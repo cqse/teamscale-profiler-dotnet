@@ -7,10 +7,10 @@
 
 // Constants used for report generation
 #ifdef _WIN64
-	#define HEADER "Coverage profiler version 0.9.1 (x64)"
+	#define HEADER "Coverage profiler version 0.9.1.1 (x64)"
 #endif
 #ifndef _WIN64
-	#define HEADER "Coverage profiler version 0.9.1 (x86)"
+	#define HEADER "Coverage profiler version 0.9.1.1 (x86)"
 #endif
 
 #define INFO "Info"
@@ -260,8 +260,24 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	ModuleID moduleId = 0;
 	m_pICorProfilerInfo->GetAssemblyInfo(assemblyId, NAME_BUFFER_SIZE, &assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
+
+	IMetaDataAssemblyImport * pMetaDataAssemblyImport = NULL;
+	HRESULT hr = S_OK;
+	hr = m_pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead, IID_IMetaDataAssemblyImport, (IUnknown** ) &pMetaDataAssemblyImport);
+
+	mdAssembly ptkAssembly = NULL;
+	pMetaDataAssemblyImport->GetAssemblyFromScope(&ptkAssembly);
+
+	
+	ULONG pcbPublicKey = 0;
+	ULONG pulHashAlgId = 0;
+	wchar_t buff[1024];
+	ASSEMBLYMETADATA metadata;
+	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, buff, 1024, NULL, &metadata, 0);
+
+	
 	char target[NAME_BUFFER_SIZE];
-	sprintf(target, "%S:%i", assemblyName, assemblyNumber);
+	sprintf(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber, metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
 	WriteTupleToFile(ASSEMBLY, target);
 
 	
