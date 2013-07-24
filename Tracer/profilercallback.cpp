@@ -264,20 +264,72 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	IMetaDataAssemblyImport * pMetaDataAssemblyImport = NULL;
 	HRESULT hr = S_OK;
 	hr = m_pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead, IID_IMetaDataAssemblyImport, (IUnknown** ) &pMetaDataAssemblyImport);
-
+	
+	if(SUCCEEDED(hr)){
+		WriteTupleToFile("GetModuleMetaData", "Success");
+	}else{
+		WriteTupleToFile("GetModuleMetaData", "Fail");
+	}
+	
 	mdAssembly ptkAssembly = NULL;
-	pMetaDataAssemblyImport->GetAssemblyFromScope(&ptkAssembly);
+	hr = pMetaDataAssemblyImport->GetAssemblyFromScope(&ptkAssembly);
+	if(SUCCEEDED(hr)){
+		WriteTupleToFile("GetAssemblyFromScope", "Success");
+	}else{
+		WriteTupleToFile("GetAssemblyFromScope", "Fail");
+	}
 
+	if(ptkAssembly == NULL){
+		WriteTupleToFile("ptkAssembly", "is null");
+	}
 	
 	ULONG pcbPublicKey = 0;
 	ULONG pulHashAlgId = 0;
 	wchar_t buff[1024];
 	ASSEMBLYMETADATA metadata;
-	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, buff, 1024, NULL, &metadata, 0);
+	ULONG nameLength = 0;
+//	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, buff, 1024, &nameLength, &metadata, NULL);
+/*	        hr = pMetaDataAssemblyImport->GetAssemblyProps(
+                ptkAssembly,
+                NULL, NULL,
+                NULL,
+                NULL, 0, NULL,
+                &metadata,
+                NULL);
+      // alloc mem for AssemblyMetaData arrays
+        if (metadata.cbLocale)
+                metadata.szLocale = (WCHAR*)malloc(metadata.cbLocale * sizeof(WCHAR));
+        if (metadata.ulProcessor)
+                metadata.rProcessor = (DWORD*)malloc(metadata.ulProcessor * sizeof(DWORD));
+        if (metadata.ulOS)
+                metadata.rOS = (OSINFO*)malloc(metadata.ulOS * sizeof(OSINFO));
+ */         
 
-	
+    metadata.szLocale = (WCHAR*)malloc(1024 * sizeof(WCHAR));
+    metadata.rProcessor = (DWORD*)malloc(1024 * sizeof(DWORD));
+    metadata.rOS = (OSINFO*)malloc(1024 * sizeof(OSINFO));
+	hr = pMetaDataAssemblyImport->GetAssemblyProps(
+                ptkAssembly,
+                NULL, NULL,
+                NULL,
+                NULL, 0, NULL,
+                &metadata,
+                NULL);
+	// recall GetAssemblyProps	
+/*	byte *pbyPublicKey;  
+	DWORD dwcKey, dwHashAlg, dwFlags;   
+	WCHAR wcName[1024];
+    hr = pMetaDataAssemblyImport->GetAssemblyProps(
+                ptkAssembly,
+                (const void**)&pcbPublicKey, &dwcKey,
+                &dwHashAlg,
+                wcName, 1024, NULL,
+                &metadata,
+                &dwFlags);
+*/
 	char target[NAME_BUFFER_SIZE];
 	sprintf(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber, metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
+//	sprintf(target, "%S:%i Version", assemblyName, assemblyNumber);
 	WriteTupleToFile(ASSEMBLY, target);
 
 	
