@@ -50,14 +50,6 @@ CProfilerCallback::~CProfilerCallback()
  */
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 {
-	//#ifdef _WIN64
-	//printf("Profiler (x64) Initializing.");
-	//#endif
-	//#ifndef _WIN64
-	//printf("Profiler (x86) Initializing.");
-	//#endif
-
-	
 	// read target directory from environment variable 
 	char targetDir[1000];
 	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir,
@@ -66,7 +58,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
     }
 	SYSTEMTIME time;
 	GetSystemTime (&time);
-
 
 	// create target file
 	char targetFilename[1000];
@@ -103,27 +94,23 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
     
 	if ( FAILED(hr) ) {
 		// we still want to work if this call fails, might be an older .NET version than VS2005
-        OutputDebugString("Pre-VS2005 version detected");
+        OutputDebugString("Pre .NET 2 version detected");
 		m_pICorProfilerInfo2.p = NULL;
 	}
-
 
 	// Indicate which events we're interested in.
 	m_dwEventMask = GetEventMask();
 
-	// set the event mask
-	if(m_pICorProfilerInfo2.p == NULL)
-	{
-		// Pre VS2005
+	// set the event mask for the interfaces of .NET 1 and .NET 2, we currently do not need the features of the profiling interface beyond .NET 2
+	if(m_pICorProfilerInfo2.p == NULL) {
+		// Pre .NET 2
 		m_pICorProfilerInfo->SetEventMask( m_dwEventMask );
 		// Enable function mapping
 		m_pICorProfilerInfo->SetFunctionIDMapper(FunctionMapper);
 	}
-	else
-	{
-		//VS 2005
+	else {
+		// .NET 2 and beyond
 		m_pICorProfilerInfo2->SetEventMask( m_dwEventMask );
-
 		// Enable function mapping
 		m_pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
 	}
@@ -135,8 +122,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
     if (0 == GetModuleFileNameW (NULL, m_szAppPath, MAX_PATH))
 	    _wsplitpath_s (m_szAppPath, NULL,0, NULL,0, m_szAppName,_MAX_FNAME, NULL, 0);
 
-	if(m_szAppPath[0]==0x00)
-	{
+	if(m_szAppPath[0]==0x00) {
 		wcscpy_s(m_szAppPath,MAX_PATH,L"No Application Path Found");
 		wcscpy_s(m_szAppName,_MAX_FNAME,L"No Application Name Found");
 	}
@@ -260,79 +246,33 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	ModuleID moduleId = 0;
 	m_pICorProfilerInfo->GetAssemblyInfo(assemblyId, NAME_BUFFER_SIZE, &assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
-
+	// Call GetModuleMetaData to get a MetaDataAssemblyImport object
 	IMetaDataAssemblyImport * pMetaDataAssemblyImport = NULL;
-	HRESULT hr = S_OK;
-	hr = m_pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead, IID_IMetaDataAssemblyImport, (IUnknown** ) &pMetaDataAssemblyImport);
+	m_pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead, IID_IMetaDataAssemblyImport, (IUnknown** ) &pMetaDataAssemblyImport);
 	
-	if(SUCCEEDED(hr)){
-		WriteTupleToFile("GetModuleMetaData", "Success");
-	}else{
-		WriteTupleToFile("GetModuleMetaData", "Fail");
-	}
-	
+	// Get the assembly token
 	mdAssembly ptkAssembly = NULL;
-	hr = pMetaDataAssemblyImport->GetAssemblyFromScope(&ptkAssembly);
-	if(SUCCEEDED(hr)){
-		WriteTupleToFile("GetAssemblyFromScope", "Success");
-	}else{
-		WriteTupleToFile("GetAssemblyFromScope", "Fail");
-	}
+	pMetaDataAssemblyImport->GetAssemblyFromScope(&ptkAssembly);
 
-	if(ptkAssembly == NULL){
-		WriteTupleToFile("ptkAssembly", "is null");
-	}
-	
-	ULONG pcbPublicKey = 0;
-	ULONG pulHashAlgId = 0;
-//	wchar_t buff[1024];
-	ASSEMBLYMETADATA metadata;
-	ULONG nameLength = 0;
-//	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, buff, 1024, &nameLength, &metadata, NULL);
-/*	        hr = pMetaDataAssemblyImport->GetAssemblyProps(
-                ptkAssembly,
-                NULL, NULL,
-                NULL,
-                NULL, 0, NULL,
-                &metadata,
-                NULL);
-      // alloc mem for AssemblyMetaData arrays
-        if (metadata.cbLocale)
-                metadata.szLocale = (WCHAR*)malloc(metadata.cbLocale * sizeof(WCHAR));
-        if (metadata.ulProcessor)
-                metadata.rProcessor = (DWORD*)malloc(metadata.ulProcessor * sizeof(DWORD));
-        if (metadata.ulOS)
-                metadata.rOS = (OSINFO*)malloc(metadata.ulOS * sizeof(OSINFO));
- */         
-
-    metadata.szLocale = (WCHAR*)malloc(1 * sizeof(WCHAR));
+	// Call GetAssemblyProps:
+	// Allocate memory for the pointers, as GetAssemblyProps seems to dereference the pointers
+	// (it crashed otherwise) .
+	// We allocate the minimum amount of memory as we do not know how much is needed to store the array. 
+	// This information would be available in the fields metadata.cbLocale, metadata.ulProcessor and 
+	// metadata.ulOS after the call to GetAssemblyProps. However, we do not need the additional 
+	// data and save the second call to GetAssemblyProps with the correct amount of memory. 
+ 	ASSEMBLYMETADATA metadata;
+	metadata.szLocale = (WCHAR*)malloc(1 * sizeof(WCHAR));
     metadata.rProcessor = (DWORD*)malloc(1 * sizeof(DWORD));
     metadata.rOS = (OSINFO*)malloc(1 * sizeof(OSINFO));
-	hr = pMetaDataAssemblyImport->GetAssemblyProps(
-                ptkAssembly,
-                NULL, NULL,
-                NULL,
-                NULL, 0, NULL,
-                &metadata,
-                NULL);
-	// recall GetAssemblyProps	
-/*	byte *pbyPublicKey;  
-	DWORD dwcKey, dwHashAlg, dwFlags;   
-	WCHAR wcName[1024];
-    hr = pMetaDataAssemblyImport->GetAssemblyProps(
-                ptkAssembly,
-                (const void**)&pcbPublicKey, &dwcKey,
-                &dwHashAlg,
-                wcName, 1024, NULL,
-                &metadata,
-                &dwFlags);
-*/
+	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, NULL, 0, NULL, &metadata, NULL);
+	free(metadata.szLocale);
+	free(metadata.rProcessor);
+	free(metadata.rOS);
+	
 	char target[NAME_BUFFER_SIZE];
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber, metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
-//	sprintf_s(target, "%S:%i Version", assemblyName, assemblyNumber);
 	WriteTupleToFile(ASSEMBLY, target);
-
-	
 
 	// Always return OK
 	return S_OK;
@@ -364,71 +304,42 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
  */
 HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodInfo* info)
 {
-	HRESULT hr = E_FAIL; // assume success
+	HRESULT hr = E_FAIL; // assume fail
             
-
     mdToken funcToken = mdTypeDefNil;
     IMetaDataImport *pMDImport = NULL;      
     WCHAR funName[NAME_BUFFER_SIZE] = L"UNKNOWN";
             
-    
-    //
     // Get the MetadataImport interface and the metadata token 
-    //
-    hr = m_pICorProfilerInfo->GetTokenAndMetaDataFromFunction( functionID, 
-                                                           IID_IMetaDataImport, 
-                                                           (IUnknown **)&pMDImport,
-                                                           &funcToken );
-    if ( SUCCEEDED( hr ) )
-    {
+    hr = m_pICorProfilerInfo->GetTokenAndMetaDataFromFunction( functionID, IID_IMetaDataImport, (IUnknown **)&pMDImport, &funcToken );
+    if (SUCCEEDED(hr)) {
         mdTypeDef classToken = mdTypeDefNil;
         DWORD methodAttr = 0;
         PCCOR_SIGNATURE sigBlob = NULL;
 		ULONG sigSize = 0;
 		ModuleID moduleId = 0;
-        hr = pMDImport->GetMethodProps( funcToken,
-                                        &classToken,
-                                        funName,
-                                        NAME_BUFFER_SIZE,
-                                        0,
-                                        &methodAttr,
-                                        &sigBlob,
-                                        &sigSize,
-                                        NULL, 
-                                        NULL );
-        if ( SUCCEEDED( hr ) )
-        {
+        hr = pMDImport->GetMethodProps(funcToken, &classToken, funName, NAME_BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL, NULL);
+        if (SUCCEEDED(hr)) {
             WCHAR className[NAME_BUFFER_SIZE] = L"UNKNOWN";
             ClassID classId =0;
 
-
-            if (m_pICorProfilerInfo2 != NULL)
-            {
+            if (m_pICorProfilerInfo2 != NULL) {
 				ULONG32 values = 0;
-                hr = m_pICorProfilerInfo2->GetFunctionInfo2(functionID,
-                                                        0,
-                                                        &classId,
-                                                        &moduleId,
-														&funcToken,
-                                                        0,
-                                                        &values,
-                                                        NULL);
+                hr = m_pICorProfilerInfo2->GetFunctionInfo2(functionID, 0, &classId, &moduleId, &funcToken, 0, &values, NULL);
 				if (!SUCCEEDED(hr)) {
                     classId = 0;
 				}
             }
 
-
 			int assemblyNumber = -1;
-			if (SUCCEEDED(hr) && moduleId != 0)
-            {
+			if (SUCCEEDED(hr) && moduleId != 0) {
 				// get assembly name
 				AssemblyID assemblyId;
 				hr = m_pICorProfilerInfo->GetModuleInfo(moduleId, NULL, NULL, NULL, NULL, &assemblyId);
-				if (SUCCEEDED (hr)) {
+				if (SUCCEEDED(hr)) {
 					assemblyNumber = (*_assemblyMap)[assemblyId];
 				}
-            }
+			}
            
 			info->assemblyNumber = assemblyNumber;
 			info->classToken = classToken;
@@ -437,7 +348,6 @@ HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodI
 
         pMDImport->Release();
     }
-
 
     return hr;
 } // PrfInfo::GetFunctionProperties
@@ -464,19 +374,18 @@ int CProfilerCallback::WriteToFile(const char *pszFmtString, ...)
 	memset(g_szBuffer,0,4096);
 
     va_list args;
-    va_start( args, pszFmtString );
-    retVal = wvsprintf(g_szBuffer, pszFmtString, args );
-    va_end( args );
+    va_start(args, pszFmtString);
+    retVal = wvsprintf(g_szBuffer, pszFmtString, args);
+    va_end(args);
 
 	// write out to the file if the file is open
-	if(_resultFile != INVALID_HANDLE_VALUE)
-	{
-		if(TRUE == WriteFile(_resultFile ,g_szBuffer,(DWORD)strlen(g_szBuffer),&dwWritten,NULL))
-		{
+	if(_resultFile != INVALID_HANDLE_VALUE)	{
+		if(TRUE == WriteFile(_resultFile ,g_szBuffer,(DWORD)strlen(g_szBuffer),&dwWritten,NULL)) {
 			retVal = dwWritten;
 		}
-		else
+		else {
 			retVal = 0;
+		}
 	}
 	LeaveCriticalSection(&m_prf_crit_sec);
 
