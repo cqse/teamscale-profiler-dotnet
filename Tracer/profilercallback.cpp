@@ -50,29 +50,7 @@ CProfilerCallback::~CProfilerCallback()
  */
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 {
-	// read target directory from environment variable 
-	char targetDir[1000];
-	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir,
-                                    sizeof(targetDir) ) ) {
-        sprintf_s(targetDir, "c:/profiler/");
-    }
-	SYSTEMTIME time;
-	GetSystemTime (&time);
-
-	// create target file
-	char targetFilename[1000];
-	sprintf_s (targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt", targetDir, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-	_tcscpy_s(m_pszResultFile, targetFilename);
-
-	EnterCriticalSection(&m_prf_crit_sec);
-	_resultFile = CreateFile(m_pszResultFile,GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
-	WriteTupleToFile(INFO, HEADER);
-	
-	char timeStamp[NAME_BUFFER_SIZE];
-	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-	WriteTupleToFile(STARTED, timeStamp);
-	LeaveCriticalSection(&m_prf_crit_sec);
-
+	CreateOutputFile();
 
 	// intitialize data structures
 	_assemblyCounter = 1;
@@ -83,14 +61,12 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 
 	// Get reference to the ICorProfilerInfo interface 
     HRESULT hr =
-        pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo,
-                                            (LPVOID *)&m_pICorProfilerInfo );
+        pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&m_pICorProfilerInfo );
 	if ( FAILED(hr) ) {
         return E_INVALIDARG;
 	}
 
-    hr = pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo2,
-                                            (LPVOID *)&m_pICorProfilerInfo2 );
+    hr = pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&m_pICorProfilerInfo2 );
     
 	if ( FAILED(hr) ) {
 		// we still want to work if this call fails, might be an older .NET version than VS2005
@@ -115,13 +91,18 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 		m_pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
 	}
 
+	WriteProcessInfoToOutputFile();
 
+    return S_OK;
+}
+
+void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	// Get the name of the executing process and write to log
 	m_szAppPath[0]=0x00;
 	m_szAppName[0]=0x00;
-    if (0 == GetModuleFileNameW (NULL, m_szAppPath, MAX_PATH))
+    if (0 == GetModuleFileNameW(NULL, m_szAppPath, MAX_PATH)) {
 	    _wsplitpath_s (m_szAppPath, NULL,0, NULL,0, m_szAppName,_MAX_FNAME, NULL, 0);
-
+	}
 	if(m_szAppPath[0]==0x00) {
 		wcscpy_s(m_szAppPath,MAX_PATH,L"No Application Path Found");
 		wcscpy_s(m_szAppName,_MAX_FNAME,L"No Application Name Found");
@@ -129,10 +110,35 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 
 	char process[NAME_BUFFER_SIZE];
 	sprintf_s(process, "%S", m_szAppPath);
-	WriteTupleToFile(PROCESS, process );
+	WriteTupleToFile(PROCESS, process);
+}
 
+/**
+ * Create the output file and add general information.
+ */
+void CProfilerCallback::CreateOutputFile() {
+	// read target directory from environment variable 
+	char targetDir[1000];
+	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir,
+                                    sizeof(targetDir) ) ) {
+        sprintf_s(targetDir, "c:/profiler/");
+    }
+	SYSTEMTIME time;
+	GetSystemTime (&time);
 
-    return S_OK;
+	// create target file
+	char targetFilename[1000];
+	sprintf_s (targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt", targetDir, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+	_tcscpy_s(m_pszResultFile, targetFilename);
+
+	EnterCriticalSection(&m_prf_crit_sec);
+	_resultFile = CreateFile(m_pszResultFile,GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+	WriteTupleToFile(INFO, HEADER);
+	
+	char timeStamp[NAME_BUFFER_SIZE];
+	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+	WriteTupleToFile(STARTED, timeStamp);
+	LeaveCriticalSection(&m_prf_crit_sec);
 }
 
 /**
@@ -348,7 +354,6 @@ HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodI
 
         pMDImport->Release();
     }
-
     return hr;
 } // PrfInfo::GetFunctionProperties
 
