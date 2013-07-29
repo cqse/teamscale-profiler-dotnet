@@ -62,7 +62,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 	char targetDir[1000];
 	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir,
                                     sizeof(targetDir) ) ) {
-        sprintf(targetDir, "c:/profiler/");
+        sprintf_s(targetDir, "c:/profiler/");
     }
 	SYSTEMTIME time;
 	GetSystemTime (&time);
@@ -70,15 +70,15 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 
 	// create target file
 	char targetFilename[1000];
-	sprintf (targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt", targetDir, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-	_tcscpy(m_pszResultFile, targetFilename);
+	sprintf_s (targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt", targetDir, time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+	_tcscpy_s(m_pszResultFile, targetFilename);
 
 	EnterCriticalSection(&m_prf_crit_sec);
 	_resultFile = CreateFile(m_pszResultFile,GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
 	WriteTupleToFile(INFO, HEADER);
 	
 	char timeStamp[NAME_BUFFER_SIZE];
-	sprintf(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 	WriteTupleToFile(STARTED, timeStamp);
 	LeaveCriticalSection(&m_prf_crit_sec);
 
@@ -142,7 +142,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 	}
 
 	char process[NAME_BUFFER_SIZE];
-	sprintf(process, "%S", m_szAppPath);
+	sprintf_s(process, "%S", m_szAppPath);
 	WriteTupleToFile(PROCESS, process );
 
 
@@ -168,7 +168,7 @@ HRESULT CProfilerCallback::Shutdown()
 
 	// write timestamp
 	char timeStamp[NAME_BUFFER_SIZE];
-	sprintf(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 	WriteTupleToFile(STOPPED, timeStamp);
 
 	WriteTupleToFile(INFO, "Shutting down coverage profiler" );
@@ -285,7 +285,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	
 	ULONG pcbPublicKey = 0;
 	ULONG pulHashAlgId = 0;
-	wchar_t buff[1024];
+//	wchar_t buff[1024];
 	ASSEMBLYMETADATA metadata;
 	ULONG nameLength = 0;
 //	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL, buff, 1024, &nameLength, &metadata, NULL);
@@ -305,9 +305,9 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
                 metadata.rOS = (OSINFO*)malloc(metadata.ulOS * sizeof(OSINFO));
  */         
 
-    metadata.szLocale = (WCHAR*)malloc(1024 * sizeof(WCHAR));
-    metadata.rProcessor = (DWORD*)malloc(1024 * sizeof(DWORD));
-    metadata.rOS = (OSINFO*)malloc(1024 * sizeof(OSINFO));
+    metadata.szLocale = (WCHAR*)malloc(1 * sizeof(WCHAR));
+    metadata.rProcessor = (DWORD*)malloc(1 * sizeof(DWORD));
+    metadata.rOS = (OSINFO*)malloc(1 * sizeof(OSINFO));
 	hr = pMetaDataAssemblyImport->GetAssemblyProps(
                 ptkAssembly,
                 NULL, NULL,
@@ -328,8 +328,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
                 &dwFlags);
 */
 	char target[NAME_BUFFER_SIZE];
-	sprintf(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber, metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
-//	sprintf(target, "%S:%i Version", assemblyName, assemblyNumber);
+	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber, metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
+//	sprintf_s(target, "%S:%i Version", assemblyName, assemblyNumber);
 	WriteTupleToFile(ASSEMBLY, target);
 
 	
@@ -492,7 +492,7 @@ void CProfilerCallback::WriteToLog(const char* label, vector<MethodInfo>* list) 
 		MethodInfo info = *i;
 		char signature[NAME_BUFFER_SIZE];
 		signature[0] = '\0';
-		sprintf(signature, "%i:%i:%i", info.assemblyNumber, info.classToken, info.funcToken);
+		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken, info.funcToken);
 		WriteTupleToFile(label, signature);
 	}
 }
