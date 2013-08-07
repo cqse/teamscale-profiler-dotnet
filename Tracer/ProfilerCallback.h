@@ -84,6 +84,7 @@ private:
     DWORD m_dwEventMask; // the event mask used for this profiler
 	CComQIPtr<ICorProfilerInfo> m_pICorProfilerInfo;	// smart pointer container for ICorProfilerInfo reference
     CComQIPtr<ICorProfilerInfo2> m_pICorProfilerInfo2;	// smart pointer container for ICorProfilerInfo2 reference
+	CComQIPtr<ICorProfilerInfo3> m_pICorProfilerInfo3;
 
 	TCHAR m_pszResultFile[_MAX_PATH]; // name of the result file
 
@@ -92,7 +93,8 @@ private:
 
 	CRITICAL_SECTION m_prf_crit_sec; // SYNCHRONIZATION PRIMITIVE
 
-		
+	void CProfilerCallback::WriteProcessInfoToOutputFile();
+	void CProfilerCallback::CreateOutputFile();
 	void CProfilerCallback::WriteToLog(const char*, vector<MethodInfo>* list);
 
 };
