@@ -7,10 +7,10 @@
 
 // Constants used for report generation
 #ifdef _WIN64
-	#define HEADER "Coverage profiler version 0.9.1.1 (x64)"
+	#define HEADER "Coverage profiler version 0.9.1.2 (x64)"
 #endif
 #ifndef _WIN64
-	#define HEADER "Coverage profiler version 0.9.1.1 (x86)"
+	#define HEADER "Coverage profiler version 0.9.1.2 (x86)"
 #endif
 
 #define INFO "Info"
