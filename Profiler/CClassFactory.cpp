@@ -1,8 +1,7 @@
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #include <windows.h>
 #include <stdio.h>
-#include "ProfilerCallback.h"
-
+#include "CProfilerCallback.h"
 
 HRESULT RegisterClassBase( REFCLSID rclsid,
 	const char *szDesc,                 
@@ -25,15 +24,11 @@ BOOL SetKeyAndValue(const char *szKey,
 	const char *szSubkey,
 	const char *szValue );
 
-//=============================================================
 #define MAX_LENGTH 256
 #define PROFILER_GUID "{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}"
 
 extern const GUID CLSID_PROFILER = 
 { 0xDD0A1BB6, 0x11CE, 0x11DD, { 0x8E, 0xE8, 0x3F, 0x9E, 0x55, 0xD8, 0x95, 0x93 } };
-
-
-
 
 static const char *g_szProgIDPrefix = "Profiler";
 
@@ -41,13 +36,9 @@ static const char *g_szProgIDPrefix = "Profiler";
 
 HINSTANCE g_hInst;        // instance handle to this piece of code
 
-//==========================================================
-
-BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved )
-{    
+BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved ) {    
 	// save off the instance handle for later use
-	switch ( dwReason )
-	{
+	switch ( dwReason )	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls( hInstance );
 		g_hInst = hInstance;
@@ -57,27 +48,21 @@ BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved )
 	return TRUE;
 }
 
-//================================================================
-
-class CClassFactory : public IClassFactory
-{
+class CClassFactory : public IClassFactory {
 public:
-	CClassFactory( )
-	{ 
+	CClassFactory( ) { 
 		m_refCount = 1; 
 	}
 
-	virtual ~CClassFactory( )
-	{
+	virtual ~CClassFactory( ) {
 		// nothing to do
 	}
 
-	COM_METHOD( ULONG ) AddRef()
-	{
+	COM_METHOD( ULONG ) AddRef() {
 		return InterlockedIncrement( &m_refCount );
 	}
-	COM_METHOD( ULONG ) Release()
-	{
+
+	COM_METHOD( ULONG ) Release() {
 		return InterlockedDecrement( &m_refCount );
 	}
 
@@ -96,11 +81,7 @@ private:
 
 CClassFactory g_ProfilerClassFactory;
 
-//================================================================
-
-//#pragma comment(linker, "/EXPORT:DllUnregisterServer=_DllUnregisterServer@0,PRIVATE")
-STDAPI DllUnregisterServer()
-{    
+STDAPI DllUnregisterServer() {    
 	char szID[128];         // the class ID to unregister.
 	char szCLSID[128];      // CLSID\\szID.
 	OLECHAR szWID[128];     // helper for the class ID to unregister.
@@ -124,11 +105,7 @@ STDAPI DllUnregisterServer()
 	return S_OK;   
 }
 
-//================================================================
-
-//#pragma comment(linker, "/EXPORT:DllRegisterServer=_DllRegisterServer@0,PRIVATE")
-STDAPI DllRegisterServer()
-{    
+STDAPI DllRegisterServer() {
 	HRESULT hr = S_OK;
 	char  szModule[_MAX_PATH];  
 
@@ -150,8 +127,7 @@ STDAPI DllRegisterServer()
 		"Profiler", rcProgID, rcIndProgID, rcCLSID,
 		ARRAY_SIZE (rcCLSID));
 
-	if ( SUCCEEDED( hr ) )
-	{
+	if ( SUCCEEDED( hr ) ) {
 		// set the server path.
 		SetKeyAndValue( rcCLSID, "InprocServer32", szModule );
 
@@ -159,60 +135,47 @@ STDAPI DllRegisterServer()
 		sprintf_s( rcInproc,MAX_LENGTH+2, "%s\\%s", rcCLSID, "InprocServer32" );
 		SetRegValue( rcInproc, "ThreadingModel", "Both" );
 	}   
-	else
+	else{
 		DllUnregisterServer();
-
+	}
 	return hr;    
 }
 
-//================================================================
-
-//#pragma comment(linker, "/EXPORT:DllGetClassObject=_DllGetClassObject@12,PRIVATE")
-STDAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv )                  
-{    
+STDAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv ) {    
 	HRESULT hr = E_OUTOFMEMORY;
 
-	if ( rclsid == CLSID_PROFILER )
+	if ( rclsid == CLSID_PROFILER ){
 		hr = g_ProfilerClassFactory.QueryInterface( riid, ppv );
-
+	}
 	return hr;   
 }
 
-//===========================================================
-
-HRESULT CClassFactory::QueryInterface( REFIID riid, void **ppInterface )
-{    
-	if ( riid == IID_IUnknown )
+HRESULT CClassFactory::QueryInterface( REFIID riid, void **ppInterface ) {    
+	if ( riid == IID_IUnknown ) {
 		*ppInterface = static_cast<IUnknown *>( this ); 
-	else if ( riid == IID_IClassFactory )
+	}
+	else if ( riid == IID_IClassFactory ){
 		*ppInterface = static_cast<IClassFactory *>( this );
-	else
-	{
+	}
+	else {
 		*ppInterface = NULL;                                  
 		return E_NOINTERFACE;
 	}
 
 	reinterpret_cast<IUnknown *>( *ppInterface )->AddRef();
-
 	return S_OK;
 }
 
 // Used to determine whether the DLL can be unloaded by COM
-//#pragma comment(linker, "/EXPORT:DllCanUnloadNow=_DllCanUnloadNow@0,PRIVATE")
-STDAPI DllCanUnloadNow(void)
-{
+STDAPI DllCanUnloadNow(void) {
 	return S_OK;
 }
 
-//===========================================================
-
-HRESULT CClassFactory::CreateInstance( IUnknown *pUnkOuter, REFIID riid,
-	void **ppInstance )
-{       
+HRESULT CClassFactory::CreateInstance( IUnknown *pUnkOuter, REFIID riid, void **ppInstance ) {       
 	// aggregation is not supported by these objects
-	if ( pUnkOuter != NULL )
+	if ( pUnkOuter != NULL ) {
 		return CLASS_E_NOAGGREGATION;
-
+	}
 	CProfilerCallback * pProfilerCallback = new CProfilerCallback();
 
 	*ppInstance = (void *)pProfilerCallback;
@@ -220,15 +183,7 @@ HRESULT CClassFactory::CreateInstance( IUnknown *pUnkOuter, REFIID riid,
 	return S_OK;
 }
 
-//===========================================================
-
-HRESULT RegisterClassBase( REFCLSID rclsid,
-	const char *szDesc,                 
-	const char *szProgID,               
-	const char *szIndepProgID,          
-	char *szOutCLSID,
-	size_t nOutCLSIDLen)              
-{
+HRESULT RegisterClassBase( REFCLSID rclsid, const char *szDesc, const char *szProgID, const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
 	char szID[64];     // the class ID to register.
 	OLECHAR szWID[64]; // helper for the class ID to register.
 
@@ -255,18 +210,15 @@ HRESULT RegisterClassBase( REFCLSID rclsid,
 	success &=SetKeyAndValue( szOutCLSID, "VersionIndependentProgID", szIndepProgID );
 	success &=SetKeyAndValue( szOutCLSID, "NotInsertable", NULL );
 
-	if(success) return S_OK;
-	else return S_FALSE;
+	if(success) {
+		return S_OK;
+	}
+	else {
+		return S_FALSE;
+	}
 }
 
-//===========================================================
-
-HRESULT UnregisterClassBase( REFCLSID rclsid,
-	const char *szProgID,
-	const char *szIndepProgID,
-	char *szOutCLSID,
-	size_t nOutCLSIDLen )
-{
+HRESULT UnregisterClassBase( REFCLSID rclsid, const char *szProgID, const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
 	char szID[64];     // the class ID to register.
 	OLECHAR szWID[64]; // helper for the class ID to register.
 
@@ -294,13 +246,8 @@ HRESULT UnregisterClassBase( REFCLSID rclsid,
 	return S_OK;
 }
 
-//===========================================================
-
-BOOL DeleteKey( const char *szKey,
-	const char *szSubkey )
-{
+BOOL DeleteKey( const char *szKey, const char *szSubkey) {
 	char rcKey[MAX_LENGTH]; // buffer for the full key name.
-
 	sprintf_s (rcKey, ARRAY_SIZE(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
@@ -312,12 +259,7 @@ BOOL DeleteKey( const char *szKey,
 	return TRUE;
 }
 
-//===========================================================
-
-BOOL SetKeyAndValue( const char *szKey,
-	const char *szSubkey,
-	const char *szValue )
-{
+BOOL SetKeyAndValue( const char *szKey, const char *szSubkey, const char *szValue) {
 	HKEY hKey;              // handle to the new reg key.
 	char rcKey[MAX_LENGTH]; // buffer for the full key name.
 
@@ -332,15 +274,7 @@ BOOL SetKeyAndValue( const char *szKey,
 	}
 
 	// create the registration key.
-	long ec = RegCreateKeyExA( HKEY_CLASSES_ROOT, 
-		rcKey, 
-		0, 
-		NULL,
-		REG_OPTION_NON_VOLATILE, 
-		KEY_ALL_ACCESS, 
-		NULL,
-		&hKey, 
-		NULL );
+	long ec = RegCreateKeyExA( HKEY_CLASSES_ROOT, rcKey, 0, NULL,REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,	&hKey, NULL);
 	if (ec  == ERROR_SUCCESS )
 	{
 		// set the value (if there is one).
@@ -351,35 +285,24 @@ BOOL SetKeyAndValue( const char *szKey,
 		}
 
 		RegCloseKey( hKey );
-
 		return TRUE;
 	}
-
 	return FALSE;   
 }
 
-BOOL SetRegValue(char *szKeyName, char *szKeyword, char *szValue)
-{
+BOOL SetRegValue(char *szKeyName, char *szKeyword, char *szValue) {
 	HKEY hKey; // handle to the new reg key.
 
 	// create the registration key.
-	if ( RegCreateKeyExA( HKEY_CLASSES_ROOT, 
-		szKeyName, 0,  NULL,
-		REG_OPTION_NON_VOLATILE, 
-		KEY_ALL_ACCESS, 
-		NULL, &hKey, 
-		NULL) == ERROR_SUCCESS )
-	{
+	if ( RegCreateKeyExA( HKEY_CLASSES_ROOT, szKeyName, 0,  NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL) == ERROR_SUCCESS ) {
 		// set the value (if there is one).
-		if ( szValue != NULL )
-		{
+		if ( szValue != NULL ) {
 			RegSetValueExA( hKey, szKeyword, 0, REG_SZ, 
 				(BYTE *)szValue, 
 				(DWORD)((strlen(szValue) + 1) * sizeof ( char )));
 		}
 
 		RegCloseKey( hKey );
-
 		return TRUE;
 	}
 

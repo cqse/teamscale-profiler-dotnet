@@ -29,10 +29,10 @@
     <ClInclude Include="CProfilerCallbackBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProfilerCallback.h">
+    <ClInclude Include="MethodInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MethodInfo.h">
+    <ClInclude Include="CProfilerCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

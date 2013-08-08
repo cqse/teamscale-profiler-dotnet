@@ -72,7 +72,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">bin\Debug\log\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\resources\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\resources\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Release\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Release\</IntDir>
@@ -200,7 +200,7 @@
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClInclude Include="MethodInfo.h" />
-    <ClInclude Include="ProfilerCallback.h" />
+    <ClInclude Include="CProfilerCallback.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def" />

@@ -4,8 +4,6 @@
 #include <cor.h>
 #include <corprof.h>
 
-
-
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
 
 public:

@@ -1,6 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
-#include "ProfilerCallback.h"
+#include "CProfilerCallback.h"
 #include <winuser.h>
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -26,10 +26,7 @@ CHAR g_szBuffer[4096];
 /**
 * Constructor
 */
-CProfilerCallback::CProfilerCallback() :
-m_dwEventMask(0),
-	_resultFile(INVALID_HANDLE_VALUE) {
-
+CProfilerCallback::CProfilerCallback() : m_dwEventMask(0), _resultFile(INVALID_HANDLE_VALUE) {
 		// make a critical section for synchronization
 		InitializeCriticalSection(&m_prf_crit_sec);
 }
@@ -37,8 +34,7 @@ m_dwEventMask(0),
 /**
 * Destructor
 */
-CProfilerCallback::~CProfilerCallback()
-{
+CProfilerCallback::~CProfilerCallback() {
 	// clean up the critical section
 	DeleteCriticalSection(&m_prf_crit_sec);
 }
@@ -46,8 +42,7 @@ CProfilerCallback::~CProfilerCallback()
 /**
 * Initializer. Called at profiler startup.
 */
-HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
-{
+HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk ) {
 	CreateOutputFile();
 
 	// intitialize data structures
@@ -88,9 +83,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk )
 		// Enable function mapping
 		m_pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
 	}
-
 	WriteProcessInfoToOutputFile();
-
 	return S_OK;
 }
 
@@ -117,8 +110,7 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 void CProfilerCallback::CreateOutputFile() {
 	// read target directory from environment variable 
 	char targetDir[1000];
-	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir,
-		sizeof(targetDir) ) ) {
+	if ( !GetEnvironmentVariable( "COR_PROFILER_TARGETDIR", targetDir, sizeof(targetDir) ) ) {
 			sprintf_s(targetDir, "c:/profiler/");
 	}
 	SYSTEMTIME time;
@@ -142,8 +134,7 @@ void CProfilerCallback::CreateOutputFile() {
 /**
 * Write coverage information to log file at shutdown.
 */
-HRESULT CProfilerCallback::Shutdown()
-{
+HRESULT CProfilerCallback::Shutdown() {
 	// get timestamp
 	SYSTEMTIME time;
 	GetSystemTime (&time);
@@ -168,8 +159,9 @@ HRESULT CProfilerCallback::Shutdown()
 
 	// close the log file
 	EnterCriticalSection(&m_prf_crit_sec);
-	if(_resultFile != INVALID_HANDLE_VALUE)
+	if(_resultFile != INVALID_HANDLE_VALUE) {
 		CloseHandle(_resultFile);
+	}
 	LeaveCriticalSection(&m_prf_crit_sec);
 
 	delete _assemblyMap;
@@ -186,8 +178,7 @@ HRESULT CProfilerCallback::Shutdown()
 * In addition, EnterLeave hooks are enabled to force re-jitting of pre-jitted code, 
 * in order to make coverage information independent of pre-jitted code.
 */
-DWORD CProfilerCallback::GetEventMask()
-{
+DWORD CProfilerCallback::GetEventMask() {
 	m_dwEventMask = 0;
 	m_dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
 	m_dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
@@ -205,9 +196,7 @@ DWORD CProfilerCallback::GetEventMask()
 * in the event mask in order to force JIT-events for each first call to a function, 
 * independent of whether a prejitted version exists.)
 */
-UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId,
-	BOOL *pbHookFunction)
-{
+UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId, BOOL *pbHookFunction) {
 	// disable hooking of functions
 	*pbHookFunction = false;
 
@@ -218,8 +207,7 @@ UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId,
 /**
 * Store information about jitted method.
 */
-HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock)
-{
+HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	// notify monitor that method has been jitted
 	MethodInfo info;
 	GetFunctionIdentifier(functionId, &info);
@@ -233,14 +221,12 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT
 * Write loaded assembly to log file.
 */
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
-
 	// store assembly counter for id
 	int assemblyNumber = _assemblyCounter++;
 	(*_assemblyMap)[assemblyId] = assemblyNumber;
 
 	// log assembly load
 	WCHAR assemblyName[NAME_BUFFER_SIZE];
-
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
@@ -296,15 +282,11 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-
-
 /**
 * Create method info object for a function id.
 */
-HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodInfo* info)
-{
+HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodInfo* info) {
 	HRESULT hr = E_FAIL; // assume fail
-
 	mdToken funcToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;      
 	WCHAR funName[NAME_BUFFER_SIZE] = L"UNKNOWN";
@@ -350,7 +332,6 @@ HRESULT CProfilerCallback::GetFunctionIdentifier( FunctionID functionID, MethodI
 	return hr;
 } // PrfInfo::GetFunctionProperties
 
-
 /**
 * Write name-value pair to log file.
 */
@@ -364,8 +345,7 @@ void CProfilerCallback::WriteTupleToFile(const char* label, const char* value) {
 /**
 * Write to log file.
 */
-int CProfilerCallback::WriteToFile(const char *pszFmtString, ...)
-{
+int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
 	EnterCriticalSection(&m_prf_crit_sec);
 	int retVal = 0;
 	DWORD dwWritten = 0;

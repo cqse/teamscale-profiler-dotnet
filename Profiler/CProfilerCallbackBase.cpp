@@ -1,7 +1,5 @@
 #include "CProfilerCallbackBase.h"
 
-
-
 /** Constructor */
 CProfilerCallbackBase::CProfilerCallbackBase() : m_ref_cnt(0){
 	// do nothing but inialization performed in m_ref_cnt
@@ -15,35 +13,28 @@ CProfilerCallbackBase::~CProfilerCallbackBase() {
 //====================================================
 // IUnknown implementation
 //====================================================
-ULONG CProfilerCallbackBase::AddRef()
-{
+ULONG CProfilerCallbackBase::AddRef() {
 	return InterlockedIncrement(&m_ref_cnt);
 }
 
-ULONG CProfilerCallbackBase::Release()
-{
+ULONG CProfilerCallbackBase::Release() {
 	return InterlockedDecrement(&m_ref_cnt);
 }
 
-HRESULT CProfilerCallbackBase::QueryInterface( REFIID riid, void **ppInterface )
-{
-	if(riid == IID_IUnknown)
-	{
+HRESULT CProfilerCallbackBase::QueryInterface( REFIID riid, void **ppInterface ) {
+	if(riid == IID_IUnknown) {
 		*ppInterface = static_cast<ICorProfilerCallback*>(this);
 		return S_OK;
 	}
-	else if(riid == IID_ICorProfilerCallback)
-	{
+	else if(riid == IID_ICorProfilerCallback) {
 		*ppInterface = static_cast<ICorProfilerCallback*>(this);
 		return S_OK;
 	}
-	else if(riid == IID_ICorProfilerCallback2)
-	{
+	else if(riid == IID_ICorProfilerCallback2) {
 		*ppInterface = static_cast<ICorProfilerCallback2*>(this);
 		return S_OK;
 	}
-    else if(riid == IID_ICorProfilerCallback3)
-	{
+    else if(riid == IID_ICorProfilerCallback3) {
 		*ppInterface = static_cast<ICorProfilerCallback3*>(this);
 		return S_OK;
 	}
@@ -65,404 +56,323 @@ HRESULT CProfilerCallbackBase::QueryInterface( REFIID riid, void **ppInterface )
 // and code specific for the coverage profiler.
 //
 //====================================================
-STDMETHODIMP CProfilerCallbackBase::Initialize(IUnknown *pICorProfilerInfoUnk)
-{
+STDMETHODIMP CProfilerCallbackBase::Initialize(IUnknown *pICorProfilerInfoUnk) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::Shutdown()
-{
+STDMETHODIMP CProfilerCallbackBase::Shutdown() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AppDomainCreationStarted(AppDomainID appDomainID)
-{
+STDMETHODIMP CProfilerCallbackBase::AppDomainCreationStarted(AppDomainID appDomainID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AppDomainCreationFinished(AppDomainID appDomainID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::AppDomainCreationFinished(AppDomainID appDomainID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AppDomainShutdownStarted(AppDomainID appDomainID)
-{
+STDMETHODIMP CProfilerCallbackBase::AppDomainShutdownStarted(AppDomainID appDomainID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AppDomainShutdownFinished(AppDomainID appDomainID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::AppDomainShutdownFinished(AppDomainID appDomainID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AssemblyLoadStarted(AssemblyID assemblyID)
-{
+STDMETHODIMP CProfilerCallbackBase::AssemblyLoadStarted(AssemblyID assemblyID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AssemblyLoadFinished(AssemblyID assemblyID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::AssemblyLoadFinished(AssemblyID assemblyID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AssemblyUnloadStarted(AssemblyID assemblyID)
-{
+STDMETHODIMP CProfilerCallbackBase::AssemblyUnloadStarted(AssemblyID assemblyID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::AssemblyUnloadFinished(AssemblyID assemblyID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::AssemblyUnloadFinished(AssemblyID assemblyID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ModuleLoadStarted(ModuleID moduleID)
-{
+STDMETHODIMP CProfilerCallbackBase::ModuleLoadStarted(ModuleID moduleID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ModuleLoadFinished(ModuleID moduleID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::ModuleLoadFinished(ModuleID moduleID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ModuleUnloadStarted(ModuleID moduleID)
-{
+STDMETHODIMP CProfilerCallbackBase::ModuleUnloadStarted(ModuleID moduleID) {
     return S_OK;
 }
 	  
-STDMETHODIMP CProfilerCallbackBase::ModuleUnloadFinished(ModuleID moduleID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::ModuleUnloadFinished(ModuleID moduleID, HRESULT hrStatus) {
 	return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ModuleAttachedToAssembly(ModuleID moduleID, AssemblyID assemblyID)
-{
+STDMETHODIMP CProfilerCallbackBase::ModuleAttachedToAssembly(ModuleID moduleID, AssemblyID assemblyID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ClassLoadStarted(ClassID classID)
-{
+STDMETHODIMP CProfilerCallbackBase::ClassLoadStarted(ClassID classID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ClassLoadFinished(ClassID classID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::ClassLoadFinished(ClassID classID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ClassUnloadStarted(ClassID classID)
-{
+STDMETHODIMP CProfilerCallbackBase::ClassUnloadStarted(ClassID classID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ClassUnloadFinished(ClassID classID, HRESULT hrStatus)
-{
+STDMETHODIMP CProfilerCallbackBase::ClassUnloadFinished(ClassID classID, HRESULT hrStatus) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::FunctionUnloadStarted(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::FunctionUnloadStarted(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITCompilationStarted(FunctionID functionID, BOOL fIsSafeToBlock)
-{
+STDMETHODIMP CProfilerCallbackBase::JITCompilationStarted(FunctionID functionID, BOOL fIsSafeToBlock) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITCompilationFinished(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock)
-{
+STDMETHODIMP CProfilerCallbackBase::JITCompilationFinished(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITCachedFunctionSearchStarted(FunctionID functionID, BOOL *pbUseCachedFunction)
-{
+STDMETHODIMP CProfilerCallbackBase::JITCachedFunctionSearchStarted(FunctionID functionID, BOOL *pbUseCachedFunction) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITCachedFunctionSearchFinished(FunctionID functionID, COR_PRF_JIT_CACHE result)
-{
+STDMETHODIMP CProfilerCallbackBase::JITCachedFunctionSearchFinished(FunctionID functionID, COR_PRF_JIT_CACHE result) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITFunctionPitched(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::JITFunctionPitched(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::JITInlining(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline)
-{
+STDMETHODIMP CProfilerCallbackBase::JITInlining(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::UnmanagedToManagedTransition(FunctionID functionID, COR_PRF_TRANSITION_REASON reason)
-{
+STDMETHODIMP CProfilerCallbackBase::UnmanagedToManagedTransition(FunctionID functionID, COR_PRF_TRANSITION_REASON reason) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ManagedToUnmanagedTransition(FunctionID functionID, COR_PRF_TRANSITION_REASON reason)
-{
+STDMETHODIMP CProfilerCallbackBase::ManagedToUnmanagedTransition(FunctionID functionID, COR_PRF_TRANSITION_REASON reason) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ThreadCreated(ThreadID threadID)
-{
+STDMETHODIMP CProfilerCallbackBase::ThreadCreated(ThreadID threadID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ThreadDestroyed(ThreadID threadID)
-{
+STDMETHODIMP CProfilerCallbackBase::ThreadDestroyed(ThreadID threadID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ThreadAssignedToOSThread(ThreadID managedThreadID, DWORD osThreadID) 
-{
+STDMETHODIMP CProfilerCallbackBase::ThreadAssignedToOSThread(ThreadID managedThreadID, DWORD osThreadID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingClientInvocationStarted()
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingClientInvocationStarted() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingClientSendingMessage(GUID *pCookie, BOOL fIsAsync)
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingClientSendingMessage(GUID *pCookie, BOOL fIsAsync) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingClientReceivingReply(GUID *pCookie, BOOL fIsAsync)
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingClientReceivingReply(GUID *pCookie, BOOL fIsAsync) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingClientInvocationFinished()
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingClientInvocationFinished() {
 	return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingServerReceivingMessage(GUID *pCookie, BOOL fIsAsync)
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingServerReceivingMessage(GUID *pCookie, BOOL fIsAsync) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingServerInvocationStarted()
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingServerInvocationStarted() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingServerInvocationReturned()
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingServerInvocationReturned() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RemotingServerSendingReply(GUID *pCookie, BOOL fIsAsync)
-{
+STDMETHODIMP CProfilerCallbackBase::RemotingServerSendingReply(GUID *pCookie, BOOL fIsAsync) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendStarted(COR_PRF_SUSPEND_REASON suspendReason)
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendStarted(COR_PRF_SUSPEND_REASON suspendReason) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendFinished()
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendFinished() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendAborted()
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeSuspendAborted() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeResumeStarted()
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeResumeStarted() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeResumeFinished()
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeResumeFinished() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeThreadSuspended(ThreadID threadID)
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeThreadSuspended(ThreadID threadID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RuntimeThreadResumed(ThreadID threadID)
-{
+STDMETHODIMP CProfilerCallbackBase::RuntimeThreadResumed(ThreadID threadID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::MovedReferences(ULONG cmovedObjectIDRanges, ObjectID oldObjectIDRangeStart[], ObjectID newObjectIDRangeStart[], ULONG cObjectIDRangeLength[])
-{
+STDMETHODIMP CProfilerCallbackBase::MovedReferences(ULONG cmovedObjectIDRanges, ObjectID oldObjectIDRangeStart[], ObjectID newObjectIDRangeStart[], ULONG cObjectIDRangeLength[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ObjectAllocated(ObjectID objectID, ClassID classID)
-{
+STDMETHODIMP CProfilerCallbackBase::ObjectAllocated(ObjectID objectID, ClassID classID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ObjectsAllocatedByClass(ULONG classCount, ClassID classIDs[], ULONG objects[])
-{
+STDMETHODIMP CProfilerCallbackBase::ObjectsAllocatedByClass(ULONG classCount, ClassID classIDs[], ULONG objects[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ObjectReferences(ObjectID objectID, ClassID classID, ULONG objectRefs, ObjectID objectRefIDs[])
-{
+STDMETHODIMP CProfilerCallbackBase::ObjectReferences(ObjectID objectID, ClassID classID, ULONG objectRefs, ObjectID objectRefIDs[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RootReferences(ULONG rootRefs, ObjectID rootRefIDs[])
-{
+STDMETHODIMP CProfilerCallbackBase::RootReferences(ULONG rootRefs, ObjectID rootRefIDs[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionThrown(ObjectID thrownObjectID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionThrown(ObjectID thrownObjectID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFunctionEnter(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFunctionEnter(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFunctionLeave()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFunctionLeave() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFunctionEnter(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFunctionEnter(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFunctionLeave()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFunctionLeave() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFilterEnter(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFilterEnter(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFilterLeave()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionSearchFilterLeave() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionSearchCatcherFound(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionSearchCatcherFound(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionCLRCatcherFound()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionCLRCatcherFound() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionCLRCatcherExecute()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionCLRCatcherExecute() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionOSHandlerEnter(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionOSHandlerEnter(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionOSHandlerLeave(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionOSHandlerLeave(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFinallyEnter(FunctionID functionID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFinallyEnter(FunctionID functionID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFinallyLeave()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionUnwindFinallyLeave() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionCatcherEnter(FunctionID functionID,
-    											 ObjectID objectID)
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionCatcherEnter(FunctionID functionID, ObjectID objectID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ExceptionCatcherLeave()
-{
+STDMETHODIMP CProfilerCallbackBase::ExceptionCatcherLeave() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::COMClassicVTableCreated(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable, ULONG cSlots)
-{
+STDMETHODIMP CProfilerCallbackBase::COMClassicVTableCreated(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable, ULONG cSlots) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::COMClassicVTableDestroyed(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable)
-{
+STDMETHODIMP CProfilerCallbackBase::COMClassicVTableDestroyed(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ThreadNameChanged(ThreadID threadID, ULONG cchName, WCHAR name[])
-{
+STDMETHODIMP CProfilerCallbackBase::ThreadNameChanged(ThreadID threadID, ULONG cchName, WCHAR name[]) {
 	return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::GarbageCollectionStarted(int cGenerations, BOOL generationCollected[], COR_PRF_GC_REASON reason)
-{
+STDMETHODIMP CProfilerCallbackBase::GarbageCollectionStarted(int cGenerations, BOOL generationCollected[], COR_PRF_GC_REASON reason) {
 	return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::SurvivingReferences(ULONG cSurvivingObjectIDRanges, ObjectID objectIDRangeStart[], ULONG cObjectIDRangeLength[])
-{
+STDMETHODIMP CProfilerCallbackBase::SurvivingReferences(ULONG cSurvivingObjectIDRanges, ObjectID objectIDRangeStart[], ULONG cObjectIDRangeLength[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::GarbageCollectionFinished()
-{
+STDMETHODIMP CProfilerCallbackBase::GarbageCollectionFinished() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::FinalizeableObjectQueued(DWORD finalizerFlags, ObjectID objectID)
-{
+STDMETHODIMP CProfilerCallbackBase::FinalizeableObjectQueued(DWORD finalizerFlags, ObjectID objectID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::RootReferences2(ULONG cRootRefs, ObjectID rootRefIDs[], COR_PRF_GC_ROOT_KIND rootKinds[], COR_PRF_GC_ROOT_FLAGS rootFlags[], UINT_PTR rootIDs[])
-{
+STDMETHODIMP CProfilerCallbackBase::RootReferences2(ULONG cRootRefs, ObjectID rootRefIDs[], COR_PRF_GC_ROOT_KIND rootKinds[], COR_PRF_GC_ROOT_FLAGS rootFlags[], UINT_PTR rootIDs[]) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::HandleCreated(GCHandleID handleID, ObjectID initialObjectID)
-{
+STDMETHODIMP CProfilerCallbackBase::HandleCreated(GCHandleID handleID, ObjectID initialObjectID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::HandleDestroyed(GCHandleID handleID)
-{
+STDMETHODIMP CProfilerCallbackBase::HandleDestroyed(GCHandleID handleID) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::InitializeForAttach(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData)
-{
+STDMETHODIMP CProfilerCallbackBase::InitializeForAttach(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData) {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ProfilerAttachComplete()
-{
+STDMETHODIMP CProfilerCallbackBase::ProfilerAttachComplete() {
     return S_OK;
 }
 
-STDMETHODIMP CProfilerCallbackBase::ProfilerDetachSucceeded()
-{
+STDMETHODIMP CProfilerCallbackBase::ProfilerDetachSucceeded() {
     return S_OK;
 }
 
