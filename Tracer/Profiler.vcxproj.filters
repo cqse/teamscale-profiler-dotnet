@@ -18,10 +18,10 @@
     <ClCompile Include="CProfilerCallbackBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Profiler.cpp">
+    <ClCompile Include="ProfilerCallback.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProfilerCallback.cpp">
+    <ClCompile Include="CClassFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

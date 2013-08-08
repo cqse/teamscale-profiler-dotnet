@@ -4,9 +4,13 @@
 
 /** Constructor */
 CProfilerCallbackBase::CProfilerCallbackBase() : m_ref_cnt(0){
+	// do nothing but inialization performed in m_ref_cnt
 }
 
-
+/** Destructor */
+CProfilerCallbackBase::~CProfilerCallbackBase() {
+	// do nothing 
+}
 
 //====================================================
 // IUnknown implementation

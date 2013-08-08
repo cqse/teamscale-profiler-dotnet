@@ -194,7 +194,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CProfilerCallbackBase.cpp" />
-    <ClCompile Include="Profiler.cpp" />
+    <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="ProfilerCallback.cpp" />
   </ItemGroup>
   <ItemGroup>

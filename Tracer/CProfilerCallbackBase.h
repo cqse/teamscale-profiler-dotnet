@@ -1,11 +1,17 @@
+#ifndef _CProfilerCallbackBase_H_
+#define _CProfilerCallbackBase_H_
+
 #include <cor.h>
 #include <corprof.h>
+
+
 
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
 
 public:
 	/** Constructor */
 	CProfilerCallbackBase();
+	virtual ~CProfilerCallbackBase();
 
 // IUnknown interface implementation
     STDMETHOD_(ULONG, AddRef)();
@@ -127,3 +133,4 @@ private:
 	long m_ref_cnt; // reference count
 
 };
+#endif
