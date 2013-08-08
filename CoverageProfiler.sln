@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Profiler", "Tracer\Profiler.vcxproj", "{CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Profiler", "Profiler\Profiler.vcxproj", "{CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyMetaDataCollector", "AssemblyMetaDataCollector\AssemblyMetaDataCollector.csproj", "{2B92AFC3-3C52-4310-AEC1-447D0F0A501B}"
 EndProject
