@@ -1,3 +1,7 @@
+ /*
+ * @ConQAT.Rating YELLOW Hash: 52F4D0EF0460AFAFE2308D10697E10AB
+ */
+
 #ifndef _MethodInfo_H_
 #define _MethodInfo_H_
 

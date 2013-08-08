@@ -1,3 +1,7 @@
+ /*
+ * @ConQAT.Rating YELLOW Hash: 798E3554DB052F4D0700ADE2DD38D59D
+ */
+
 #include <windows.h>
 #include <stdio.h>
 #include "CProfilerCallback.h"

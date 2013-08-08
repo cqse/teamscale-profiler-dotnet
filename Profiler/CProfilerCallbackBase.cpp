@@ -1,3 +1,7 @@
+ /*
+ * @ConQAT.Rating YELLOW Hash: 74CCDB9FF909088C601ABBC2FA63ED72
+ */
+
 #include "CProfilerCallbackBase.h"
 
 /** Constructor */

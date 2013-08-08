@@ -1,3 +1,7 @@
+ /*
+ * @ConQAT.Rating YELLOW Hash: EE3DD3A4BB2B844F4FB697A388E950AC
+ */
+
 #ifndef _CProfilerCallbackBase_H_
 #define _CProfilerCallbackBase_H_
 
