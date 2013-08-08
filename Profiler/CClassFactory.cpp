@@ -67,7 +67,7 @@ public:
 		m_refCount = 1; 
 	}
 
-	~CClassFactory( )
+	virtual ~CClassFactory( )
 	{
 		// nothing to do
 	}

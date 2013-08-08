@@ -1,3 +1,6 @@
+#ifndef _ProfilerCallback_H_
+#define _ProfilerCallback_H_
+
 #include <cor.h>
 #include <corprof.h>
 #include <atlbase.h>
@@ -6,23 +9,12 @@
 #include <map>
 #include <set>
 #include "CProfilerCallbackBase.h"
+#include "MethodInfo.h"
 
 using namespace std;
 
 #define NAME_BUFFER_SIZE 2048
 #define ARRAY_SIZE(s) (sizeof(s) / sizeof(s[0]))
-
-
-/**
- * Struct that stores information to uniquely identify a method.
- */
-struct MethodInfo {
-
-	int assemblyNumber;
-	mdToken classToken;
-	mdToken funcToken;
-
-};
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method coverage.
@@ -98,3 +90,4 @@ private:
 	void CProfilerCallback::WriteToLog(const char*, vector<MethodInfo>* list);
 
 };
+#endif

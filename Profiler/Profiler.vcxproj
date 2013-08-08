@@ -199,6 +199,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h" />
+    <ClInclude Include="MethodInfo.h" />
     <ClInclude Include="ProfilerCallback.h" />
   </ItemGroup>
   <ItemGroup>
