@@ -193,13 +193,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CClassFactory.cpp" />
-    <ClCompile Include="ProfilerCallback.cpp" />
+    <ClCompile Include="CProfilerCallbackBase.cpp" />
+    <ClCompile Include="CProfilerCallback.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClInclude Include="MethodInfo.h" />
+    <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
   </ItemGroup>
   <ItemGroup>

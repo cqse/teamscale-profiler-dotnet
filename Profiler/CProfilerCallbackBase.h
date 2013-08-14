@@ -13,6 +13,8 @@ class CProfilerCallbackBase : public ICorProfilerCallback3 {
 public:
 	/** Constructor */
 	CProfilerCallbackBase();
+
+	/** Destructor */
 	virtual ~CProfilerCallbackBase();
 
 // IUnknown interface implementation

@@ -18,7 +18,7 @@
     <ClCompile Include="CProfilerCallbackBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProfilerCallback.cpp">
+    <ClCompile Include="CProfilerCallback.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CClassFactory.cpp">
@@ -29,10 +29,10 @@
     <ClInclude Include="CProfilerCallbackBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MethodInfo.h">
+    <ClInclude Include="CProfilerCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CProfilerCallback.h">
+    <ClInclude Include="FunctionInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
