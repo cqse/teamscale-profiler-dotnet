@@ -1,15 +1,20 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 74CCDB9FF909088C601ABBC2FA63ED72
+ * @ConQAT.Rating RED Hash: 784C5796BF0492D6F877D4AF7C2DB23B
  */
 
 #include "CProfilerCallbackBase.h"
 
 /** Constructor */
+// TODO [NG]: I think the initialization of the variable can happen where it is
+//            declared. I don't see why we need to explicitly declare and
+//            implement the constructor if it has no other purpose.
 CProfilerCallbackBase::CProfilerCallbackBase() : m_ref_cnt(0){
 	// do nothing but inialization performed in m_ref_cnt
 }
 
 /** Destructor */
+// TODO [NG]: Why do we need to explicitly declare and implement a destructor if
+//            it does nothing?
 CProfilerCallbackBase::~CProfilerCallbackBase() {
 	// do nothing 
 }

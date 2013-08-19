@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 12D3CDAAC486ABC45479E6C80A6B3F31
+ * @ConQAT.Rating RED Hash: 62FAC6C36AF4F3B84E5CAA9AB3D29247
  */
 
 #ifndef _CProfilerCallbackBase_H_
@@ -8,6 +8,7 @@
 #include <cor.h>
 #include <corprof.h>
 
+// TODO [NG]: The class lacks a comment that describes its purpose.
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
 
 public:
@@ -131,9 +132,8 @@ public:
 	STDMETHOD(ProfilerDetachSucceeded)();
 // End of ICorProfilerCallback3 interface implementation
 
-
-
 private:
+	// TODO [NG]: Rename to 'referenceCount'?
 	long m_ref_cnt; // reference count
 
 };

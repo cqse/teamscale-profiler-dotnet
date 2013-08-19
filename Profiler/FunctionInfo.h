@@ -19,7 +19,8 @@ struct FunctionInfo {
 	mdToken classToken;
 
 	/** Metadata token of the function. */
+	// TODO [NG]: I think 'functionToken' would be a better name here.
 	mdToken funcToken;
-
 };
+
 #endif
