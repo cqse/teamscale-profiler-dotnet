@@ -28,7 +28,7 @@
 #define STOPPED "Stopped"
 
 /** Constructor. */
-CProfilerCallback::CProfilerCallback() : m_dwEventMask(0), _resultFile(INVALID_HANDLE_VALUE) {
+CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE) {
 		// Make a critical section for synchronization.
 		InitializeCriticalSection(&criticalSection);
 }
@@ -41,47 +41,48 @@ CProfilerCallback::~CProfilerCallback() {
 
 /** Initializer. Called at profiler startup. */
 // TODO [NG]: Chose better name for the parameter?
+// -> its the same name as in the function we override here. Thus, I'd rather keep it. 
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk ) {
 	CreateOutputFile();
 
 	// Initialize data structures.
-	_assemblyCounter = 1;
-	_assemblyMap = new map<int, int>;
-	_jittedMethods = new vector<FunctionInfo>;
-	_inlinedMethods = new set<FunctionID>;
-	_inlinedMethodsList = new vector<FunctionInfo>;
+	assemblyCounter = 1;
+	assemblyMap = new map<int, int>;
+	jittedMethods = new vector<FunctionInfo>;
+	inlinedMethods = new set<FunctionID>;
+	inlinedMethodsList = new vector<FunctionInfo>;
 
 	// Get reference to the ICorProfilerInfo interface 
 	HRESULT hr =
-		pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&m_pICorProfilerInfo );
+		pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
 	if ( FAILED(hr) ) {
 		return E_INVALIDARG;
 	}
 
-	hr = pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&m_pICorProfilerInfo2 );
+	hr = pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&pICorProfilerInfo2 );
 
 	if ( FAILED(hr) ) {
 		// We still want to work if this call fails, might be an older .NET
 		// version than VS2005.
 		OutputDebugString("Pre .NET 2 version detected");
-		m_pICorProfilerInfo2.p = NULL;
+		pICorProfilerInfo2.p = NULL;
 	}
 
 	// Indicate which events we're interested in.
-	m_dwEventMask = GetEventMask();
+	DWORD dwEventMask = GetEventMask();
 
 	// Set the event mask for the interfaces of .NET 1 and .NET 2. We currently
 	// do not need the features of the profiling interface beyond .NET 2.
-	if (m_pICorProfilerInfo2.p == NULL) {
+	if (pICorProfilerInfo2.p == NULL) {
 		// Pre .NET 2.
-		m_pICorProfilerInfo->SetEventMask(m_dwEventMask);
+		pICorProfilerInfo->SetEventMask(dwEventMask);
 		// Enable function mapping.
-		m_pICorProfilerInfo->SetFunctionIDMapper(FunctionMapper);
+		pICorProfilerInfo->SetFunctionIDMapper(FunctionMapper);
 	} else {
 		// .NET 2 and beyond.
-		m_pICorProfilerInfo2->SetEventMask(m_dwEventMask);
+		pICorProfilerInfo2->SetEventMask(dwEventMask);
 		// Enable function mapping.
-		m_pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
+		pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
 	}
 	WriteProcessInfoToOutputFile();
 	return S_OK;
@@ -93,20 +94,19 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk ) {
  */
 void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	// Get the name of the executing process and write to log.
-	// TODO [NG]: Why '0x00' and not simply '0'?
-	m_szAppPath[0] = 0x00;
-	m_szAppName[0] = 0x00;
-	if (0 == GetModuleFileNameW(NULL, m_szAppPath, MAX_PATH)) {
-		_wsplitpath_s(m_szAppPath, NULL, 0, NULL, 0, m_szAppName, _MAX_FNAME, NULL, 0);
+	szAppPath[0] = 0;
+	szAppName[0] = 0;
+	if (0 == GetModuleFileNameW(NULL, szAppPath, MAX_PATH)) {
+		_wsplitpath_s(szAppPath, NULL, 0, NULL, 0, szAppName, _MAX_FNAME, NULL, 0);
 	}
-	if (m_szAppPath[0] == 0x00) { // TODO [NG]: Why '0x00' and not simply '0'?
-		wcscpy_s(m_szAppPath, MAX_PATH, L"No Application Path Found");
-		wcscpy_s(m_szAppName, _MAX_FNAME, L"No Application Name Found");
+	if (szAppPath[0] == 0) {
+		wcscpy_s(szAppPath, MAX_PATH, L"No Application Path Found");
+		wcscpy_s(szAppName, _MAX_FNAME, L"No Application Name Found");
 	}
 
 	// TODO [NG]: What are the following two lines for?
 	char process[NAME_BUFFER_SIZE];
-	sprintf_s(process, "%S", m_szAppPath);
+	sprintf_s(process, "%S", szAppPath);
 	WriteTupleToFile(PROCESS, process);
 }
 
@@ -118,21 +118,18 @@ void CProfilerCallback::CreateOutputFile() {
 			sizeof(targetDir))) {
 		sprintf_s(targetDir, "c:/profiler/");
 	}
-	// TODO [NG]: Getting the system time and formatting it should be put in its
-	//            own method.
-	SYSTEMTIME time;
-	GetSystemTime(&time);
+
+	SYSTEMTIME time = GetTime();;
 
 	// Create target file.
-	// TODO [NG]: Why not use NAME_BUFFER_SIZE here?
-	char targetFilename[1000];
+	char targetFilename[NAME_BUFFER_SIZE];
 	sprintf_s(targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt",
 			targetDir, time.wYear, time.wMonth, time.wDay, time.wHour,
 			time.wMinute, time.wSecond, time.wMilliseconds);
-	_tcscpy_s(m_pszResultFile, targetFilename);
+	_tcscpy_s(pszResultFile, targetFilename);
 
 	EnterCriticalSection(&criticalSection);
-	_resultFile = CreateFile(m_pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
+	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	WriteTupleToFile(INFO, HEADER);
 
@@ -144,21 +141,24 @@ void CProfilerCallback::CreateOutputFile() {
 	LeaveCriticalSection(&criticalSection);
 }
 
-/** Write coverage information to log file at shutdown. */
-HRESULT CProfilerCallback::Shutdown() {
-	// TODO [NG]: Getting the system time and formatting it should be put in its
-	//            own method.
-	// Get timestamp.
+/** Return the current time. */ 
+SYSTEMTIME CProfilerCallback::GetTime() {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
+	return time;
+}
+
+/** Write coverage information to log file at shutdown. */
+HRESULT CProfilerCallback::Shutdown() {
+	SYSTEMTIME time = GetTime();
 
 	// Write inlined methods.
-	WriteToFile("//%i methods inlined\r\n", _inlinedMethodsList->size());
-	WriteToLog(INLINED, _inlinedMethodsList);
+	WriteToFile("//%i methods inlined\r\n", inlinedMethodsList->size());
+	WriteToLog(INLINED, inlinedMethodsList);
 
 	// Write jitted methods.
-	WriteToFile("//%i methods jitted\r\n", _jittedMethods->size());
-	WriteToLog(JITTED, _jittedMethods);
+	WriteToFile("//%i methods jitted\r\n", jittedMethods->size());
+	WriteToLog(JITTED, jittedMethods);
 
 	// Write timestamp.
 	char timeStamp[NAME_BUFFER_SIZE];
@@ -168,19 +168,19 @@ HRESULT CProfilerCallback::Shutdown() {
 	WriteTupleToFile(INFO, "Shutting down coverage profiler" );
 
 	// Cleanup.
-	m_pICorProfilerInfo2->ForceGC();
+	pICorProfilerInfo2->ForceGC();
 
 	// Close the log file.
 	EnterCriticalSection(&criticalSection);
-	if(_resultFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(_resultFile);
+	if(resultFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(resultFile);
 	}
 	LeaveCriticalSection(&criticalSection);
 
-	delete _assemblyMap;
-	delete _jittedMethods;
-	delete _inlinedMethods;
-	delete _inlinedMethodsList;
+	delete assemblyMap;
+	delete jittedMethods;
+	delete inlinedMethods;
+	delete inlinedMethodsList;
 
 	return S_OK;
 }
@@ -192,12 +192,12 @@ HRESULT CProfilerCallback::Shutdown() {
  * code, in order to make coverage information independent of pre-jitted code.
  */
 DWORD CProfilerCallback::GetEventMask() {
-	m_dwEventMask = 0;
-	m_dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
-	m_dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
-	m_dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+	DWORD dwEventMask = 0;
+	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
+	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
+	dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 
-	return m_dwEventMask;
+	return dwEventMask;
 }
 
 /**
@@ -224,8 +224,8 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	// Notify monitor that method has been jitted.
 	FunctionInfo info;
-	GetFunctionIdentifier(functionId, &info);
-	_jittedMethods->push_back(info);
+	GetFunctionInfo(functionId, &info);
+	jittedMethods->push_back(info);
 
 	// Always return OK
 	return S_OK;
@@ -235,20 +235,20 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 		HRESULT hrStatus) {
 	// Store assembly counter for id.
-	int assemblyNumber = _assemblyCounter++;
-	(*_assemblyMap)[assemblyId] = assemblyNumber;
+	int assemblyNumber = assemblyCounter++;
+	(*assemblyMap)[assemblyId] = assemblyNumber;
 
 	// Log assembly load.
 	WCHAR assemblyName[NAME_BUFFER_SIZE];
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	m_pICorProfilerInfo->GetAssemblyInfo(assemblyId, NAME_BUFFER_SIZE,
+	pICorProfilerInfo->GetAssemblyInfo(assemblyId, NAME_BUFFER_SIZE,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
 	IMetaDataAssemblyImport *pMetaDataAssemblyImport = NULL;
-	m_pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead,
+	pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead,
 			IID_IMetaDataAssemblyImport, (IUnknown**) &pMetaDataAssemblyImport);
 
 	// Get the assembly token.
@@ -265,14 +265,14 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// the second call to GetAssemblyProps with the correct amount of memory.
 	ASSEMBLYMETADATA metadata;
 	// TODO [NG]: Why malloc/free instead of new/delete?
-	metadata.szLocale = (WCHAR*) malloc(sizeof(WCHAR));
-	metadata.rProcessor = (DWORD*) malloc(sizeof(DWORD));
-	metadata.rOS = (OSINFO*) malloc(sizeof(OSINFO));
+	metadata.szLocale = new WCHAR;//(WCHAR*) malloc(sizeof(WCHAR));
+	metadata.rProcessor = new DWORD; //(DWORD*) malloc(sizeof(DWORD));
+	metadata.rOS = new OSINFO;//(OSINFO*) malloc(sizeof(OSINFO));
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
-	free(metadata.szLocale);
-	free(metadata.rProcessor);
-	free(metadata.rOS);
+	delete metadata.szLocale;
+	delete metadata.rProcessor;
+	delete metadata.rOS;
 
 	char target[NAME_BUFFER_SIZE];
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
@@ -288,10 +288,10 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL *pfShouldInline) {
 	// Notify monitor that method has been inlined.
-	if (_inlinedMethods->insert(calleeId).second == true) {
+	if (inlinedMethods->insert(calleeId).second == true) {
 		FunctionInfo info;
-		GetFunctionIdentifier(calleeId, &info);
-		_inlinedMethodsList->push_back(info);
+		GetFunctionInfo(calleeId, &info);
+		inlinedMethodsList->push_back(info);
 	}
 
 	// Always allow inlining.
@@ -302,7 +302,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 /** Create method info object for a function id. */
-HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
+HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		FunctionInfo* info) {
 	HRESULT hr = E_FAIL; // Assume fail.
 	mdToken functionToken = mdTypeDefNil;
@@ -310,7 +310,7 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 	WCHAR funName[NAME_BUFFER_SIZE] = L"UNKNOWN";
 
 	// Get the MetadataImport interface and the metadata token.
-	hr = m_pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
+	hr = pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
 	if (SUCCEEDED(hr)) {
 		mdTypeDef classToken = mdTypeDefNil;
@@ -325,9 +325,9 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 			WCHAR className[NAME_BUFFER_SIZE] = L"UNKNOWN";
 			ClassID classId = 0;
 
-			if (m_pICorProfilerInfo2 != NULL) {
+			if (pICorProfilerInfo2 != NULL) {
 				ULONG32 values = 0;
-				hr = m_pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
+				hr = pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
 						&classId, &moduleId, &functionToken, 0, &values, NULL);
 				if (!SUCCEEDED(hr)) {
 					classId = 0;
@@ -338,10 +338,10 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 			if (SUCCEEDED(hr) && moduleId != 0) {
 				// Get assembly name.
 				AssemblyID assemblyId;
-				hr = m_pICorProfilerInfo->GetModuleInfo(moduleId, NULL, NULL,
+				hr = pICorProfilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 						NULL, NULL, &assemblyId);
 				if (SUCCEEDED(hr)) {
-					assemblyNumber = (*_assemblyMap)[assemblyId];
+					assemblyNumber = (*assemblyMap)[assemblyId];
 				}
 			}
 
@@ -365,9 +365,6 @@ void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
 
 /** Write to log file. */
 int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
-	// TODO [NG]: Why do we need to enter the critical section here? I think it
-	//            can be moved inside the if-block.
-	EnterCriticalSection(&criticalSection);
 	int retVal = 0;
 	DWORD dwWritten = 0;
 	CHAR g_szBuffer[4096];
@@ -379,15 +376,17 @@ int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
 	va_end(args);
 
 	// Write out to the file if the file is open.
-	if (_resultFile != INVALID_HANDLE_VALUE) {
-		if (TRUE == WriteFile(_resultFile, g_szBuffer,
+	if (resultFile != INVALID_HANDLE_VALUE) {
+		EnterCriticalSection(&criticalSection);
+		if (TRUE == WriteFile(resultFile, g_szBuffer,
 						(DWORD) strlen(g_szBuffer), &dwWritten, NULL)) {
 			retVal = dwWritten;
 		} else {
 			retVal = 0;
 		}
+		LeaveCriticalSection(&criticalSection);
 	}
-	LeaveCriticalSection(&criticalSection);
+	
 
 	return retVal;
 }

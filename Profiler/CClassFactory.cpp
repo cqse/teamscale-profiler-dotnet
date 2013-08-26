@@ -34,18 +34,16 @@ extern const GUID CLSID_PROFILER = { 0xDD0A1BB6, 0x11CE, 0x11DD, { 0x8E, 0xE8,
 static const char *g_szProgIDPrefix = "Profiler";
 
 // TODO [NG]: I think this macro adds only noise and should be removed/inlined.
+// I am unsure if it is used to mark the methods as COM interfaces.
 #define COM_METHOD(TYPE) TYPE STDMETHODCALLTYPE
 
 HINSTANCE g_hInst; // Instance handle to this piece of code.
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	// Save off the instance handle for later use.
-	// TODO [NG]: Use 'if' instead of 'switch/case'.
-	switch (dwReason) {
-	case DLL_PROCESS_ATTACH:
+	if (dwReason == DLL_PROCESS_ATTACH) {
 		DisableThreadLibraryCalls(hInstance);
 		g_hInst = hInstance;
-		break;
 	}
 
 	return TRUE;
@@ -147,9 +145,7 @@ STDAPI DllRegisterServer() {
 }
 
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
-	// TODO [NG]: Why is E_OUTOFMEMORY the default return value? Wouldn't
-	//            CLASS_E_CLASSNOTAVAILABLE be more appropriate?
-	HRESULT hr = E_OUTOFMEMORY;
+	HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
 
 	if (rclsid == CLSID_PROFILER) {
 		hr = g_ProfilerClassFactory.QueryInterface(riid, ppv);

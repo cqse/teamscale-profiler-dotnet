@@ -54,68 +54,58 @@ public:
 
 
 // FunctionIDMapper implementation
-	// TODO [NG]: The method lacks a comment.
+	// Defined if a given function should be registered to receice a callback every time it is executed.
 	static UINT_PTR _stdcall FunctionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 // End of FunctionIDMapper implementation
 
-	// TODO [NG]: The method lacks a comment.
+	// Writes the given string to the output file.
     int WriteToFile(const char* pszFmtString, ... ); // write an entry to the beacon file
-    // TODO [NG]: The method lacks a comment.
-    // TODO [NG]: Shouldn't 'label' be renamed to 'key' to follow the general
-    //            terminology?
+    
+	// Writes the given key and value to the output file.
 	void WriteTupleToFile(const char* key, const char* value);
 	
-	// TODO [NG]: The method lacks a comment.
-	HRESULT GetFunctionIdentifier( FunctionID functionID, FunctionInfo* info);
+	// Retrieves the FunctionInfo for the function with the given ID.
+	HRESULT GetFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
 private:
-	// TODO [NG]: Some members start with '_', others start with 'm_'. I think
-	//            we can leave out both and just name the members as we do in
-	//            Java.
-	// TODO [NG]: The member lacks a comment.
-	int _assemblyCounter;
+	// Count the assemblies loaded.
+	int assemblyCounter;
 
-	// TODO [NG]: What is the difference between an assembly ID and assembly
-	//            number?
 	// TODO [NG]: Why is this a pointer and not just a normal variable?
-	// Maps from assemblyIDs to assemblyNumbers.
-	map<int, int>* _assemblyMap;
+	// Maps from assemblyIDs to assemblyNumbers (determined by assemblyCounter).
+	map<int, int>* assemblyMap;
 
 	// Info object that keeps track of jitted methods.
 	// TODO [NG]: Why is this a pointer and not just a normal variable?
-	vector<FunctionInfo>* _jittedMethods;
+	vector<FunctionInfo>* jittedMethods;
 
 	// Info object that keeps track of inlined methods
 	// TODO [NG]: Why do we need two collections?
 	// TODO [NG]: Why are these pointers and not just a normal variables?
-	set<FunctionID>* _inlinedMethods;
-	vector<FunctionInfo>* _inlinedMethodsList;
+	set<FunctionID>* inlinedMethods;
+	vector<FunctionInfo>* inlinedMethodsList;
 
 	// Function to set up our event mask.
 	DWORD GetEventMask();
 
 	// File into which results are written.
-	HANDLE _resultFile;
-	
-	// The event mask used for this profiler.
-	// TODO [NG]: Why do we need this variable as class member?
-    DWORD m_dwEventMask; 
+	HANDLE resultFile;
 	
 	// Smart pointer container for ICorProfilerInfo reference.
-	CComQIPtr<ICorProfilerInfo> m_pICorProfilerInfo;	
+	CComQIPtr<ICorProfilerInfo> pICorProfilerInfo;	
     
 	// Smart pointer container for ICorProfilerInfo2 reference.
-	CComQIPtr<ICorProfilerInfo2> m_pICorProfilerInfo2;	
+	CComQIPtr<ICorProfilerInfo2> pICorProfilerInfo2;	
 
 	// Name of the result file.
-	TCHAR m_pszResultFile[_MAX_PATH];
+	TCHAR pszResultFile[_MAX_PATH];
 
     // Path for the process we are in.
-	wchar_t m_szAppPath[_MAX_PATH]; 
+	wchar_t szAppPath[_MAX_PATH]; 
    
 	// Name of the file for the process we are in.
-	wchar_t m_szAppName[_MAX_FNAME]; 
+	wchar_t szAppName[_MAX_FNAME]; 
 	
 	// Synchronization primitive
 	CRITICAL_SECTION criticalSection; 
@@ -128,5 +118,8 @@ private:
 	
 	// Writes information about the called functions to the output file.
 	void WriteToLog(const char* key, vector<FunctionInfo>* functions); 
+
+	// Return the current time.
+	SYSTEMTIME CProfilerCallback::GetTime();
 };
 #endif

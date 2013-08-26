@@ -8,6 +8,7 @@
 // TODO [NG]: I think the initialization of the variable can happen where it is
 //            declared. I don't see why we need to explicitly declare and
 //            implement the constructor if it has no other purpose.
+// -> Only static const fields can be initialized in place.
 CProfilerCallbackBase::CProfilerCallbackBase() : referenceCount(0){
 	// do nothing but inialization performed in referenceCount
 }
@@ -15,6 +16,7 @@ CProfilerCallbackBase::CProfilerCallbackBase() : referenceCount(0){
 /** Destructor */
 // TODO [NG]: Why do we need to explicitly declare and implement a destructor if
 //            it does nothing?
+// -> Otherwise it won't compile
 CProfilerCallbackBase::~CProfilerCallbackBase() {
 	// do nothing 
 }
