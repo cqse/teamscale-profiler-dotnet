@@ -32,9 +32,9 @@ using namespace std;
  */
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
-	// TODO [NG]: The method lacks a comment.
+	// Constructor.
 	CProfilerCallback();
-	// TODO [NG]: The method lacks a comment.
+	// Destructor.
 	virtual ~CProfilerCallback();
 
 // Overwritten Profiling methods
@@ -64,7 +64,7 @@ public:
     // TODO [NG]: The method lacks a comment.
     // TODO [NG]: Shouldn't 'label' be renamed to 'key' to follow the general
     //            terminology?
-	void WriteTupleToFile(const char* label, const char* value);
+	void WriteTupleToFile(const char* key, const char* value);
 	
 	// TODO [NG]: The method lacks a comment.
 	HRESULT GetFunctionIdentifier( FunctionID functionID, FunctionInfo* info);
@@ -117,24 +117,16 @@ private:
 	// Name of the file for the process we are in.
 	wchar_t m_szAppName[_MAX_FNAME]; 
 	
-	// SYNCHRONIZATION PRIMITIVE
-	// TODO [NG]: Why is the comment in capital letters?
-	// TODO [NG]: The name 'm_prf_crit_sec' is very bad. Use 'criticalSection'?
-	CRITICAL_SECTION m_prf_crit_sec; 
+	// Synchronization primitive
+	CRITICAL_SECTION criticalSection; 
 	
 	// Writes info about the process to the output file.
-	// TODO [NG]: Why do we need the 'CProfilerCallback::' here?
-	void CProfilerCallback::WriteProcessInfoToOutputFile(); 
+	void WriteProcessInfoToOutputFile(); 
 	
 	// Creates the output file.
-	// TODO [NG]: Why do we need the 'CProfilerCallback::' here?
-	void CProfilerCallback::CreateOutputFile(); 
+	void CreateOutputFile(); 
 	
-	// Writes information about a method to the output file.
-	// TODO [NG]: Why do we need the 'CProfilerCallback::' here?
-	// TODO [NG]: the first parameter should have a name for documentation
-	//            purposes.
-	// TODO [NG]: The name 'list' is too generic.
-	void CProfilerCallback::WriteToLog(const char*, vector<FunctionInfo>* list); 
+	// Writes information about the called functions to the output file.
+	void WriteToLog(const char* key, vector<FunctionInfo>* functions); 
 };
 #endif

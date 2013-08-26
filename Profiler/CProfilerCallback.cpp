@@ -1,4 +1,4 @@
- /*
+/*
  * @ConQAT.Rating YELLOW Hash: 5BC43D3204326C64782428D6C56505E9
  */
 
@@ -27,21 +27,16 @@
 #define STARTED "Started"
 #define STOPPED "Stopped"
 
-// TODO [NG]: Use better variable name.
-// TODO [NG]: Why is this declared here? It is used only in the method
-//            WriteToFile.
-CHAR g_szBuffer[4096];
-
 /** Constructor. */
 CProfilerCallback::CProfilerCallback() : m_dwEventMask(0), _resultFile(INVALID_HANDLE_VALUE) {
 		// Make a critical section for synchronization.
-		InitializeCriticalSection(&m_prf_crit_sec);
+		InitializeCriticalSection(&criticalSection);
 }
 
 /** Destructor. */
 CProfilerCallback::~CProfilerCallback() {
 	// Clean up the critical section.
-	DeleteCriticalSection(&m_prf_crit_sec);
+	DeleteCriticalSection(&criticalSection);
 }
 
 /** Initializer. Called at profiler startup. */
@@ -136,7 +131,7 @@ void CProfilerCallback::CreateOutputFile() {
 			time.wMinute, time.wSecond, time.wMilliseconds);
 	_tcscpy_s(m_pszResultFile, targetFilename);
 
-	EnterCriticalSection(&m_prf_crit_sec);
+	EnterCriticalSection(&criticalSection);
 	_resultFile = CreateFile(m_pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	WriteTupleToFile(INFO, HEADER);
@@ -146,7 +141,7 @@ void CProfilerCallback::CreateOutputFile() {
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
 	WriteTupleToFile(STARTED, timeStamp);
-	LeaveCriticalSection(&m_prf_crit_sec);
+	LeaveCriticalSection(&criticalSection);
 }
 
 /** Write coverage information to log file at shutdown. */
@@ -176,11 +171,11 @@ HRESULT CProfilerCallback::Shutdown() {
 	m_pICorProfilerInfo2->ForceGC();
 
 	// Close the log file.
-	EnterCriticalSection(&m_prf_crit_sec);
+	EnterCriticalSection(&criticalSection);
 	if(_resultFile != INVALID_HANDLE_VALUE) {
 		CloseHandle(_resultFile);
 	}
-	LeaveCriticalSection(&m_prf_crit_sec);
+	LeaveCriticalSection(&criticalSection);
 
 	delete _assemblyMap;
 	delete _jittedMethods;
@@ -269,11 +264,10 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// GetAssemblyProps. However, we do not need the additional data and save
 	// the second call to GetAssemblyProps with the correct amount of memory.
 	ASSEMBLYMETADATA metadata;
-	// TODO [NG]: What is the '1 *' for?
 	// TODO [NG]: Why malloc/free instead of new/delete?
-	metadata.szLocale = (WCHAR*) malloc(1 * sizeof(WCHAR));
-	metadata.rProcessor = (DWORD*) malloc(1 * sizeof(DWORD));
-	metadata.rOS = (OSINFO*) malloc(1 * sizeof(OSINFO));
+	metadata.szLocale = (WCHAR*) malloc(sizeof(WCHAR));
+	metadata.rProcessor = (DWORD*) malloc(sizeof(DWORD));
+	metadata.rOS = (OSINFO*) malloc(sizeof(OSINFO));
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 	free(metadata.szLocale);
@@ -311,20 +305,20 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 		FunctionInfo* info) {
 	HRESULT hr = E_FAIL; // Assume fail.
-	mdToken funcToken = mdTypeDefNil;
+	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
 	WCHAR funName[NAME_BUFFER_SIZE] = L"UNKNOWN";
 
 	// Get the MetadataImport interface and the metadata token.
 	hr = m_pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
-			IID_IMetaDataImport, (IUnknown **) &pMDImport, &funcToken);
+			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
 	if (SUCCEEDED(hr)) {
 		mdTypeDef classToken = mdTypeDefNil;
 		DWORD methodAttr = 0;
 		PCCOR_SIGNATURE sigBlob = NULL;
 		ULONG sigSize = 0;
 		ModuleID moduleId = 0;
-		hr = pMDImport->GetMethodProps(funcToken, &classToken, funName,
+		hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
 				NAME_BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 				NULL);
 		if (SUCCEEDED(hr)) {
@@ -334,7 +328,7 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 			if (m_pICorProfilerInfo2 != NULL) {
 				ULONG32 values = 0;
 				hr = m_pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
-						&classId, &moduleId, &funcToken, 0, &values, NULL);
+						&classId, &moduleId, &functionToken, 0, &values, NULL);
 				if (!SUCCEEDED(hr)) {
 					classId = 0;
 				}
@@ -353,7 +347,7 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 
 			info->assemblyNumber = assemblyNumber;
 			info->classToken = classToken;
-			info->funcToken = funcToken;
+			info->functionToken = functionToken;
 		}
 
 		pMDImport->Release();
@@ -362,9 +356,8 @@ HRESULT CProfilerCallback::GetFunctionIdentifier(FunctionID functionID,
 }
 
 /** Write name-value pair to log file. */
-// TODO [NG]: Rename 'label' to 'key'?
-void CProfilerCallback::WriteTupleToFile(const char* label, const char* value) {
-	WriteToFile(label);
+void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
+	WriteToFile(key);
 	WriteToFile("=");
 	WriteToFile(value);
 	WriteToFile("\r\n");
@@ -374,9 +367,10 @@ void CProfilerCallback::WriteTupleToFile(const char* label, const char* value) {
 int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
 	// TODO [NG]: Why do we need to enter the critical section here? I think it
 	//            can be moved inside the if-block.
-	EnterCriticalSection(&m_prf_crit_sec);
+	EnterCriticalSection(&criticalSection);
 	int retVal = 0;
 	DWORD dwWritten = 0;
+	CHAR g_szBuffer[4096];
 	memset(g_szBuffer, 0, 4096);
 
 	va_list args;
@@ -393,24 +387,21 @@ int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
 			retVal = 0;
 		}
 	}
-	LeaveCriticalSection(&m_prf_crit_sec);
+	LeaveCriticalSection(&criticalSection);
 
-	// TODO [NG]: What does this comment mean?
-	// Also write out to the debug window.
 	return retVal;
 }
 
-/** Write a list of method info values to the log. */
-// TODO [NG]: Rename 'label' to 'key'?
-void CProfilerCallback::WriteToLog(const char* label,
-		vector<FunctionInfo>* list) {
-	for (vector<FunctionInfo>::iterator i = list->begin(); i != list->end();
+/** Write a list of functionInfos values to the log. */
+void CProfilerCallback::WriteToLog(const char* key,
+		vector<FunctionInfo>* functions) {
+	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		FunctionInfo info = *i;
 		char signature[NAME_BUFFER_SIZE];
 		signature[0] = '\0';
 		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
-				info.funcToken);
-		WriteTupleToFile(label, signature);
+				info.functionToken);
+		WriteTupleToFile(key, signature);
 	}
 }

@@ -1,4 +1,4 @@
- /*
+/*
  * @ConQAT.Rating RED Hash: 62FAC6C36AF4F3B84E5CAA9AB3D29247
  */
 
@@ -8,7 +8,9 @@
 #include <cor.h>
 #include <corprof.h>
 
-// TODO [NG]: The class lacks a comment that describes its purpose.
+/**
+ * Base class of the coverage profiler that adds default implementations of all unneeded callback functions.
+*/
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
 
 public:
@@ -133,8 +135,8 @@ public:
 // End of ICorProfilerCallback3 interface implementation
 
 private:
-	// TODO [NG]: Rename to 'referenceCount'?
-	long m_ref_cnt; // reference count
+	// Reference counter for AddRef() and Release()
+	long referenceCount; 
 
 };
 #endif

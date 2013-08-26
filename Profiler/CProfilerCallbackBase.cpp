@@ -8,8 +8,8 @@
 // TODO [NG]: I think the initialization of the variable can happen where it is
 //            declared. I don't see why we need to explicitly declare and
 //            implement the constructor if it has no other purpose.
-CProfilerCallbackBase::CProfilerCallbackBase() : m_ref_cnt(0){
-	// do nothing but inialization performed in m_ref_cnt
+CProfilerCallbackBase::CProfilerCallbackBase() : referenceCount(0){
+	// do nothing but inialization performed in referenceCount
 }
 
 /** Destructor */
@@ -23,11 +23,11 @@ CProfilerCallbackBase::~CProfilerCallbackBase() {
 // IUnknown implementation
 //====================================================
 ULONG CProfilerCallbackBase::AddRef() {
-	return InterlockedIncrement(&m_ref_cnt);
+	return InterlockedIncrement(&referenceCount);
 }
 
 ULONG CProfilerCallbackBase::Release() {
-	return InterlockedDecrement(&m_ref_cnt);
+	return InterlockedDecrement(&referenceCount);
 }
 
 HRESULT CProfilerCallbackBase::QueryInterface( REFIID riid, void **ppInterface ) {
