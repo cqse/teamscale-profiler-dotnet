@@ -35,6 +35,9 @@
     <ClInclude Include="FunctionInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CClassFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def">

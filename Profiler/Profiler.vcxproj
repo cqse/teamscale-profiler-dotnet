@@ -198,6 +198,7 @@
     <ClCompile Include="CProfilerCallback.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />

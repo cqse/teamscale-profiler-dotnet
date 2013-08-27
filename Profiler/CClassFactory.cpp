@@ -6,38 +6,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include "CProfilerCallback.h"
-
-// TODO [NG]: Why are the following declarations here and not in a header file?
-// TODO [NG]: The methods lack comments.
-HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
-		const char *szProgID, const char *szIndepProgID, char *szOutCLSID,
-		size_t nOutCLSIDLen);
-
-HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
-		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen);
-
-BOOL SetRegValue(char *szKeyName, char *szKeyword, char *szValue);
-
-BOOL DeleteKey(const char *szKey, const char *szSubkey);
-
-BOOL SetKeyAndValue(const char *szKey, const char *szSubkey,
-		const char *szValue);
-
-// TODO [NG]: I think we should avoid macros wherever possible and use 'normal'
-//            constants.
-#define MAX_LENGTH 256
-#define PROFILER_GUID "{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}"
-
-extern const GUID CLSID_PROFILER = { 0xDD0A1BB6, 0x11CE, 0x11DD, { 0x8E, 0xE8,
-		0x3F, 0x9E, 0x55, 0xD8, 0x95, 0x93 } };
-
-static const char *g_szProgIDPrefix = "Profiler";
-
-// TODO [NG]: I think this macro adds only noise and should be removed/inlined.
-// I am unsure if it is used to mark the methods as COM interfaces.
-#define COM_METHOD(TYPE) TYPE STDMETHODCALLTYPE
-
-HINSTANCE g_hInst; // Instance handle to this piece of code.
+#include "CClassFactory.h"
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	// Save off the instance handle for later use.
@@ -49,41 +18,50 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	return TRUE;
 }
 
-// TODO [NG]: The class and its members need comments.
+/** Class handling the registration and unregistration of the profiler. */
 class CClassFactory: public IClassFactory {
 public:
+	/** Constructor. */
 	CClassFactory() {
 		m_refCount = 1;
 	}
 
+	/** Destructor. */
 	virtual ~CClassFactory() {
 		// Nothing to do.
 	}
 
+	/** COM method to add new references to the COM interface. */
 	COM_METHOD( ULONG ) AddRef() {
 		return InterlockedIncrement(&m_refCount);
 	}
 
+	/** COM method to release references to the COM interface. */
 	COM_METHOD( ULONG ) Release() {
 		return InterlockedDecrement(&m_refCount);
 	}
 
+	/** Implementation of the COM query interface. */
 	COM_METHOD( HRESULT ) QueryInterface(REFIID riid, void **ppInterface);
 
-	// IClassFactory methods
+	/** Overriding IClassFactory.LockServer method. */
 	COM_METHOD( HRESULT ) LockServer(BOOL fLock) {
 		return S_OK;
 	}
+
+	/** Overriding IClassFactory.CreateInstance method. */
 	COM_METHOD( HRESULT ) CreateInstance(IUnknown *pUnkOuter, REFIID riid,
 			void **ppInterface);
 
 private:
-
+	/** Counts the references to the COM interface. */
 	long m_refCount;
 };
 
+/** The CClassFactory instance. */
 CClassFactory g_ProfilerClassFactory;
 
+/** Unregisters the profiler. */
 STDAPI DllUnregisterServer() {
 	char szID[128];        // The class ID to unregister.
 	char szCLSID[128];     // CLSID\\szID.
@@ -92,14 +70,14 @@ STDAPI DllUnregisterServer() {
 	char rcIndProgID[128]; // rcProgID.iVersion
 
 	// Format the prog ID values.
-	sprintf_s(rcProgID, 128, "%s.%s", g_szProgIDPrefix, PROFILER_GUID);
+	sprintf_s(rcProgID, 128, "%s.%s", g_szProgIDPrefix, g_profilerGuid);
 	sprintf_s(rcIndProgID, 128, "%s.%d", rcProgID, 1);
 
 	memset(szCLSID, 0, sizeof(szCLSID));
 	UnregisterClassBase(CLSID_PROFILER, rcProgID, rcIndProgID, szCLSID,
 	ARRAY_SIZE(szCLSID));
-	// TODO [NG]: 'InprocServer32' should be a constant (redundant literal).
-	DeleteKey(szCLSID, "InprocServer32");
+
+	DeleteKey(szCLSID, g_inProcessServerDeclaration);
 
 	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_SIZE( szWID ));
 	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
@@ -109,6 +87,7 @@ STDAPI DllUnregisterServer() {
 	return S_OK;
 }
 
+/** Registers the Profiler. */
 STDAPI DllRegisterServer() {
 	HRESULT hr = S_OK;
 	char szModule[_MAX_PATH];
@@ -116,15 +95,14 @@ STDAPI DllRegisterServer() {
 	DllUnregisterServer();
 	GetModuleFileNameA(g_hInst, szModule, ARRAY_SIZE(szModule));
 
-	char rcCLSID[MAX_LENGTH];      // CLSID\\szID.
-	char rcProgID[MAX_LENGTH];     // szProgIDPrefix.szClassProgID
-	char rcIndProgID[MAX_LENGTH];  // rcProgID.iVersion
-	char rcInproc[MAX_LENGTH + 2]; // CLSID\\InprocServer32
+	char rcCLSID[g_maxLength];      // CLSID\\szID.
+	char rcProgID[g_maxLength];     // szProgIDPrefix.szClassProgID
+	char rcIndProgID[g_maxLength];  // rcProgID.iVersion
+	char rcInproc[g_maxLength + 2]; // CLSID\\InprocServer32
 
 	// Format the prog ID values.
-	sprintf_s(rcIndProgID, MAX_LENGTH, "%s.%s", g_szProgIDPrefix,
-	PROFILER_GUID);
-	sprintf_s(rcProgID, MAX_LENGTH, "%s.%d", rcIndProgID, 1);
+	sprintf_s(rcIndProgID, g_maxLength, "%s.%s", g_szProgIDPrefix, g_profilerGuid);
+	sprintf_s(rcProgID, g_maxLength, "%s.%d", rcIndProgID, 1);
 
 	// Do the initial portion.
 	hr = RegisterClassBase(CLSID_PROFILER, "Profiler", rcProgID, rcIndProgID,
@@ -132,18 +110,19 @@ STDAPI DllRegisterServer() {
 
 	if (SUCCEEDED(hr)) {
 		// Set the server path.
-		SetKeyAndValue(rcCLSID, "InprocServer32", szModule);
+		CreateFullKeyAndRegister(rcCLSID, g_inProcessServerDeclaration, szModule);
 
 		// Add the threading model information.
-		sprintf_s(rcInproc, MAX_LENGTH + 2, "%s\\%s", rcCLSID,
-				"InprocServer32");
-		SetRegValue(rcInproc, "ThreadingModel", "Both");
+		sprintf_s(rcInproc, g_maxLength + 2, "%s\\%s", rcCLSID,
+				g_inProcessServerDeclaration);
+		CreateRegistryKeyAndSetValue(rcInproc, "ThreadingModel", "Both");
 	} else {
 		DllUnregisterServer();
 	}
 	return hr;
 }
 
+/** Sets the class object for the profiler. */
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 	HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
 
@@ -153,6 +132,9 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 	return hr;
 }
 
+/*
+* Implementation of the COM QueryInterface. 
+*/
 HRESULT CClassFactory::QueryInterface(REFIID riid, void **ppInterface) {
 	if (riid == IID_IUnknown) {
 		// TODO [NG]: Do we need the explicit cast here?
@@ -176,6 +158,7 @@ STDAPI DllCanUnloadNow(void) {
 	return S_OK;
 }
 
+/** Instantiates the Profiler (CProfilerCallback) */
 HRESULT CClassFactory::CreateInstance(IUnknown *pUnkOuter, REFIID riid,
 		void **ppInstance) {
 	// Aggregation is not supported by these objects.
@@ -189,38 +172,33 @@ HRESULT CClassFactory::CreateInstance(IUnknown *pUnkOuter, REFIID riid,
 	return S_OK;
 }
 
+/*
+* Registers the class of the profiler by setting the registry entries. 
+*/
 HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
 		const char *szProgID, const char *szIndepProgID, char *szOutCLSID,
 		size_t nOutCLSIDLen) {
-	// TODO [NG]: The following six statements are identical with the first six
-	//            statements of the following method. It would be nice if the
-	//            redundancy was removed.
 	char szID[64];     // The class ID to register.
-	OLECHAR szWID[64]; // Helper for the class ID to register.
 
-	StringFromGUID2(rclsid, szWID, ARRAY_SIZE( szWID ));
-	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
-
-	strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
-	strcat_s(szOutCLSID, nOutCLSIDLen, szID);
+	CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
 
 	BOOL success = TRUE;
 
 	// Create ProgID keys.
-	success &= SetKeyAndValue(szProgID, NULL, szDesc);
-	success &= SetKeyAndValue(szProgID, "CLSID", szID);
+	success &= CreateFullKeyAndRegister(szProgID, NULL, szDesc);
+	success &= CreateFullKeyAndRegister(szProgID, "CLSID", szID);
 
 	// Create VersionIndependentProgID keys.
-	success &= SetKeyAndValue(szIndepProgID, NULL, szDesc);
-	success &= SetKeyAndValue(szIndepProgID, "CurVer", szProgID);
-	success &= SetKeyAndValue(szIndepProgID, "CLSID", szID);
+	success &= CreateFullKeyAndRegister(szIndepProgID, NULL, szDesc);
+	success &= CreateFullKeyAndRegister(szIndepProgID, "CurVer", szProgID);
+	success &= CreateFullKeyAndRegister(szIndepProgID, "CLSID", szID);
 
 	// Create entries under CLSID.
-	success &= SetKeyAndValue(szOutCLSID, NULL, szDesc);
-	success &= SetKeyAndValue(szOutCLSID, "ProgID", szProgID);
-	success &= SetKeyAndValue(szOutCLSID, "VersionIndependentProgID",
+	success &= CreateFullKeyAndRegister(szOutCLSID, NULL, szDesc);
+	success &= CreateFullKeyAndRegister(szOutCLSID, "ProgID", szProgID);
+	success &= CreateFullKeyAndRegister(szOutCLSID, "VersionIndependentProgID",
 			szIndepProgID);
-	success &= SetKeyAndValue(szOutCLSID, "NotInsertable", NULL);
+	success &= CreateFullKeyAndRegister(szOutCLSID, "NotInsertable", NULL);
 
 	if (success) {
 		return S_OK;
@@ -229,12 +207,10 @@ HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
 	}
 }
 
-HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
-		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
-	// TODO [NG]: The following six statements are identical with the first six
-	//            statements of the previous method. It would be nice if the
-	//            redundancy was removed.
-	char szID[64];     // The class ID to register.
+/*
+* Helper function to create the class IDs needed for registration.
+*/
+void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID){
 	OLECHAR szWID[64]; // Helper for the class ID to register.
 
 	StringFromGUID2(rclsid, szWID, ARRAY_SIZE( szWID ));
@@ -242,31 +218,43 @@ HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 
 	strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
 	strcat_s(szOutCLSID, nOutCLSIDLen, szID);
-
-	// TODO [NG]: Why are the return values of 'DeleteKey' and 'RegDeleteKeyA'
-	//            ignored? In the previous method, the return value of
-	//            'SetKeyAndValue' was not ignored. I would expect similar
-	//            behavior here.
-	// Delete the version independent prog ID settings.
-	DeleteKey(szIndepProgID, "CurVer");
-	DeleteKey(szIndepProgID, "CLSID");
-	RegDeleteKeyA(HKEY_CLASSES_ROOT, szIndepProgID);
-
-	// Delete the prog ID settings.
-	DeleteKey(szProgID, "CLSID");
-	RegDeleteKeyA(HKEY_CLASSES_ROOT, szProgID);
-
-	// Delete the class ID settings.
-	DeleteKey(szOutCLSID, "ProgID");
-	DeleteKey(szOutCLSID, "VersionIndependentProgID");
-	DeleteKey(szOutCLSID, "NotInsertable");
-	RegDeleteKeyA(HKEY_CLASSES_ROOT, szOutCLSID);
-
-	return S_OK;
 }
 
+/*
+* Unregisters the profiler class by deleting the registry keys.
+*/
+HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
+		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
+	char szID[64];     // The class ID to register.
+	CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
+
+	BOOL success = TRUE;
+
+	// Delete the version independent prog ID settings.
+	success &= DeleteKey(szIndepProgID, "CurVer");
+	success &= DeleteKey(szIndepProgID, "CLSID");
+	success &= RegDeleteKeyA(HKEY_CLASSES_ROOT, szIndepProgID);
+
+	// Delete the prog ID settings.
+	success &= DeleteKey(szProgID, "CLSID");
+	success &= RegDeleteKeyA(HKEY_CLASSES_ROOT, szProgID);
+
+	// Delete the class ID settings.
+	success &= DeleteKey(szOutCLSID, "ProgID");
+	success &= DeleteKey(szOutCLSID, "VersionIndependentProgID");
+	success &= DeleteKey(szOutCLSID, "NotInsertable");
+	success &= RegDeleteKeyA(HKEY_CLASSES_ROOT, szOutCLSID);
+
+	if (success) {
+		return S_OK;
+	} else {
+		return S_FALSE;
+	}
+}
+
+/** Deletes the key from the registry. */
 BOOL DeleteKey(const char *szKey, const char *szSubkey) {
-	char rcKey[MAX_LENGTH]; // buffer for the full key name.
+	char rcKey[g_maxLength]; // buffer for the full key name.
 	sprintf_s(rcKey, ARRAY_SIZE(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
@@ -278,41 +266,25 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 	return TRUE;
 }
 
-// TODO [NG]: This method contains the complete following method. The redundancy
-//            should be removed.
-BOOL SetKeyAndValue(const char *szKey, const char *szSubkey,
+/** Creates a full registry key and creates it in the registry. */
+BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
 		const char *szValue) {
-	HKEY hKey;              // Handle to the new registry key.
-	char rcKey[MAX_LENGTH]; // Buffer for the full key name.
+	char rcKey[g_maxLength]; // Buffer for the full key name.
 
 	// Initialize the key with the base key name.
-	strcpy_s(rcKey, MAX_LENGTH, szKey);
+	strcpy_s(rcKey, g_maxLength, szKey);
 
 	// Append the subkey name (if there is one).
 	if (szSubkey != NULL) {
-		strcat_s(rcKey, MAX_LENGTH, "\\");
-		strcat_s(rcKey, MAX_LENGTH, szSubkey);
+		strcat_s(rcKey, g_maxLength, "\\");
+		strcat_s(rcKey, g_maxLength, szSubkey);
 	}
 
-	// Create the registry key.
-	long ec = RegCreateKeyExA(HKEY_CLASSES_ROOT, rcKey, 0, NULL,
-			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
-	if (ec == ERROR_SUCCESS) {
-		// Set the value (if there is one).
-		if (szValue != NULL) {
-			RegSetValueExA(hKey, NULL, 0, REG_SZ, (BYTE *) szValue,
-					(DWORD)(((strlen(szValue) + 1) * sizeof(char))));
-		}
-
-		RegCloseKey(hKey);
-		return TRUE;
-	}
-	return FALSE;
+	return CreateRegistryKeyAndSetValue(rcKey, NULL, szValue);
 }
 
-// TODO [NG]: This method is completely contained in the previous method. The
-//            redundancy should be removed.
-BOOL SetRegValue(char *szKeyName, char *szKeyword, char *szValue) {
+/** Creates a registry key and sets its value. Returns true if the operations habe been executed successfully. */
+BOOL CreateRegistryKeyAndSetValue(const char *szKeyName, const char *szKeyword, const char *szValue) {
 	HKEY hKey; // Handle to the new registry key.
 
 	// create the registration key.

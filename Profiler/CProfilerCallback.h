@@ -38,7 +38,7 @@ public:
 	virtual ~CProfilerCallback();
 
 // Overwritten Profiling methods
-	// STARTUP/SHUTDOWN EVENTS
+	// Startup/shutdown events
     STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
     STDMETHOD(Shutdown)();
 
