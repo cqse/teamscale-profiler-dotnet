@@ -8,6 +8,12 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
 
+// TODO [NG]: I think we should avoid macros wherever possible and implement
+//            this as a function. I suspect the overhead for the additional
+//            function calls can be tolerated.
+// -> I don't know which type the parameter of the function would be. Is there an untyped array in c++?
+#define ARRAY_SIZE(s) (sizeof(s) / sizeof(s[0]))
+
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	// Save off the instance handle for later use.
 	if (dwReason == DLL_PROCESS_ATTACH) {

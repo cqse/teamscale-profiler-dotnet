@@ -17,14 +17,8 @@
 
 using namespace std;
 
-// TODO [NG]: I think we should avoid macros wherever possible and use a
-//            'normal' constant here and make it part of the class.
-#define NAME_BUFFER_SIZE 2048
-
-// TODO [NG]: I think we should avoid macros wherever possible and implement
-//            this as a function. I suspect the overhead for the additional
-//            function calls can be tolerated.
-#define ARRAY_SIZE(s) (sizeof(s) / sizeof(s[0]))
+// Default size for arrays containing names. 
+const int nameBufferSize = 2048;
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method

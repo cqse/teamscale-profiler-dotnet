@@ -10,22 +10,20 @@
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 // Constants used for report generation
-// TODO [NG]: Is this really needed? If yes, use a normal constant?
 #ifdef _WIN64
-#define HEADER "Coverage profiler version 0.9.1.2 (x64)"
+const char* profilerVersionInfo = "Coverage profiler version 0.9.1.2 (x64)";
 #endif
 #ifndef _WIN64
-#define HEADER "Coverage profiler version 0.9.1.2 (x86)"
+const char* profilerVersionInfo = "Coverage profiler version 0.9.1.2 (x86)";
 #endif
 
-// TODO [NG]: Use "normal" constants for the following macros?
-#define INFO "Info"
-#define ASSEMBLY "Assembly"
-#define PROCESS "Process"
-#define INLINED "Inlined"
-#define JITTED "Jitted"
-#define STARTED "Started"
-#define STOPPED "Stopped"
+const char* logKeyInfo = "Info";
+const char* logKeyAssembly = "Assembly";
+const char* logKeyProcess = "Process";
+const char* logKeyInlined = "Inlined";
+const char* logKeyJitted = "Jitted";
+const char* logKeyStarted = "Started";
+const char* logKeyStopped = "Stopped";
 
 /** Constructor. */
 CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE) {
@@ -104,10 +102,7 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 		wcscpy_s(szAppName, _MAX_FNAME, L"No Application Name Found");
 	}
 
-	// TODO [NG]: What are the following two lines for?
-	char process[NAME_BUFFER_SIZE];
-	sprintf_s(process, "%S", szAppPath);
-	WriteTupleToFile(PROCESS, process);
+	WriteTupleToFile(logKeyProcess, (char*)szAppPath);
 }
 
 /** Create the output file and add general information. */
@@ -119,10 +114,10 @@ void CProfilerCallback::CreateOutputFile() {
 		sprintf_s(targetDir, "c:/profiler/");
 	}
 
-	SYSTEMTIME time = GetTime();;
+	SYSTEMTIME time = GetTime();
 
 	// Create target file.
-	char targetFilename[NAME_BUFFER_SIZE];
+	char targetFilename[nameBufferSize];
 	sprintf_s(targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt",
 			targetDir, time.wYear, time.wMonth, time.wDay, time.wHour,
 			time.wMinute, time.wSecond, time.wMilliseconds);
@@ -131,13 +126,13 @@ void CProfilerCallback::CreateOutputFile() {
 	EnterCriticalSection(&criticalSection);
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	WriteTupleToFile(INFO, HEADER);
+	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
 
-	char timeStamp[NAME_BUFFER_SIZE];
+	char timeStamp[nameBufferSize];
 	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
-	WriteTupleToFile(STARTED, timeStamp);
+	WriteTupleToFile(logKeyStarted, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }
 
@@ -154,18 +149,18 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	// Write inlined methods.
 	WriteToFile("//%i methods inlined\r\n", inlinedMethodsList->size());
-	WriteToLog(INLINED, inlinedMethodsList);
+	WriteToLog(logKeyInlined, inlinedMethodsList);
 
 	// Write jitted methods.
 	WriteToFile("//%i methods jitted\r\n", jittedMethods->size());
-	WriteToLog(JITTED, jittedMethods);
+	WriteToLog(logKeyJitted, jittedMethods);
 
 	// Write timestamp.
-	char timeStamp[NAME_BUFFER_SIZE];
+	char timeStamp[nameBufferSize];
 	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-	WriteTupleToFile(STOPPED, timeStamp);
+	WriteTupleToFile(logKeyStopped, timeStamp);
 
-	WriteTupleToFile(INFO, "Shutting down coverage profiler" );
+	WriteTupleToFile(logKeyInfo, "Shutting down coverage profiler" );
 
 	// Cleanup.
 	pICorProfilerInfo2->ForceGC();
@@ -239,11 +234,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	(*assemblyMap)[assemblyId] = assemblyNumber;
 
 	// Log assembly load.
-	WCHAR assemblyName[NAME_BUFFER_SIZE];
+	WCHAR assemblyName[nameBufferSize];
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	pICorProfilerInfo->GetAssemblyInfo(assemblyId, NAME_BUFFER_SIZE,
+	pICorProfilerInfo->GetAssemblyInfo(assemblyId, nameBufferSize,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
@@ -264,21 +259,21 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// GetAssemblyProps. However, we do not need the additional data and save
 	// the second call to GetAssemblyProps with the correct amount of memory.
 	ASSEMBLYMETADATA metadata;
-	// TODO [NG]: Why malloc/free instead of new/delete?
-	metadata.szLocale = new WCHAR;//(WCHAR*) malloc(sizeof(WCHAR));
-	metadata.rProcessor = new DWORD; //(DWORD*) malloc(sizeof(DWORD));
-	metadata.rOS = new OSINFO;//(OSINFO*) malloc(sizeof(OSINFO));
+
+	metadata.szLocale = new WCHAR;
+	metadata.rProcessor = new DWORD; 
+	metadata.rOS = new OSINFO;
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 	delete metadata.szLocale;
 	delete metadata.rProcessor;
 	delete metadata.rOS;
 
-	char target[NAME_BUFFER_SIZE];
+	char target[nameBufferSize];
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
-	WriteTupleToFile(ASSEMBLY, target);
+	WriteTupleToFile(logKeyAssembly, target);
 
 	// Always return OK
 	return S_OK;
@@ -307,7 +302,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 	HRESULT hr = E_FAIL; // Assume fail.
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
-	WCHAR funName[NAME_BUFFER_SIZE] = L"UNKNOWN";
+	WCHAR funName[nameBufferSize] = L"UNKNOWN";
 
 	// Get the MetadataImport interface and the metadata token.
 	hr = pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
@@ -319,10 +314,10 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		ULONG sigSize = 0;
 		ModuleID moduleId = 0;
 		hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
-				NAME_BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
+				nameBufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 				NULL);
 		if (SUCCEEDED(hr)) {
-			WCHAR className[NAME_BUFFER_SIZE] = L"UNKNOWN";
+			WCHAR className[nameBufferSize] = L"UNKNOWN";
 			ClassID classId = 0;
 
 			if (pICorProfilerInfo2 != NULL) {
@@ -397,7 +392,7 @@ void CProfilerCallback::WriteToLog(const char* key,
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		FunctionInfo info = *i;
-		char signature[NAME_BUFFER_SIZE];
+		char signature[nameBufferSize];
 		signature[0] = '\0';
 		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
 				info.functionToken);
