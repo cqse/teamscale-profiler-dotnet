@@ -75,10 +75,8 @@ private:
 	vector<FunctionInfo>* jittedMethods;
 
 	// Info object that keeps track of inlined methods
-	// TODO [NG]: Why do we need two collections?
 	// TODO [NG]: Why are these pointers and not just a normal variables?
-	set<FunctionID>* inlinedMethods;
-	vector<FunctionInfo>* inlinedMethodsList;
+	vector<FunctionInfo>* inlinedMethods;
 
 	// Function to set up our event mask.
 	DWORD GetEventMask();

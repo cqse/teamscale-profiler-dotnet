@@ -47,8 +47,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk ) {
 	assemblyCounter = 1;
 	assemblyMap = new map<int, int>;
 	jittedMethods = new vector<FunctionInfo>;
-	inlinedMethods = new set<FunctionID>;
-	inlinedMethodsList = new vector<FunctionInfo>;
+	inlinedMethods = new vector<FunctionInfo>;
 
 	// Get reference to the ICorProfilerInfo interface 
 	HRESULT hr =
@@ -148,8 +147,8 @@ HRESULT CProfilerCallback::Shutdown() {
 	SYSTEMTIME time = GetTime();
 
 	// Write inlined methods.
-	WriteToFile("//%i methods inlined\r\n", inlinedMethodsList->size());
-	WriteToLog(logKeyInlined, inlinedMethodsList);
+	WriteToFile("//%i methods inlined\r\n", inlinedMethods->size());
+	WriteToLog(logKeyInlined, inlinedMethods);
 
 	// Write jitted methods.
 	WriteToFile("//%i methods jitted\r\n", jittedMethods->size());
@@ -175,7 +174,6 @@ HRESULT CProfilerCallback::Shutdown() {
 	delete assemblyMap;
 	delete jittedMethods;
 	delete inlinedMethods;
-	delete inlinedMethodsList;
 
 	return S_OK;
 }
@@ -282,12 +280,10 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 /** Record inlining of method, but generally allow it. */
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL *pfShouldInline) {
-	// Notify monitor that method has been inlined.
-	if (inlinedMethods->insert(calleeId).second == true) {
-		FunctionInfo info;
-		GetFunctionInfo(calleeId, &info);
-		inlinedMethodsList->push_back(info);
-	}
+	// Save information about inlined method.
+	FunctionInfo info;
+	GetFunctionInfo(calleeId, &info);
+	inlinedMethods->push_back(info);
 
 	// Always allow inlining.
 	*pfShouldInline = true;

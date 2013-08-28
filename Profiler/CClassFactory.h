@@ -35,6 +35,7 @@ static const char *inProcessServerDeclaration = "InprocServer32";
 // -> I think it is used to mark the methods as COM interfaces.
 #define COM_METHOD(TYPE) TYPE STDMETHODCALLTYPE
 
-HINSTANCE profilerInstance; // Instance handle to this piece of code.
+// COM instance handle to the profiler object.
+HINSTANCE profilerInstance; 
 
 #endif
