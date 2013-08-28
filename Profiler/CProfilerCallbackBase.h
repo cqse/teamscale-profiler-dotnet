@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating RED Hash: 62FAC6C36AF4F3B84E5CAA9AB3D29247
+ * @ConQAT.Rating YELLOW Hash: 79BB9C896996D932818DD471C4552969
  */
 
 #ifndef _CProfilerCallbackBase_H_
@@ -19,7 +19,7 @@ public:
 	CProfilerCallbackBase();
 
 	/** Destructor */
-	virtual ~CProfilerCallbackBase();
+	virtual ~CProfilerCallbackBase(){};
 
 // IUnknown interface implementation
     STDMETHOD_(ULONG, AddRef)();
@@ -136,7 +136,7 @@ public:
 // End of ICorProfilerCallback3 interface implementation
 
 private:
-	// Reference counter for AddRef() and Release()
+	// COM reference counter (for AddRef() and Release()) of the IUnknown implementation of the profiler
 	long referenceCount; 
 
 };

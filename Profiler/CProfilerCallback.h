@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 65079FDB2DAFB2A2145E9C6E948D7DB0
+ * @ConQAT.Rating YELLOW Hash: A77344601990103C6B9F2C80BB947596
  */
 
 #ifndef _ProfilerCallback_H_
@@ -66,17 +66,21 @@ private:
 	// Count the assemblies loaded.
 	int assemblyCounter;
 
-	// TODO [NG]: Why is this a pointer and not just a normal variable?
 	// Maps from assemblyIDs to assemblyNumbers (determined by assemblyCounter).
-	map<int, int>* assemblyMap;
+	// It is used to identify the declaring assembly for functions.
+	map<int, int> assemblyMap;
 
 	// Info object that keeps track of jitted methods.
-	// TODO [NG]: Why is this a pointer and not just a normal variable?
-	vector<FunctionInfo>* jittedMethods;
+	// We use a pointer because this collection may become large.
+	vector<FunctionInfo> *jittedMethods;
 
-	// Info object that keeps track of inlined methods
-	// TODO [NG]: Why are these pointers and not just a normal variables?
-	vector<FunctionInfo>* inlinedMethods;
+	// Collecions that keep track of inlined methods.
+	// We use the set to efficiently determine if we already noticed an inlined method and 
+	// the vector to uniquely store the information about inlined methods. Using one collection, 
+	// e.g. a hash_map would force us to implement additional functions to write the infos to the output file.
+	// We use pointers because these collections may become large.
+	set<FunctionID>* inlinedMethodIds;
+	vector<FunctionInfo> *inlinedMethods;
 
 	// Function to set up our event mask.
 	DWORD GetEventMask();

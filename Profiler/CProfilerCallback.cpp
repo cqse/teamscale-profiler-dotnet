@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 5BC43D3204326C64782428D6C56505E9
+ * @ConQAT.Rating YELLOW Hash: 67E591CDBD7F53A6C17C8A288C3550E6
  */
 
 #include <windows.h>
@@ -11,10 +11,10 @@
 
 // Constants used for report generation
 #ifdef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.1.2 (x64)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.0 (x64)";
 #endif
 #ifndef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.1.2 (x86)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.0 (x86)";
 #endif
 
 const char* logKeyInfo = "Info";
@@ -38,25 +38,22 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 /** Initializer. Called at profiler startup. */
-// TODO [NG]: Chose better name for the parameter?
-// -> its the same name as in the function we override here. Thus, I'd rather keep it. 
-HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnk ) {
+HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown ) {
 	CreateOutputFile();
 
 	// Initialize data structures.
 	assemblyCounter = 1;
-	assemblyMap = new map<int, int>;
 	jittedMethods = new vector<FunctionInfo>;
 	inlinedMethods = new vector<FunctionInfo>;
+	inlinedMethodIds = new set<FunctionID>;
 
 	// Get reference to the ICorProfilerInfo interface 
-	HRESULT hr =
-		pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
 	if ( FAILED(hr) ) {
 		return E_INVALIDARG;
 	}
 
-	hr = pICorProfilerInfoUnk->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&pICorProfilerInfo2 );
+	hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&pICorProfilerInfo2 );
 
 	if ( FAILED(hr) ) {
 		// We still want to work if this call fails, might be an older .NET
@@ -171,9 +168,9 @@ HRESULT CProfilerCallback::Shutdown() {
 	}
 	LeaveCriticalSection(&criticalSection);
 
-	delete assemblyMap;
 	delete jittedMethods;
 	delete inlinedMethods;
+	delete inlinedMethodIds;
 
 	return S_OK;
 }
@@ -229,7 +226,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 		HRESULT hrStatus) {
 	// Store assembly counter for id.
 	int assemblyNumber = assemblyCounter++;
-	(*assemblyMap)[assemblyId] = assemblyNumber;
+	assemblyMap[assemblyId] = assemblyNumber;
 
 	// Log assembly load.
 	WCHAR assemblyName[nameBufferSize];
@@ -281,10 +278,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL *pfShouldInline) {
 	// Save information about inlined method.
-	FunctionInfo info;
-	GetFunctionInfo(calleeId, &info);
-	inlinedMethods->push_back(info);
-
+	if (inlinedMethodIds->insert(calleeId).second == true) {
+		FunctionInfo info;
+		GetFunctionInfo(calleeId, &info);
+		inlinedMethods->push_back(info);
+	}
 	// Always allow inlining.
 	*pfShouldInline = true;
 
@@ -332,7 +330,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 				hr = pICorProfilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 						NULL, NULL, &assemblyId);
 				if (SUCCEEDED(hr)) {
-					assemblyNumber = (*assemblyMap)[assemblyId];
+					assemblyNumber = assemblyMap[assemblyId];
 				}
 			}
 
@@ -378,7 +376,6 @@ int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
 		LeaveCriticalSection(&criticalSection);
 	}
 	
-
 	return retVal;
 }
 

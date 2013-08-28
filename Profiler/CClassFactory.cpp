@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating RED Hash: B1C383095EDD96175583C6F92271C8B7
+ * @ConQAT.Rating YELLOW Hash: 309BADB7A8B687439315EFB5C4729815
  */
 
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
@@ -8,11 +8,7 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
 
-// TODO [NG]: I think we should avoid macros wherever possible and implement
-//            this as a function. I suspect the overhead for the additional
-//            function calls can be tolerated.
-// -> I don't know which type the parameter of the function would be. Is there an untyped array in c++?
-#define ARRAY_SIZE(s) (sizeof(s) / sizeof(s[0]))
+#define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	// Save off the instance handle for later use.
@@ -29,7 +25,7 @@ class CClassFactory: public IClassFactory {
 public:
 	/** Constructor. */
 	CClassFactory() {
-		m_refCount = 1;
+		referenceCount = 1;
 	}
 
 	/** Destructor. */
@@ -39,12 +35,12 @@ public:
 
 	/** COM method to add new references to the COM interface. */
 	COM_METHOD( ULONG ) AddRef() {
-		return InterlockedIncrement(&m_refCount);
+		return InterlockedIncrement(&referenceCount);
 	}
 
 	/** COM method to release references to the COM interface. */
 	COM_METHOD( ULONG ) Release() {
-		return InterlockedDecrement(&m_refCount);
+		return InterlockedDecrement(&referenceCount);
 	}
 
 	/** Implementation of the COM query interface. */
@@ -60,8 +56,8 @@ public:
 			void **ppInterface);
 
 private:
-	/** Counts the references to the COM interface. */
-	long m_refCount;
+	/** Counts the references to the COM interface of the ClassFactory. */
+	long referenceCount;
 };
 
 /** The CClassFactory instance. */
@@ -81,11 +77,11 @@ STDAPI DllUnregisterServer() {
 
 	memset(szCLSID, 0, sizeof(szCLSID));
 	UnregisterClassBase(CLSID_PROFILER, rcProgID, rcIndProgID, szCLSID,
-	ARRAY_SIZE(szCLSID));
+	ARRAY_LENGTH(szCLSID));
 
 	DeleteKey(szCLSID, inProcessServerDeclaration);
 
-	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_SIZE( szWID ));
+	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_LENGTH( szWID ));
 	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
 
 	DeleteKey("CLSID", szCLSID);
@@ -99,7 +95,7 @@ STDAPI DllRegisterServer() {
 	char szModule[_MAX_PATH];
 
 	DllUnregisterServer();
-	GetModuleFileNameA(profilerInstance, szModule, ARRAY_SIZE(szModule));
+	GetModuleFileNameA(profilerInstance, szModule, ARRAY_LENGTH(szModule));
 
 	char rcCLSID[maxLength];      // CLSID\\szID.
 	char rcProgID[maxLength];     // szProgIDPrefix.szClassProgID
@@ -112,7 +108,7 @@ STDAPI DllRegisterServer() {
 
 	// Do the initial portion.
 	hr = RegisterClassBase(CLSID_PROFILER, "Profiler", rcProgID, rcIndProgID,
-			rcCLSID, ARRAY_SIZE (rcCLSID));
+			rcCLSID, ARRAY_LENGTH (rcCLSID));
 
 	if (SUCCEEDED(hr)) {
 		// Set the server path.
@@ -138,9 +134,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 	return hr;
 }
 
-/*
-* Implementation of the COM QueryInterface. 
-*/
+/** Implementation of the COM QueryInterface. */
 HRESULT CClassFactory::QueryInterface(REFIID riid, void **ppInterface) {
 	if (!ppInterface){
         return E_INVALIDARG;
@@ -178,9 +172,6 @@ HRESULT CClassFactory::CreateInstance(IUnknown *pUnkOuter, REFIID riid,
 	return S_OK;
 }
 
-/*
-* Registers the class of the profiler by setting the registry entries. 
-*/
 HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
 		const char *szProgID, const char *szIndepProgID, char *szOutCLSID,
 		size_t nOutCLSIDLen) {
@@ -213,22 +204,6 @@ HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
 	}
 }
 
-/*
-* Helper function to create the class IDs needed for registration.
-*/
-void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID){
-	OLECHAR szWID[64]; // Helper for the class ID to register.
-
-	StringFromGUID2(rclsid, szWID, ARRAY_SIZE( szWID ));
-	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
-
-	strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
-	strcat_s(szOutCLSID, nOutCLSIDLen, szID);
-}
-
-/*
-* Unregisters the profiler class by deleting the registry keys.
-*/
 HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
 	char szID[64];     // The class ID to register.
@@ -258,13 +233,22 @@ HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 	}
 }
 
-/** Deletes the key from the registry. */
+void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID){
+	OLECHAR szWID[64]; // Helper for the class ID to register.
+
+	StringFromGUID2(rclsid, szWID, ARRAY_LENGTH( szWID ));
+	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
+
+	strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
+	strcat_s(szOutCLSID, nOutCLSIDLen, szID);
+}
+
 BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 	char rcKey[maxLength]; // buffer for the full key name.
-	sprintf_s(rcKey, ARRAY_SIZE(rcKey), "%s\\%s", szKey, szSubkey);
+	sprintf_s(rcKey, ARRAY_LENGTH(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
-	sprintf_s(buf, ARRAY_SIZE(buf), "Length=%d", strlen(rcKey));
+	sprintf_s(buf, ARRAY_LENGTH(buf), "Length=%d", strlen(rcKey));
 
 	// Delete the registration key.
 	RegDeleteKeyA(HKEY_CLASSES_ROOT, rcKey);
@@ -272,7 +256,6 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 	return TRUE;
 }
 
-/** Creates a full registry key and creates it in the registry. */
 BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
 		const char *szValue) {
 	char rcKey[maxLength]; // Buffer for the full key name.
@@ -289,7 +272,6 @@ BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
 	return CreateRegistryKeyAndSetValue(rcKey, NULL, szValue);
 }
 
-/** Creates a registry key and sets its value. Returns true if the operations habe been executed successfully. */
 BOOL CreateRegistryKeyAndSetValue(const char *szKeyName, const char *szKeyword, const char *szValue) {
 	HKEY hKey; // Handle to the new registry key.
 

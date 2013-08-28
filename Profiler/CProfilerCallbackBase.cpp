@@ -1,24 +1,12 @@
  /*
- * @ConQAT.Rating RED Hash: 784C5796BF0492D6F877D4AF7C2DB23B
+ * @ConQAT.Rating YELLOW Hash: 3CBD5AC25875666CE37F215D33D4188B
  */
 
 #include "CProfilerCallbackBase.h"
 
 /** Constructor */
-// TODO [NG]: I think the initialization of the variable can happen where it is
-//            declared. I don't see why we need to explicitly declare and
-//            implement the constructor if it has no other purpose.
-// -> Only static const fields can be initialized in place.
 CProfilerCallbackBase::CProfilerCallbackBase() : referenceCount(0){
 	// do nothing but inialization performed in referenceCount
-}
-
-/** Destructor */
-// TODO [NG]: Why do we need to explicitly declare and implement a destructor if
-//            it does nothing?
-// -> Otherwise it won't compile
-CProfilerCallbackBase::~CProfilerCallbackBase() {
-	// do nothing 
 }
 
 //====================================================
