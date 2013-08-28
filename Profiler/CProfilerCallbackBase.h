@@ -9,7 +9,8 @@
 #include <corprof.h>
 
 /**
- * Base class of the coverage profiler that adds default implementations of all unneeded callback functions.
+ * Base class of the coverage profiler that adds default implementations for all unneeded callback functions.
+ * The callbacks the profiler needs are implemented (overridden) in the subclass.
 */
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
 

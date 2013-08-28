@@ -18,7 +18,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	// Save off the instance handle for later use.
 	if (dwReason == DLL_PROCESS_ATTACH) {
 		DisableThreadLibraryCalls(hInstance);
-		g_hInst = hInstance;
+		profilerInstance = hInstance;
 	}
 
 	return TRUE;
@@ -65,7 +65,7 @@ private:
 };
 
 /** The CClassFactory instance. */
-CClassFactory g_ProfilerClassFactory;
+CClassFactory ProfilerClassFactory;
 
 /** Unregisters the profiler. */
 STDAPI DllUnregisterServer() {
@@ -76,14 +76,14 @@ STDAPI DllUnregisterServer() {
 	char rcIndProgID[128]; // rcProgID.iVersion
 
 	// Format the prog ID values.
-	sprintf_s(rcProgID, 128, "%s.%s", g_szProgIDPrefix, g_profilerGuid);
+	sprintf_s(rcProgID, 128, "%s.%s", szProgIDPrefix, profilerGuid);
 	sprintf_s(rcIndProgID, 128, "%s.%d", rcProgID, 1);
 
 	memset(szCLSID, 0, sizeof(szCLSID));
 	UnregisterClassBase(CLSID_PROFILER, rcProgID, rcIndProgID, szCLSID,
 	ARRAY_SIZE(szCLSID));
 
-	DeleteKey(szCLSID, g_inProcessServerDeclaration);
+	DeleteKey(szCLSID, inProcessServerDeclaration);
 
 	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_SIZE( szWID ));
 	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
@@ -99,16 +99,16 @@ STDAPI DllRegisterServer() {
 	char szModule[_MAX_PATH];
 
 	DllUnregisterServer();
-	GetModuleFileNameA(g_hInst, szModule, ARRAY_SIZE(szModule));
+	GetModuleFileNameA(profilerInstance, szModule, ARRAY_SIZE(szModule));
 
-	char rcCLSID[g_maxLength];      // CLSID\\szID.
-	char rcProgID[g_maxLength];     // szProgIDPrefix.szClassProgID
-	char rcIndProgID[g_maxLength];  // rcProgID.iVersion
-	char rcInproc[g_maxLength + 2]; // CLSID\\InprocServer32
+	char rcCLSID[maxLength];      // CLSID\\szID.
+	char rcProgID[maxLength];     // szProgIDPrefix.szClassProgID
+	char rcIndProgID[maxLength];  // rcProgID.iVersion
+	char rcInproc[maxLength + 2]; // CLSID\\InprocServer32
 
 	// Format the prog ID values.
-	sprintf_s(rcIndProgID, g_maxLength, "%s.%s", g_szProgIDPrefix, g_profilerGuid);
-	sprintf_s(rcProgID, g_maxLength, "%s.%d", rcIndProgID, 1);
+	sprintf_s(rcIndProgID, maxLength, "%s.%s", szProgIDPrefix, profilerGuid);
+	sprintf_s(rcProgID, maxLength, "%s.%d", rcIndProgID, 1);
 
 	// Do the initial portion.
 	hr = RegisterClassBase(CLSID_PROFILER, "Profiler", rcProgID, rcIndProgID,
@@ -116,11 +116,11 @@ STDAPI DllRegisterServer() {
 
 	if (SUCCEEDED(hr)) {
 		// Set the server path.
-		CreateFullKeyAndRegister(rcCLSID, g_inProcessServerDeclaration, szModule);
+		CreateFullKeyAndRegister(rcCLSID, inProcessServerDeclaration, szModule);
 
 		// Add the threading model information.
-		sprintf_s(rcInproc, g_maxLength + 2, "%s\\%s", rcCLSID,
-				g_inProcessServerDeclaration);
+		sprintf_s(rcInproc, maxLength + 2, "%s\\%s", rcCLSID,
+				inProcessServerDeclaration);
 		CreateRegistryKeyAndSetValue(rcInproc, "ThreadingModel", "Both");
 	} else {
 		DllUnregisterServer();
@@ -133,7 +133,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 	HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
 
 	if (rclsid == CLSID_PROFILER) {
-		hr = g_ProfilerClassFactory.QueryInterface(riid, ppv);
+		hr = ProfilerClassFactory.QueryInterface(riid, ppv);
 	}
 	return hr;
 }
@@ -142,20 +142,20 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 * Implementation of the COM QueryInterface. 
 */
 HRESULT CClassFactory::QueryInterface(REFIID riid, void **ppInterface) {
+	if (!ppInterface){
+        return E_INVALIDARG;
+	}
+
 	if (riid == IID_IUnknown) {
-		// TODO [NG]: Do we need the explicit cast here?
-		*ppInterface = static_cast<IUnknown *>(this);
+		*ppInterface = this;
 	} else if (riid == IID_IClassFactory) {
-		// TODO [NG]: Do we need the explicit cast here?
-		*ppInterface = static_cast<IClassFactory *>(this);
+		*ppInterface = this;
 	} else {
 		*ppInterface = NULL;
 		return E_NOINTERFACE;
 	}
 
-	// TODO [NG]: Why do we need the potentially dangerous cast here? Can't we
-	//            just call AddRef as ppInterface points to 'this'?
-	reinterpret_cast<IUnknown *>(*ppInterface)->AddRef();
+	AddRef();
 	return S_OK;
 }
 
@@ -260,7 +260,7 @@ HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 
 /** Deletes the key from the registry. */
 BOOL DeleteKey(const char *szKey, const char *szSubkey) {
-	char rcKey[g_maxLength]; // buffer for the full key name.
+	char rcKey[maxLength]; // buffer for the full key name.
 	sprintf_s(rcKey, ARRAY_SIZE(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
@@ -275,15 +275,15 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 /** Creates a full registry key and creates it in the registry. */
 BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
 		const char *szValue) {
-	char rcKey[g_maxLength]; // Buffer for the full key name.
+	char rcKey[maxLength]; // Buffer for the full key name.
 
 	// Initialize the key with the base key name.
-	strcpy_s(rcKey, g_maxLength, szKey);
+	strcpy_s(rcKey, maxLength, szKey);
 
 	// Append the subkey name (if there is one).
 	if (szSubkey != NULL) {
-		strcat_s(rcKey, g_maxLength, "\\");
-		strcat_s(rcKey, g_maxLength, szSubkey);
+		strcat_s(rcKey, maxLength, "\\");
+		strcat_s(rcKey, maxLength, szSubkey);
 	}
 
 	return CreateRegistryKeyAndSetValue(rcKey, NULL, szValue);
