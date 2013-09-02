@@ -11,10 +11,10 @@
 
 // Constants used for report generation
 #ifdef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.0 (x64)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
 #endif
 #ifndef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.0 (x86)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x86)";
 #endif
 
 const char* logKeyInfo = "Info";
@@ -98,7 +98,10 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 		wcscpy_s(szAppName, _MAX_FNAME, L"No Application Name Found");
 	}
 
-	WriteTupleToFile(logKeyProcess, (char*)szAppPath);
+	// turn szAppPath from wchar_t to char
+	char process[nameBufferSize];
+	sprintf_s(process, "%S", szAppPath);
+	WriteTupleToFile(logKeyProcess, process);
 }
 
 /** Create the output file and add general information. */
