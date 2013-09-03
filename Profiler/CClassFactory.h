@@ -1,4 +1,4 @@
- /*
+/*
  * @ConQAT.Rating YELLOW Hash: 63EF04EE3BF50DFCA85C227FB39835DA
  */
 
@@ -15,8 +15,8 @@ HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen);
 
 /** Helper function to create the class IDs needed for registration.*/
-void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID);
-
+void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen,
+		char* szID);
 
 /** Deletes the key from the registry. */
 BOOL DeleteKey(const char *szKey, const char *szSubkey);
@@ -25,8 +25,12 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey);
 BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
 		const char *szValue);
 
-/** Creates a registry key and sets its value. Returns true if the operations habe been executed successfully. */
-BOOL CreateRegistryKeyAndSetValue(const char *szKeyName, const char *szKeyword, const char *szValue);
+/**
+ * Creates a registry key and sets its value. Returns true if the operations
+ * have been executed successfully.
+ */
+BOOL CreateRegistryKeyAndSetValue(const char *szKeyName, const char *szKeyword,
+		const char *szValue);
 
 // Maximum length used for strings.
 static const int maxLength = 256;
@@ -48,6 +52,6 @@ static const char *inProcessServerDeclaration = "InprocServer32";
 #define COM_METHOD(TYPE) TYPE STDMETHODCALLTYPE
 
 // COM instance handle to the profiler object.
-HINSTANCE profilerInstance; 
+HINSTANCE profilerInstance;
 
 #endif

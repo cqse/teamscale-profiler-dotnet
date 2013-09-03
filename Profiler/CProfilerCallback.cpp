@@ -9,6 +9,9 @@
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
+// TODO [NG]: Move the following block inside the function 'CreateOutputFile'
+//            where it is used.
+// TODO [NG]: Use '#else' to make it more readable.
 // Constants used for report generation
 #ifdef _WIN64
 const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
@@ -17,6 +20,11 @@ const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
 const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x86)";
 #endif
 
+// TODO [NG]: As far as I can see each of these constants is used in only one
+//            place. I think each constant should be moved to this place. I also
+//            wonder why these are stored explicitly as constant if used only
+//            once. If this is for easy modification I suggest to create a new
+//            class "LogKeys" to make this more OO.
 const char* logKeyInfo = "Info";
 const char* logKeyAssembly = "Assembly";
 const char* logKeyProcess = "Process";
@@ -117,6 +125,11 @@ void CProfilerCallback::CreateOutputFile() {
 
 	// Create target file.
 	char targetFilename[nameBufferSize];
+	// TODO [NG]: The following statement should also use the function
+	//            'GetFormattedTime' (see below) since the date formatting is
+	//            complex and redundant. I think you can actually move the array
+	//            'timeStamp' from below up here and initialize it right here.
+	//            The targetFilename can then be constructed using timeStamp.
 	sprintf_s(targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt",
 			targetDir, time.wYear, time.wMonth, time.wDay, time.wHour,
 			time.wMinute, time.wSecond, time.wMilliseconds);
@@ -128,6 +141,8 @@ void CProfilerCallback::CreateOutputFile() {
 	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
 
 	char timeStamp[nameBufferSize];
+	// TODO [NG]: The following statement should be moved into function
+	//            'GetTime/GetFormattedTime' to remove the redundancy.
 	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
@@ -136,6 +151,8 @@ void CProfilerCallback::CreateOutputFile() {
 }
 
 /** Return the current time. */ 
+// TODO [NG]: Change to 'void CProfilerCallback::GetFormattedTime(char *result)'
+//            and add the redundant statement from above and below.
 SYSTEMTIME CProfilerCallback::GetTime() {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
@@ -156,6 +173,8 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	// Write timestamp.
 	char timeStamp[nameBufferSize];
+	// TODO [NG]: The following statement should be moved into function
+	//            'GetTime/GetFormattedTime' to remove the redundancy.
 	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 	WriteTupleToFile(logKeyStopped, timeStamp);
 

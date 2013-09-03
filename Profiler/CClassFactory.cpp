@@ -20,6 +20,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	return TRUE;
 }
 
+// TODO [NG]: Now that we have a header file, the following class declaration
+//            should be moved to the header file.
 /** Class handling the registration and unregistration of the profiler. */
 class CClassFactory: public IClassFactory {
 public:
