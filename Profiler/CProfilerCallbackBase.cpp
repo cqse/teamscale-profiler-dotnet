@@ -1,12 +1,12 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 3CBD5AC25875666CE37F215D33D4188B
+ * @ConQAT.Rating GREEN Hash: 2FCA3490B9E26FCF0EC3057E4EA27C04
  */
 
 #include "CProfilerCallbackBase.h"
 
 /** Constructor */
 CProfilerCallbackBase::CProfilerCallbackBase() : referenceCount(0){
-	// do nothing but inialization performed in referenceCount
+	// Do nothing but initialize referenceCount.
 }
 
 //====================================================
