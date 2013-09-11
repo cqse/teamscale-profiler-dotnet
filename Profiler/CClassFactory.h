@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 63EF04EE3BF50DFCA85C227FB39835DA
+ * @ConQAT.Rating YELLOW Hash: 7F1F1DC8B5EFD933B973A4291FF698C9
  */
 
 #ifndef _CClassFactory_H_
@@ -53,5 +53,48 @@ static const char *inProcessServerDeclaration = "InprocServer32";
 
 // COM instance handle to the profiler object.
 HINSTANCE profilerInstance;
+
+/** Class handling the registration and unregistration of the profiler. */
+class CClassFactory: public IClassFactory {
+public:
+	/** Constructor. */
+	CClassFactory() {
+		referenceCount = 1;
+	}
+
+	/** Destructor. */
+	virtual ~CClassFactory() {
+		// Nothing to do.
+	}
+
+	/** COM method to add new references to the COM interface. */
+	COM_METHOD( ULONG ) AddRef() {
+		return InterlockedIncrement(&referenceCount);
+	}
+
+	/** COM method to release references to the COM interface. */
+	COM_METHOD( ULONG ) Release() {
+		return InterlockedDecrement(&referenceCount);
+	}
+
+	/** Implementation of the COM query interface. */
+	COM_METHOD( HRESULT ) QueryInterface(REFIID riid, void **ppInterface);
+
+	/** Overriding IClassFactory.LockServer method. */
+	COM_METHOD( HRESULT ) LockServer(BOOL fLock) {
+		return S_OK;
+	}
+
+	/** Overriding IClassFactory.CreateInstance method. */
+	COM_METHOD( HRESULT ) CreateInstance(IUnknown *pUnkOuter, REFIID riid,
+			void **ppInterface);
+
+private:
+	/** Counts the references to the COM interface of the ClassFactory. */
+	long referenceCount;
+};
+
+/** The CClassFactory instance. */
+CClassFactory ProfilerClassFactory;
 
 #endif

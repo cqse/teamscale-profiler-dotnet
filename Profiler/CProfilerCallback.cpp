@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 288EB53BDB16DA218A1DB69B5F77A6FA
+ * @ConQAT.Rating YELLOW Hash: FE7B0F2124DFF932CFBC4761E735D39A
  */
 
 #include <windows.h>
@@ -14,6 +14,11 @@
 //            wonder why these are stored explicitly as constant if used only
 //            once. If this is for easy modification I suggest to create a new
 //            class "LogKeys" to make this more OO.
+// TODO [MF]: I tried to do this but ran into the following problem:
+//            As these are not "integral" types these cannot be initialized within  a class 
+//            in place at their declarations. Thus, we would need to make the members  
+//            non-constant and initialize them in a constructor. From my point of view this 
+//            is not optimal as well. Do you have other suggestions of how to deal with this?
 const char* logKeyInfo = "Info";
 const char* logKeyAssembly = "Assembly";
 const char* logKeyProcess = "Process";
@@ -112,11 +117,6 @@ void CProfilerCallback::CreateOutputFile() {
 	char timeStamp[nameBufferSize];
 	GetFormattedTime(timeStamp, nameBufferSize);
 
-	// TODO [NG]: The following statement should also use the function
-	//            'GetFormattedTime' (see below) since the date formatting is
-	//            complex and redundant. I think you can actually move the array
-	//            'timeStamp' from below up here and initialize it right here.
-	//            The targetFilename can then be constructed using timeStamp.
 	sprintf_s(targetFilename, "%s/coverage_%s.txt",
 			targetDir, timeStamp);
 	_tcscpy_s(pszResultFile, targetFilename);

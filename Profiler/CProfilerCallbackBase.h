@@ -19,7 +19,7 @@ public:
 	CProfilerCallbackBase();
 
 	/** Destructor */
-	virtual ~CProfilerCallbackBase(){};
+	virtual ~CProfilerCallbackBase(){ /* nothing to do. */};
 
 // IUnknown interface implementation
     STDMETHOD_(ULONG, AddRef)();

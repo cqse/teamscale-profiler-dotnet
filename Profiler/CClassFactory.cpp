@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 309BADB7A8B687439315EFB5C4729815
+ * @ConQAT.Rating YELLOW Hash: 8D28261EF8ED61A76E4437BAFDBC6DC4
  */
 
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
@@ -19,51 +19,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 
 	return TRUE;
 }
-
-// TODO [NG]: Now that we have a header file, the following class declaration
-//            should be moved to the header file.
-/** Class handling the registration and unregistration of the profiler. */
-class CClassFactory: public IClassFactory {
-public:
-	/** Constructor. */
-	CClassFactory() {
-		referenceCount = 1;
-	}
-
-	/** Destructor. */
-	virtual ~CClassFactory() {
-		// Nothing to do.
-	}
-
-	/** COM method to add new references to the COM interface. */
-	COM_METHOD( ULONG ) AddRef() {
-		return InterlockedIncrement(&referenceCount);
-	}
-
-	/** COM method to release references to the COM interface. */
-	COM_METHOD( ULONG ) Release() {
-		return InterlockedDecrement(&referenceCount);
-	}
-
-	/** Implementation of the COM query interface. */
-	COM_METHOD( HRESULT ) QueryInterface(REFIID riid, void **ppInterface);
-
-	/** Overriding IClassFactory.LockServer method. */
-	COM_METHOD( HRESULT ) LockServer(BOOL fLock) {
-		return S_OK;
-	}
-
-	/** Overriding IClassFactory.CreateInstance method. */
-	COM_METHOD( HRESULT ) CreateInstance(IUnknown *pUnkOuter, REFIID riid,
-			void **ppInterface);
-
-private:
-	/** Counts the references to the COM interface of the ClassFactory. */
-	long referenceCount;
-};
-
-/** The CClassFactory instance. */
-CClassFactory ProfilerClassFactory;
 
 /** Unregisters the profiler. */
 STDAPI DllUnregisterServer() {

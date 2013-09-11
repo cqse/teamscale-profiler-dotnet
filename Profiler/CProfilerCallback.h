@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating YELLOW Hash: A77344601990103C6B9F2C80BB947596
+ * @ConQAT.Rating YELLOW Hash: 699C54D8A8C8B523EB9A7AD0444A6204
  */
 
 #ifndef _ProfilerCallback_H_
@@ -16,11 +16,6 @@
 #include "FunctionInfo.h"
 
 using namespace std;
-
-// TODO [NG]: I think the constant can be moved to the private part of the
-//            following class as it is used only by this class.
-// Default size for arrays containing names. 
-const int nameBufferSize = 2048;
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
@@ -65,6 +60,9 @@ public:
 	HRESULT GetFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
 private:
+	// Default size for arrays containing names. 
+	static const int nameBufferSize = 2048;
+
 	// Count the assemblies loaded.
 	int assemblyCounter;
 
