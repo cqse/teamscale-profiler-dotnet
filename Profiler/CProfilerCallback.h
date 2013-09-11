@@ -72,22 +72,17 @@ private:
 	// It is used to identify the declaring assembly for functions.
 	map<int, int> assemblyMap;
 
-	// TODO [NG]: I have researched a little on stackoverflow and found that STL
-	//            collections internally always use the heap to store the
-	//            elements. Hence, I think we can safely remove the '*' from the
-	//            following three collections as the collections store only some
-	//            metadata on the stack (capacity, number of elements, ...).
 	// Info object that keeps track of jitted methods.
 	// We use a pointer because this collection may become large.
-	vector<FunctionInfo> *jittedMethods;
+	vector<FunctionInfo> jittedMethods;
 
 	// Collecions that keep track of inlined methods.
 	// We use the set to efficiently determine if we already noticed an inlined method and 
 	// the vector to uniquely store the information about inlined methods. Using one collection, 
 	// e.g. a hash_map would force us to implement additional functions to write the infos to the output file.
 	// We use pointers because these collections may become large.
-	set<FunctionID>* inlinedMethodIds;
-	vector<FunctionInfo> *inlinedMethods;
+	set<FunctionID> inlinedMethodIds;
+	vector<FunctionInfo> inlinedMethods;
 
 	// Function to set up our event mask.
 	DWORD GetEventMask();
@@ -123,8 +118,6 @@ private:
 	void WriteToLog(const char* key, vector<FunctionInfo>* functions); 
 
 	// Return the current time.
-	// TODO [NG]: Why do we need the 'CProfilerCallback::' here? We are already
-	//            in the scope of this class.
-	SYSTEMTIME CProfilerCallback::GetTime();
+	void GetFormattedTime(char *result, size_t size);
 };
 #endif

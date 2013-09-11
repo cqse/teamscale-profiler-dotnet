@@ -9,17 +9,6 @@
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-// TODO [NG]: Move the following block inside the function 'CreateOutputFile'
-//            where it is used.
-// TODO [NG]: Use '#else' to make it more readable.
-// Constants used for report generation
-#ifdef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
-#endif
-#ifndef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x86)";
-#endif
-
 // TODO [NG]: As far as I can see each of these constants is used in only one
 //            place. I think each constant should be moved to this place. I also
 //            wonder why these are stored explicitly as constant if used only
@@ -51,9 +40,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown ) {
 
 	// Initialize data structures.
 	assemblyCounter = 1;
-	jittedMethods = new vector<FunctionInfo>;
-	inlinedMethods = new vector<FunctionInfo>;
-	inlinedMethodIds = new set<FunctionID>;
 
 	// Get reference to the ICorProfilerInfo interface 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
@@ -121,61 +107,60 @@ void CProfilerCallback::CreateOutputFile() {
 		sprintf_s(targetDir, "c:/profiler/");
 	}
 
-	SYSTEMTIME time = GetTime();
-
 	// Create target file.
 	char targetFilename[nameBufferSize];
+	char timeStamp[nameBufferSize];
+	GetFormattedTime(timeStamp, nameBufferSize);
+
 	// TODO [NG]: The following statement should also use the function
 	//            'GetFormattedTime' (see below) since the date formatting is
 	//            complex and redundant. I think you can actually move the array
 	//            'timeStamp' from below up here and initialize it right here.
 	//            The targetFilename can then be constructed using timeStamp.
-	sprintf_s(targetFilename, "%s/coverage_%04d%02d%02d_%02d%02d%02d%04d.txt",
-			targetDir, time.wYear, time.wMonth, time.wDay, time.wHour,
-			time.wMinute, time.wSecond, time.wMilliseconds);
+	sprintf_s(targetFilename, "%s/coverage_%s.txt",
+			targetDir, timeStamp);
 	_tcscpy_s(pszResultFile, targetFilename);
 
 	EnterCriticalSection(&criticalSection);
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	#ifdef _WIN64
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
+	#else
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x86)";
+	#endif
+	
 	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
 
-	char timeStamp[nameBufferSize];
-	// TODO [NG]: The following statement should be moved into function
-	//            'GetTime/GetFormattedTime' to remove the redundancy.
-	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
-			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
-			time.wMilliseconds);
 	WriteTupleToFile(logKeyStarted, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }
 
-/** Return the current time. */ 
-// TODO [NG]: Change to 'void CProfilerCallback::GetFormattedTime(char *result)'
-//            and add the redundant statement from above and below.
-SYSTEMTIME CProfilerCallback::GetTime() {
+/** Makes result point to a string representing the current time. */ 
+void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
-	return time;
+	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
+			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
+			time.wMilliseconds);
 }
 
 /** Write coverage information to log file at shutdown. */
 HRESULT CProfilerCallback::Shutdown() {
-	SYSTEMTIME time = GetTime();
 
 	// Write inlined methods.
-	WriteToFile("//%i methods inlined\r\n", inlinedMethods->size());
-	WriteToLog(logKeyInlined, inlinedMethods);
+	WriteToFile("//%i methods inlined\r\n", inlinedMethods.size());
+	WriteToLog(logKeyInlined, &inlinedMethods);
 
 	// Write jitted methods.
-	WriteToFile("//%i methods jitted\r\n", jittedMethods->size());
-	WriteToLog(logKeyJitted, jittedMethods);
+	WriteToFile("//%i methods jitted\r\n", jittedMethods.size());
+	WriteToLog(logKeyJitted, &jittedMethods);
 
 	// Write timestamp.
 	char timeStamp[nameBufferSize];
-	// TODO [NG]: The following statement should be moved into function
-	//            'GetTime/GetFormattedTime' to remove the redundancy.
-	sprintf_s(timeStamp, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+
+	GetFormattedTime(timeStamp, nameBufferSize);
 	WriteTupleToFile(logKeyStopped, timeStamp);
 
 	WriteTupleToFile(logKeyInfo, "Shutting down coverage profiler" );
@@ -189,10 +174,6 @@ HRESULT CProfilerCallback::Shutdown() {
 		CloseHandle(resultFile);
 	}
 	LeaveCriticalSection(&criticalSection);
-
-	delete jittedMethods;
-	delete inlinedMethods;
-	delete inlinedMethodIds;
 
 	return S_OK;
 }
@@ -237,7 +218,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	// Notify monitor that method has been jitted.
 	FunctionInfo info;
 	GetFunctionInfo(functionId, &info);
-	jittedMethods->push_back(info);
+	jittedMethods.push_back(info);
 
 	// Always return OK
 	return S_OK;
@@ -300,10 +281,10 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL *pfShouldInline) {
 	// Save information about inlined method.
-	if (inlinedMethodIds->insert(calleeId).second == true) {
+	if (inlinedMethodIds.insert(calleeId).second == true) {
 		FunctionInfo info;
 		GetFunctionInfo(calleeId, &info);
-		inlinedMethods->push_back(info);
+		inlinedMethods.push_back(info);
 	}
 	// Always allow inlining.
 	*pfShouldInline = true;
