@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 8D28261EF8ED61A76E4437BAFDBC6DC4
+ * @ConQAT.Rating GREEN Hash: D8578F734D13784915D81A018AE3E758
  */
 
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers

@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating GREEN Hash: 475753E0C558D0209830E86E8F52D14F
+ * @ConQAT.Rating GREEN Hash: E696F8D9252EF86FACCF2B2BE2D9D6CA
  */
 
 #ifndef _CProfilerCallbackBase_H_

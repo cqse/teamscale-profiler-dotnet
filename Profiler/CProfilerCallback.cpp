@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: FE7B0F2124DFF932CFBC4761E735D39A
+ * @ConQAT.Rating GREEN Hash: 94D451F52B2F4570A2C6E3B4F51AC871
  */
 
 #include <windows.h>
@@ -9,16 +9,6 @@
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-// TODO [NG]: As far as I can see each of these constants is used in only one
-//            place. I think each constant should be moved to this place. I also
-//            wonder why these are stored explicitly as constant if used only
-//            once. If this is for easy modification I suggest to create a new
-//            class "LogKeys" to make this more OO.
-// TODO [MF]: I tried to do this but ran into the following problem:
-//            As these are not "integral" types these cannot be initialized within  a class 
-//            in place at their declarations. Thus, we would need to make the members  
-//            non-constant and initialize them in a constructor. From my point of view this 
-//            is not optimal as well. Do you have other suggestions of how to deal with this?
 const char* logKeyInfo = "Info";
 const char* logKeyAssembly = "Assembly";
 const char* logKeyProcess = "Process";
