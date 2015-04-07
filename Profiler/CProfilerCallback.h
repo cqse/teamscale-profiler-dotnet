@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating GREEN Hash: E98E7635C62C2A24C49859CCEF4C7A7D
+ * @ConQAT.Rating YELLOW Hash: 4ECF41CD79A14A1B4ECE7C2CF9A88837
  */
 
 #ifndef _ProfilerCallback_H_
@@ -51,7 +51,7 @@ public:
 // End of FunctionIDMapper implementation
 
 	// Writes the given string to the output file.
-    int WriteToFile(const char* pszFmtString, ... ); // write an entry to the beacon file
+    int WriteToFile(const char* string); 
     
 	// Writes the given key and value to the output file.
 	void WriteTupleToFile(const char* key, const char* value);
@@ -68,7 +68,7 @@ private:
 
 	// Maps from assemblyIDs to assemblyNumbers (determined by assemblyCounter).
 	// It is used to identify the declaring assembly for functions.
-	map<int, int> assemblyMap;
+	map<AssemblyID, int> assemblyMap;
 
 	// Info object that keeps track of jitted methods.
 	// We use a pointer because this collection may become large.

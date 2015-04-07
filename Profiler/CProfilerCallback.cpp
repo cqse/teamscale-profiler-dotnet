@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating GREEN Hash: 94D451F52B2F4570A2C6E3B4F51AC871
+ * @ConQAT.Rating YELLOW Hash: 31FEB3061742E08E84DB4BED739D2BB5
  */
 
 #include <windows.h>
@@ -89,17 +89,18 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 
 	// turn szAppPath from wchar_t to char
 	char process[nameBufferSize];
-	sprintf_s(process, "%S", szAppPath);
+	sprintf_s(process, nameBufferSize, "%S", szAppPath);
 	WriteTupleToFile(logKeyProcess, process);
 }
 
 /** Create the output file and add general information. */
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
-	char targetDir[1000];
+	const int bufferSize = 1000;
+	char targetDir[bufferSize];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
-		sprintf_s(targetDir, "c:/profiler/");
+		sprintf_s(targetDir, bufferSize, "c:/profiler/");
 	}
 
 	// Create target file.
@@ -107,7 +108,7 @@ void CProfilerCallback::CreateOutputFile() {
 	char timeStamp[nameBufferSize];
 	GetFormattedTime(timeStamp, nameBufferSize);
 
-	sprintf_s(targetFilename, "%s/coverage_%s.txt",
+	sprintf_s(targetFilename, nameBufferSize, "%s/coverage_%s.txt",
 			targetDir, timeStamp);
 	_tcscpy_s(pszResultFile, targetFilename);
 
@@ -138,13 +139,19 @@ void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 
 /** Write coverage information to log file at shutdown. */
 HRESULT CProfilerCallback::Shutdown() {
+	const int bufferSize = 2048;
+	char buffer[bufferSize];
+
+	EnterCriticalSection(&criticalSection);
 
 	// Write inlined methods.
-	WriteToFile("//%i methods inlined\r\n", inlinedMethods.size());
+	sprintf_s(buffer, bufferSize, "//%i methods inlined\r\n", inlinedMethods.size());
+	WriteToFile(buffer);
 	WriteToLog(logKeyInlined, &inlinedMethods);
 
 	// Write jitted methods.
-	WriteToFile("//%i methods jitted\r\n", jittedMethods.size());
+	sprintf_s(buffer, bufferSize, "//%i methods jitted\r\n", jittedMethods.size());
+	WriteToFile(buffer);
 	WriteToLog(logKeyJitted, &jittedMethods);
 
 	// Write timestamp.
@@ -154,6 +161,8 @@ HRESULT CProfilerCallback::Shutdown() {
 	WriteTupleToFile(logKeyStopped, timeStamp);
 
 	WriteTupleToFile(logKeyInfo, "Shutting down coverage profiler" );
+
+	LeaveCriticalSection(&criticalSection);
 
 	// Cleanup.
 	pICorProfilerInfo2->ForceGC();
@@ -258,7 +267,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	delete metadata.rOS;
 
 	char target[nameBufferSize];
-	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
+	sprintf_s(target, nameBufferSize, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
 	WriteTupleToFile(logKeyAssembly, target);
@@ -339,29 +348,22 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 
 /** Write name-value pair to log file. */
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
-	WriteToFile(key);
-	WriteToFile("=");
-	WriteToFile(value);
-	WriteToFile("\r\n");
+	const int bufferSize = 2048;
+	char buffer[bufferSize];
+	sprintf_s(buffer, bufferSize, "%s=%s\r\n", key, value);
+	WriteToFile(buffer);
 }
 
 /** Write to log file. */
-int CProfilerCallback::WriteToFile(const char *pszFmtString, ...) {
+int CProfilerCallback::WriteToFile(const char *string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
-	CHAR g_szBuffer[4096];
-	memset(g_szBuffer, 0, 4096);
-
-	va_list args;
-	va_start(args, pszFmtString);
-	retVal = wvsprintf(g_szBuffer, pszFmtString, args);
-	va_end(args);
 
 	// Write out to the file if the file is open.
 	if (resultFile != INVALID_HANDLE_VALUE) {
 		EnterCriticalSection(&criticalSection);
-		if (TRUE == WriteFile(resultFile, g_szBuffer,
-						(DWORD) strlen(g_szBuffer), &dwWritten, NULL)) {
+		if (TRUE == WriteFile(resultFile, string,
+			(DWORD)strlen(string), &dwWritten, NULL)) {
 			retVal = dwWritten;
 		} else {
 			retVal = 0;
@@ -380,7 +382,7 @@ void CProfilerCallback::WriteToLog(const char* key,
 		FunctionInfo info = *i;
 		char signature[nameBufferSize];
 		signature[0] = '\0';
-		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
+		sprintf_s(signature, nameBufferSize, "%i:%i:%i", info.assemblyNumber, info.classToken,
 				info.functionToken);
 		WriteTupleToFile(key, signature);
 	}
