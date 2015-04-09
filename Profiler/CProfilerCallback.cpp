@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 7044AC9FF3E75054F6B41D0DF5127E0E
+ * @ConQAT.Rating YELLOW Hash: 56A344525E594E606879432D51D115B3
  */
 
 #include <windows.h>
@@ -16,6 +16,13 @@ const char* logKeyInlined = "Inlined";
 const char* logKeyJitted = "Jitted";
 const char* logKeyStarted = "Started";
 const char* logKeyStopped = "Stopped";
+
+/** The version of the profiler */
+#ifdef _WIN64
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x64)";
+#else
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x86)";
+#endif
 
 /** Constructor. */
 CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE) {
@@ -117,9 +124,9 @@ void CProfilerCallback::CreateOutputFile() {
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	#ifdef _WIN64
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x64)";
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x64)";
 	#else
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.2 (x86)";
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x86)";
 	#endif
 	
 	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
