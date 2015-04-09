@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 31FEB3061742E08E84DB4BED739D2BB5
+ * @ConQAT.Rating YELLOW Hash: 7044AC9FF3E75054F6B41D0DF5127E0E
  */
 
 #include <windows.h>
@@ -187,7 +187,11 @@ DWORD CProfilerCallback::GetEventMask() {
 	DWORD dwEventMask = 0;
 	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
 	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
+
+	// disable force re-jitting for the light variant
+#ifndef LIGHT
 	dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+#endif
 
 	return dwEventMask;
 }
