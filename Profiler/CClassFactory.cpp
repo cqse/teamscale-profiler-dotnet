@@ -94,7 +94,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 /** Implementation of the COM QueryInterface. */
 HRESULT CClassFactory::QueryInterface(REFIID riid, void **ppInterface) {
 	if (!ppInterface){
-        return E_INVALIDARG;
+		return E_INVALIDARG;
 	}
 
 	if (riid == IID_IUnknown) {

@@ -30,8 +30,8 @@ public:
 
 // Overwritten Profiling methods
 	// Startup/shutdown events
-    STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
-    STDMETHOD(Shutdown)();
+	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
+	STDMETHOD(Shutdown)();
 
 	// JIT method to capture JIT events
 	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
@@ -51,8 +51,8 @@ public:
 // End of FunctionIDMapper implementation
 
 	// Writes the given string to the output file.
-    int WriteToFile(const char* string); 
-    
+	int WriteToFile(const char* string); 
+	
 	// Writes the given key and value to the output file.
 	void WriteTupleToFile(const char* key, const char* value);
 	
@@ -90,14 +90,14 @@ private:
 	
 	// Smart pointer container for ICorProfilerInfo reference.
 	CComQIPtr<ICorProfilerInfo> pICorProfilerInfo;	
-    
+	
 	// Smart pointer container for ICorProfilerInfo2 reference.
 	CComQIPtr<ICorProfilerInfo2> pICorProfilerInfo2;	
 
 	// Name of the result file.
 	TCHAR pszResultFile[_MAX_PATH];
 
-    // Path for the process we are in.
+	// Path for the process we are in.
 	wchar_t szAppPath[_MAX_PATH]; 
    
 	// Name of the file for the process we are in.
