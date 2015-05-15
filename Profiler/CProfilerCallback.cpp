@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 56A344525E594E606879432D51D115B3
+ * @ConQAT.Rating RED Hash: AA6F2F22E767A44C243F82B6A81A756F
  */
 
 #include <windows.h>
@@ -63,6 +63,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown ) {
 
 	// Set the event mask for the interfaces of .NET 1 and .NET 2. We currently
 	// do not need the features of the profiling interface beyond .NET 2.
+	// TODO (AG) It appears that the new profiler does *not at all* work with older .NET versions. So maybe this can be removed?
 	if (pICorProfilerInfo2.p == NULL) {
 		// Pre .NET 2.
 		pICorProfilerInfo->SetEventMask(dwEventMask);
@@ -103,6 +104,7 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 /** Create the output file and add general information. */
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
+	// TODO (AG) Should we really have different buffer sizes, some method-internal and some usgng nameBufferSize?
 	const int bufferSize = 1000;
 	char targetDir[bufferSize];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
@@ -123,6 +125,7 @@ void CProfilerCallback::CreateOutputFile() {
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
+	// TODO (AG) These declarations seem redundant, since they are already in lines 20-25.
 	#ifdef _WIN64
 	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x64)";
 	#else
@@ -139,6 +142,7 @@ void CProfilerCallback::CreateOutputFile() {
 void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
+	// TODO (AG) size always equals nameBufferSize. Remove method parameter and use nameBufferSize directly.
 	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
@@ -146,6 +150,7 @@ void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 
 /** Write coverage information to log file at shutdown. */
 HRESULT CProfilerCallback::Shutdown() {
+	// TODO (AG) Also use nameBufferSize here?
 	const int bufferSize = 2048;
 	char buffer[bufferSize];
 
@@ -156,6 +161,7 @@ HRESULT CProfilerCallback::Shutdown() {
 	WriteToFile(buffer);
 	WriteToLog(logKeyInlined, &inlinedMethods);
 
+	// TODO (AG) Is it safe to reuse the same buffer here? What if the second string is shorter than the first?
 	// Write jitted methods.
 	sprintf_s(buffer, bufferSize, "//%i methods jitted\r\n", jittedMethods.size());
 	WriteToFile(buffer);
@@ -304,6 +310,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 /** Create method info object for a function id. */
+// TODO (AG) This is long and depply nested (see Teamscale findings). Maybe extract some of the inner ifs?
 HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		FunctionInfo* info) {
 	HRESULT hr = E_FAIL; // Assume fail.
@@ -359,6 +366,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 
 /** Write name-value pair to log file. */
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
+	// TODO (AG) Also use nameBufferSize here? And maybe rename?
 	const int bufferSize = 2048;
 	char buffer[bufferSize];
 	sprintf_s(buffer, bufferSize, "%s=%s\r\n", key, value);
