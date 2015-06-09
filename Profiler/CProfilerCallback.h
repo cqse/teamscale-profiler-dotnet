@@ -66,6 +66,9 @@ private:
 	// Count the assemblies loaded.
 	int assemblyCounter;
 
+	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
+	bool isLightMode;
+
 	// Maps from assemblyIDs to assemblyNumbers (determined by assemblyCounter).
 	// It is used to identify the declaring assembly for functions.
 	map<AssemblyID, int> assemblyMap;

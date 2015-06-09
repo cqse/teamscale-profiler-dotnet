@@ -25,7 +25,7 @@ const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x86)";
 #endif
 
 /** Constructor. */
-CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE) {
+CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false) {
 		// Make a critical section for synchronization.
 		InitializeCriticalSection(&criticalSection);
 }
@@ -37,7 +37,16 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 /** Initializer. Called at profiler startup. */
-HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown ) {
+HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
+	char lightMode[nameBufferSize];
+	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
+		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
+		isLightMode = true;
+		WriteTupleToFile(logKeyInfo, "Mode: light");
+	} else {
+		WriteTupleToFile(logKeyInfo, "Mode: force re-jitting");
+	}
+
 	CreateOutputFile();
 
 	// Initialize data structures.
@@ -202,9 +211,10 @@ DWORD CProfilerCallback::GetEventMask() {
 	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	// disable force re-jitting for the light variant
-#ifndef LIGHT
-	dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
-#endif
+	if (!isLightMode) {
+		WriteTupleToFile("Mode", "Light");
+		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+	}
 
 	return dwEventMask;
 }
