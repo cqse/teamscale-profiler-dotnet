@@ -19,9 +19,9 @@ const char* logKeyStopped = "Stopped";
 
 /** The version of the profiler */
 #ifdef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x64)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
 #else
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x86)";
+const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
 #endif
 
 /** Constructor. */
