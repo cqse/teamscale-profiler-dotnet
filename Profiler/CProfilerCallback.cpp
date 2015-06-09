@@ -73,6 +73,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	// Set the event mask for the interfaces of .NET 1 and .NET 2. We currently
 	// do not need the features of the profiling interface beyond .NET 2.
 	// TODO (AG) It appears that the new profiler does *not at all* work with older .NET versions. So maybe this can be removed?
+	// TODO (FS) to be honest, I have no idea whaat is happening here and why. I'd rather consult with MF before changing anything here.
 	if (pICorProfilerInfo2.p == NULL) {
 		// Pre .NET 2.
 		pICorProfilerInfo->SetEventMask(dwEventMask);
@@ -113,7 +114,6 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 /** Create the output file and add general information. */
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
-	// TODO (AG) Should we really have different buffer sizes, some method-internal and some usgng bufferSize?
 	char targetDir[bufferSize];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
