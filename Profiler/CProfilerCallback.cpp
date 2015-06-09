@@ -274,14 +274,16 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// the second call to GetAssemblyProps with the correct amount of memory.
 	ASSEMBLYMETADATA metadata;
 
-	metadata.szLocale = new WCHAR;
-	metadata.rProcessor = new DWORD; 
-	metadata.rOS = new OSINFO;
+    // We have to explicitly set these to NULL, otherwise the .NET framework will try
+    // to access these pointers at a later time and crash, because they are not
+    // valid. This happened @MR when we started an application multiple times on
+    // the same machine in rapid succession.
+	metadata.szLocale = NULL;
+	metadata.rProcessor = NULL;
+	metadata.rOS = NULL;
+
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
-	delete metadata.szLocale;
-	delete metadata.rProcessor;
-	delete metadata.rOS;
 
 	char target[nameBufferSize];
 	sprintf_s(target, nameBufferSize, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
