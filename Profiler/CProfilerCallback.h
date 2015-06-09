@@ -60,8 +60,8 @@ public:
 	HRESULT GetFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
 private:
-	// Default size for arrays containing names. 
-	static const int nameBufferSize = 2048;
+	// Default size for arrays. 
+	static const int bufferSize = 2048;
 
 	// Count the assemblies loaded.
 	int assemblyCounter;

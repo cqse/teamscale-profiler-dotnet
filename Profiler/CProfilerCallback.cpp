@@ -38,7 +38,7 @@ CProfilerCallback::~CProfilerCallback() {
 
 /** Initializer. Called at profiler startup. */
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
-	char lightMode[nameBufferSize];
+	char lightMode[bufferSize];
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
@@ -105,16 +105,15 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	}
 
 	// turn szAppPath from wchar_t to char
-	char process[nameBufferSize];
-	sprintf_s(process, nameBufferSize, "%S", szAppPath);
+	char process[bufferSize];
+	sprintf_s(process, "%S", szAppPath);
 	WriteTupleToFile(logKeyProcess, process);
 }
 
 /** Create the output file and add general information. */
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
-	// TODO (AG) Should we really have different buffer sizes, some method-internal and some usgng nameBufferSize?
-	const int bufferSize = 1000;
+	// TODO (AG) Should we really have different buffer sizes, some method-internal and some usgng bufferSize?
 	char targetDir[bufferSize];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
@@ -122,24 +121,16 @@ void CProfilerCallback::CreateOutputFile() {
 	}
 
 	// Create target file.
-	char targetFilename[nameBufferSize];
-	char timeStamp[nameBufferSize];
-	GetFormattedTime(timeStamp, nameBufferSize);
+	char targetFilename[bufferSize];
+	char timeStamp[bufferSize];
+	GetFormattedTime(timeStamp, bufferSize);
 
-	sprintf_s(targetFilename, nameBufferSize, "%s/coverage_%s.txt",
-			targetDir, timeStamp);
+	sprintf_s(targetFilename, "%s/coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(pszResultFile, targetFilename);
 
 	EnterCriticalSection(&criticalSection);
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	// TODO (AG) These declarations seem redundant, since they are already in lines 20-25.
-	#ifdef _WIN64
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x64)";
-	#else
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.3 (x86)";
-	#endif
 	
 	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
 
@@ -151,7 +142,8 @@ void CProfilerCallback::CreateOutputFile() {
 void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
-	// TODO (AG) size always equals nameBufferSize. Remove method parameter and use nameBufferSize directly.
+	// TODO (AG) size always equals bufferSize. Remove method parameter and use bufferSize directly.
+	// TODO (FS) I'd rather not. If someone changes the buffer size later on (e.g. because it turns out we need a bigger buffer), this can cause really ugly memory issues here. Hard to debug.
 	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
@@ -159,27 +151,26 @@ void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 
 /** Write coverage information to log file at shutdown. */
 HRESULT CProfilerCallback::Shutdown() {
-	// TODO (AG) Also use nameBufferSize here?
-	const int bufferSize = 2048;
 	char buffer[bufferSize];
 
 	EnterCriticalSection(&criticalSection);
 
 	// Write inlined methods.
-	sprintf_s(buffer, bufferSize, "//%i methods inlined\r\n", inlinedMethods.size());
+	sprintf_s(buffer, "//%i methods inlined\r\n", inlinedMethods.size());
 	WriteToFile(buffer);
 	WriteToLog(logKeyInlined, &inlinedMethods);
 
 	// TODO (AG) Is it safe to reuse the same buffer here? What if the second string is shorter than the first?
+	// TODO (FS) it's safe. sprintf_s will always write a \0 character. see here: https://msdn.microsoft.com/en-us/library/ce3zzk1k.aspx
 	// Write jitted methods.
-	sprintf_s(buffer, bufferSize, "//%i methods jitted\r\n", jittedMethods.size());
+	sprintf_s(buffer, "//%i methods jitted\r\n", jittedMethods.size());
 	WriteToFile(buffer);
 	WriteToLog(logKeyJitted, &jittedMethods);
 
 	// Write timestamp.
-	char timeStamp[nameBufferSize];
+	char timeStamp[bufferSize];
 
-	GetFormattedTime(timeStamp, nameBufferSize);
+	GetFormattedTime(timeStamp, sizeof(timeStamp));
 	WriteTupleToFile(logKeyStopped, timeStamp);
 
 	WriteTupleToFile(logKeyInfo, "Shutting down coverage profiler" );
@@ -258,11 +249,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	assemblyMap[assemblyId] = assemblyNumber;
 
 	// Log assembly load.
-	WCHAR assemblyName[nameBufferSize];
+	WCHAR assemblyName[bufferSize];
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	pICorProfilerInfo->GetAssemblyInfo(assemblyId, nameBufferSize,
+	pICorProfilerInfo->GetAssemblyInfo(assemblyId, bufferSize,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
@@ -295,8 +286,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 
-	char target[nameBufferSize];
-	sprintf_s(target, nameBufferSize, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
+	char target[bufferSize];
+	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
 	WriteTupleToFile(logKeyAssembly, target);
@@ -328,7 +319,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 	HRESULT hr = E_FAIL; // Assume fail.
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
-	WCHAR funName[nameBufferSize] = L"UNKNOWN";
+	WCHAR funName[bufferSize] = L"UNKNOWN";
 
 	// Get the MetadataImport interface and the metadata token.
 	hr = pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
@@ -340,10 +331,10 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		ULONG sigSize = 0;
 		ModuleID moduleId = 0;
 		hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
-				nameBufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
+				bufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 				NULL);
 		if (SUCCEEDED(hr)) {
-			WCHAR className[nameBufferSize] = L"UNKNOWN";
+			WCHAR className[bufferSize] = L"UNKNOWN";
 			ClassID classId = 0;
 
 			if (pICorProfilerInfo2 != NULL) {
@@ -378,10 +369,8 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 
 /** Write name-value pair to log file. */
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
-	// TODO (AG) Also use nameBufferSize here? And maybe rename?
-	const int bufferSize = 2048;
 	char buffer[bufferSize];
-	sprintf_s(buffer, bufferSize, "%s=%s\r\n", key, value);
+	sprintf_s(buffer, "%s=%s\r\n", key, value);
 	WriteToFile(buffer);
 }
 
@@ -411,9 +400,9 @@ void CProfilerCallback::WriteToLog(const char* key,
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		FunctionInfo info = *i;
-		char signature[nameBufferSize];
+		char signature[bufferSize];
 		signature[0] = '\0';
-		sprintf_s(signature, nameBufferSize, "%i:%i:%i", info.assemblyNumber, info.classToken,
+		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
 				info.functionToken);
 		WriteTupleToFile(key, signature);
 	}
