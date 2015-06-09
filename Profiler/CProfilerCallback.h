@@ -23,47 +23,61 @@ using namespace std;
  */
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
-	// Constructor.
+
+	/** Constructor. */
 	CProfilerCallback();
-	// Destructor.
+
+	/** Destructor. */
 	virtual ~CProfilerCallback();
 
 // Overwritten Profiling methods
-	// Startup/shutdown events
+
+	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
+
+	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
 
-	// JIT method to capture JIT events
+	/** Store information about jitted method. */
 	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 
-	// Assembly load hook to capture assembly load events
+	/** Write loaded assembly to log file. */
 	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
 
-	// Inlining hook to keep track of inlined methods
+	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+
 // End of overwritten profiling methods
 
-
-// FunctionIDMapper implementation
-	// Defined if a given function should be registered to receice a callback every time it is executed.
+	/**
+	* Defines whether the given function should trigger a callback everytime it is executed.
+	* 
+	* We do not register a single function callback in order to not affect
+	* performance. In effect, we disable this feature here. It has been tested via
+	* a performance benchmark, that this implementation does not impact call
+	* performance.
+	*
+	* For coverage profiling, we do not need this callback. However, the event is
+	* enabled in the event mask in order to force JIT-events for each first call to
+	* a function, independent of whether a pre-jitted version exists.)
+	*/
 	static UINT_PTR _stdcall FunctionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
-// End of FunctionIDMapper implementation
 
-	// Writes the given string to the output file.
+	/** Writes the given string to the log file. */
 	int WriteToFile(const char* string); 
-	
-	// Writes the given key and value to the output file.
+
+	/** Writes the given name-value pair to the log file. */
 	void WriteTupleToFile(const char* key, const char* value);
-	
-	// Retrieves the FunctionInfo for the function with the given ID.
+
+	/** Create method info object for a function id. */
 	HRESULT GetFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
 private:
-	// Default size for arrays. 
+	/** Default size for arrays. */
 	static const int bufferSize = 2048;
 
-	// Count the assemblies loaded.
+	/** Counts the number of assemblies loaded. */
 	int assemblyCounter;
 
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */

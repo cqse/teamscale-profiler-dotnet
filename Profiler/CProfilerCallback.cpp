@@ -24,19 +24,16 @@ const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
 const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
 #endif
 
-/** Constructor. */
 CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false) {
-		// Make a critical section for synchronization.
-		InitializeCriticalSection(&criticalSection);
+	// Make a critical section for synchronization.
+	InitializeCriticalSection(&criticalSection);
 }
 
-/** Destructor. */
 CProfilerCallback::~CProfilerCallback() {
 	// Clean up the critical section.
 	DeleteCriticalSection(&criticalSection);
 }
 
-/** Initializer. Called at profiler startup. */
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	char lightMode[bufferSize];
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
@@ -149,7 +146,6 @@ void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 			time.wMilliseconds);
 }
 
-/** Write coverage information to log file at shutdown. */
 HRESULT CProfilerCallback::Shutdown() {
 	char buffer[bufferSize];
 
@@ -210,16 +206,6 @@ DWORD CProfilerCallback::GetEventMask() {
 	return dwEventMask;
 }
 
-/**
- * We do not register a single function callback in order to not affect
- * performance. In effect, we disable this feature here. It has been tested via
- * a performance benchmark, that this implementation does not impact call
- * performance.
- *
- * For coverage profiling, we do not need this callback. However, the event is
- * enabled in the event mask in order to force JIT-events for each first call to
- * a function, independent of whether a pre-jitted version exists.)
- */
 UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId,
 		BOOL *pbHookFunction) {
 	// Disable hooking of functions.
@@ -229,7 +215,6 @@ UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId,
 	return functionId;
 }
 
-/** Store information about jitted method. */
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	// Notify monitor that method has been jitted.
@@ -241,7 +226,6 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	return S_OK;
 }
 
-/** Write loaded assembly to log file. */
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 		HRESULT hrStatus) {
 	// Store assembly counter for id.
@@ -296,7 +280,6 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	return S_OK;
 }
 
-/** Record inlining of method, but generally allow it. */
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL *pfShouldInline) {
 	// Save information about inlined method.
@@ -312,7 +295,6 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-/** Create method info object for a function id. */
 // TODO (AG) This is long and depply nested (see Teamscale findings). Maybe extract some of the inner ifs?
 HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		FunctionInfo* info) {
@@ -367,14 +349,12 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 	return hr;
 }
 
-/** Write name-value pair to log file. */
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
 	char buffer[bufferSize];
 	sprintf_s(buffer, "%s=%s\r\n", key, value);
 	WriteToFile(buffer);
 }
 
-/** Write to log file. */
 int CProfilerCallback::WriteToFile(const char *string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
