@@ -58,7 +58,6 @@ public:
 	static UINT_PTR _stdcall FunctionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 
-	/** Writes the given string to the log file. */
 	int WriteToFile(const char* string); 
 
 	/** Writes the given name-value pair to the log file. */
