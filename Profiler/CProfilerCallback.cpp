@@ -24,13 +24,11 @@ const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
 const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
 #endif
 
-CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false) {
-	// Make a critical section for synchronization.
+CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
 	InitializeCriticalSection(&criticalSection);
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	// Clean up the critical section.
 	DeleteCriticalSection(&criticalSection);
 }
 
@@ -45,9 +43,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	}
 
 	CreateOutputFile();
-
-	// Initialize data structures.
-	assemblyCounter = 1;
 
 	// Get reference to the ICorProfilerInfo interface 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
@@ -86,12 +81,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	return S_OK;
 }
 
-/**
- * Writes information about the profiled process (path to executable) to the
- * output file.
- */
 void CProfilerCallback::WriteProcessInfoToOutputFile(){
-	// Get the name of the executing process and write to log.
 	szAppPath[0] = 0;
 	szAppName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, szAppPath, MAX_PATH)) {
@@ -108,7 +98,6 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	WriteTupleToFile(logKeyProcess, process);
 }
 
-/** Create the output file and add general information. */
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
 	char targetDir[bufferSize];
@@ -135,7 +124,6 @@ void CProfilerCallback::CreateOutputFile() {
 	LeaveCriticalSection(&criticalSection);
 }
 
-/** Makes result point to a string representing the current time. */ 
 void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
@@ -186,12 +174,6 @@ HRESULT CProfilerCallback::Shutdown() {
 	return S_OK;
 }
 
-/**
- * The event mask tells the CLR which callbacks the profiler wants to subscribe
- * to. We enable JIT compilation and assembly loads for coverage profiling. In
- * addition, EnterLeave hooks are enabled to force re-jitting of pre-jitted
- * code, in order to make coverage information independent of pre-jitted code.
- */
 DWORD CProfilerCallback::GetEventMask() {
 	DWORD dwEventMask = 0;
 	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
@@ -261,7 +243,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 
     // We have to explicitly set these to NULL, otherwise the .NET framework will try
     // to access these pointers at a later time and crash, because they are not
-    // valid. This happened @MR when we started an application multiple times on
+    // valid. This happened when we started an application multiple times on
     // the same machine in rapid succession.
 	metadata.szLocale = NULL;
 	metadata.rProcessor = NULL;
@@ -359,7 +341,6 @@ int CProfilerCallback::WriteToFile(const char *string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
 
-	// Write out to the file if the file is open.
 	if (resultFile != INVALID_HANDLE_VALUE) {
 		EnterCriticalSection(&criticalSection);
 		if (TRUE == WriteFile(resultFile, string,
@@ -374,7 +355,6 @@ int CProfilerCallback::WriteToFile(const char *string) {
 	return retVal;
 }
 
-/** Write a list of functionInfos values to the log. */
 void CProfilerCallback::WriteToLog(const char* key,
 		vector<FunctionInfo>* functions) {
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();

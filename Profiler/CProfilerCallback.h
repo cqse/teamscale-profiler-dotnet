@@ -30,8 +30,6 @@ public:
 	/** Destructor. */
 	virtual ~CProfilerCallback();
 
-// Overwritten Profiling methods
-
 	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
@@ -47,20 +45,18 @@ public:
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
-// End of overwritten profiling methods
-
 	/**
-	* Defines whether the given function should trigger a callback everytime it is executed.
-	* 
-	* We do not register a single function callback in order to not affect
-	* performance. In effect, we disable this feature here. It has been tested via
-	* a performance benchmark, that this implementation does not impact call
-	* performance.
-	*
-	* For coverage profiling, we do not need this callback. However, the event is
-	* enabled in the event mask in order to force JIT-events for each first call to
-	* a function, independent of whether a pre-jitted version exists.)
-	*/
+	 * Defines whether the given function should trigger a callback everytime it is executed.
+	 * 
+	 * We do not register a single function callback in order to not affect
+	 * performance. In effect, we disable this feature here. It has been tested via
+	 * a performance benchmark, that this implementation does not impact call
+	 * performance.
+	 *
+	 * For coverage profiling, we do not need this callback. However, the event is
+	 * enabled in the event mask in order to force JIT-events for each first call to
+	 * a function, independent of whether a pre-jitted version exists.)
+	 */
 	static UINT_PTR _stdcall FunctionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 
@@ -83,56 +79,71 @@ private:
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
 	bool isLightMode;
 
-	// Maps from assemblyIDs to assemblyNumbers (determined by assemblyCounter).
-	// It is used to identify the declaring assembly for functions.
+	/**
+	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
+	 * It is used to identify the declaring assembly for functions.
+	 */
 	map<AssemblyID, int> assemblyMap;
 
-	// Info object that keeps track of jitted methods.
-	// We use a pointer because this collection may become large.
+	/**
+	 * Info object that keeps track of jitted methods.
+	 */
 	vector<FunctionInfo> jittedMethods;
 
-	// Collecions that keep track of inlined methods.
-	// We use the set to efficiently determine if we already noticed an inlined method and 
-	// the vector to uniquely store the information about inlined methods. Using one collection, 
-	// e.g. a hash_map would force us to implement additional functions to write the infos to the output file.
-	// We use pointers because these collections may become large.
+	/**
+	 * Keeps track of inlined methods.
+	 * We use the set to efficiently determine if we already noticed an inlined method.
+	 */
 	set<FunctionID> inlinedMethodIds;
+
+	/**
+	 * Collecions that keep track of inlined methods.
+	 * We use the vector to uniquely store the information about inlined methods.
+	 */
 	vector<FunctionInfo> inlinedMethods;
 
-	// Function to set up our event mask.
+	/**
+	 * Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
+	 * to. We enable JIT compilation and assembly loads for coverage profiling. In
+	 * addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
+	 * code, in order to make coverage information independent of pre-jitted code.
+	 */
 	DWORD GetEventMask();
 
-	// File into which results are written.
+	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE resultFile;
 	
-	// Smart pointer container for ICorProfilerInfo reference.
+	/** Smart pointer container for ICorProfilerInfo reference. */
 	CComQIPtr<ICorProfilerInfo> pICorProfilerInfo;	
 	
-	// Smart pointer container for ICorProfilerInfo2 reference.
+	/** Smart pointer container for ICorProfilerInfo2 reference. */
 	CComQIPtr<ICorProfilerInfo2> pICorProfilerInfo2;	
 
-	// Name of the result file.
+	/** Path of the result file. */
 	TCHAR pszResultFile[_MAX_PATH];
 
-	// Path for the process we are in.
+	/** Path of the process we are in. */
 	wchar_t szAppPath[_MAX_PATH]; 
    
-	// Name of the file for the process we are in.
+	/** Name of the profiled application. */
 	wchar_t szAppName[_MAX_FNAME]; 
 	
-	// Synchronization primitive
+	/** Synchronizes access to the result file. */
 	CRITICAL_SECTION criticalSection; 
-	
-	// Writes info about the process to the output file.
+
+	/**
+	 * Writes information about the profiled process to the
+	 * output file.
+	 */
 	void WriteProcessInfoToOutputFile(); 
-	
-	// Creates the output file.
+
+	/** Create the output file and add general information. */
 	void CreateOutputFile(); 
-	
-	// Writes information about the called functions to the output file.
+
+	/** Write a information about the given functions to the log. */
 	void WriteToLog(const char* key, vector<FunctionInfo>* functions); 
 
-	// Return the current time.
+	/** Fills the given buffer with a string representing the current time. */
 	void GetFormattedTime(char *result, size_t size);
 };
 #endif
