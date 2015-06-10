@@ -9,20 +9,24 @@
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-const char* logKeyInfo = "Info";
-const char* logKeyAssembly = "Assembly";
-const char* logKeyProcess = "Process";
-const char* logKeyInlined = "Inlined";
-const char* logKeyJitted = "Jitted";
-const char* logKeyStarted = "Started";
-const char* logKeyStopped = "Stopped";
+namespace {
 
-/** The version of the profiler */
+	const char* logKeyInfo = "Info";
+	const char* logKeyAssembly = "Assembly";
+	const char* logKeyProcess = "Process";
+	const char* logKeyInlined = "Inlined";
+	const char* logKeyJitted = "Jitted";
+	const char* logKeyStarted = "Started";
+	const char* logKeyStopped = "Stopped";
+
+	/** The version of the profiler */
 #ifdef _WIN64
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
 #else
-const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
+	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
 #endif
+
+}
 
 CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
 	InitializeCriticalSection(&criticalSection);

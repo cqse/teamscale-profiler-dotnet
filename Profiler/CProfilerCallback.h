@@ -15,8 +15,6 @@
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
 
-using namespace std;
-
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
  * coverage.
