@@ -269,55 +269,57 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-// TODO (AG) This is long and depply nested (see Teamscale findings). Maybe extract some of the inner ifs?
-HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
+HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
 	WCHAR funName[bufferSize] = L"UNKNOWN";
 
-	// Get the MetadataImport interface and the metadata token.
-	HRESULT hr = pICorProfilerInfo2->GetTokenAndMetaDataFromFunction(functionID,
+	HRESULT hr = pICorProfilerInfo2->GetTokenAndMetaDataFromFunction(functionId,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
-	if (SUCCEEDED(hr)) {
-		mdTypeDef classToken = mdTypeDefNil;
-		DWORD methodAttr = 0;
-		PCCOR_SIGNATURE sigBlob = NULL;
-		ULONG sigSize = 0;
-		ModuleID moduleId = 0;
-		hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
-				bufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
-				NULL);
-		if (SUCCEEDED(hr)) {
-			WCHAR className[bufferSize] = L"UNKNOWN";
-			ClassID classId = 0;
-
-			ULONG32 values = 0;
-			hr = pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
-					&classId, &moduleId, &functionToken, 0, &values, NULL);
-			if (!SUCCEEDED(hr)) {
-				classId = 0;
-			}
-
-			int assemblyNumber = -1;
-			if (SUCCEEDED(hr) && moduleId != 0) {
-				// Get assembly name.
-				AssemblyID assemblyId;
-				hr = pICorProfilerInfo2->GetModuleInfo(moduleId, NULL, NULL,
-						NULL, NULL, &assemblyId);
-				if (SUCCEEDED(hr)) {
-					assemblyNumber = assemblyMap[assemblyId];
-				}
-			}
-
-			info->assemblyNumber = assemblyNumber;
-			info->classToken = classToken;
-			info->functionToken = functionToken;
-		}
-
-		pMDImport->Release();
+	if (!SUCCEEDED(hr)) {
+		return hr;
 	}
+
+	mdTypeDef classToken = mdTypeDefNil;
+	DWORD methodAttr = 0;
+	PCCOR_SIGNATURE sigBlob = NULL;
+	ULONG sigSize = 0;
+	ModuleID moduleId = 0;
+	hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
+			bufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
+			NULL);
+	if (SUCCEEDED(hr)) {
+		FillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
+	}
+	
+	pMDImport->Release();
+	
 	return hr;
+}
+
+void CProfilerCallback::FillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken) {
+	ClassID classId = 0;
+	ULONG32 values = 0;
+	HRESULT hr = pICorProfilerInfo2->GetFunctionInfo2(functionId, 0,
+		&classId, &moduleId, &functionToken, 0, &values, NULL);
+	if (!SUCCEEDED(hr)) {
+		classId = 0;
+	}
+
+	int assemblyNumber = -1;
+	if (SUCCEEDED(hr) && moduleId != 0) {
+		AssemblyID assemblyId;
+		hr = pICorProfilerInfo2->GetModuleInfo(moduleId, NULL, NULL,
+			NULL, NULL, &assemblyId);
+		if (SUCCEEDED(hr)) {
+			assemblyNumber = assemblyMap[assemblyId];
+		}
+	}
+
+	info->assemblyNumber = assemblyNumber;
+	info->classToken = classToken;
+	info->functionToken = functionToken;
 }
 
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {

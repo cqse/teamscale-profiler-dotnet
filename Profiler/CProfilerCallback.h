@@ -133,10 +133,13 @@ private:
 	void WriteProcessInfoToOutputFile(); 
 
 	/** Create the output file and add general information. */
-	void CreateOutputFile(); 
+	void CreateOutputFile();
 
 	/** Write a information about the given functions to the log. */
-	void WriteToLog(const char* key, vector<FunctionInfo>* functions); 
+	void WriteToLog(const char* key, vector<FunctionInfo>* functions);
+
+	/** Fills the given function info for the function represented by the given IDs and tokens. */
+	void FillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken);
 
 	/** Fills the given buffer with a string representing the current time. */
 	void GetFormattedTime(char *result, size_t size);
