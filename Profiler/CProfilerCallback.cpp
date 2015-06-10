@@ -33,7 +33,7 @@ namespace {
 	const char* LOG_KEY_STOPPED = "Stopped";
 
 	/** The version of the profiler */
-	const char* profilerVersionInfo =
+	const char* PROFILER_VERSION_INFO =
 #ifdef _WIN64
 		"Coverage profiler version 0.9.2.5 (x64)"
 #else
@@ -111,7 +111,7 @@ void CProfilerCallback::CreateOutputFile() {
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-	WriteTupleToFile(LOG_KEY_INFO, profilerVersionInfo);
+	WriteTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
 
 	WriteTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
