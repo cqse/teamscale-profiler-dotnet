@@ -11,21 +11,35 @@
 
 namespace {
 
-	const char* logKeyInfo = "Info";
-	const char* logKeyAssembly = "Assembly";
-	const char* logKeyProcess = "Process";
-	const char* logKeyInlined = "Inlined";
-	const char* logKeyJitted = "Jitted";
-	const char* logKeyStarted = "Started";
-	const char* logKeyStopped = "Stopped";
+	/** The key to log information useful when interpreting the traces. */
+	const char* LOG_KEY_INFO = "Info";
+
+	/** The key to log information about a single assembly. */
+	const char* LOG_KEY_ASSEMBLY = "Assembly";
+
+	/** The key to log information about the profiled process. */
+	const char* LOG_KEY_PROCESS = "Process";
+
+	/** The key to log information about inlined methods. */
+	const char* LOG_KEY_INLINED = "Inlined";
+
+	/** The key to log information about jitted methods. */
+	const char* LOG_KEY_JITTED = "Jitted";
+
+	/** The key to log information about the profiler startup. */
+	const char* LOG_KEY_STARTED = "Started";
+
+	/** The key to log information about the profiler shutdown. */
+	const char* LOG_KEY_STOPPED = "Stopped";
 
 	/** The version of the profiler */
+	const char* profilerVersionInfo =
 #ifdef _WIN64
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x64)";
+		"Coverage profiler version 0.9.2.5 (x64)"
 #else
-	const char* profilerVersionInfo = "Coverage profiler version 0.9.2.4 (x86)";
+		"Coverage profiler version 0.9.2.5 (x86)"
 #endif
-
+		;
 }
 
 CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
@@ -41,9 +55,9 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
-		WriteTupleToFile(logKeyInfo, "Mode: light");
+		WriteTupleToFile(LOG_KEY_INFO, "Mode: light");
 	} else {
-		WriteTupleToFile(logKeyInfo, "Mode: force re-jitting");
+		WriteTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
 	CreateOutputFile();
@@ -99,7 +113,7 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	// turn szAppPath from wchar_t to char
 	char process[bufferSize];
 	sprintf_s(process, "%S", szAppPath);
-	WriteTupleToFile(logKeyProcess, process);
+	WriteTupleToFile(LOG_KEY_PROCESS, process);
 }
 
 void CProfilerCallback::CreateOutputFile() {
@@ -122,9 +136,9 @@ void CProfilerCallback::CreateOutputFile() {
 	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-	WriteTupleToFile(logKeyInfo, profilerVersionInfo);
+	WriteTupleToFile(LOG_KEY_INFO, profilerVersionInfo);
 
-	WriteTupleToFile(logKeyStarted, timeStamp);
+	WriteTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }
 
@@ -146,22 +160,22 @@ HRESULT CProfilerCallback::Shutdown() {
 	// Write inlined methods.
 	sprintf_s(buffer, "//%i methods inlined\r\n", inlinedMethods.size());
 	WriteToFile(buffer);
-	WriteToLog(logKeyInlined, &inlinedMethods);
+	WriteToLog(LOG_KEY_INLINED, &inlinedMethods);
 
 	// TODO (AG) Is it safe to reuse the same buffer here? What if the second string is shorter than the first?
 	// TODO (FS) it's safe. sprintf_s will always write a \0 character. see here: https://msdn.microsoft.com/en-us/library/ce3zzk1k.aspx
 	// Write jitted methods.
 	sprintf_s(buffer, "//%i methods jitted\r\n", jittedMethods.size());
 	WriteToFile(buffer);
-	WriteToLog(logKeyJitted, &jittedMethods);
+	WriteToLog(LOG_KEY_JITTED, &jittedMethods);
 
 	// Write timestamp.
 	char timeStamp[bufferSize];
 
 	GetFormattedTime(timeStamp, sizeof(timeStamp));
-	WriteTupleToFile(logKeyStopped, timeStamp);
+	WriteTupleToFile(LOG_KEY_STOPPED, timeStamp);
 
-	WriteTupleToFile(logKeyInfo, "Shutting down coverage profiler" );
+	WriteTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler" );
 
 	LeaveCriticalSection(&criticalSection);
 
@@ -260,7 +274,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
-	WriteTupleToFile(logKeyAssembly, target);
+	WriteTupleToFile(LOG_KEY_ASSEMBLY, target);
 
 	// Always return OK
 	return S_OK;
