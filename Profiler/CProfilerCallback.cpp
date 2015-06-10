@@ -51,7 +51,7 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
-	char lightMode[bufferSize];
+	char lightMode[BUFFER_SIZE];
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
@@ -86,23 +86,23 @@ void CProfilerCallback::WriteProcessInfoToOutputFile(){
 	}
 
 	// turn szAppPath from wchar_t to char
-	char process[bufferSize];
+	char process[BUFFER_SIZE];
 	sprintf_s(process, "%S", szAppPath);
 	WriteTupleToFile(LOG_KEY_PROCESS, process);
 }
 
 void CProfilerCallback::CreateOutputFile() {
 	// Read target directory from environment variable.
-	char targetDir[bufferSize];
+	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
-		sprintf_s(targetDir, bufferSize, "c:/profiler/");
+		sprintf_s(targetDir, BUFFER_SIZE, "c:/profiler/");
 	}
 
 	// Create target file.
-	char targetFilename[bufferSize];
-	char timeStamp[bufferSize];
-	GetFormattedTime(timeStamp, bufferSize);
+	char targetFilename[BUFFER_SIZE];
+	char timeStamp[BUFFER_SIZE];
+	GetFormattedTime(timeStamp, BUFFER_SIZE);
 
 	sprintf_s(targetFilename, "%s/coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(pszResultFile, targetFilename);
@@ -120,7 +120,7 @@ void CProfilerCallback::CreateOutputFile() {
 void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
-	// TODO (AG) size always equals bufferSize. Remove method parameter and use bufferSize directly.
+	// TODO (AG) size always equals BUFFER_SIZE. Remove method parameter and use BUFFER_SIZE directly.
 	// TODO (FS) I'd rather not. If someone changes the buffer size later on (e.g. because it turns out we need a bigger buffer), this can cause really ugly memory issues here. Hard to debug.
 	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
@@ -128,7 +128,7 @@ void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-	char buffer[bufferSize];
+	char buffer[BUFFER_SIZE];
 
 	EnterCriticalSection(&criticalSection);
 
@@ -145,7 +145,7 @@ HRESULT CProfilerCallback::Shutdown() {
 	WriteToLog(LOG_KEY_JITTED, &jittedMethods);
 
 	// Write timestamp.
-	char timeStamp[bufferSize];
+	char timeStamp[BUFFER_SIZE];
 
 	GetFormattedTime(timeStamp, sizeof(timeStamp));
 	WriteTupleToFile(LOG_KEY_STOPPED, timeStamp);
@@ -207,11 +207,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	assemblyMap[assemblyId] = assemblyNumber;
 
 	// Log assembly load.
-	WCHAR assemblyName[bufferSize];
+	WCHAR assemblyName[BUFFER_SIZE];
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	pICorProfilerInfo2->GetAssemblyInfo(assemblyId, bufferSize,
+	pICorProfilerInfo2->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
@@ -244,7 +244,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 
-	char target[bufferSize];
+	char target[BUFFER_SIZE];
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
@@ -273,7 +273,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
-	WCHAR funName[bufferSize] = L"UNKNOWN";
+	WCHAR funName[BUFFER_SIZE] = L"UNKNOWN";
 
 	HRESULT hr = pICorProfilerInfo2->GetTokenAndMetaDataFromFunction(functionId,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
@@ -287,7 +287,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
 	ULONG sigSize = 0;
 	ModuleID moduleId = 0;
 	hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
-			bufferSize, 0, &methodAttr, &sigBlob, &sigSize, NULL,
+			BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 			NULL);
 	if (SUCCEEDED(hr)) {
 		FillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
@@ -323,7 +323,7 @@ void CProfilerCallback::FillFunctionInfo(FunctionInfo* info, FunctionID function
 }
 
 void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
-	char buffer[bufferSize];
+	char buffer[BUFFER_SIZE];
 	sprintf_s(buffer, "%s=%s\r\n", key, value);
 	WriteToFile(buffer);
 }
@@ -351,7 +351,7 @@ void CProfilerCallback::WriteToLog(const char* key,
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		FunctionInfo info = *i;
-		char signature[bufferSize];
+		char signature[BUFFER_SIZE];
 		signature[0] = '\0';
 		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
 				info.functionToken);

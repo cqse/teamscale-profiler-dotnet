@@ -69,7 +69,7 @@ public:
 
 private:
 	/** Default size for arrays. */
-	static const int bufferSize = 2048;
+	static const int BUFFER_SIZE = 2048;
 
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter;
