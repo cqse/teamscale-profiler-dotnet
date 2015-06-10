@@ -62,39 +62,14 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 
 	CreateOutputFile();
 
-	// Get reference to the ICorProfilerInfo interface 
-	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo, (LPVOID *)&pICorProfilerInfo );
-	if ( FAILED(hr) ) {
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &pICorProfilerInfo2);
+	if (FAILED(hr) || pICorProfilerInfo2.p == NULL) {
 		return E_INVALIDARG;
 	}
 
-	hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *)&pICorProfilerInfo2 );
-
-	if ( FAILED(hr) ) {
-		// We still want to work if this call fails, might be an older .NET
-		// version than VS2005.
-		OutputDebugString("Pre .NET 2 version detected");
-		pICorProfilerInfo2.p = NULL;
-	}
-
-	// Indicate which events we're interested in.
 	DWORD dwEventMask = GetEventMask();
-
-	// Set the event mask for the interfaces of .NET 1 and .NET 2. We currently
-	// do not need the features of the profiling interface beyond .NET 2.
-	// TODO (AG) It appears that the new profiler does *not at all* work with older .NET versions. So maybe this can be removed?
-	// TODO (FS) to be honest, I have no idea whaat is happening here and why. I'd rather consult with MF before changing anything here.
-	if (pICorProfilerInfo2.p == NULL) {
-		// Pre .NET 2.
-		pICorProfilerInfo->SetEventMask(dwEventMask);
-		// Enable function mapping.
-		pICorProfilerInfo->SetFunctionIDMapper(FunctionMapper);
-	} else {
-		// .NET 2 and beyond.
-		pICorProfilerInfo2->SetEventMask(dwEventMask);
-		// Enable function mapping.
-		pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
-	}
+	pICorProfilerInfo2->SetEventMask(dwEventMask);
+	pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
 	WriteProcessInfoToOutputFile();
 	return S_OK;
 }
@@ -179,7 +154,6 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	LeaveCriticalSection(&criticalSection);
 
-	// Cleanup.
 	pICorProfilerInfo2->ForceGC();
 
 	// Close the log file.
@@ -237,12 +211,12 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	pICorProfilerInfo->GetAssemblyInfo(assemblyId, bufferSize,
+	pICorProfilerInfo2->GetAssemblyInfo(assemblyId, bufferSize,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
 	IMetaDataAssemblyImport *pMetaDataAssemblyImport = NULL;
-	pICorProfilerInfo->GetModuleMetaData(moduleId, ofRead,
+	pICorProfilerInfo2->GetModuleMetaData(moduleId, ofRead,
 			IID_IMetaDataAssemblyImport, (IUnknown**) &pMetaDataAssemblyImport);
 
 	// Get the assembly token.
@@ -298,13 +272,12 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 // TODO (AG) This is long and depply nested (see Teamscale findings). Maybe extract some of the inner ifs?
 HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 		FunctionInfo* info) {
-	HRESULT hr = E_FAIL; // Assume fail.
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
 	WCHAR funName[bufferSize] = L"UNKNOWN";
 
 	// Get the MetadataImport interface and the metadata token.
-	hr = pICorProfilerInfo->GetTokenAndMetaDataFromFunction(functionID,
+	HRESULT hr = pICorProfilerInfo2->GetTokenAndMetaDataFromFunction(functionID,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
 	if (SUCCEEDED(hr)) {
 		mdTypeDef classToken = mdTypeDefNil;
@@ -319,20 +292,18 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionID,
 			WCHAR className[bufferSize] = L"UNKNOWN";
 			ClassID classId = 0;
 
-			if (pICorProfilerInfo2 != NULL) {
-				ULONG32 values = 0;
-				hr = pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
-						&classId, &moduleId, &functionToken, 0, &values, NULL);
-				if (!SUCCEEDED(hr)) {
-					classId = 0;
-				}
+			ULONG32 values = 0;
+			hr = pICorProfilerInfo2->GetFunctionInfo2(functionID, 0,
+					&classId, &moduleId, &functionToken, 0, &values, NULL);
+			if (!SUCCEEDED(hr)) {
+				classId = 0;
 			}
 
 			int assemblyNumber = -1;
 			if (SUCCEEDED(hr) && moduleId != 0) {
 				// Get assembly name.
 				AssemblyID assemblyId;
-				hr = pICorProfilerInfo->GetModuleInfo(moduleId, NULL, NULL,
+				hr = pICorProfilerInfo2->GetModuleInfo(moduleId, NULL, NULL,
 						NULL, NULL, &assemblyId);
 				if (SUCCEEDED(hr)) {
 					assemblyNumber = assemblyMap[assemblyId];

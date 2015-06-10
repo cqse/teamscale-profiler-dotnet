@@ -111,9 +111,6 @@ private:
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE resultFile;
 	
-	/** Smart pointer container for ICorProfilerInfo reference. */
-	CComQIPtr<ICorProfilerInfo> pICorProfilerInfo;	
-	
 	/** Smart pointer container for ICorProfilerInfo2 reference. */
 	CComQIPtr<ICorProfilerInfo2> pICorProfilerInfo2;	
 
