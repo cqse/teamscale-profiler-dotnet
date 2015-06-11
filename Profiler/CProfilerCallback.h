@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 90E4C5BDCAB24A3EB5B91E26273CB699
+ * @ConQAT.Rating YELLOW Hash: CAB572A31AC9DE1BFF349EA972B6DBA0
  */
 
 #ifndef _ProfilerCallback_H_
@@ -111,7 +111,7 @@ private:
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE resultFile;
 	
-	/** Smart pointer container for ICorProfilerInfo2 reference. */
+	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
 
 	/** Path of the result file. */
