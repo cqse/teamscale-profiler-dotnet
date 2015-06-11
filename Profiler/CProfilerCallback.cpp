@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 319C145D01BEA068904C5C8AE957347B
+ * @ConQAT.Rating YELLOW Hash: C5E67FB7AE214B4F4419F2A426C59F26
  */
 
 #include <windows.h>
@@ -55,43 +55,43 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
-		WriteTupleToFile(LOG_KEY_INFO, "Mode: light");
+		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
 	} else {
-		WriteTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
+		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
-	CreateOutputFile();
+	createResultFile();
 
-	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &pICorProfilerInfo2);
-	if (FAILED(hr) || pICorProfilerInfo2.p == NULL) {
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &profilerInfo);
+	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
 	}
 
-	DWORD dwEventMask = GetEventMask();
-	pICorProfilerInfo2->SetEventMask(dwEventMask);
-	pICorProfilerInfo2->SetFunctionIDMapper(FunctionMapper);
-	WriteProcessInfoToOutputFile();
+	DWORD dwEventMask = getEventMask();
+	profilerInfo->SetEventMask(dwEventMask);
+	profilerInfo->SetFunctionIDMapper(functionMapper);
+	writeProcessInfoToOutputFile();
 	return S_OK;
 }
 
-void CProfilerCallback::WriteProcessInfoToOutputFile(){
-	szAppPath[0] = 0;
-	szAppName[0] = 0;
-	if (0 == GetModuleFileNameW(NULL, szAppPath, MAX_PATH)) {
-		_wsplitpath_s(szAppPath, NULL, 0, NULL, 0, szAppName, _MAX_FNAME, NULL, 0);
+void CProfilerCallback::writeProcessInfoToOutputFile(){
+	appPath[0] = 0;
+	appName[0] = 0;
+	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
+		_wsplitpath_s(appPath, NULL, 0, NULL, 0, appName, _MAX_FNAME, NULL, 0);
 	}
-	if (szAppPath[0] == 0) {
-		wcscpy_s(szAppPath, MAX_PATH, L"No Application Path Found");
-		wcscpy_s(szAppName, _MAX_FNAME, L"No Application Name Found");
+	if (appPath[0] == 0) {
+		wcscpy_s(appPath, MAX_PATH, L"No Application Path Found");
+		wcscpy_s(appName, _MAX_FNAME, L"No Application Name Found");
 	}
 
 	// turn szAppPath from wchar_t to char
 	char process[BUFFER_SIZE];
-	sprintf_s(process, "%S", szAppPath);
-	WriteTupleToFile(LOG_KEY_PROCESS, process);
+	sprintf_s(process, "%S", appPath);
+	writeTupleToFile(LOG_KEY_PROCESS, process);
 }
 
-void CProfilerCallback::CreateOutputFile() {
+void CProfilerCallback::createResultFile() {
 	// Read target directory from environment variable.
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
@@ -102,22 +102,22 @@ void CProfilerCallback::CreateOutputFile() {
 	// Create target file.
 	char targetFilename[BUFFER_SIZE];
 	char timeStamp[BUFFER_SIZE];
-	GetFormattedTime(timeStamp, BUFFER_SIZE);
+	getFormattedCurrentTime(timeStamp, BUFFER_SIZE);
 
 	sprintf_s(targetFilename, "%s/coverage_%s.txt", targetDir, timeStamp);
-	_tcscpy_s(pszResultFile, targetFilename);
+	_tcscpy_s(resultFilePath, targetFilename);
 
 	EnterCriticalSection(&criticalSection);
-	resultFile = CreateFile(pszResultFile, GENERIC_WRITE, FILE_SHARE_READ,
+	resultFile = CreateFile(resultFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-	WriteTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
+	writeTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
 
-	WriteTupleToFile(LOG_KEY_STARTED, timeStamp);
+	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }
 
-void CProfilerCallback::GetFormattedTime(char *result, size_t size) {
+void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
 	// TODO (AG) size always equals BUFFER_SIZE. Remove method parameter and use BUFFER_SIZE directly.
@@ -134,27 +134,27 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	// Write inlined methods.
 	sprintf_s(buffer, "//%i methods inlined\r\n", inlinedMethods.size());
-	WriteToFile(buffer);
-	WriteToLog(LOG_KEY_INLINED, &inlinedMethods);
+	writeToFile(buffer);
+	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
 
 	// TODO (AG) Is it safe to reuse the same buffer here? What if the second string is shorter than the first?
 	// TODO (FS) it's safe. sprintf_s will always write a \0 character. see here: https://msdn.microsoft.com/en-us/library/ce3zzk1k.aspx
 	// Write jitted methods.
 	sprintf_s(buffer, "//%i methods jitted\r\n", jittedMethods.size());
-	WriteToFile(buffer);
-	WriteToLog(LOG_KEY_JITTED, &jittedMethods);
+	writeToFile(buffer);
+	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
 
 	// Write timestamp.
 	char timeStamp[BUFFER_SIZE];
 
-	GetFormattedTime(timeStamp, sizeof(timeStamp));
-	WriteTupleToFile(LOG_KEY_STOPPED, timeStamp);
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
+	writeTupleToFile(LOG_KEY_STOPPED, timeStamp);
 
-	WriteTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler" );
+	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler" );
 
 	LeaveCriticalSection(&criticalSection);
 
-	pICorProfilerInfo2->ForceGC();
+	profilerInfo->ForceGC();
 
 	// Close the log file.
 	EnterCriticalSection(&criticalSection);
@@ -166,21 +166,21 @@ HRESULT CProfilerCallback::Shutdown() {
 	return S_OK;
 }
 
-DWORD CProfilerCallback::GetEventMask() {
+DWORD CProfilerCallback::getEventMask() {
 	DWORD dwEventMask = 0;
 	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
 	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	// disable force re-jitting for the light variant
 	if (!isLightMode) {
-		WriteTupleToFile("Mode", "Light");
+		writeTupleToFile("Mode", "Light");
 		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
 
 	return dwEventMask;
 }
 
-UINT_PTR CProfilerCallback::FunctionMapper(FunctionID functionId,
+UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 		BOOL *pbHookFunction) {
 	// Disable hooking of functions.
 	*pbHookFunction = false;
@@ -193,7 +193,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	// Notify monitor that method has been jitted.
 	FunctionInfo info;
-	GetFunctionInfo(functionId, &info);
+	getFunctionInfo(functionId, &info);
 	jittedMethods.push_back(info);
 
 	// Always return OK
@@ -211,12 +211,12 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	pICorProfilerInfo2->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
+	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
 	IMetaDataAssemblyImport *pMetaDataAssemblyImport = NULL;
-	pICorProfilerInfo2->GetModuleMetaData(moduleId, ofRead,
+	profilerInfo->GetModuleMetaData(moduleId, ofRead,
 			IID_IMetaDataAssemblyImport, (IUnknown**) &pMetaDataAssemblyImport);
 
 	// Get the assembly token.
@@ -248,7 +248,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
-	WriteTupleToFile(LOG_KEY_ASSEMBLY, target);
+	writeTupleToFile(LOG_KEY_ASSEMBLY, target);
 
 	// Always return OK
 	return S_OK;
@@ -259,7 +259,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	// Save information about inlined method.
 	if (inlinedMethodIds.insert(calleeId).second == true) {
 		FunctionInfo info;
-		GetFunctionInfo(calleeId, &info);
+		getFunctionInfo(calleeId, &info);
 		inlinedMethods.push_back(info);
 	}
 	// Always allow inlining.
@@ -269,13 +269,13 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
+HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
 	WCHAR funName[BUFFER_SIZE] = L"UNKNOWN";
 
-	HRESULT hr = pICorProfilerInfo2->GetTokenAndMetaDataFromFunction(functionId,
+	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
 	if (!SUCCEEDED(hr)) {
 		return hr;
@@ -290,7 +290,7 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
 			BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 			NULL);
 	if (SUCCEEDED(hr)) {
-		FillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
+		fillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
 	}
 	
 	pMDImport->Release();
@@ -298,10 +298,10 @@ HRESULT CProfilerCallback::GetFunctionInfo(FunctionID functionId,
 	return hr;
 }
 
-void CProfilerCallback::FillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken) {
+void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken) {
 	ClassID classId = 0;
 	ULONG32 values = 0;
-	HRESULT hr = pICorProfilerInfo2->GetFunctionInfo2(functionId, 0,
+	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
 		&classId, &moduleId, &functionToken, 0, &values, NULL);
 	if (!SUCCEEDED(hr)) {
 		classId = 0;
@@ -310,7 +310,7 @@ void CProfilerCallback::FillFunctionInfo(FunctionInfo* info, FunctionID function
 	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
 		AssemblyID assemblyId;
-		hr = pICorProfilerInfo2->GetModuleInfo(moduleId, NULL, NULL,
+		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 			NULL, NULL, &assemblyId);
 		if (SUCCEEDED(hr)) {
 			assemblyNumber = assemblyMap[assemblyId];
@@ -322,13 +322,13 @@ void CProfilerCallback::FillFunctionInfo(FunctionInfo* info, FunctionID function
 	info->functionToken = functionToken;
 }
 
-void CProfilerCallback::WriteTupleToFile(const char* key, const char* value) {
+void CProfilerCallback::writeTupleToFile(const char* key, const char* value) {
 	char buffer[BUFFER_SIZE];
 	sprintf_s(buffer, "%s=%s\r\n", key, value);
-	WriteToFile(buffer);
+	writeToFile(buffer);
 }
 
-int CProfilerCallback::WriteToFile(const char *string) {
+int CProfilerCallback::writeToFile(const char *string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
 
@@ -346,7 +346,7 @@ int CProfilerCallback::WriteToFile(const char *string) {
 	return retVal;
 }
 
-void CProfilerCallback::WriteToLog(const char* key,
+void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		vector<FunctionInfo>* functions) {
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
@@ -355,6 +355,6 @@ void CProfilerCallback::WriteToLog(const char* key,
 		signature[0] = '\0';
 		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
 				info.functionToken);
-		WriteTupleToFile(key, signature);
+		writeTupleToFile(key, signature);
 	}
 }

@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating YELLOW Hash: 9B7348F228F00E80DF29CD5E615D5FE0
+ * @ConQAT.Rating YELLOW Hash: 90E4C5BDCAB24A3EB5B91E26273CB699
  */
 
 #ifndef _ProfilerCallback_H_
@@ -55,17 +55,17 @@ public:
 	 * enabled in the event mask in order to force JIT-events for each first call to
 	 * a function, independent of whether a pre-jitted version exists.)
 	 */
-	static UINT_PTR _stdcall FunctionMapper(FunctionID functionId,
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 
 	/** Writes the given string to the log file. */
-	int WriteToFile(const char* string); 
+	int writeToFile(const char* string); 
 
 	/** Writes the given name-value pair to the log file. */
-	void WriteTupleToFile(const char* key, const char* value);
+	void writeTupleToFile(const char* key, const char* value);
 
 	/** Create method info object for a function id. */
-	HRESULT GetFunctionInfo( FunctionID functionID, FunctionInfo* info);
+	HRESULT getFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
 private:
 	/** Default size for arrays. */
@@ -106,22 +106,22 @@ private:
 	 * addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
 	 * code, in order to make coverage information independent of pre-jitted code.
 	 */
-	DWORD GetEventMask();
+	DWORD getEventMask();
 
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE resultFile;
 	
 	/** Smart pointer container for ICorProfilerInfo2 reference. */
-	CComQIPtr<ICorProfilerInfo2> pICorProfilerInfo2;	
+	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
 
 	/** Path of the result file. */
-	TCHAR pszResultFile[_MAX_PATH];
+	TCHAR resultFilePath[_MAX_PATH];
 
 	/** Path of the process we are in. */
-	wchar_t szAppPath[_MAX_PATH]; 
+	wchar_t appPath[_MAX_PATH]; 
    
 	/** Name of the profiled application. */
-	wchar_t szAppName[_MAX_FNAME]; 
+	wchar_t appName[_MAX_FNAME]; 
 	
 	/** Synchronizes access to the result file. */
 	CRITICAL_SECTION criticalSection; 
@@ -130,18 +130,20 @@ private:
 	 * Writes information about the profiled process to the
 	 * output file.
 	 */
-	void WriteProcessInfoToOutputFile(); 
+	void writeProcessInfoToOutputFile(); 
 
 	/** Create the output file and add general information. */
-	void CreateOutputFile();
+	void createResultFile();
 
 	/** Write a information about the given functions to the log. */
-	void WriteToLog(const char* key, vector<FunctionInfo>* functions);
+	void writeFunctionInfosToLog(const char* key, vector<FunctionInfo>* functions);
 
 	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void FillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken);
+	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken);
 
 	/** Fills the given buffer with a string representing the current time. */
-	void GetFormattedTime(char *result, size_t size);
+	void getFormattedCurrentTime(char *result, size_t size);
+
 };
+
 #endif
