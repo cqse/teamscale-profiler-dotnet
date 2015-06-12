@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: C5E67FB7AE214B4F4419F2A426C59F26
+ * @ConQAT.Rating RED Hash: 2E6CDE591DB8AE98BD0618BAE72B9D79
  */
 
 #include <windows.h>
@@ -55,6 +55,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
+		// TODO (AG) This seems redundant to line 178. Please decide which one makes more sense.
 		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
 	} else {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
@@ -137,8 +138,6 @@ HRESULT CProfilerCallback::Shutdown() {
 	writeToFile(buffer);
 	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
 
-	// TODO (AG) Is it safe to reuse the same buffer here? What if the second string is shorter than the first?
-	// TODO (FS) it's safe. sprintf_s will always write a \0 character. see here: https://msdn.microsoft.com/en-us/library/ce3zzk1k.aspx
 	// Write jitted methods.
 	sprintf_s(buffer, "//%i methods jitted\r\n", jittedMethods.size());
 	writeToFile(buffer);
@@ -173,6 +172,9 @@ DWORD CProfilerCallback::getEventMask() {
 
 	// disable force re-jitting for the light variant
 	if (!isLightMode) {
+		// TODO (AG) That seems wrong. If *not* light mode then write "Mode=Light" to the file? Should rather be "Full", I guess.
+		// TODO (AG) Also it seems redundant to lines 59-61
+		// TODO (AG) Extract constant for the Log key "Mode".
 		writeTupleToFile("Mode", "Light");
 		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
@@ -233,10 +235,10 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// the second call to GetAssemblyProps with the correct amount of memory.
 	ASSEMBLYMETADATA metadata;
 
-    // We have to explicitly set these to NULL, otherwise the .NET framework will try
-    // to access these pointers at a later time and crash, because they are not
-    // valid. This happened when we started an application multiple times on
-    // the same machine in rapid succession.
+	// We have to explicitly set these to NULL, otherwise the .NET framework will try
+	// to access these pointers at a later time and crash, because they are not
+	// valid. This happened when we started an application multiple times on
+	// the same machine in rapid succession.
 	metadata.szLocale = NULL;
 	metadata.rProcessor = NULL;
 	metadata.rOS = NULL;

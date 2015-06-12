@@ -1,6 +1,10 @@
  /*
- * @ConQAT.Rating YELLOW Hash: CAB572A31AC9DE1BFF349EA972B6DBA0
+ * @ConQAT.Rating RED Hash: 2F88CB8C567C368F3AEA8D64B8D0853E
  */
+
+// TODO (AG) How do we call the result file? We currently have "file", "log", "outputFile", 
+// and "resultFile". This is a bit confusing and might need some harmonization. This applies
+// to both method names and interface comments.
 
 #ifndef _ProfilerCallback_H_
 #define _ProfilerCallback_H_
