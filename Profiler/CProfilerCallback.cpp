@@ -50,7 +50,7 @@ CProfilerCallback::~CProfilerCallback() {
 	DeleteCriticalSection(&criticalSection);
 }
 
-HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
+HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	createLogFile();
 
 	char lightMode[BUFFER_SIZE];
@@ -62,7 +62,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
-	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &profilerInfo);
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
 	}
@@ -175,7 +175,7 @@ DWORD CProfilerCallback::getEventMask() {
 }
 
 UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
-		BOOL *pbHookFunction) {
+		BOOL* pbHookFunction) {
 	// Disable hooking of functions.
 	*pbHookFunction = false;
 
@@ -209,7 +209,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
-	IMetaDataAssemblyImport *pMetaDataAssemblyImport = NULL;
+	IMetaDataAssemblyImport* pMetaDataAssemblyImport = NULL;
 	profilerInfo->GetModuleMetaData(moduleId, ofRead,
 			IID_IMetaDataAssemblyImport, (IUnknown**) &pMetaDataAssemblyImport);
 
@@ -249,7 +249,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
-		BOOL *pfShouldInline) {
+		BOOL* pfShouldInline) {
 	// Save information about inlined method.
 	if (inlinedMethodIds.insert(calleeId).second == true) {
 		FunctionInfo info;
@@ -266,11 +266,11 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
-	IMetaDataImport *pMDImport = NULL;
+	IMetaDataImport* pMDImport = NULL;
 	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
 
 	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
-			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
+			IID_IMetaDataImport, (IUnknown**) &pMDImport, &functionToken);
 	if (!SUCCEEDED(hr)) {
 		return hr;
 	}
@@ -322,7 +322,7 @@ void CProfilerCallback::writeTupleToFile(const char* key, const char* value) {
 	writeToFile(buffer);
 }
 
-int CProfilerCallback::writeToFile(const char *string) {
+int CProfilerCallback::writeToFile(const char* string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
 
