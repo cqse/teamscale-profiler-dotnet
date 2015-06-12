@@ -1,10 +1,6 @@
  /*
- * @ConQAT.Rating RED Hash: 2F88CB8C567C368F3AEA8D64B8D0853E
+ * @ConQAT.Rating YELLOW Hash: A90B2C24759B64F8A081AF20C1049254
  */
-
-// TODO (AG) How do we call the result file? We currently have "file", "log", "outputFile", 
-// and "resultFile". This is a bit confusing and might need some harmonization. This applies
-// to both method names and interface comments.
 
 #ifndef _ProfilerCallback_H_
 #define _ProfilerCallback_H_
@@ -113,13 +109,13 @@ private:
 	DWORD getEventMask();
 
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
-	HANDLE resultFile;
+	HANDLE logFile;
 	
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
 
 	/** Path of the result file. */
-	TCHAR resultFilePath[_MAX_PATH];
+	TCHAR logFilePath[_MAX_PATH];
 
 	/** Path of the process we are in. */
 	wchar_t appPath[_MAX_PATH]; 
@@ -132,12 +128,12 @@ private:
 
 	/**
 	 * Writes information about the profiled process to the
-	 * output file.
+	 * log file.
 	 */
-	void writeProcessInfoToOutputFile(); 
+	void writeProcessInfoToLogFile(); 
 
-	/** Create the output file and add general information. */
-	void createResultFile();
+	/** Create the log file and add general information. */
+	void createLogFile();
 
 	/** Write a information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, vector<FunctionInfo>* functions);

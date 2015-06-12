@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating RED Hash: 2E6CDE591DB8AE98BD0618BAE72B9D79
+ * @ConQAT.Rating YELLOW Hash: 2B0EE2731764756A7F733355ADADB12C
  */
 
 #include <windows.h>
@@ -42,7 +42,7 @@ namespace {
 		;
 }
 
-CProfilerCallback::CProfilerCallback() : resultFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
+CProfilerCallback::CProfilerCallback() : logFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
 	InitializeCriticalSection(&criticalSection);
 }
 
@@ -55,13 +55,12 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
 		isLightMode = true;
-		// TODO (AG) This seems redundant to line 178. Please decide which one makes more sense.
 		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
 	} else {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
-	createResultFile();
+	createLogFile();
 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
@@ -71,11 +70,11 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	DWORD dwEventMask = getEventMask();
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
-	writeProcessInfoToOutputFile();
+	writeProcessInfoToLogFile();
 	return S_OK;
 }
 
-void CProfilerCallback::writeProcessInfoToOutputFile(){
+void CProfilerCallback::writeProcessInfoToLogFile(){
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -86,33 +85,29 @@ void CProfilerCallback::writeProcessInfoToOutputFile(){
 		wcscpy_s(appName, _MAX_FNAME, L"No Application Name Found");
 	}
 
-	// turn szAppPath from wchar_t to char
 	char process[BUFFER_SIZE];
+	// turn application path from wide to normal character string
 	sprintf_s(process, "%S", appPath);
 	writeTupleToFile(LOG_KEY_PROCESS, process);
 }
 
-void CProfilerCallback::createResultFile() {
-	// Read target directory from environment variable.
+void CProfilerCallback::createLogFile() {
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
-		// TODO (AG) We don't even have a format string here. Maybe use strcpy_s instead?
-		// TODO (AG) Otherwise, replace BUFFER_SIZE with sizeof(targetDir) or omit entirely, as you did almost anywhere else.
-		sprintf_s(targetDir, BUFFER_SIZE, "c:/profiler/");
+		// c:/users/public is usually writable for everyone
+		strcpy_s(targetDir, "c:/users/public/");
 	}
 
-	// Create target file.
-	char targetFilename[BUFFER_SIZE];
+	char logFileName[BUFFER_SIZE];
 	char timeStamp[BUFFER_SIZE];
-	// TODO (AG) Use sizeof(timeStamp) in the method call
-	getFormattedCurrentTime(timeStamp, BUFFER_SIZE);
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
 
-	sprintf_s(targetFilename, "%s/coverage_%s.txt", targetDir, timeStamp);
-	_tcscpy_s(resultFilePath, targetFilename);
+	sprintf_s(logFileName, "%s/coverage_%s.txt", targetDir, timeStamp);
+	_tcscpy_s(logFilePath, logFileName);
 
 	EnterCriticalSection(&criticalSection);
-	resultFile = CreateFile(resultFilePath, GENERIC_WRITE, FILE_SHARE_READ,
+	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
 	writeTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
@@ -158,8 +153,8 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	// Close the log file.
 	EnterCriticalSection(&criticalSection);
-	if(resultFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(resultFile);
+	if(logFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(logFile);
 	}
 	LeaveCriticalSection(&criticalSection);
 
@@ -173,10 +168,6 @@ DWORD CProfilerCallback::getEventMask() {
 
 	// disable force re-jitting for the light variant
 	if (!isLightMode) {
-		// TODO (AG) That seems wrong. If *not* light mode then write "Mode=Light" to the file? Should rather be "Full", I guess.
-		// TODO (AG) Also it seems redundant to lines 59-61
-		// TODO (AG) Extract constant for the Log key "Mode".
-		writeTupleToFile("Mode", "Light");
 		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
 
@@ -214,9 +205,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	// TODO (AG) use sizeof(assemblyName) in the method call?
-	// TODO (AG) I'm not sure if the variables here have the correct names. Check Method signature and probably adjust variable names here.
-	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
+	profilerInfo->GetAssemblyInfo(assemblyId, sizeof(assemblyName),
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
@@ -249,11 +238,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 
-	char target[BUFFER_SIZE];
-	sprintf_s(target, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
+	char assemblyInfo[BUFFER_SIZE];
+	sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber);
-	writeTupleToFile(LOG_KEY_ASSEMBLY, target);
+	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
 
 	// Always return OK
 	return S_OK;
@@ -278,8 +267,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
-	// TODO (AG) Rename to functionName to be consistent with the other functionXyz variables.
-	WCHAR funName[BUFFER_SIZE] = L"UNKNOWN";
+	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
 
 	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
 			IID_IMetaDataImport, (IUnknown **) &pMDImport, &functionToken);
@@ -292,9 +280,8 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 	PCCOR_SIGNATURE sigBlob = NULL;
 	ULONG sigSize = 0;
 	ModuleID moduleId = 0;
-	// TODO (AG) Use sizeof(funName) in the method call.
-	hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
-			BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
+	hr = pMDImport->GetMethodProps(functionToken, &classToken, functionName,
+			sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
 			NULL);
 	if (SUCCEEDED(hr)) {
 		fillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
@@ -339,9 +326,9 @@ int CProfilerCallback::writeToFile(const char *string) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
 
-	if (resultFile != INVALID_HANDLE_VALUE) {
+	if (logFile != INVALID_HANDLE_VALUE) {
 		EnterCriticalSection(&criticalSection);
-		if (TRUE == WriteFile(resultFile, string,
+		if (TRUE == WriteFile(logFile, string,
 			(DWORD)strlen(string), &dwWritten, NULL)) {
 			retVal = dwWritten;
 		} else {
