@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 2B0EE2731764756A7F733355ADADB12C
+ * @ConQAT.Rating YELLOW Hash: 02FC79828483CDBE71E0781A9C8B0ECE
  */
 
 #include <windows.h>
@@ -51,6 +51,8 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
+	createLogFile();
+
 	char lightMode[BUFFER_SIZE];
 	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
 		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
@@ -59,8 +61,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown * pICorProfilerInfoUnkown) {
 	} else {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
-
-	createLogFile();
 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID *) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
