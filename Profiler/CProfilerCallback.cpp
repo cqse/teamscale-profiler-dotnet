@@ -97,12 +97,15 @@ void CProfilerCallback::createResultFile() {
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
+		// TODO (AG) We don't even have a format string here. Maybe use strcpy_s instead?
+		// TODO (AG) Otherwise, replace BUFFER_SIZE with sizeof(targetDir) or omit entirely, as you did almost anywhere else.
 		sprintf_s(targetDir, BUFFER_SIZE, "c:/profiler/");
 	}
 
 	// Create target file.
 	char targetFilename[BUFFER_SIZE];
 	char timeStamp[BUFFER_SIZE];
+	// TODO (AG) Use sizeof(timeStamp) in the method call
 	getFormattedCurrentTime(timeStamp, BUFFER_SIZE);
 
 	sprintf_s(targetFilename, "%s/coverage_%s.txt", targetDir, timeStamp);
@@ -121,8 +124,6 @@ void CProfilerCallback::createResultFile() {
 void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
-	// TODO (AG) size always equals BUFFER_SIZE. Remove method parameter and use BUFFER_SIZE directly.
-	// TODO (FS) I'd rather not. If someone changes the buffer size later on (e.g. because it turns out we need a bigger buffer), this can cause really ugly memory issues here. Hard to debug.
 	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
@@ -213,6 +214,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
+	// TODO (AG) use sizeof(assemblyName) in the method call?
+	// TODO (AG) I'm not sure if the variables here have the correct names. Check Method signature and probably adjust variable names here.
 	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
@@ -275,6 +278,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 		FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport *pMDImport = NULL;
+	// TODO (AG) Rename to functionName to be consistent with the other functionXyz variables.
 	WCHAR funName[BUFFER_SIZE] = L"UNKNOWN";
 
 	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
@@ -288,6 +292,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 	PCCOR_SIGNATURE sigBlob = NULL;
 	ULONG sigSize = 0;
 	ModuleID moduleId = 0;
+	// TODO (AG) Use sizeof(funName) in the method call.
 	hr = pMDImport->GetMethodProps(functionToken, &classToken, funName,
 			BUFFER_SIZE, 0, &methodAttr, &sigBlob, &sigSize, NULL,
 			NULL);
