@@ -70,12 +70,12 @@
 				Name="VCLinkerTool"
 				ExecutionBucket="14"
 				AdditionalDependencies="corguids.lib"
-				OutputFile="$(OutDir)/Profiler.dll"
+				OutputFile="$(OutDir)/Profiler32.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/Profiler.pdb"
+				ProgramDatabaseFile="$(OutDir)/Profiler32.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/Profiler.lib"
+				ImportLibrary="$(OutDir)/Profiler32.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -166,13 +166,13 @@
 				Name="VCLinkerTool"
 				ExecutionBucket="14"
 				AdditionalDependencies="corguids.lib"
-				OutputFile="$(OutDir)/Profiler.dll"
+				OutputFile="$(OutDir)/Profiler32.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/Profiler.lib"
+				ImportLibrary="$(OutDir)/Profiler32.lib"
 				TargetMachine="1"
 			/>
 			<Tool

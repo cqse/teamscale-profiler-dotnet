@@ -75,6 +75,12 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetName>$(ProjectName)32</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>$(ProjectName)64</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -90,11 +96,11 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)Profiler.dll</OutputFile>
+      <OutputFile>$(OutDir)Profiler32.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)Profiler.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)Profiler32.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
-      <ImportLibrary>$(OutDir)Profiler.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)Profiler32.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <ModuleDefinitionFile>Profiler.def</ModuleDefinitionFile>
     </Link>
@@ -113,11 +119,11 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)Profiler.dll</OutputFile>
+      <OutputFile>$(OutDir)Profiler64.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)Profiler.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)Profiler64.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
-      <ImportLibrary>$(OutDir)Profiler.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)Profiler64.lib</ImportLibrary>
       <ModuleDefinitionFile>Profiler.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -137,12 +143,12 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)Profiler.dll</OutputFile>
+      <OutputFile>$(OutDir)Profiler32.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <ImportLibrary>$(OutDir)Profiler.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)Profiler32.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <ModuleDefinitionFile>Profiler.def</ModuleDefinitionFile>
     </Link>
@@ -163,12 +169,12 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)Profiler.dll</OutputFile>
+      <OutputFile>$(OutDir)Profiler64.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <ImportLibrary>$(OutDir)Profiler.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)Profiler64.lib</ImportLibrary>
       <ModuleDefinitionFile>Profiler.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
