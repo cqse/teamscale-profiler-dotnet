@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating GREEN Hash: 29A46567FDE2A976C854EA2C59EF0748
+ * @ConQAT.Rating GREEN Hash: 5B6828DDEB2CC91679FCE2051C24129C
  */
 
 #include <windows.h>
@@ -119,6 +119,8 @@ void CProfilerCallback::createLogFile() {
 void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 	SYSTEMTIME time;
 	GetSystemTime (&time);
+	// Four digits for milliseconds means we always have a leading 0 there.
+	// We consider this legacy and keep it here for compatibility reasons.
 	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 			time.wMilliseconds);
