@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating YELLOW Hash: 9413C122744BF8AA2805AE5B7AB580C8
+ * @ConQAT.Rating YELLOW Hash: 8969EEB125C61063FF619FD37EFC73CA
  */
 
 #include <windows.h>
@@ -348,7 +348,7 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		FunctionInfo info = *i;
 		char signature[BUFFER_SIZE];
 		signature[0] = '\0';
-		sprintf_s(signature, "%i::%i", info.assemblyNumber,
+		sprintf_s(signature, "%i:%i", info.assemblyNumber,
 				info.functionToken);
 		writeTupleToFile(key, signature);
 	}
