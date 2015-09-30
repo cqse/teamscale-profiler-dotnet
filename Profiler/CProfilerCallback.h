@@ -1,5 +1,5 @@
  /*
- * @ConQAT.Rating GREEN Hash: B1D56314B95DBBCCE33192C717F7423B
+ * @ConQAT.Rating GREEN Hash: 3E52A612D827B2039AE7880EA7CEDAA2
  */
 
 #ifndef _ProfilerCallback_H_
@@ -139,7 +139,7 @@ private:
 	void writeFunctionInfosToLog(const char* key, vector<FunctionInfo>* functions);
 
 	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken);
+	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
 
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);

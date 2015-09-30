@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating GREEN Hash: 5B6828DDEB2CC91679FCE2051C24129C
+ * @ConQAT.Rating GREEN Hash: C1CB206F0F696288C2D9BD38D1A05C24
  */
 
 #include <windows.h>
@@ -286,7 +286,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 			sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
 			NULL);
 	if (SUCCEEDED(hr)) {
-		fillFunctionInfo(info, functionId, functionToken, moduleId, classToken);
+		fillFunctionInfo(info, functionId, functionToken, moduleId);
 	}
 	
 	pMDImport->Release();
@@ -294,7 +294,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 	return hr;
 }
 
-void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId, mdTypeDef classToken) {
+void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId) {
 	ClassID classId = 0;
 	ULONG32 values = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
@@ -314,7 +314,6 @@ void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID function
 	}
 
 	info->assemblyNumber = assemblyNumber;
-	info->classToken = classToken;
 	info->functionToken = functionToken;
 }
 
@@ -349,7 +348,7 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		FunctionInfo info = *i;
 		char signature[BUFFER_SIZE];
 		signature[0] = '\0';
-		sprintf_s(signature, "%i:%i:%i", info.assemblyNumber, info.classToken,
+		sprintf_s(signature, "%i:%i", info.assemblyNumber,
 				info.functionToken);
 		writeTupleToFile(key, signature);
 	}
