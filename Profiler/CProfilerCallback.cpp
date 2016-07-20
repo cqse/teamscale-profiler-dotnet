@@ -177,12 +177,12 @@ HRESULT CProfilerCallback::Shutdown() {
 	EnterCriticalSection(&criticalSection);
 
 	// Write inlined methods.
-	sprintf_s(buffer, "//%i methods inlined\r\n", inlinedMethods.size());
+	sprintf_s(buffer, "//%zu methods inlined\r\n", inlinedMethods.size());
 	writeToFile(buffer);
 	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
 
 	// Write jitted methods.
-	sprintf_s(buffer, "//%i methods jitted\r\n", jittedMethods.size());
+	sprintf_s(buffer, "//%zu methods jitted\r\n", jittedMethods.size());
 	writeToFile(buffer);
 	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
 

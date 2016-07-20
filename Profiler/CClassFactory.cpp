@@ -205,7 +205,7 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 	sprintf_s(rcKey, ARRAY_LENGTH(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
-	sprintf_s(buf, ARRAY_LENGTH(buf), "Length=%d", strlen(rcKey));
+	sprintf_s(buf, ARRAY_LENGTH(buf), "Length=%zu", strlen(rcKey));
 
 	// Delete the registration key.
 	RegDeleteKeyA(HKEY_CLASSES_ROOT, rcKey);
