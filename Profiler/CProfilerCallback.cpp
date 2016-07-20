@@ -294,9 +294,15 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 			NULL, 0, NULL, &metadata, NULL);
 
 	char assemblyInfo[BUFFER_SIZE];
-	sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i Path:%S", assemblyName, assemblyNumber,
+	if (getOption("ASSEMBLY_PATHS") == "1") {
+		sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i Path:%S", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
 			metadata.usBuildNumber, metadata.usRevisionNumber, moduleFileName);
+	} else {
+		sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
+			metadata.usMajorVersion, metadata.usMinorVersion,
+			metadata.usBuildNumber, metadata.usRevisionNumber);
+	}
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
 
 	// Always return OK
