@@ -31,6 +31,18 @@ public:
 	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
+	/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
+	std::string getEnvironmentVariable(std::string suffix);
+
+	/** Reads all options from the config file into memory. */
+	void readConfig();
+
+	/**
+	* Reads all the config option from 1) the environment variable COR_PROFILER_<optionName> and then 2) the config file if the corresponding environment variable is not set.
+	* If the option is declared in neither location, returns the empty string.
+	*/
+	std::string getOption(std::string optionName);
+
 	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
 
@@ -95,10 +107,15 @@ private:
 	set<FunctionID> inlinedMethodIds;
 
 	/**
-	 * Collecions that keep track of inlined methods.
-	 * We use the vector to uniquely store the information about inlined methods.
-	 */
+	* Collecions that keep track of inlined methods.
+	* We use the vector to uniquely store the information about inlined methods.
+	*/
 	vector<FunctionInfo> inlinedMethods;
+
+	/**
+	* Stores all declared options from the config file.
+	*/
+	map<std::string, std::string> configOptions;
 
 	/**
 	 * Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe

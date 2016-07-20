@@ -4,6 +4,9 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <fstream>
+#include <string>
+#include <algorithm>
 #include "CProfilerCallback.h"
 #include <winuser.h>
 
@@ -13,6 +16,9 @@ namespace {
 
 	/** The key to log information useful when interpreting the traces. */
 	const char* LOG_KEY_INFO = "Info";
+
+	/** The key to log information about non-critical error conditions. */
+	const char* LOG_KEY_WARN= "Warn";
 
 	/** The key to log information about a single assembly. */
 	const char* LOG_KEY_ASSEMBLY = "Assembly";
@@ -52,10 +58,9 @@ CProfilerCallback::~CProfilerCallback() {
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	createLogFile();
+	readConfig();
 
-	char lightMode[BUFFER_SIZE];
-	if (GetEnvironmentVariable("COR_PROFILER_LIGHT_MODE", lightMode,
-		sizeof(lightMode)) && strcmp(lightMode, "1") == 0) {
+	if (getOption("LIGHT_MODE") == "1") {
 		isLightMode = true;
 		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
 	} else {
@@ -72,6 +77,46 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 	writeProcessInfoToLogFile();
 	return S_OK;
+}
+
+std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
+	char value[BUFFER_SIZE];
+	std::string name = "COR_PROFILER_" + suffix;
+	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
+		return "";
+	}
+	return value;
+}
+
+void CProfilerCallback::readConfig() {
+	std::string configFile = getEnvironmentVariable("CONFIG");
+	if (configFile.empty()) {
+		configFile = getEnvironmentVariable("PATH") + ".config";
+	}
+	writeTupleToFile(LOG_KEY_INFO, ("looking for configuration options in: " + configFile).c_str());
+
+	std::ifstream inputStream(configFile);
+	this->configOptions = std::map<std::string, std::string>();
+	for (std::string line; getline(inputStream, line);) {
+		size_t delimiterPosition = line.find("=");
+		if (delimiterPosition == std::string::npos) {
+			writeTupleToFile(LOG_KEY_WARN, ("invalid line in config file: " + line).c_str());
+			continue;
+		}
+
+		std::string optionName = line.substr(0, delimiterPosition);
+		std::string optionValue = line.substr(delimiterPosition + 1);
+		std::transform(optionName.begin(), optionName.end(), optionName.begin(), toupper);
+		this->configOptions[optionName] = optionValue;
+	}
+}
+
+std::string CProfilerCallback::getOption(std::string optionName) {
+	std::string value = getEnvironmentVariable(optionName);
+	if (!value.empty()) {
+		return value;
+	}
+	return this->configOptions[optionName];
 }
 
 void CProfilerCallback::writeProcessInfoToLogFile(){
@@ -210,6 +255,14 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	profilerInfo->GetAssemblyInfo(assemblyId, sizeof(assemblyName),
 			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
 
+	// We need the module info to get the path of the assembly
+	LPCBYTE baseLoadAddress;
+	WCHAR moduleFileName[BUFFER_SIZE];
+	ULONG moduleFileNameSize = 0;
+	AssemblyID parentAssembly;
+	profilerInfo->GetModuleInfo(moduleId, &baseLoadAddress, sizeof(moduleFileName),
+		&moduleFileNameSize, moduleFileName, &parentAssembly);
+
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
 	IMetaDataAssemblyImport* pMetaDataAssemblyImport = NULL;
 	profilerInfo->GetModuleMetaData(moduleId, ofRead,
@@ -241,9 +294,9 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 			NULL, 0, NULL, &metadata, NULL);
 
 	char assemblyInfo[BUFFER_SIZE];
-	sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
+	sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i Path:%S", assemblyName, assemblyNumber,
 			metadata.usMajorVersion, metadata.usMinorVersion,
-			metadata.usBuildNumber, metadata.usRevisionNumber);
+			metadata.usBuildNumber, metadata.usRevisionNumber, moduleFileName);
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
 
 	// Always return OK
