@@ -1,5 +1,5 @@
 /*
- * @ConQAT.Rating GREEN Hash: D8578F734D13784915D81A018AE3E758
+ * @ConQAT.Rating GREEN Hash: 8DE2FE7087426D53FC5AD9AC7686693A
  */
 
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
@@ -205,7 +205,7 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 	sprintf_s(rcKey, ARRAY_LENGTH(rcKey), "%s\\%s", szKey, szSubkey);
 
 	char buf[256];
-	sprintf_s(buf, ARRAY_LENGTH(buf), "Length=%d", strlen(rcKey));
+	sprintf_s(buf, ARRAY_LENGTH(buf), "Length=%zu", strlen(rcKey));
 
 	// Delete the registration key.
 	RegDeleteKeyA(HKEY_CLASSES_ROOT, rcKey);
