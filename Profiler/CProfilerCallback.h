@@ -89,6 +89,9 @@ private:
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
 	bool isLightMode;
 
+	/** Whether to run in eager mode and write all invocations to the trace file directly or wait until shutdown. */
+	bool isEagerMode;
+
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
 	 * It is used to identify the declaring assembly for functions.

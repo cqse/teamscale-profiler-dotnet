@@ -41,14 +41,14 @@ namespace {
 	/** The version of the profiler */
 	const char* PROFILER_VERSION_INFO =
 #ifdef _WIN64
-		"Coverage profiler version 0.9.2.5 (x64)"
+		"Coverage profiler version 0.10.0 (64bit)"
 #else
-		"Coverage profiler version 0.9.2.5 (x86)"
+		"Coverage profiler version 0.10.0 (32bit)"
 #endif
 		;
 }
 
-CProfilerCallback::CProfilerCallback() : logFile(INVALID_HANDLE_VALUE), isLightMode(false), assemblyCounter(1) {
+CProfilerCallback::CProfilerCallback() : logFile(INVALID_HANDLE_VALUE), isLightMode(false), isEagerMode(false), assemblyCounter(1) {
 	InitializeCriticalSection(&criticalSection);
 }
 
@@ -63,8 +63,17 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	if (getOption("LIGHT_MODE") == "1") {
 		isLightMode = true;
 		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
-	} else {
+	}
+	else {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
+	}
+
+	if (getOption("EAGER_MODE") == "1") {
+		isEagerMode = true;
+		writeTupleToFile(LOG_KEY_INFO, "Mode: eager");
+	}
+	else {
+		writeTupleToFile(LOG_KEY_INFO, "Mode: lazy");
 	}
 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
@@ -172,19 +181,22 @@ void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-	char buffer[BUFFER_SIZE];
 
 	EnterCriticalSection(&criticalSection);
 
-	// Write inlined methods.
-	sprintf_s(buffer, "//%zu methods inlined\r\n", inlinedMethods.size());
-	writeToFile(buffer);
-	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
+	if (!isEagerMode) {
+		char buffer[BUFFER_SIZE];
 
-	// Write jitted methods.
-	sprintf_s(buffer, "//%zu methods jitted\r\n", jittedMethods.size());
-	writeToFile(buffer);
-	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
+		// Write inlined methods.
+		sprintf_s(buffer, "//%zu methods inlined\r\n", inlinedMethods.size());
+		writeToFile(buffer);
+		writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
+
+		// Write jitted methods.
+		sprintf_s(buffer, "//%zu methods jitted\r\n", jittedMethods.size());
+		writeToFile(buffer);
+		writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
+	}
 
 	// Write timestamp.
 	char timeStamp[BUFFER_SIZE];
@@ -232,10 +244,21 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	// Notify monitor that method has been jitted.
 	FunctionInfo info;
 	getFunctionInfo(functionId, &info);
-	jittedMethods.push_back(info);
+
+	if (isEagerMode) {
+		vector<FunctionInfo> singletonMethod;
+		singletonMethod.push_back(info);
+
+		EnterCriticalSection(&criticalSection);
+		writeFunctionInfosToLog(LOG_KEY_JITTED, &singletonMethod);
+		LeaveCriticalSection(&criticalSection);
+	}
+	else {
+		// Notify monitor that method has been jitted.
+		jittedMethods.push_back(info);
+	}
 
 	// Always return OK
 	return S_OK;
@@ -311,12 +334,24 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
-	// Save information about inlined method.
-	if (inlinedMethodIds.insert(calleeId).second == true) {
-		FunctionInfo info;
-		getFunctionInfo(calleeId, &info);
-		inlinedMethods.push_back(info);
+	FunctionInfo info;
+	getFunctionInfo(calleeId, &info);
+
+	if (isEagerMode) {
+		vector<FunctionInfo> singletonInfo;
+		singletonInfo.push_back(info);
+
+		EnterCriticalSection(&criticalSection);
+		writeFunctionInfosToLog(LOG_KEY_JITTED, &singletonInfo);
+		LeaveCriticalSection(&criticalSection);
 	}
+	else {
+		// Save information about inlined method.
+		if (inlinedMethodIds.insert(calleeId).second == true) {
+			inlinedMethods.push_back(info);
+		}
+	}
+
 	// Always allow inlining.
 	*pfShouldInline = true;
 
@@ -412,3 +447,4 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		writeTupleToFile(key, signature);
 	}
 }
+
