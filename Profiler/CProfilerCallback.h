@@ -80,18 +80,16 @@ private:
 	static const int BUFFER_SIZE = 2048;
 
 	/** Counts the number of assemblies loaded. */
-	int assemblyCounter;
+	int assemblyCounter = 1;
 
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
-	// TODO (AG): Explicitly set to false here to make clear what the default is?
-	bool isLightMode;
+	bool isLightMode = false;
 
 	/** 
 	 * Whether to run in eager mode and write all invocations to the trace 
 	 * file directly instead of waiting until shutdown. 
 	 */
-	// TODO (AG): Explicitly set to false here to make clear what the default is?
-	bool isEagerMode;
+	bool isEagerMode = false;
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
@@ -121,16 +119,8 @@ private:
 	*/
 	map<std::string, std::string> configOptions;
 
-	/**
-	 * Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
-	 * to. We enable JIT compilation and assembly loads for coverage profiling. In
-	 * addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
-	 * code, in order to make coverage information independent of pre-jitted code.
-	 */
-	DWORD getEventMask();
-
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
-	HANDLE logFile;
+	HANDLE logFile = INVALID_HANDLE_VALUE;
 	
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
@@ -145,7 +135,15 @@ private:
 	wchar_t appName[_MAX_FNAME]; 
 	
 	/** Synchronizes access to the result file. */
-	CRITICAL_SECTION criticalSection; 
+	CRITICAL_SECTION criticalSection;
+
+	/**
+	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
+	* to. We enable JIT compilation and assembly loads for coverage profiling. In
+	* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
+	* code, in order to make coverage information independent of pre-jitted code.
+	*/
+	DWORD getEventMask();
 
 	/**
 	 * Writes information about the profiled process to the
@@ -156,8 +154,11 @@ private:
 	/** Create the log file and add general information. */
 	void createLogFile();
 
-	/** Write a information about the given functions to the log. */
+	/** Write all information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, vector<FunctionInfo>* functions);
+
+	/** Write all information about the given function to the log. */
+	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
 
 	/** Fills the given function info for the function represented by the given IDs and tokens. */
 	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);

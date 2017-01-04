@@ -44,7 +44,7 @@ namespace {
 		;
 }
 
-CProfilerCallback::CProfilerCallback() : logFile(INVALID_HANDLE_VALUE), isLightMode(false), isEagerMode(false), assemblyCounter(1) {
+CProfilerCallback::CProfilerCallback() {
 	InitializeCriticalSection(&criticalSection);
 }
 
@@ -238,32 +238,6 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 	return functionId;
 }
 
-// TODO (AG) Move this down to where JITInlining is defined?
-HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
-		HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	FunctionInfo info;
-	getFunctionInfo(functionId, &info);
-
-	if (isEagerMode) {		
-		// TODO (AG) Maybe it would be cleaner to extract a method to write a single 
-		// function info to the log instead of creating a 1-element vector and then
-		// looping over it.
-		vector<FunctionInfo> singletonMethod;
-		singletonMethod.push_back(info);
-
-		EnterCriticalSection(&criticalSection);
-		writeFunctionInfosToLog(LOG_KEY_JITTED, &singletonMethod);
-		LeaveCriticalSection(&criticalSection);
-	}
-	else {
-		// Notify monitor that method has been jitted.
-		jittedMethods.push_back(info);
-	}
-
-	// Always return OK
-	return S_OK;
-}
-
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 		HRESULT hrStatus) {
 	// Store assembly counter for id.
@@ -332,19 +306,30 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	return S_OK;
 }
 
+HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
+	HRESULT hrStatus, BOOL fIsSafeToBlock) {
+	FunctionInfo info;
+	getFunctionInfo(functionId, &info);
+
+	if (isEagerMode) {
+		writeSingleFunctionInfoToLog(LOG_KEY_JITTED, info);
+	}
+	else {
+		// Notify monitor that method has been jitted.
+		jittedMethods.push_back(info);
+	}
+
+	// Always return OK
+	return S_OK;
+}
+
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
 	if (isEagerMode) {
-		vector<FunctionInfo> singletonInfo;
-		singletonInfo.push_back(info);
-
-		EnterCriticalSection(&criticalSection);
-		// TODO (AG) This should be LOG_KEY_INLINED
-		writeFunctionInfosToLog(LOG_KEY_JITTED, &singletonInfo);
-		LeaveCriticalSection(&criticalSection);
+		writeSingleFunctionInfoToLog(LOG_KEY_INLINED, info);
 	}
 	else {
 		// Save information about inlined method.
@@ -395,12 +380,6 @@ void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID function
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
 		&classId, &moduleId, &functionToken, 0, &values, NULL);
 
-	// TODO (AG) Do we need the classId or is this a remainder from when we wrote the type token to the trace?
-	// It seems we set it here, but never access it afterwards.
-	if (!SUCCEEDED(hr)) {
-		classId = 0;
-	}
-
 	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
 		AssemblyID assemblyId;
@@ -443,12 +422,16 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		vector<FunctionInfo>* functions) {
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
-		FunctionInfo info = *i;
-		char signature[BUFFER_SIZE];
-		signature[0] = '\0';
-		sprintf_s(signature, "%i:%i", info.assemblyNumber,
-				info.functionToken);
-		writeTupleToFile(key, signature);
+		writeSingleFunctionInfoToLog(key, *i);
 	}
 }
 
+void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
+	EnterCriticalSection(&criticalSection);
+	char signature[BUFFER_SIZE];
+	signature[0] = '\0';
+	sprintf_s(signature, "%i:%i", info.assemblyNumber,
+		info.functionToken);
+	writeTupleToFile(key, signature);
+	LeaveCriticalSection(&criticalSection);
+}
