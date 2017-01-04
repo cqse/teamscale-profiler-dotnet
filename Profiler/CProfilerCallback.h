@@ -1,7 +1,3 @@
- /*
- * @ConQAT.Rating GREEN Hash: 31403AF139FAC760DB5CE7E00AFB7CE8
- */
-
 #ifndef _ProfilerCallback_H_
 #define _ProfilerCallback_H_
 
@@ -87,9 +83,14 @@ private:
 	int assemblyCounter;
 
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
+	// TODO (AG): Explicitly set to false here to make clear what the default is?
 	bool isLightMode;
 
-	/** Whether to run in eager mode and write all invocations to the trace file directly or wait until shutdown. */
+	/** 
+	 * Whether to run in eager mode and write all invocations to the trace 
+	 * file directly instead of waiting until shutdown. 
+	 */
+	// TODO (AG): Explicitly set to false here to make clear what the default is?
 	bool isEagerMode;
 
 	/**

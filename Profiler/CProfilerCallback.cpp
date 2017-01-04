@@ -1,7 +1,3 @@
-/*
- * @ConQAT.Rating GREEN Hash: 50065B80A9CB7AECB61678F6A0834456
- */
-
 #include <windows.h>
 #include <stdio.h>
 #include <fstream>
@@ -242,12 +238,16 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 	return functionId;
 }
 
+// TODO (AG) Move this down to where JITInlining is defined?
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	FunctionInfo info;
 	getFunctionInfo(functionId, &info);
 
-	if (isEagerMode) {
+	if (isEagerMode) {		
+		// TODO (AG) Maybe it would be cleaner to extract a method to write a single 
+		// function info to the log instead of creating a 1-element vector and then
+		// looping over it.
 		vector<FunctionInfo> singletonMethod;
 		singletonMethod.push_back(info);
 
@@ -342,6 +342,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		singletonInfo.push_back(info);
 
 		EnterCriticalSection(&criticalSection);
+		// TODO (AG) This should be LOG_KEY_INLINED
 		writeFunctionInfosToLog(LOG_KEY_JITTED, &singletonInfo);
 		LeaveCriticalSection(&criticalSection);
 	}
@@ -393,6 +394,9 @@ void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID function
 	ULONG32 values = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
 		&classId, &moduleId, &functionToken, 0, &values, NULL);
+
+	// TODO (AG) Do we need the classId or is this a remainder from when we wrote the type token to the trace?
+	// It seems we set it here, but never access it afterwards.
 	if (!SUCCEEDED(hr)) {
 		classId = 0;
 	}
