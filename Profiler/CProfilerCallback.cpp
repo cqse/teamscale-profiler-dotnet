@@ -310,8 +310,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	return S_OK;
 }
 
-int CProfilerCallback::writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize)
-{
+int CProfilerCallback::writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize) {
 	DWORD HANDLE = 0;
 	DWORD infoSize = GetFileVersionInfoSizeW(moduleFileName, NULL);
 	if (!infoSize) {
