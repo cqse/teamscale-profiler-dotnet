@@ -1,9 +1,8 @@
-/*
- * @ConQAT.Rating GREEN Hash: E696F8D9252EF86FACCF2B2BE2D9D6CA
- */
-
 #ifndef _CProfilerCallbackBase_H_
 #define _CProfilerCallbackBase_H_
+
+#include <windows.h>
+#include <stdio.h>
 
 #include <cor.h>
 #include <corprof.h>

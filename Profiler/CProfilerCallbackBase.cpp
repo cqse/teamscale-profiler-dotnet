@@ -1,7 +1,3 @@
- /*
- * @ConQAT.Rating GREEN Hash: 2FCA3490B9E26FCF0EC3057E4EA27C04
- */
-
 #include "CProfilerCallbackBase.h"
 
 /** Constructor */

@@ -1,10 +1,3 @@
-/*
- * @ConQAT.Rating GREEN Hash: 8DE2FE7087426D53FC5AD9AC7686693A
- */
-
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#include <windows.h>
-#include <stdio.h>
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
 

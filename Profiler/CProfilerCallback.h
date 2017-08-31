@@ -1,15 +1,13 @@
 #ifndef _ProfilerCallback_H_
 #define _ProfilerCallback_H_
 
-#include <cor.h>
-#include <corprof.h>
+#include "CProfilerCallbackBase.h"
+#include "FunctionInfo.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
-#include "CProfilerCallbackBase.h"
-#include "FunctionInfo.h"
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
@@ -95,29 +93,29 @@ private:
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
 	 * It is used to identify the declaring assembly for functions.
 	 */
-	map<AssemblyID, int> assemblyMap;
+	std::map<AssemblyID, int> assemblyMap;
 
 	/**
 	 * Info object that keeps track of jitted methods.
 	 */
-	vector<FunctionInfo> jittedMethods;
+	std::vector<FunctionInfo> jittedMethods;
 
 	/**
 	 * Keeps track of inlined methods.
 	 * We use the set to efficiently determine if we already noticed an inlined method.
 	 */
-	set<FunctionID> inlinedMethodIds;
+	std::set<FunctionID> inlinedMethodIds;
 
 	/**
 	* Collecions that keep track of inlined methods.
 	* We use the vector to uniquely store the information about inlined methods.
 	*/
-	vector<FunctionInfo> inlinedMethods;
+	std::vector<FunctionInfo> inlinedMethods;
 
 	/**
 	* Stores all declared options from the config file.
 	*/
-	map<std::string, std::string> configOptions;
+	std::map<std::string, std::string> configOptions;
 
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE logFile = INVALID_HANDLE_VALUE;
@@ -154,8 +152,11 @@ private:
 	/** Create the log file and add general information. */
 	void createLogFile();
 
+	/** Writes the fileVersionInfo into the provided buffer. */
+	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
 	/** Write all information about the given functions to the log. */
-	void writeFunctionInfosToLog(const char* key, vector<FunctionInfo>* functions);
+	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
 
 	/** Write all information about the given function to the log. */
 	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);

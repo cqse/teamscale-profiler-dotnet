@@ -1,11 +1,7 @@
- /*
- * @ConQAT.Rating GREEN Hash: C0A89B43BC1C023283CD6E4E4CE3C388
- */
-
 #ifndef _FunctionInfo_H_
 #define _FunctionInfo_H_
 
-using namespace std;
+#include <cor.h>
 
 /**
  * Struct that stores information to uniquely identify a function.

@@ -1,9 +1,8 @@
-/*
- * @ConQAT.Rating GREEN Hash: 3DA75C3EA45F6B073AF663F6886E700C
- */
-
 #ifndef _CClassFactory_H_
 #define _CClassFactory_H_
+
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#include <windows.h>
 
 /** Registers the class of the profiler by setting the registry entries. */
 HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,

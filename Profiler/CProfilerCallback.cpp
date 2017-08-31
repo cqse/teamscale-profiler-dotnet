@@ -1,10 +1,9 @@
-#include <windows.h>
-#include <stdio.h>
-#include <fstream>
-#include <string>
-#include <algorithm>
 #include "CProfilerCallback.h"
+#include <fstream>
+#include <algorithm>
 #include <winuser.h>
+
+using namespace std;
 
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
@@ -37,9 +36,9 @@ namespace {
 	/** The version of the profiler */
 	const char* PROFILER_VERSION_INFO =
 #ifdef _WIN64
-		"Coverage profiler version 0.10.0 (64bit)"
+		"Coverage profiler version 0.11.0 (64bit)"
 #else
-		"Coverage profiler version 0.10.0 (32bit)"
+		"Coverage profiler version 0.11.0 (32bit)"
 #endif
 		;
 }
@@ -291,19 +290,64 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 			NULL, 0, NULL, &metadata, NULL);
 
 	char assemblyInfo[BUFFER_SIZE];
+	int writtenChars = 0;
+
+	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
+		assemblyName, assemblyNumber);
+	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
+		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
+
+	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
+		writtenChars += writeFileVersionInfo(moduleFileName, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
+	}
+	
 	if (getOption("ASSEMBLY_PATHS") == "1") {
-		sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i Path:%S", assemblyName, assemblyNumber,
-			metadata.usMajorVersion, metadata.usMinorVersion,
-			metadata.usBuildNumber, metadata.usRevisionNumber, moduleFileName);
-	} else {
-		sprintf_s(assemblyInfo, "%S:%i Version:%i.%i.%i.%i", assemblyName, assemblyNumber,
-			metadata.usMajorVersion, metadata.usMinorVersion,
-			metadata.usBuildNumber, metadata.usRevisionNumber);
+		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S",	moduleFileName);
 	}
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
 
 	// Always return OK
 	return S_OK;
+}
+
+int CProfilerCallback::writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize)
+{
+	DWORD HANDLE = 0;
+	DWORD infoSize = GetFileVersionInfoSizeW(moduleFileName, NULL);
+	if (!infoSize) {
+		return 0;
+	}
+
+	BYTE* versionInfo = new BYTE[infoSize];
+	if (!GetFileVersionInfoW(moduleFileName, NULL, infoSize, versionInfo)) {
+		return 0;
+	}
+
+	VS_FIXEDFILEINFO* fileInfo = NULL;
+	UINT fileInfoLength = 0;
+	if (!VerQueryValueW(versionInfo, L"\\", (void**)&fileInfo, &fileInfoLength)) {
+		return 0;
+	}
+
+	int	 version[4];
+	version[0] = HIWORD(fileInfo->dwFileVersionMS);
+	version[1] = LOWORD(fileInfo->dwFileVersionMS);
+	version[2] = HIWORD(fileInfo->dwFileVersionLS);
+	version[3] = LOWORD(fileInfo->dwFileVersionLS);
+
+	int writtenChars = sprintf_s(buffer, bufferSize, " FileVersion:%i.%i.%i.%i",
+		version[0], version[1], version[2], version[3]);
+
+	version[0] = HIWORD(fileInfo->dwProductVersionMS);
+	version[1] = LOWORD(fileInfo->dwProductVersionMS);
+	version[2] = HIWORD(fileInfo->dwProductVersionLS);
+	version[3] = LOWORD(fileInfo->dwProductVersionLS);
+
+	writtenChars += sprintf_s(buffer + writtenChars, bufferSize - writtenChars, " ProductVersion:%i.%i.%i.%i",
+		version[0], version[1], version[2], version[3]);
+
+	delete versionInfo;
+	return writtenChars;
 }
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
