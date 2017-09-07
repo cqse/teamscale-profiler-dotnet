@@ -289,6 +289,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 			NULL, 0, NULL, &metadata, NULL);
 
+	// TODO (AG) Assemble the assemblyInfo in a separate method? This one is getting long.
 	char assemblyInfo[BUFFER_SIZE];
 	int writtenChars = 0;
 
@@ -311,6 +312,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 }
 
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize) {
+	// TODO (AG) Is that HANDLE even used anywhere? And why is it all caps?
 	DWORD HANDLE = 0;
 	DWORD infoSize = GetFileVersionInfoSizeW(moduleFileName, NULL);
 	if (!infoSize) {
