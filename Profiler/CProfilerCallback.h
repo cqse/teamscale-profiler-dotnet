@@ -152,6 +152,12 @@ private:
 	/** Create the log file and add general information. */
 	void createLogFile();
 
+	/**  Store assembly counter for id. */
+	int registerAssembly(AssemblyID assemblyId);
+
+	/** Stores the assmebly name, path and metadata in the passed variables.*/
+	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
+
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 

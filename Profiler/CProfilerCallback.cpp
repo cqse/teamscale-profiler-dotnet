@@ -239,30 +239,61 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 		HRESULT hrStatus) {
-	// Store assembly counter for id.
-	int assemblyNumber = assemblyCounter++;
-	assemblyMap[assemblyId] = assemblyNumber;
+	int assemblyNumber = registerAssembly(assemblyId);
+
+	char assemblyInfo[BUFFER_SIZE];
+	int writtenChars = 0;
+
+	WCHAR assemblyName[BUFFER_SIZE];
+	WCHAR assemblyPath[BUFFER_SIZE];
+	ASSEMBLYMETADATA metadata;
+	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
 
 	// Log assembly load.
-	WCHAR assemblyName[BUFFER_SIZE];
+	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
+		assemblyName, assemblyNumber);
+
+	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
+		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
+
+	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
+		writtenChars += writeFileVersionInfo(assemblyPath, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
+	}
+	
+	if (getOption("ASSEMBLY_PATHS") == "1") {
+		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S",	assemblyPath);
+	}
+	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
+
+	// Always return OK
+	return S_OK;
+}
+
+int CProfilerCallback::registerAssembly(AssemblyID assemblyId) {
+	int assemblyNumber = assemblyCounter;
+	assemblyCounter++;
+	assemblyMap[assemblyId] = assemblyNumber;
+	return assemblyNumber;
+}
+
+void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA *metadata) {
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
-	profilerInfo->GetAssemblyInfo(assemblyId, sizeof(assemblyName),
-			&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
-
+	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
+		&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
+	
 	// We need the module info to get the path of the assembly
 	LPCBYTE baseLoadAddress;
-	WCHAR moduleFileName[BUFFER_SIZE];
-	ULONG moduleFileNameSize = 0;
+	ULONG assemblyPathSize = 0;
 	AssemblyID parentAssembly;
-	profilerInfo->GetModuleInfo(moduleId, &baseLoadAddress, sizeof(moduleFileName),
-		&moduleFileNameSize, moduleFileName, &parentAssembly);
+	profilerInfo->GetModuleInfo(moduleId, &baseLoadAddress, BUFFER_SIZE,
+		&assemblyPathSize, assemblyPath, &parentAssembly);
 
 	// Call GetModuleMetaData to get a MetaDataAssemblyImport object.
 	IMetaDataAssemblyImport* pMetaDataAssemblyImport = NULL;
 	profilerInfo->GetModuleMetaData(moduleId, ofRead,
-			IID_IMetaDataAssemblyImport, (IUnknown**) &pMetaDataAssemblyImport);
+		IID_IMetaDataAssemblyImport, (IUnknown**)&pMetaDataAssemblyImport);
 
 	// Get the assembly token.
 	mdAssembly ptkAssembly = NULL;
@@ -276,51 +307,26 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
 	// metadata.ulProcessor and metadata.ulOS after the call to
 	// GetAssemblyProps. However, we do not need the additional data and save
 	// the second call to GetAssemblyProps with the correct amount of memory.
-	ASSEMBLYMETADATA metadata;
-
 	// We have to explicitly set these to NULL, otherwise the .NET framework will try
 	// to access these pointers at a later time and crash, because they are not
 	// valid. This happened when we started an application multiple times on
 	// the same machine in rapid succession.
-	metadata.szLocale = NULL;
-	metadata.rProcessor = NULL;
-	metadata.rOS = NULL;
+	metadata->szLocale = NULL;
+	metadata->rProcessor = NULL;
+	metadata->rOS = NULL;
 
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
-			NULL, 0, NULL, &metadata, NULL);
-
-	// TODO (AG) Assemble the assemblyInfo in a separate method? This one is getting long.
-	char assemblyInfo[BUFFER_SIZE];
-	int writtenChars = 0;
-
-	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
-		assemblyName, assemblyNumber);
-	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
-		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
-
-	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
-		writtenChars += writeFileVersionInfo(moduleFileName, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
-	}
-	
-	if (getOption("ASSEMBLY_PATHS") == "1") {
-		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S",	moduleFileName);
-	}
-	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
-
-	// Always return OK
-	return S_OK;
+		NULL, 0, NULL, metadata, NULL);
 }
 
-int CProfilerCallback::writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize) {
-	// TODO (AG) Is that HANDLE even used anywhere? And why is it all caps?
-	DWORD HANDLE = 0;
-	DWORD infoSize = GetFileVersionInfoSizeW(moduleFileName, NULL);
+int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
+	DWORD infoSize = GetFileVersionInfoSizeW(assemblyPath, NULL);
 	if (!infoSize) {
 		return 0;
 	}
 
 	BYTE* versionInfo = new BYTE[infoSize];
-	if (!GetFileVersionInfoW(moduleFileName, NULL, infoSize, versionInfo)) {
+	if (!GetFileVersionInfoW(assemblyPath, NULL, infoSize, versionInfo)) {
 		return 0;
 	}
 
