@@ -84,10 +84,10 @@ private:
 	bool isLightMode = false;
 
 	/** 
-	 * Whether to run in eager mode and write all invocations to the trace 
-	 * file directly instead of waiting until shutdown. 
+	 * Whether to run in eager mode and write a batch of recorded invocations to the trace 
+	 * file instead of waiting until shutdown. If 0, everything is written on shutdown.
 	 */
-	bool isEagerMode = false;
+	int eagerness = 0;
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
@@ -107,9 +107,9 @@ private:
 	std::set<FunctionID> inlinedMethodIds;
 
 	/**
-	* Collecions that keep track of inlined methods.
-	* We use the vector to uniquely store the information about inlined methods.
-	*/
+	 * Collecions that keep track of inlined methods.
+	 * We use the vector to uniquely store the information about inlined methods.
+	 */
 	std::vector<FunctionInfo> inlinedMethods;
 
 	/**
@@ -158,8 +158,14 @@ private:
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
+	/** Triggers eagerly writing of function infos to log. */
+	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
+
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
+	/** Write all information about the recorded functions to the log. */
+	void writeFunctionInfosToLog();
 
 	/** Write all information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);

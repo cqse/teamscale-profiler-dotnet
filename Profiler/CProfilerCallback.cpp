@@ -63,14 +63,20 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
-	if (getOption("EAGER_MODE") == "1") {
-		isEagerMode = true;
-		writeTupleToFile(LOG_KEY_INFO, "Mode: eager");
+	char eagernessInfo[BUFFER_SIZE];
+	std:string eagernessValue = getOption("EAGERNESS");
+	if (!eagernessValue.empty()) {
+		try {
+			eagerness = std::stoi(eagernessValue);
+		}
+		catch (exception e) {
+			sprintf_s(eagernessInfo, "Could not read eagerness: %s", eagernessValue);
+			writeTupleToFile(LOG_KEY_INFO, eagernessInfo);
+		}
 	}
-	else {
-		writeTupleToFile(LOG_KEY_INFO, "Mode: lazy");
-	}
-
+	sprintf_s(eagernessInfo, "Eagerness: %i", eagerness);
+	writeTupleToFile(LOG_KEY_INFO, eagernessInfo);
+	
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
@@ -179,19 +185,7 @@ HRESULT CProfilerCallback::Shutdown() {
 
 	EnterCriticalSection(&criticalSection);
 
-	if (!isEagerMode) {
-		char buffer[BUFFER_SIZE];
-
-		// Write inlined methods.
-		sprintf_s(buffer, "//%zu methods inlined\r\n", inlinedMethods.size());
-		writeToFile(buffer);
-		writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
-
-		// Write jitted methods.
-		sprintf_s(buffer, "//%zu methods jitted\r\n", jittedMethods.size());
-		writeToFile(buffer);
-		writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
-	}
+	writeFunctionInfosToLog();
 
 	// Write timestamp.
 	char timeStamp[BUFFER_SIZE];
@@ -359,41 +353,44 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	FunctionInfo info;
-	getFunctionInfo(functionId, &info);
-
-	if (isEagerMode) {
-		writeSingleFunctionInfoToLog(LOG_KEY_JITTED, info);
-	}
-	else {
-		// Notify monitor that method has been jitted.
-		jittedMethods.push_back(info);
-	}
-
-	// Always return OK
+	recordFunctionInfo(&jittedMethods, functionId);
 	return S_OK;
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
-	FunctionInfo info;
-	getFunctionInfo(calleeId, &info);
-
-	if (isEagerMode) {
-		writeSingleFunctionInfoToLog(LOG_KEY_INLINED, info);
-	}
-	else {
-		// Save information about inlined method.
-		if (inlinedMethodIds.insert(calleeId).second == true) {
-			inlinedMethods.push_back(info);
-		}
+	// Save information about inlined method (if not already seen)
+	if (inlinedMethodIds.insert(calleeId).second == true) {
+		recordFunctionInfo(&inlinedMethods, calleeId);
 	}
 
 	// Always allow inlining.
 	*pfShouldInline = true;
 
-	// Always return OK
 	return S_OK;
+}
+
+void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId) {
+	FunctionInfo info;
+	getFunctionInfo(calleeId, &info);
+
+	if (eagerness == 1) {
+		// Directly write to log if we want to record each function immediatelly
+		if (list == &inlinedMethods) {
+			writeSingleFunctionInfoToLog(LOG_KEY_INLINED, info);
+		} else if (list == &jittedMethods) {
+			writeSingleFunctionInfoToLog(LOG_KEY_JITTED, info);
+		}
+	}
+	else {
+		// otherwise record function info
+		list->push_back(info);
+
+		// if eager and on threshold write to log
+		if (eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness) {
+			writeFunctionInfosToLog();
+		}
+	}
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
@@ -469,12 +466,18 @@ int CProfilerCallback::writeToFile(const char* string) {
 	return retVal;
 }
 
+void CProfilerCallback::writeFunctionInfosToLog() {
+	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
+	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
+}
+
 void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 		vector<FunctionInfo>* functions) {
 	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		writeSingleFunctionInfoToLog(key, *i);
 	}
+	functions->clear();
 }
 
 void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
