@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <winuser.h>
 
-using namespace std;
-
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 namespace {
@@ -63,19 +61,16 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
 	}
 
-	char eagernessInfo[BUFFER_SIZE];
-	std:string eagernessValue = getOption("EAGERNESS");
+	std::string eagernessValue = getOption("EAGERNESS");
 	if (!eagernessValue.empty()) {
 		try {
 			eagerness = std::stoi(eagernessValue);
 		}
-		catch (exception e) {
-			sprintf_s(eagernessInfo, "Could not read eagerness: %s", eagernessValue);
-			writeTupleToFile(LOG_KEY_INFO, eagernessInfo);
+		catch (std::exception e) {
+			writeTupleToFile(LOG_KEY_INFO, "Could not read eagerness: " + eagernessValue);
 		}
 	}
-	sprintf_s(eagernessInfo, "Eagerness: %i", eagerness);
-	writeTupleToFile(LOG_KEY_INFO, eagernessInfo);
+	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
 	
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
@@ -103,14 +98,14 @@ void CProfilerCallback::readConfig() {
 	if (configFile.empty()) {
 		configFile = getEnvironmentVariable("PATH") + ".config";
 	}
-	writeTupleToFile(LOG_KEY_INFO, ("looking for configuration options in: " + configFile).c_str());
+	writeTupleToFile(LOG_KEY_INFO, "looking for configuration options in: " + configFile);
 
 	std::ifstream inputStream(configFile);
 	this->configOptions = std::map<std::string, std::string>();
 	for (std::string line; getline(inputStream, line);) {
 		size_t delimiterPosition = line.find("=");
 		if (delimiterPosition == std::string::npos) {
-			writeTupleToFile(LOG_KEY_WARN, ("invalid line in config file: " + line).c_str());
+			writeTupleToFile(LOG_KEY_WARN, "invalid line in config file: " + line);
 			continue;
 		}
 
@@ -374,6 +369,8 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* list, Func
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
+	EnterCriticalSection(&criticalSection);
+
 	if (eagerness == 1) {
 		// Directly write to log if we want to record each function immediatelly
 		if (list == &inlinedMethods) {
@@ -391,6 +388,8 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* list, Func
 			writeFunctionInfosToLog();
 		}
 	}
+
+	LeaveCriticalSection(&criticalSection);
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
@@ -442,6 +441,10 @@ void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID function
 	info->functionToken = functionToken;
 }
 
+void CProfilerCallback::writeTupleToFile(const char* key, std::string value) {
+	writeTupleToFile(key, value.c_str());
+}
+
 void CProfilerCallback::writeTupleToFile(const char* key, const char* value) {
 	char buffer[BUFFER_SIZE];
 	sprintf_s(buffer, "%s=%s\r\n", key, value);
@@ -472,8 +475,8 @@ void CProfilerCallback::writeFunctionInfosToLog() {
 }
 
 void CProfilerCallback::writeFunctionInfosToLog(const char* key,
-		vector<FunctionInfo>* functions) {
-	for (vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
+		std::vector<FunctionInfo>* functions) {
+	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
 			i++) {
 		writeSingleFunctionInfoToLog(key, *i);
 	}
@@ -481,11 +484,9 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 }
 
 void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	EnterCriticalSection(&criticalSection);
 	char signature[BUFFER_SIZE];
 	signature[0] = '\0';
 	sprintf_s(signature, "%i:%i", info.assemblyNumber,
 		info.functionToken);
 	writeTupleToFile(key, signature);
-	LeaveCriticalSection(&criticalSection);
 }

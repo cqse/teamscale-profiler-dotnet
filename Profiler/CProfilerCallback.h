@@ -1,8 +1,8 @@
 #ifndef _ProfilerCallback_H_
 #define _ProfilerCallback_H_
 
-#include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
+#include "CProfilerCallbackBase.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -64,12 +64,6 @@ public:
 	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 
-	/** Writes the given string to the log file. */
-	int writeToFile(const char* string); 
-
-	/** Writes the given name-value pair to the log file. */
-	void writeTupleToFile(const char* key, const char* value);
-
 	/** Create method info object for a function id. */
 	HRESULT getFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
@@ -87,7 +81,7 @@ private:
 	 * Whether to run in eager mode and write a batch of recorded invocations to the trace 
 	 * file instead of waiting until shutdown. If 0, everything is written on shutdown.
 	 */
-	int eagerness = 0;
+	size_t eagerness = 0;
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
@@ -160,6 +154,15 @@ private:
 
 	/** Triggers eagerly writing of function infos to log. */
 	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
+
+	/** Writes the given string to the log file. */
+	int writeToFile(const char* string);
+
+	/** Writes the given name-value pair to the log file. */
+	void writeTupleToFile(const char* key, std::string value);
+
+	/** Writes the given name-value pair to the log file. */
+	void writeTupleToFile(const char* key, const char* value);
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
