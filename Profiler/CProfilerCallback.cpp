@@ -65,9 +65,8 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	if (!eagernessValue.empty()) {
 		try {
 			eagerness = std::stoi(eagernessValue);
-		}
-		catch (std::exception e) {
-			writeTupleToFile(LOG_KEY_INFO, "Could not read eagerness: " + eagernessValue);
+		} catch (std::exception e) {
+			writeTupleToFile(LOG_KEY_INFO, "Eagerness must be a number, but configured value is: " + eagernessValue);
 		}
 	}
 	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
