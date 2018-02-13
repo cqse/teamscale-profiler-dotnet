@@ -1,4 +1,4 @@
 ﻿/.vs
-*/bin/Debug/*
-*/bin/Release/*
+**/bin
+**/obj
 /Profiler/Release
