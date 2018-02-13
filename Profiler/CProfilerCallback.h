@@ -153,7 +153,7 @@ private:
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
 	/** Triggers eagerly writing of function infos to log. */
-	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
+	void recordFunctionInfo(std::vector<FunctionInfo>* list, const char* key, FunctionID calleeId);
 
 	/** Writes the given string to the log file. */
 	int writeToFile(const char* string);
@@ -167,10 +167,10 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
-	/** Write all information about the recorded functions to the log. */
+	/** Write all information about the recorded functions to the log and clears the log. */
 	void writeFunctionInfosToLog();
 
-	/** Write all information about the given functions to the log. */
+	/** Write all information about the given functions to the log and clears the log. */
 	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
 
 	/** Write all information about the given function to the log. */

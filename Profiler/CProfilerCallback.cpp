@@ -66,7 +66,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		try {
 			eagerness = std::stoi(eagernessValue);
 		} catch (std::exception e) {
-			writeTupleToFile(LOG_KEY_INFO, "Eagerness must be a number, but configured value is: " + eagernessValue);
+			writeTupleToFile(LOG_KEY_WARN, "Eagerness must be number that indicates the amount of method calls until traces are written: " + eagernessValue);
 		}
 	}
 	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
@@ -347,7 +347,7 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	recordFunctionInfo(&jittedMethods, functionId);
+	recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
 	return S_OK;
 }
 
@@ -355,7 +355,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
 	// Save information about inlined method (if not already seen)
 	if (inlinedMethodIds.insert(calleeId).second == true) {
-		recordFunctionInfo(&inlinedMethods, calleeId);
+		recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
 	}
 
 	// Always allow inlining.
@@ -364,7 +364,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId) {
+void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, const char* logKey, FunctionID calleeId) {
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
@@ -372,15 +372,11 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* list, Func
 
 	if (eagerness == 1) {
 		// Directly write to log if we want to record each function immediatelly
-		if (list == &inlinedMethods) {
-			writeSingleFunctionInfoToLog(LOG_KEY_INLINED, info);
-		} else if (list == &jittedMethods) {
-			writeSingleFunctionInfoToLog(LOG_KEY_JITTED, info);
-		}
-	}
-	else {
+		// This is solely for performance reasons as we are writing data live
+		writeSingleFunctionInfoToLog(logKey, info);
+	} else {
 		// otherwise record function info
-		list->push_back(info);
+		recordedFunctionInfos->push_back(info);
 
 		// if eager and on threshold write to log
 		if (eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness) {
