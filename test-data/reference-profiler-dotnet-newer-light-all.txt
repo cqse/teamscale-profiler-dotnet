@@ -1,0 +1,35 @@
+Info=Coverage profiler version 0.9.2.3 (x86)
+Started=20150413_1304230740
+Process=F:\cqse\engine\eu.cqse.conqat.engine.testgap\src-cs\ProfilerTestee\ProfilerTestee\bin\Release\ProfilerTestee.exe
+Assembly=mscorlib:1 Version:4.0.0.0
+Assembly=ProfilerTestee:2 Version:1.0.0.0
+//16 methods inlined
+Inlined=1:100665763
+Inlined=1:100664064
+Inlined=2:100663303
+Inlined=2:100663306
+Inlined=2:100663300
+Inlined=2:100663301
+Inlined=2:100663304
+Inlined=2:100663316
+Inlined=1:100663297
+Inlined=1:100666523
+Inlined=1:100669419
+Inlined=1:100665758
+Inlined=1:100667121
+Inlined=1:100663564
+Inlined=2:100663307
+Inlined=1:100663563
+//10 methods jitted
+Jitted=2:100663297
+Jitted=2:100663299
+Jitted=2:100663302
+Jitted=2:100663305
+Jitted=2:100663307
+Jitted=2:100663308
+Jitted=2:100663309
+Jitted=2:100663311
+Jitted=2:100663312
+Jitted=2:100663314
+Stopped=20150413_1304230755
+Info=Shutting down coverage profiler

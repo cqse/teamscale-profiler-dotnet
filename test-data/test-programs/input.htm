@@ -1,0 +1,137 @@
+<html>
+	<body>
+		<P>The tutorial graph example of the [[BGL]] is the problem of tracking 
+			dependencies for the compilation of files (<A href="http://www.boost.org/libs/graph/doc/file_dependency_example.html">http://www.boost.org/libs/graph/doc/file_dependency_example.html</A>).
+		</P>
+		<P>In this page, we will transform the file dependency problem following the 
+			[[BGL]] tutorial.</P>
+		<H2>The File Dependency Problem:</H2>
+		<P dir="ltr">The File Dendency Problem is introduced as such:</P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P><EM>One of the most common uses of the graph abstraction in computer science is to 
+					track dependencies. An example of dependency tracking that we deal with on a 
+					day to day basis is the compilation dependencies for files in programs that we 
+					write. These dependencies are used inside programs such as <TT>make</TT> or in 
+					an IDE such as Visual C++ to minimize the number of files that must be 
+					recompiled after some changes have been made.</EM></P>
+		</BLOCKQUOTE>
+		<H2 dir="ltr" style="MARGIN-RIGHT: 0px">Example graph</H2>
+		<P dir="ltr" style="MARGIN-RIGHT: 0px">The graph described below represents the 
+			source files of a killer application. Eeach source file (header, source, 
+			object) is represented by a vertex. The edges represent which files are 
+			included into others. The arrow direction means "used by" and the opposite of 
+			the arrow direction means "depends on".</P>
+		<P dir="ltr" style="MARGIN-RIGHT: 0px">The entire source code of the example is 
+			available in the ~QuickGraphTest application (the ~FileDependencyTest class).</P>
+		<H2 dir="ltr" style="MARGIN-RIGHT: 0px">Graph Setup</H2>
+		<P dir="ltr" style="MARGIN-RIGHT: 0px">To represent the graph, we are going to use 
+			the AdjacencyGraph class which contains two methods that we need:</P>
+		<UL dir="ltr">
+			<LI>
+				<DIV style="MARGIN-RIGHT: 0px">~AddVertex which adds a new vertex to the graph,</DIV>
+			</LI>
+			<LI>
+				<DIV style="MARGIN-RIGHT: 0px">~AddEdge(<EM>u,v</EM>) which creates a new edge from 
+					vertex <EM>u</EM> to <EM>v</EM>.
+				</DIV>
+			</LI>
+		</UL>
+		<PRE lang="cs"> // create a new adjacency graph
+ AdjacencyGraph g = new AdjacencyGraph(new ~VertexAndEdgeProvider(), false);
+ 
+// a vertex name map to store the file names
+~VertexStringDictionary names = new ~VertexStringDictionary();
+   
+// adding files and storing names
+[[IVertex]] zig_cpp = g.~AddVertex(); 
+names[zig_cpp]="zip.cpp"; 
+[[IVertex]] boz_h = g.~AddVertex();  
+names[boz_h]="boz.h";
+
+// adding dependencies
+g.~AddEdge(dax_h, foo_cpp); 
+g.~AddEdge(dax_h, bar_cpp); 
+...</PRE>
+		<P></P>
+		<H2>Drawing the files</H2>
+		<P>In order to have the nice figure above, we first use a special algorithm, 
+			GraphvizAlgorithm, that outputs the graph and renders it using the GraphViz 
+			library:</P>
+		<PRE lang="cs">// outputing graph to png
+GraphvizAlgorithm gw = new GraphvizAlgorithm(
+    g,                      // graph to draw
+    "filedependency",         // output file prefix
+    ".",                    // output file path
+    GraphvizImageType.Png   // output file type
+    );
+    // outputing to graph.
+    gw.Write();</PRE>
+		<P>Compiling and executing the code leads to the following image:</P>
+		<P>This not exactly what we expected since it is not the file names that appear bu 
+			some mysterious numbers. In fact, the graphviz algorithm does not know that the 
+			vertices have names so it uses their hash code number to name them. In order to 
+			add the names on the graph you must create a <STRONG>visitor</STRONG> for the 
+			algorithm.</P>
+		<H2>Graphivz output with names</H2>
+		<P>As mentionned before, it is your job to tell to the GraphvizAlgorithm the name 
+			of each vertices. In the [[BGL]], this is done by defining Visitors. Visitors 
+			are class instance, whose member function are called on specific events. For 
+			instance, the graphviz algorithm has 3 events: ~WriteGraph which is called to 
+			set-up the global graph properties, ~WriteVertex which is called on each vertex 
+			and ~WriteEdge which is called on each edge.</P>
+		<P>In QuickGraph, the ideas remains the same but there are no visitors as such 
+			anymore. The algorithms now use <STRONG>events</STRONG> and delegates to 
+			trigger the ... events. (This topic is more detailled in the 
+			QuickGraphAndTheBoostGraphLibrary page). So basically what you need to do is 
+			write a method that will be attached to the ~WriteVertex event and will specify 
+			the vertex name.</P>
+		<PRE lang="cs">public class ~FileDependencyTest
+{
+    private ~GraphvizVertex m_Vertex;
+    private ~VertexStringDictionary m_Names;
+    public ~FileDependencyTest()
+    {
+        m_Vertex = new ~GraphvizVertex();            
+        m_Names = new ~VertexStringDictionary();
+    }
+    #region Properties
+    public ~GraphvizVertex Vertex
+    {
+        get
+        {
+            return m_Vertex;
+        }
+    }
+    public ~VertexStringDictionary Names
+    {
+        get
+        {
+            return m_Names;
+        }
+    }
+    #endregion</PRE>
+		<P></P>
+		<P>We can then add a handler to be attached to the ~WriterVertex event:</P>
+		<PRE lang="cs">public void ~WriteVertex(Object sender, VertexEventArgs args)
+{
+    // label is drawed on the dot diagram
+    // args.Vertex is the examined vertex
+    Vertex.Label = Names[ args.Vertex ];
+
+    // outputing to dot
+    // sender is the calling algorithm
+    // ToDot produces the dot code
+    ((GraphvizAlgorithm)sender).Output.Write( Vertex.ToDot() );
+}
+</PRE>
+		<P>Once the hanlder is ready, you have to attach it to the GraphvizAlgorithm gw and 
+			recall the algorithm.</P>
+		<PRE lang="cs">...
+gw.~WriteVertex += new VertexHandler( this.~WriteVertex );
+// rerendering
+gw.Write();</PRE>
+		<P></P>
+		<P>Relaunching the application, we have the expected result! Victory.</P>
+		<P>The tutorial is continued in FileDependencyPart2.</P>
+	</body>
+</html>
