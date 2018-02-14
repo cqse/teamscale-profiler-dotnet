@@ -1,3 +1,7 @@
+# Teamscale Ephemeral .NET Profiler
+[![Build status](https://ci.appveyor.com/api/projects/status/mhdeqjyg3u3osjm6?svg=true)](https://ci.appveyor.com/project/mpdeimos/teamscale-profiler-dotnet)
+===================================
+
 These are the sources of the profiler for .NET framework 4.0 and up.
 
 # Compiling
