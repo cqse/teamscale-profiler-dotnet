@@ -70,11 +70,22 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null)
 		{
 			DirectoryInfo targetDir = CreateTemporaryTestDir().CreateSubdirectory("traces");
-			ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments);
+			ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
+			{
+				WorkingDirectory = GetTestDataPath("test-programs"),
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				CreateNoWindow = true,
+				UseShellExecute = false
+
+			};
+
 			RegisterProfiler(startInfo, targetDir, lightMode, bitness);
-			startInfo.WorkingDirectory = GetTestDataPath("test-programs");
+
 			Process result = Process.Start(startInfo);
+			result.StandardOutput.ReadToEnd();
 			result.WaitForExit();
+
 			Assert.That(result.ExitCode, Is.EqualTo(0), "Program " + application + " did not execute properly.");
 			return GetTraceFiles(targetDir);
 		}
