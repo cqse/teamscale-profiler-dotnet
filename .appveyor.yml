@@ -20,12 +20,16 @@ test_script:
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
+artifacts:
+  - path: Profiler\bin\Release\*.dll
+    name: profiler
+
 deploy:
   - provider: GitHub
     auth_token:
       secure: APo4+sBDiSmiOI6yPrKS/4o3gu8yHaldPd9fmusOHnmVK5p7cxRuLAni0xkvH9nM
     release: $(APPVEYOR_REPO_TAG_NAME)
-    artifact: /Profiler\/bin\/Release\/.*.dll/
+    artifact: /.*Profiler.*\.dll/
     description: Release v$(appveyor_build_version)
     draft: true
     prerelease: false
