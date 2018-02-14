@@ -20,5 +20,18 @@ test_script:
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: APo4+sBDiSmiOI6yPrKS/4o3gu8yHaldPd9fmusOHnmVK5p7cxRuLAni0xkvH9nM
+    release: Release $(appveyor_build_version)
+    artifact: /Profiler\/bin\/Release\/*.dll/
+    description: v$(appveyor_build_version)
+    draft: true
+    prerelease: false
+    on:
+      branch: master
+      appveyor_repo_tag: true 
+
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
