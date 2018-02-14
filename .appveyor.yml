@@ -1,6 +1,5 @@
 configuration: Release
 
 build_script:
-  - set
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /p:PlatformToolset=v140 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /p:PlatformToolset=v140 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
