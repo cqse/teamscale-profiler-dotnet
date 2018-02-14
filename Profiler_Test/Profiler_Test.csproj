@@ -4,6 +4,9 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>Cqse.Teamscale.Profiler.Dotnet_Test</AssemblyName>
     <RootNamespace>Cqse.Teamscale.Profiler.Dotnet</RootNamespace>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿/.vs
-**/bin
-**/obj
-/Profiler/Release
+﻿/.vs/
+bin/
+obj/
+test-tmp/

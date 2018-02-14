@@ -13,6 +13,22 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 	/// </summary>
 	public abstract class ProfilerTestBase
 	{
+		/// <summary>
+		/// Enumeration for processor bitness
+		/// </summary>
+		public enum Bitness
+		{
+			/// <summary>
+			/// x86 architecture.
+			/// </summary>
+			x68,
+
+			/// <summary>
+			/// x64 architecture.
+			/// </summary>
+			x64
+		}
+
 		/** Environment variable name to enable the profiler. */
 		private const string PROFILER_ENABLE_KEY = "COR_ENABLE_PROFILING";
 
@@ -43,79 +59,123 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		/** Separator used to concatenate method keys */
 		public const char KEY_SEPARATOR = ':';
 
-		/** Sets all environment variables the profiler needs. */
-		protected void registerProfiler(ProcessStartInfo processInfo, DirectoryInfo targetDir, bool useLightMode, string bitness)
-		{
+		/// <summary>
+		/// The directory containing profiler solution.
+		/// </summary>
+		public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../../"));
 
-			string profilerDll = "profiler-dotnet-newer/Profiler" + bitness + ".dll";
+		/// <summary>
+		/// Executes the test application with the profiler attached and returns the written traces.
+		/// </summary>
+		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null)
+		{
+			DirectoryInfo targetDir = CreateTemporaryTestDir().CreateSubdirectory("traces");
+			ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments);
+			RegisterProfiler(startInfo, targetDir, lightMode, bitness);
+			startInfo.WorkingDirectory = GetTestDataPath("test-programs");
+			Process result = Process.Start(startInfo);
+			result.WaitForExit();
+			Assert.That(result.ExitCode, Is.EqualTo(0), "Program " + application + " did not execute properly.");
+			return GetTraceFiles(targetDir);
+		}
+
+		/// <summary>
+		/// Sets all environment variables the profiler needs.
+		/// </summary>
+		protected void RegisterProfiler(ProcessStartInfo processInfo, DirectoryInfo targetDir, bool lightMode = false, Bitness? bitness = null)
+		{
+			if (bitness == null)
+			{
+				bitness = GetBitness();
+			}
+
+			string profilerDll = SolutionRoot + "/Profiler/bin/Release/Profiler32.dll";
+			if (bitness == Bitness.x64)
+			{
+				profilerDll = SolutionRoot + "/Profiler/bin/Release/Profiler64.dll";
+			}
 
 			// set environment variables for the profiler
-			processInfo.Environment[PROFILER_PATH_KEY] = getAbsoluteResourcePath(profilerDll);
+			processInfo.Environment[PROFILER_PATH_KEY] = Path.GetFullPath(profilerDll);
 			processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
 			processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
 			processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
-			if (useLightMode)
+			if (lightMode)
 			{
 				processInfo.Environment[PROFILER_LIGHT_MODE_KEY] = "1";
 			}
 		}
 
-		/**
-		 * Asserts that the trace file written by the profiler has the same contents as
-		 * the given reference trace, modulo some normalization.
-		 */
-		protected void assertNormalizedTraceFileEqualsReference(FileInfo referenceTraceFile, DirectoryInfo directory,
-				HashSet<string> assembliesToCompare)
+		/// <summary>
+		/// Asserts that the trace file written by the profiler has the same contents as the given reference trace, modulo some normalization.
+		/// </summary>
+		protected void AssertNormalizedTraceFileEqualsReference(List<FileInfo> traces, int[] assembliesToCompare)
 		{
-			Assert.AreEqual(getNormalizedTraceContent(referenceTraceFile, assembliesToCompare),
-						getNormalizedTraceContent(getTraceFile(directory), assembliesToCompare),
+			Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
+			Assert.That(traces, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traces));
+
+			FileInfo referenceTraceFile = new FileInfo(GetTestDataPath("reference-traces", GetSanatizedTestName() + ".txt"));
+
+			var assmeblyIds = assembliesToCompare.ToHashSet();
+			Assert.AreEqual(ReadNormalizedTraceContent(referenceTraceFile, assmeblyIds),
+						ReadNormalizedTraceContent(traces[0], assmeblyIds),
 						"The normalized contents of the trace files did not match");
 		}
 
-		/**
-		 * Returns the trace.
-		 *
-		 * @throws AssertionError
-		 *             if not exactly one trace was written.
-		 */
-		protected FileInfo getTraceFile(DirectoryInfo directory)
-		{
-			List<FileInfo> traceFiles = directory.EnumerateFiles().Where(file => file.Name.StartsWith("coverage_")).ToList();
-			Assert.That(traceFiles, Has.Count.GreaterThan(0), "No coverage trace was written.");
-			Assert.That(traceFiles, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traceFiles));
+		/// <summary>
+		/// Returns the single trace file in the output directory.
+		/// </summary>
+		private List<FileInfo> GetTraceFiles(DirectoryInfo directory)
+			=> directory.EnumerateFiles().Where(file => file.Name.StartsWith("coverage_")).ToList();
 
-			return traceFiles[0];
+		/// <summary>
+		/// Returns the absolute path to a test data file.
+		/// </summary>
+		protected static string GetTestDataPath(params string[] path)
+			=> Path.Combine(SolutionRoot.FullName, "test-data", Path.Combine(path));
+
+		/// <summary>
+		/// Creates a unique (and empty) temporary test directory for storing output.
+		/// </summary>
+		/// <returns></returns>
+		protected static DirectoryInfo CreateTemporaryTestDir()
+		{
+			
+			var testDir = new DirectoryInfo(Path.Combine(SolutionRoot.FullName, "test-tmp", GetSanatizedTestName()));
+			if (testDir.Exists)
+			{
+				testDir.Delete(true);
+			}
+
+			testDir.Create();
+
+			return testDir;
 		}
 
-		/**
-		 * Executes a program from the resource folder.
-		 */
-		protected static Process executeProgramInResourceFolder(string program)
+		/// <summary>
+		/// Returns a sanatized name for the test case that is valid for paths.
+		/// </summary>
+		/// <returns></returns>
+		private static string GetSanatizedTestName()
 		{
-			var process = Process.Start(getAbsoluteResourcePath(program));
-			process.WaitForExit();
-			return process;
+			var testDirName = TestContext.CurrentContext.Test.FullName;
+			char[] invalidChars = Path.GetInvalidFileNameChars().Union(Path.GetInvalidPathChars()).Distinct().ToArray();
+			return string.Join("", testDirName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
 		}
 
-		/** Gets the absolute path to a resource file. */
-		protected static string getAbsoluteResourcePath(string path)
-		{
-			return Path.GetFullPath(Path.Combine("..", "test-data", path));
-		}
-
-		/**
-		 * Returns the inlined and jitted methods for the testee assembly. All other
-		 * trace file content may vary across machines or versions of the .NET
-		 * framework, including the number of actually jitted methods (in mscorlib).
-		 */
-		private static string getNormalizedTraceContent(FileInfo traceFile, HashSet<string> assembliesToCompare)
+		/// <summary>
+		/// Returns the inlined and jitted methods for the testee assembly. All other
+		/// trace file content may vary across machines or versions of the.NET
+		/// framework, including the number of actually jitted methods(in mscorlib).
+		/// </summary>
+		private static string ReadNormalizedTraceContent(FileInfo traceFile, HashSet<int> assembliesToCompare)
 		{
 			string[] content = File.ReadAllLines(traceFile.FullName);
 
-			ILookup<string, string> traceMap = keyValuesMapFor(content);
+			ILookup<string, string> traceMap = KeyValuesMapFor(content);
 
-			IEnumerable<string> inlined = filterMethodInvocationsByAssemblyNumber(traceMap[LABEL_INLINED], assembliesToCompare);
-			IEnumerable<string> jitted = filterMethodInvocationsByAssemblyNumber(traceMap[LABEL_JITTED], assembliesToCompare);
+			IEnumerable<string> inlined = FilterMethodInvocationsByAssemblyNumber(traceMap[LABEL_INLINED], assembliesToCompare);
+			IEnumerable<string> jitted = FilterMethodInvocationsByAssemblyNumber(traceMap[LABEL_JITTED], assembliesToCompare);
 
 			var invocations = inlined.Union(jitted).ToList();
 			invocations.Sort();
@@ -123,41 +183,52 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			return string.Join("\\n", invocations);
 		}
 
-		/**
-		 * Filters invoked methods, keeping only those that contain allowed assembly
-		 * keys. Each line in the output corresponds to one method invocation.
-		 */
-		private static IEnumerable<string> filterMethodInvocationsByAssemblyNumber(IEnumerable<string> methodInvocations,
-				HashSet<string> assembliesToCompare)
+		/// <summary>
+		/// Filters invoked methods, keeping only those that contain allowed assembly keys. Each line in the output corresponds to one method invocation.
+		/// </summary>
+		private static IEnumerable<string> FilterMethodInvocationsByAssemblyNumber(IEnumerable<string> methodInvocations,
+				HashSet<int> assembliesToCompare)
 		{
 			foreach (string methodInvocation in methodInvocations)
 			{
 				string assemblyToken = methodInvocation.Split(KEY_SEPARATOR, 2).First();
 
-				if (assembliesToCompare.Contains(assemblyToken))
+				if (int.TryParse(assemblyToken, out int assemblyId))
 				{
-					yield return methodInvocation;
+					if (assembliesToCompare.Contains(int.Parse(assemblyToken)))
+					{
+						yield return methodInvocation;
+					}
 				}
 			}
 		}
 
-		/**
-		 * Returns "64" if running on an x64 OS and having a .NET framework x64
-		 * installed, or "32" in case of an x86 .NET framework.
-		 */
-		protected static string getBitness()
+		/// <summary>
+		/// Returns "64" if running on an x64 OS and having a .NET framework x64 installed, or "32" in case of an x86.NET framework.
+		/// </summary>
+		private static Bitness GetBitness()
 		{
-			return executeProgramInResourceFolder("bitness-checker.exe").StandardOutput.ReadToEnd().Substring(0, 2);
+			// TODO (MP) we could examine this now w/o staring an external process
+			var startInfo = new ProcessStartInfo(GetTestDataPath("test-programs/bitness-checker.exe"));
+			startInfo.RedirectStandardOutput = true;
+			var process = Process.Start(startInfo);
+			process.WaitForExit();
+			var bitness = process.StandardOutput.ReadToEnd().Substring(0, 2);
+			switch (bitness)
+			{
+				case "32":
+					return Bitness.x68;
+				case "64":
+					return Bitness.x64;
+				default:
+					throw new Exception("Unknown bitness: " + bitness);
+			}
 		}
 
-
-		/**
-		 * Parse trace into map from key to list of values.
-		 *
-		 * @param coverageReport
-		 *            The coverage report.
-		 */
-		public static ILookup<string, string> keyValuesMapFor(string[] coverageReport)
+		/// <summary>
+		/// Parse trace into map from key to list of values.
+		/// </summary>
+		private static ILookup<string, string> KeyValuesMapFor(string[] coverageReport)
 			=> coverageReport.Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//"))
 				.Select(line => line.Split('=', 2))
 				.ToLookup(split => split[0], split => split[0]);
