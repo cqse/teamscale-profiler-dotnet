@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfilerTestGenerator", "ProfilerTestGenerator\ProfilerTestGenerator.csproj", "{28F6A832-08DA-49C3-85D7-AFD2D8596178}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{5EED95BE-7C82-49FD-BCB7-CAE1E2D1E8ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemotelyCalledAssembly", "RemotelyCalledAssembly\RemotelyCalledAssembly.csproj", "{21ADF6D2-0382-43D3-BB90-33AD2DB810D8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28F6A832-08DA-49C3-85D7-AFD2D8596178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28F6A832-08DA-49C3-85D7-AFD2D8596178}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28F6A832-08DA-49C3-85D7-AFD2D8596178}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28F6A832-08DA-49C3-85D7-AFD2D8596178}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EED95BE-7C82-49FD-BCB7-CAE1E2D1E8ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EED95BE-7C82-49FD-BCB7-CAE1E2D1E8ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EED95BE-7C82-49FD-BCB7-CAE1E2D1E8ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EED95BE-7C82-49FD-BCB7-CAE1E2D1E8ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21ADF6D2-0382-43D3-BB90-33AD2DB810D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21ADF6D2-0382-43D3-BB90-33AD2DB810D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21ADF6D2-0382-43D3-BB90-33AD2DB810D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21ADF6D2-0382-43D3-BB90-33AD2DB810D8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
