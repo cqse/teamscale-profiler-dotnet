@@ -2,8 +2,12 @@ version: 18.2.0.{build}
 
 configuration: Release
 
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 build_script:
-  - tree "C:\Program Files (x86)\Microsoft SDKs\" /A
-  - tree "C:\Program Files\Microsoft SDKs\" /A
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.0 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.0 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
