@@ -3,5 +3,7 @@ version: 18.2.0.{build}
 configuration: Release
 
 build_script:
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.795 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.795 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - tree "C:\Program Files (x86)\Microsoft SDKs\" /A
+  - tree "C:\Program Files\Microsoft SDKs\" /A
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.0 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /p:PlatformToolset=v140 /p:WindowsTargetPlatformVersion=10.0.14393.0 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
