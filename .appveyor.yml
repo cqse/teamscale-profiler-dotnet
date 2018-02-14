@@ -1,9 +1,5 @@
-platform:
-  - x86
-  - x64
+configuration: Release
 
-configuration:
-  - Release
-
-build:
-  project: Cqse.Teamscale.Profiler.Dotnet.sln
+build_script:
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
