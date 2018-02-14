@@ -15,7 +15,10 @@ build_script:
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
-  - dotnet test -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$resultsCORE"
+  - ps: $results = "test_results.xml"
+  - ps: dotnet test Cqse.Teamscale.Profiler.Dotnet.sln -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
+  - ps: $wc = New-Object System.Net.WebClient
+  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID", $results)
 
 on_finish:
   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
