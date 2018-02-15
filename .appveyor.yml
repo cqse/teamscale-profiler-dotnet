@@ -7,8 +7,8 @@ configuration: Release
 environment:
   release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
-#init:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
   - nuget restore
@@ -24,11 +24,13 @@ test_script:
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 install:
+  # Convert GitHub Wiki to PDF
   - git clone --depth=5 https://github.com/cqse/teamscale-profiler-dotnet.wiki.git wiki
   - npm install -g github-wikito-converter
   - curl -L https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_msvc2015-win64.exe --output wkhtmltox.exe
   - wkhtmltox.exe /S /D=C:\wkhtmltox
   - set PATH=%PATH%;C:\wkhtmltox\bin
+  - wkhtmltopdf -V
   - gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   
 after_test:
@@ -51,5 +53,5 @@ deploy:
       branch: master
       appveyor_repo_tag: true 
 
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
