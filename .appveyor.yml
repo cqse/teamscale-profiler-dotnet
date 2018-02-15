@@ -18,7 +18,7 @@ build_script:
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 after_build:
-  - 7z a $(release_zip) .\Profiler\bin\Release\*.dll
+  - 7z a %release_zip% .\Profiler\bin\Release\*.dll
 
 test_script:
   - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
