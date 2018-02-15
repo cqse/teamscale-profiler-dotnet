@@ -2,24 +2,31 @@ Teamscale Ephemeral .NET Profiler
 [![Build status](https://ci.appveyor.com/api/projects/status/mhdeqjyg3u3osjm6/branch/master?svg=true)](https://ci.appveyor.com/project/mpdeimos/teamscale-profiler-dotnet/branch/master)
 ===================================
 
-These are the sources of the profiler for .NET framework 4.0 and up.
+Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
 
-# Compiling
+## Documentation
 
-The code can be compiled with Visual Studio 2013 for 32bit and 64bit (target: "Release").
+Documentation on installation and usage of the profiler can be found in the [GitHub Wiki](https://github.com/cqse/teamscale-profiler-dotnet/wiki).
 
-# Profiling .NET framework 2.0 - 3.5 applications
+## Downloads
 
-For these old applications, you need to use the old, no longer updated profiler binary under `resources/profiler-dotnet-v2`, since the interface has changed drastically.
-The current profiler code CANNOT be used to profile these old applications!
+The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
 
-[Info about changes to the profiling API in .NET 4.0][1]
+## Contributing
 
-# Tests
+The coverage profiler can be compiled using Visual Studio 2017. Ensure to have the Windows and .NET SDK installed.
 
-There is some code and precompiled binaries under test-data, but these were all produced with .NET framework 2.0 and are undocumented. Thus, they cannot be used to test the current profiler version.
+Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler. Ensure to build both flavors of the Profiler (`Win32` and `x64`) before running the tests.
 
-If you have Eclipse under Windows, you can run the DotNetProfilerRegressionTest.
+Automatic build and testing is performed with an Appveyour build definition.
 
+## Release Process
 
-    [1]: https://msdn.microsoft.com/en-us/library/vstudio/dd778910%28v=vs.100%29.aspx
+The release process is outomated with GitHub Releases and Appveyor:
+
+1. Go to GitHub Releases and draft a new Release
+2. Enter the Tag name and Release name. It is good practice to give both the same name. We use `YY.MM.(minor)` version scheme, e.g. `v18.2.0`.
+3. Enter a short description of changes
+4. Publish the release
+
+Appveyour will then take care of attaching the release binary.
