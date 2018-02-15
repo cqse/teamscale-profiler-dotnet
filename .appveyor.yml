@@ -4,6 +4,9 @@ version: 18.2.0.{build}
 
 configuration: Release
 
+environment:
+  release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
+
 #init:
 #  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
@@ -14,6 +17,9 @@ build_script:
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
+after_build:
+  - 7z a $(release_zip) .\Profiler\bin\Release\*.dll
+
 test_script:
   - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
   - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
@@ -21,7 +27,7 @@ test_script:
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 artifacts:
-  - path: Profiler\bin\Release\*.dll
+  - path: $(release_zip)
     name: profiler
 
 deploy:
@@ -29,7 +35,7 @@ deploy:
     auth_token:
       secure: APo4+sBDiSmiOI6yPrKS/4o3gu8yHaldPd9fmusOHnmVK5p7cxRuLAni0xkvH9nM
     release: $(APPVEYOR_REPO_TAG_NAME)
-    artifact: /.*Profiler.*\.dll/
+    artifact: $(release_zip)
     description: Release v$(appveyor_build_version)
     draft: true
     prerelease: false
