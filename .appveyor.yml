@@ -26,7 +26,7 @@ test_script:
 install:
   - git clone --depth=5 https://github.com/cqse/teamscale-profiler-dotnet.wiki.git wiki
   - npm install -g github-wikito-converter
-  - curl https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_msvc2015-win64.exe --output wkhtmltox.exe
+  - curl -L https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_msvc2015-win64.exe --output wkhtmltox.exe
   - wkhtmltox.exe /S /D=C:\wkhtmltox
   - set PATH=%PATH%;C:\wkhtmltox\bin
   - gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
