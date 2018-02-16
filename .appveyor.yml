@@ -52,6 +52,6 @@ deploy:
 
 # Enable RDP
 init:
-  - ps: if ($env.RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+  - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
 on_finish:
-  - ps: if ($env.RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+  - ps: if ($env:RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
