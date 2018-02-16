@@ -7,9 +7,6 @@ configuration: Release
 environment:
   release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
-#init:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 before_build:
   - nuget restore
 
@@ -23,7 +20,7 @@ test_script:
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
-after_test:
+install:
   # Convert GitHub Wiki to PDF
   - git clone --depth=5 https://github.com/cqse/teamscale-profiler-dotnet.wiki.git wiki
   - npm install -g github-wikito-converter
@@ -33,6 +30,8 @@ after_test:
   - wkhtmltopdf -V
   - gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki & exit 0
   - If Not Exist documentation.pdf exit 1
+  
+after_test:
   # Create release zip with profiler & documentation
   - 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf
 
@@ -53,5 +52,8 @@ deploy:
       branch: master
       appveyor_repo_tag: true 
 
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# Enable RDP
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
