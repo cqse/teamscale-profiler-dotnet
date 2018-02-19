@@ -1,4 +1,4 @@
 Fixes # .
 
-[ ] Tests written
-[ ] Documentation updated
+- [ ] Tests written
+- [ ] Documentation updated
