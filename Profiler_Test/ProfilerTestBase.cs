@@ -21,7 +21,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			/// <summary>
 			/// x86 architecture.
 			/// </summary>
-			x68,
+			x86,
 
 			/// <summary>
 			/// x64 architecture.
@@ -67,7 +67,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		/// <summary>
 		/// Executes the test application with the profiler attached and returns the written traces.
 		/// </summary>
-		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null)
+		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
 		{
 			DirectoryInfo targetDir = CreateTemporaryTestDir().CreateSubdirectory("traces");
 			ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
@@ -77,10 +77,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 				RedirectStandardError = true,
 				CreateNoWindow = true,
 				UseShellExecute = false
-
 			};
 
 			RegisterProfiler(startInfo, targetDir, lightMode, bitness);
+
+			if (environment != null)
+			{
+				foreach(KeyValuePair<string, string> entry in environment)
+				{
+					startInfo.Environment[entry.Key] = entry.Value;
+				}
+			}
 
 			Process result = Process.Start(startInfo);
 			result.StandardOutput.ReadToEnd();
@@ -118,18 +125,26 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		}
 
 		/// <summary>
+		/// Asserts that the provided traces list contains exactly one item and returns that.
+		/// </summary>
+		protected FileInfo AssertSingleTrace(List<FileInfo> traces)
+		{
+			Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
+			Assert.That(traces, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traces));
+			return traces[0];
+		}
+
+		/// <summary>
 		/// Asserts that the trace file written by the profiler has the same contents as the given reference trace, modulo some normalization.
 		/// </summary>
 		protected void AssertNormalizedTraceFileEqualsReference(List<FileInfo> traces, int[] assembliesToCompare)
 		{
-			Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
-			Assert.That(traces, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traces));
-
+			FileInfo actual = AssertSingleTrace(traces);
 			FileInfo referenceTraceFile = new FileInfo(GetTestDataPath("reference-traces", GetSanatizedTestName() + ".txt"));
 
 			var assmeblyIds = assembliesToCompare.ToHashSet();
 			Assert.AreEqual(ReadNormalizedTraceContent(referenceTraceFile, assmeblyIds),
-						ReadNormalizedTraceContent(traces[0], assmeblyIds),
+						ReadNormalizedTraceContent(actual, assmeblyIds),
 						"The normalized contents of the trace files did not match");
 		}
 
@@ -228,7 +243,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			switch (bitness)
 			{
 				case "32":
-					return Bitness.x68;
+					return Bitness.x86;
 				case "64":
 					return Bitness.x64;
 				default:

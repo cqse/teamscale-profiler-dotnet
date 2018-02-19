@@ -36,9 +36,9 @@ namespace {
 	/** The version of the profiler */
 	const char* PROFILER_VERSION_INFO =
 #ifdef _WIN64
-		"Coverage profiler version 0.11.0 (64bit)"
+		"Coverage profiler version 0.11.1 (64bit)"
 #else
-		"Coverage profiler version 0.11.0 (32bit)"
+		"Coverage profiler version 0.11.1 (32bit)"
 #endif
 		;
 }
@@ -69,6 +69,13 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 	else {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: lazy");
+	}
+
+	char appPool[BUFFER_SIZE];
+	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
+		std::string message = "IIS AppPool: ";
+		message += appPool;
+		writeTupleToFile(LOG_KEY_INFO, message.c_str());
 	}
 
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
