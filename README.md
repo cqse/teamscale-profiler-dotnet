@@ -1,16 +1,16 @@
 Teamscale Ephemeral .NET Profiler
-[![Build status](https://ci.appveyor.com/api/projects/status/mhdeqjyg3u3osjm6/branch/master?svg=true)](https://ci.appveyor.com/project/mpdeimos/teamscale-profiler-dotnet/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/pamrby3g6dm26074/branch/master?svg=true)](https://ci.appveyor.com/project/cqse/teamscale-profiler-dotnet/branch/master)
 ===================================
 
 Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
 
+## Download
+
+The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
+
 ## Documentation
 
 Documentation on installation and usage of the profiler can be found in the [GitHub Wiki](https://github.com/cqse/teamscale-profiler-dotnet/wiki).
-
-## Downloads
-
-The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
 
 ## Contributing
 
