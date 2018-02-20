@@ -15,7 +15,7 @@ environment:
 before_build:
   - cmd: nuget restore
   # Patch C++ Version Info
-  - ps: (Get-Content Profiler/version.h) | ForEach-Object { $_.Replace("1.0.0.0", $env:APPVEYOR_BUILD_VERSION).Replace("1,0,0,0", $env:APPVEYOR_BUILD_VERSION.Replace(".", ","))} | Set-Content Profiler/version.h
+  - ps: (Get-Content Profiler/version.h) | ForEach-Object { $_.Replace("1.0.0.0", $env:APPVEYOR_BUILD_VERSION).Replace("1,0,0,0", $env:APPVEYOR_BUILD_VERSION.Replace(".", ",").Split("-")[0]) } | Set-Content Profiler/version.h
 
 build_script:
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
