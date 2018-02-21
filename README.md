@@ -24,9 +24,12 @@ Automatic build and testing is performed with an Appveyour build definition.
 
 The release process is outomated with GitHub Releases and Appveyor:
 
-1. Go to GitHub Releases and draft a new Release
-2. Enter the Tag name and Release name. It is good practice to give both the same name. We use `YY.MM.(minor)` version scheme, e.g. `v18.2.0`.
-3. Enter a short description of changes
-4. Publish the release
+We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
 
-Appveyour will then take care of attaching the release binary.
+1. Edit `.appveyor.yml` and adust the `version` property.
+2. Go to GitHub Releases and draft a new Release
+3. Enter the Tag name and Release name. It is good practice to give both the same name, e.g. `v18.2.0`.
+4. Enter a short description of changes
+5. Publish the release
+
+AppVeyor will then take care of attaching the release binary.
