@@ -18,7 +18,7 @@ The coverage profiler can be compiled using Visual Studio 2017. Ensure to have t
 
 Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler. Ensure to build both flavors of the Profiler (`Win32` and `x64`) before running the tests.
 
-Automatic build and testing is performed with an Appveyour build definition.
+Automatic build and testing is performed with an AppVeyor build definition.
 
 ## Release Process
 
