@@ -1,4 +1,5 @@
 #include "CProfilerCallback.h"
+#include "version.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -32,15 +33,6 @@ namespace {
 
 	/** The key to log information about the profiler shutdown. */
 	const char* LOG_KEY_STOPPED = "Stopped";
-
-	/** The version of the profiler */
-	const char* PROFILER_VERSION_INFO =
-#ifdef _WIN64
-		"Coverage profiler version 0.11.1 (64bit)"
-#else
-		"Coverage profiler version 0.11.1 (32bit)"
-#endif
-		;
 }
 
 CProfilerCallback::CProfilerCallback() {
@@ -166,7 +158,7 @@ void CProfilerCallback::createLogFile() {
 	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-	writeTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
+	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
 
 	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
