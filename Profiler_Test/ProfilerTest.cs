@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.Text;
 
@@ -21,8 +22,31 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		[TestCase("profilerTesTEE.EXE", 1)]
 		public void TestProcessSelection(string process, int expectedTraces)
 		{
-			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x68, environment: new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } });
+			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } });
 			Assert.That(traces, Has.Count.EqualTo(expectedTraces), "Got the wrong number of traces.");
+		}
+
+		/// <summary>
+		/// Runs the profiler with the environment variable APP_POOL_ID set and asserts its content is logged into the trace.
+		/// </summary>
+		[Test]
+		public void TestWithAppPool()
+		{
+			IDictionary<string, string> environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));
+		}
+
+		/// <summary>
+		/// Runs the profiler without the environment variable APP_POOL_ID set and asserts the trace does not contain a line for the app pool.
+		/// </summary>
+		[Test]
+		public void TestWihoutAppPool()
+		{
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(!lines.Any(line => line.StartsWith("Info=IIS AppPool:")));
 		}
 
 		/// <summary>
@@ -33,7 +57,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			[Values("none", "all")] string applicationMode,
 			[Values(true, false)] bool isLightMode)
 		{
-			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x68);
+			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x86);
 			AssertNormalizedTraceFileEqualsReference(traces, new[] { 2 });
 		}
 
