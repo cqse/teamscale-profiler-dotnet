@@ -89,6 +89,9 @@ private:
 	 */
 	bool isEagerMode = false;
 
+	/** Whether the current process should be profiled. */
+	bool isProfilingEnabled = false;
+
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
 	 * It is used to identify the declaring assembly for functions.
@@ -143,11 +146,8 @@ private:
 	*/
 	DWORD getEventMask();
 
-	/**
-	 * Writes information about the profiled process to the
-	 * log file.
-	 */
-	void writeProcessInfoToLogFile(); 
+	/** Returns information about the profiled process. */
+	std::string getProcessInfo(); 
 
 	/** Create the log file and add general information. */
 	void createLogFile();

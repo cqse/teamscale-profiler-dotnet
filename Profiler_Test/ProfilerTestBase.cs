@@ -67,7 +67,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		/// <summary>
 		/// Executes the test application with the profiler attached and returns the written traces.
 		/// </summary>
-		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null)
+		protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
 		{
 			DirectoryInfo targetDir = CreateTemporaryTestDir().CreateSubdirectory("traces");
 			ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
@@ -81,6 +81,15 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			};
 
 			RegisterProfiler(startInfo, targetDir, lightMode, bitness);
+
+			// TODO (AG) Remove before merging master after #8 was merged
+			if (environment != null)
+				          {
+				              foreach (KeyValuePair<string, string> entry in environment)
+					              {
+					startInfo.Environment[entry.Key] = entry.Value;
+					              }
+				          }
 
 			Process result = Process.Start(startInfo);
 			result.StandardOutput.ReadToEnd();

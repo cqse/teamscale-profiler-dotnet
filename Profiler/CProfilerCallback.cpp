@@ -43,7 +43,24 @@ CProfilerCallback::~CProfilerCallback() {
 	DeleteCriticalSection(&criticalSection);
 }
 
+/** Whether the given value ends with the given suffix. */
+inline bool endsWith(std::string const & value, std::string const & suffix)
+{
+	if (suffix.size() > value.size()) return false;
+	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+}
+
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
+	std::string process = getProcessInfo();
+	std::string processToProfile = getEnvironmentVariable("PROCESS");
+	std::transform(process.begin(), process.end(), process.begin(), toupper);
+	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
+
+	isProfilingEnabled = processToProfile.empty() || endsWith(process, processToProfile);
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	createLogFile();
 	readConfig();
 
@@ -71,9 +88,13 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	DWORD dwEventMask = getEventMask();
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
-	writeProcessInfoToLogFile();
+
+	writeTupleToFile(LOG_KEY_PROCESS, getProcessInfo().c_str());
+
 	return S_OK;
 }
+
+
 
 std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
 	char value[BUFFER_SIZE];
@@ -115,7 +136,7 @@ std::string CProfilerCallback::getOption(std::string optionName) {
 	return this->configOptions[optionName];
 }
 
-void CProfilerCallback::writeProcessInfoToLogFile(){
+std::string CProfilerCallback::getProcessInfo(){
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -129,7 +150,7 @@ void CProfilerCallback::writeProcessInfoToLogFile(){
 	char process[BUFFER_SIZE];
 	// turn application path from wide to normal character string
 	sprintf_s(process, "%S", appPath);
-	writeTupleToFile(LOG_KEY_PROCESS, process);
+	return process;
 }
 
 void CProfilerCallback::createLogFile() {
@@ -168,7 +189,9 @@ void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
 	EnterCriticalSection(&criticalSection);
 
 	if (!isEagerMode) {
@@ -229,8 +252,11 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 	return functionId;
 }
 
-HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
-		HRESULT hrStatus) {
+HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
@@ -349,8 +375,11 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 	return writtenChars;
 }
 
-HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
-	HRESULT hrStatus, BOOL fIsSafeToBlock) {
+HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock) {
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	FunctionInfo info;
 	getFunctionInfo(functionId, &info);
 
@@ -366,8 +395,11 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
-		BOOL* pfShouldInline) {
+HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId, BOOL* pfShouldInline) {
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 

@@ -14,6 +14,18 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 	public class ProfilerTest : ProfilerTestBase
 	{
 		/// <summary>
+		/// Makes sure that processes not matching the given process name are not profiled.
+		/// </summary>
+		[TestCase("w3wp.exe", 0)]
+		[TestCase("ProfilerTestee.exe", 1)]
+		[TestCase("profilerTesTEE.EXE", 1)]
+		public void TestProcessSelection(string process, int expectedTraces)
+		{
+			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x68, environment: new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } });
+			Assert.That(traces, Has.Count.EqualTo(expectedTraces), "Got the wrong number of traces.");
+		}
+
+		/// <summary>
 		/// Executes a test for the given profiler with the given application mode.
 		/// </summary>
 		[Test, Pairwise]
