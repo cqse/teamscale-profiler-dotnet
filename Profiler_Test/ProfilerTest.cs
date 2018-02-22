@@ -17,13 +17,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		/// <summary>
 		/// Makes sure that processes not matching the given process name are not profiled.
 		/// </summary>
-		[TestCase("w3wp.exe", 0)]
-		[TestCase("ProfilerTestee.exe", 1)]
-		[TestCase("profilerTesTEE.EXE", 1)]
-		public void TestProcessSelection(string process, int expectedTraces)
+		[TestCase("w3wp.exe", ExpectedResult = 0)]
+		[TestCase("ProfilerTestee.exe", ExpectedResult = 1)]
+		[TestCase("profilerTesTEE.EXE", ExpectedResult = 1)]
+		public int TestProcessSelection(string process)
 		{
-			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } });
-			Assert.That(traces, Has.Count.EqualTo(expectedTraces), "Got the wrong number of traces.");
+			var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
+			return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
 		}
 
 		/// <summary>
@@ -32,7 +32,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		[Test]
 		public void TestWithAppPool()
 		{
-			IDictionary<string, string> environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
+			var environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
 			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment, bitness: Bitness.x86));
 			string[] lines = File.ReadAllLines(actualTrace.FullName);
 			Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));

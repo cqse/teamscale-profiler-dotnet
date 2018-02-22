@@ -46,13 +46,15 @@ CProfilerCallback::~CProfilerCallback() {
 /** Whether the given value ends with the given suffix. */
 inline bool endsWith(std::string const & value, std::string const & suffix)
 {
-	if (suffix.size() > value.size()) return false;
+	if (suffix.size() > value.size()) {
+		return false;
+	}
 	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	std::string process = getProcessInfo();
-	std::string processToProfile = getEnvironmentVariable("PROCESS");
+	std::string processToProfile = getConfigValueFromEnvironment("PROCESS");
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
@@ -103,7 +105,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 
 
-std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
+std::string CProfilerCallback::getConfigValueFromEnvironment(std::string suffix) {
 	char value[BUFFER_SIZE];
 	std::string name = "COR_PROFILER_" + suffix;
 	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
@@ -113,9 +115,9 @@ std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
 }
 
 void CProfilerCallback::readConfig() {
-	std::string configFile = getEnvironmentVariable("CONFIG");
+	std::string configFile = getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
-		configFile = getEnvironmentVariable("PATH") + ".config";
+		configFile = getConfigValueFromEnvironment("PATH") + ".config";
 	}
 	writeTupleToFile(LOG_KEY_INFO, ("looking for configuration options in: " + configFile).c_str());
 
@@ -136,7 +138,7 @@ void CProfilerCallback::readConfig() {
 }
 
 std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = getEnvironmentVariable(optionName);
+	std::string value = getConfigValueFromEnvironment(optionName);
 	if (!value.empty()) {
 		return value;
 	}
