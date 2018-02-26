@@ -15,6 +15,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 	public class ProfilerTest : ProfilerTestBase
 	{
 		/// <summary>
+		/// Runs the profiler with command line argument and asserts its content is logged into the trace.
+		/// </summary>
+		[Test]
+		public void TestCommandLine()
+		{
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
+		}
+
+		/// <summary>
 		/// Runs the profiler with the environment variable APP_POOL_ID set and asserts its content is logged into the trace.
 		/// </summary>
 		[Test]
