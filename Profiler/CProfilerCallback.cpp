@@ -89,6 +89,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		writeTupleToFile(LOG_KEY_INFO, message.c_str());
 	}
 
+	std::string message = "Command Line: ";
+	message += GetCommandLine();
+	writeTupleToFile(LOG_KEY_INFO, message.c_str());
+
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;

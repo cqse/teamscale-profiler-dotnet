@@ -15,6 +15,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 	public class ProfilerTest : ProfilerTestBase
 	{
 		/// <summary>
+		/// Runs the profiler with command line argument and asserts its content is logged into the trace.
+		/// </summary>
+		[Test]
+		public void TestCommandLine()
+		{
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
+		}
+
+		/// <summary>
 		/// Makes sure that processes not matching the given process name are not profiled.
 		/// </summary>
 		[TestCase("w3wp.exe", ExpectedResult = 0)]
@@ -25,6 +36,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
 			return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
 		}
+
 
 		/// <summary>
 		/// Runs the profiler with the environment variable APP_POOL_ID set and asserts its content is logged into the trace.
