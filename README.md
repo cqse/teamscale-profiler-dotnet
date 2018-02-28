@@ -26,9 +26,9 @@ The release process is outomated with GitHub Releases and Appveyor:
 
 We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
 
-1. Edit `.appveyor.yml` and adust the `version` property.
-2. Go to GitHub Releases and draft a new Release
-3. Enter the Tag name and Release name. It is good practice to give both the same name, e.g. `v18.2.0`.
+1. Edit `.appveyor.yml` and adjust the `version` property.
+2. Go to GitHub Releases and draft a new release
+3. Enter the tag name and release name. It is good practice to give both the same name, e.g. `v18.2.0`.
 4. Enter a short description of changes
 5. Publish the release
 
