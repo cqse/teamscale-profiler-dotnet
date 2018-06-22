@@ -1,8 +1,10 @@
 #include "CProfilerCallback.h"
 #include "version.h"
+#include "Uploader.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
+#include <Shlwapi.h>
 
 using namespace std;
 
@@ -82,6 +84,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		writeTupleToFile(LOG_KEY_INFO, "Mode: lazy");
 	}
 
+	if (getOption("UPLOAD") == "1") {
+		startUpload();
+	}
+
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
 		std::string message = "IIS AppPool: ";
@@ -107,7 +113,15 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	return S_OK;
 }
 
-
+std::string CProfilerCallback::startUpload() {
+	std::string uploaderPath = getConfigValueFromEnvironment("PATH");
+	PathRemoveFileSpec(uploaderPath.c_str());
+	std::string coverageDir = getLogFilePath();
+	PathRemoveFileSpec(coverageDir.c_str());
+	
+	Uploader uploader = new Uploader(uploaderPath, coverageDir);
+	uploader.launch();
+}
 
 std::string CProfilerCallback::getConfigValueFromEnvironment(std::string suffix) {
 	char value[BUFFER_SIZE];
@@ -166,7 +180,7 @@ std::string CProfilerCallback::getProcessInfo(){
 	return process;
 }
 
-void CProfilerCallback::createLogFile() {
+std::string CProfilerCallback::getLogFilePath() {
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 			sizeof(targetDir))) {
@@ -180,9 +194,14 @@ void CProfilerCallback::createLogFile() {
 
 	sprintf_s(logFileName, "%s/coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(logFilePath, logFileName);
+	return std::string(logFilePath);
+}
+
+void CProfilerCallback::createLogFile() {
+	std::string logFilePath = getLogFilePath();
 
 	EnterCriticalSection(&criticalSection);
-	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
+	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);

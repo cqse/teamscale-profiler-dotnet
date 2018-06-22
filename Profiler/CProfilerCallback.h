@@ -152,6 +152,9 @@ private:
 	/** Create the log file and add general information. */
 	void createLogFile();
 
+	/** Starts the upload process. */
+	void startUpload();
+
 	/**  Store assembly counter for id. */
 	int registerAssembly(AssemblyID assemblyId);
 
@@ -172,6 +175,9 @@ private:
 
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);
+
+	/** Returns the path to the log. */
+	std::string getLogFilePath();
 
 };
 
