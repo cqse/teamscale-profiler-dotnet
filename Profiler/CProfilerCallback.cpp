@@ -8,6 +8,7 @@
 
 using namespace std;
 
+#pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 
