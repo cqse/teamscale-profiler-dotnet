@@ -9,6 +9,7 @@ using System.IO.Abstractions;
 /// </summary>
 public class Config
 {
+    public const string CONFIG_FILE_NAME = "Uploader.json";
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     /// <summary>
@@ -26,21 +27,15 @@ public class Config
     /// </summary>
     public string Partition;
 
+    /// <summary>
+    /// Tries to read the config JSON file.
+    /// </summary>
+    /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>
     public static Config ReadConfig(IFileSystem fileSystem)
     {
-        string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Uploader.json");
-
-        try
-        {
-            string json = fileSystem.File.ReadAllText(configPath);
-            return JsonConvert.DeserializeObject<Config>(json);
-        }
-        catch (Exception e)
-        {
-            logger.Error(e, "Failed to read config file {configPath}", configPath);
-            Environment.Exit(1);
-            return null;
-        }
+        string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CONFIG_FILE_NAME);
+        string json = fileSystem.File.ReadAllText(configPath);
+        return JsonConvert.DeserializeObject<Config>(json);
     }
 
 }

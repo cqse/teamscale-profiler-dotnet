@@ -15,7 +15,7 @@ public class Uploader
 {
     private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-    
+
     private readonly TimerAction timerAction;
 
     /// <summary>
@@ -56,8 +56,22 @@ public class Uploader
     {
         string traceDirectory = ParseArguments(args);
         FileSystem fileSystem = new FileSystem();
-        Config config = Config.ReadConfig(fileSystem);
+        Config config = ReadConfig(fileSystem);
         timerAction = new TimerAction(traceDirectory, config, fileSystem);
+    }
+
+    private static Config ReadConfig(FileSystem fileSystem)
+    {
+        try
+        {
+            return Config.ReadConfig(fileSystem);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Failed to read config file {configName}", Config.CONFIG_FILE_NAME);
+            Environment.Exit(1);
+            return null;
+        }
     }
 
     /// <summary>
@@ -69,7 +83,7 @@ public class Uploader
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine("The uploader reads its configuration from a file called Uploader.json" +
+            Console.Error.WriteLine($"The uploader reads its configuration from a file called {Config.CONFIG_FILE_NAME}" +
                 " that must reside in the same directory as Uploader.exe");
             Environment.Exit(1);
         }
