@@ -11,7 +11,7 @@ public:
 	/** Constructor. */
 	Uploader(std::string uploaderPath, std::string traceDirectory, Log* log);
 
-	/** Starts the uploader in a new process. */
+	/** Starts the uploader in a new background process. */
 	void launch();
 
 private:

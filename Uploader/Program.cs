@@ -3,12 +3,16 @@ using NLog;
 using System.IO;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
+using System.Timers;
 
 /// <summary>
 /// Main entry point of the program
 /// </summary>
 public class Uploader
 {
+    private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
+
     private readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     private string traceDirectory;
@@ -74,6 +78,31 @@ public class Uploader
     private void Run()
     {
         logger.Info("Starting loop");
-        // TODO
+
+        System.Timers.Timer timer = new System.Timers.Timer();
+        timer.Elapsed += new ElapsedEventHandler(OnTimerTriggered);
+        timer.Interval = TIMER_INTERVAL_MILLISECONDS;
+        timer.Enabled = true;
+
+        SuspendThread();
+    }
+
+    private void OnTimerTriggered(object sender, ElapsedEventArgs arguments)
+    {
+
+    }
+
+    /// <summary>
+    /// Suspends this thread indefinitely but still reacts to interruptions from the console's cancel key.
+    /// </summary>
+    private static void SuspendThread()
+    {
+        AutoResetEvent cancelEvent = new AutoResetEvent(false);
+        Console.CancelKeyPress += (sender, eArgs) =>
+        {
+            cancelEvent.Set();
+            eArgs.Cancel = true;
+        };
+        cancelEvent.WaitOne(Timeout.Infinite);
     }
 }
