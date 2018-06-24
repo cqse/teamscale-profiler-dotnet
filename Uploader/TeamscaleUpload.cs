@@ -10,7 +10,7 @@ using NLog;
 /// </summary>
 class TeamscaleUpload
 {
-    private readonly Logger logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     private HttpClient client;
 

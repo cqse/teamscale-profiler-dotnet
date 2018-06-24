@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 /// </summary>
 class TraceFileScanner
 {
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
     private static readonly Regex TRACE_FILE_REGEX = new Regex(@"^coverage_\d*_\d*.txt$");
 
     private readonly string traceDirectory;
@@ -27,7 +29,18 @@ class TraceFileScanner
     /// </summary>
     public IEnumerable<ScannedFile> ListTraceFilesReadyForUpload()
     {
-        foreach (string fileName in Directory.EnumerateFiles(traceDirectory))
+        IEnumerable<string> files;
+        try
+        {
+            files = Directory.EnumerateFiles(traceDirectory);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Unable to list files in {traceDirectory}. Will retry later", traceDirectory);
+            yield break;
+        }
+
+        foreach (string fileName in files)
         {
             if (!IsTraceFile(fileName))
             {
@@ -35,29 +48,49 @@ class TraceFileScanner
             }
 
             string filePath = Path.Combine(traceDirectory, fileName);
-            // TODO handle exceptions
-            string[] lines = File.ReadAllLines(filePath);
-
-            if (!IsFinished(lines))
+            ScannedFile scannedFile = ScanFile(filePath);
+            if (scannedFile != null)
             {
-                continue;
+                yield return scannedFile;
             }
+        }
+    }
 
-            if (!ContainsVersionAssembly(lines))
-            {
-                yield return new ScannedFile
-                {
-                    FilePath = filePath,
-                    Result = EScanResult.MISSING_VERSION_ASSEMBLY
-                };
-            }
+    /// <summary>
+    /// Scans the given file path and returns the resulting ScannedFile or null in case the file should be ignored.
+    /// </summary>
+    private ScannedFile ScanFile(string filePath)
+    {
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(filePath);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Unable to read from file {trace}. Ignoring this file", filePath);
+            return null;
+        }
 
-            yield return new ScannedFile
+        if (!IsFinished(lines))
+        {
+            return null;
+        }
+
+        if (ContainsVersionAssembly(lines))
+        {
+            return new ScannedFile
             {
                 FilePath = filePath,
                 Result = EScanResult.READY_FOR_UPLOAD
             };
         }
+
+        return new ScannedFile
+        {
+            FilePath = filePath,
+            Result = EScanResult.MISSING_VERSION_ASSEMBLY
+        };
     }
 
     private bool IsFinished(string[] lines)

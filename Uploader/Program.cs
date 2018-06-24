@@ -13,7 +13,7 @@ public class Uploader
 {
     private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
 
-    private readonly Logger logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     private string traceDirectory;
 
