@@ -29,4 +29,9 @@ public class TeamscaleServer
     [JsonProperty(Required = Required.Always)]
     public string Project;
 
+    public override string ToString()
+    {
+        return $"Teamscale {Url} project {Project} with user {Username}";
+    }
+
 }

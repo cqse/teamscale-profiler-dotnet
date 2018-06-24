@@ -46,13 +46,14 @@ class TeamscaleUpload : IUpload
             {
                 if (response.IsSuccessStatusCode)
                 {
-                    logger.Info("Successfully uploaded {trace}", filePath);
+                    logger.Info("Successfully uploaded {trace} to {teamscale}", filePath, server.ToString());
                     return true;
                 }
                 else
                 {
                     string body = await response.Content.ReadAsStringAsync();
-                    logger.Error("Upload of {trace} failed with status code {statusCode}\n{responseBody}", filePath, response.StatusCode, body);
+                    logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
+                        filePath, server.ToString(), response.StatusCode, body);
                     return false;
                 }
             }

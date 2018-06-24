@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.IO.Abstractions;
 using System.Timers;
 
@@ -7,37 +8,42 @@ using System.Timers;
 /// </summary>
 class TimerAction
 {
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     private readonly Config config;
     private readonly TraceFileScanner scanner;
     private readonly IUpload upload;
+    private readonly Archiver archiver;
 
     public TimerAction(string traceDirectory, Config config, IFileSystem fileSystem)
     {
         this.config = config;
         this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
         this.upload = new TeamscaleUpload(config.Teamscale);
+        this.archiver = new Archiver(traceDirectory, fileSystem);
     }
 
-    public void Run(object sender, ElapsedEventArgs arguments)
+    public async void Run(object sender, ElapsedEventArgs arguments)
     {
         foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
         {
             if (file.Version == null)
             {
-                Archive(file);
+                archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
             }
             else
             {
-                upload.UploadAsync(file.FilePath, file.Version, "TODO", config.Partition);
+                bool success = await upload.UploadAsync(file.FilePath, file.Version, "TODO", config.Partition);
+                if (success)
+                {
+                    archiver.ArchiveUploadedFile(file.FilePath);
+                }
+                else
+                {
+                    logger.Error("Upload of {tracePath} failed. Will retry later", file.FilePath);
+                }
             }
         }
-    }
-
-
-    private void Archive(TraceFileScanner.ScannedFile file)
-    {
-        throw new NotImplementedException();
     }
 
 }

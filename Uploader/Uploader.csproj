@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Archiver.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="TimerAction.cs" />
     <Compile Include="TraceFileScanner.cs" />
