@@ -130,10 +130,10 @@ private:
 	TCHAR logFilePath[_MAX_PATH];
 
 	/** Path of the process we are in. */
-	wchar_t appPath[_MAX_PATH]; 
-   
+	wchar_t appPath[_MAX_PATH];
+
 	/** Name of the profiled application. */
-	wchar_t appName[_MAX_FNAME]; 
+	wchar_t appName[_MAX_FNAME];
 	
 	/** Synchronizes access to the result file. */
 	CRITICAL_SECTION criticalSection;
@@ -175,9 +175,6 @@ private:
 
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);
-
-	/** Returns the path to the log. */
-	std::string getLogFilePath();
 
 };
 

@@ -23,6 +23,8 @@ void Uploader::launch()
 	shExecInfo.nShow = SW_NORMAL;
 	shExecInfo.hInstApp = NULL;
 
-	ShellExecuteEx(&shExecInfo);
+	bool successful = ShellExecuteEx(&shExecInfo);
+	if (!successful) {
 	// ToDO handle errors
+	}
 }

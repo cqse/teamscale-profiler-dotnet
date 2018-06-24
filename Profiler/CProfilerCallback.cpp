@@ -115,7 +115,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 void CProfilerCallback::startUpload() {
 	std::string uploaderPath = removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
-	std::string traceDirectory = removeLastPartOfPath(getLogFilePath());
+	std::string traceDirectory = removeLastPartOfPath(std::string(logFilePath));
 	
 	Uploader uploader(uploaderPath, traceDirectory);
 	uploader.launch();
@@ -178,10 +178,10 @@ std::string CProfilerCallback::getProcessInfo(){
 	return process;
 }
 
-std::string CProfilerCallback::getLogFilePath() {
+void CProfilerCallback::createLogFile() {
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
-			sizeof(targetDir))) {
+		sizeof(targetDir))) {
 		// c:/users/public is usually writable for everyone
 		strcpy_s(targetDir, "c:/users/public/");
 	}
@@ -192,20 +192,13 @@ std::string CProfilerCallback::getLogFilePath() {
 
 	sprintf_s(logFileName, "%s/coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(logFilePath, logFileName);
-	return std::string(logFilePath);
-}
-
-void CProfilerCallback::createLogFile() {
-	std::string logFilePath = getLogFilePath();
 
 	EnterCriticalSection(&criticalSection);
-	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
+	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
 
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
 	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }
