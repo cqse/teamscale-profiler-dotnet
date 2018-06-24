@@ -204,6 +204,7 @@
     <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
+    <ClInclude Include="WindowsUtils.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Uploader.h" />

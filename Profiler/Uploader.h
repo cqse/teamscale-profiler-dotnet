@@ -1,4 +1,5 @@
 #pragma once
+#include "Log.h"
 #include <string>
 
 /**
@@ -8,12 +9,15 @@ class Uploader {
 public:
 
 	/** Constructor. */
-	Uploader(std::string uploaderPath, std::string traceDirectory);
+	Uploader(std::string uploaderPath, std::string traceDirectory, Log* log);
 
 	/** Starts the uploader in a new process. */
 	void launch();
 
 private:
+
+	/** The log for error reporting. */
+	Log* log;
 
 	/** Path to the executable of the uploader. */
 	std::string pathToExe;

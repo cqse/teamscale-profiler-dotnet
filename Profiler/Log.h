@@ -24,6 +24,9 @@ public:
 	/** Writes a warning message. */
 	void warn(std::string message);
 
+	/** Writes an error message. */
+	void error(std::string message);
+
 	/** Writes the profiled process into the log. Should only be called once. */
 	void logProcess(std::string process);
 

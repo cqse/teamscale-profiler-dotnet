@@ -89,7 +89,7 @@ void CProfilerCallback::startUpload() {
 	std::string uploaderPath = removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = removeLastPartOfPath(log.getLogFilePath());
 	
-	Uploader uploader(uploaderPath, traceDirectory);
+	Uploader uploader(uploaderPath, traceDirectory, &log);
 	uploader.launch();
 }
 

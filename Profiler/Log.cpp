@@ -12,8 +12,11 @@ namespace {
 	/** The key to log information useful when interpreting the traces. */
 	const char* LOG_KEY_INFO = "Info";
 
-	/** The key to log information about non-critical error conditions. */
+	/** The key to log information about non-critical problems. */
 	const char* LOG_KEY_WARN = "Warn";
+
+	/** The key to log information about errors that should be addressed but don't prevent the profiler from tracing method calls. */
+	const char* LOG_KEY_ERROR = "Error";
 
 	/** The key to log information about a single assembly. */
 	const char* LOG_KEY_ASSEMBLY = "Assembly";
@@ -52,6 +55,11 @@ void Log::info(std::string message) {
 void Log::warn(std::string message)
 {
 	writeTupleToFile(LOG_KEY_WARN, message.c_str());
+}
+
+void Log::error(std::string message)
+{
+	writeTupleToFile(LOG_KEY_ERROR, message.c_str());
 }
 
 void Log::logProcess(std::string process)
