@@ -8,17 +8,16 @@ using NLog;
 /// <summary>
 /// Uploads trace files to Teamscale.
 /// </summary>
-class TeamscaleUpload
+class TeamscaleUpload : IUpload
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    private HttpClient client;
+    private static readonly HttpClient client = new HttpClient();
 
     private TeamscaleServer server;
 
-    public TeamscaleUpload(HttpClient client, TeamscaleServer server)
+    public TeamscaleUpload(TeamscaleServer server)
     {
-        this.client = client;
         this.server = server;
     }
 
@@ -29,7 +28,7 @@ class TeamscaleUpload
     /// <param name="version">The application version (read from a version assembly).</param>
     /// <param name="message">The upload commit message.</param>
     /// <param name="partition">The partition to upload to.</param>
-    /// <returns></returns>
+    /// <returns>Whether the upload was successful.</returns>
     public async Task<bool> UploadAsync(string filePath, string version, string message, string partition)
     {
         using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))

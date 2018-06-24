@@ -1,7 +1,7 @@
 /// <summary>
 /// Data class that holds all details needed to connect to Teamscale.
 /// </summary>
-class TeamscaleServer
+public class TeamscaleServer
 {
     /// <summary>
     /// URL of the Teamscale server.
@@ -22,4 +22,5 @@ class TeamscaleServer
     /// Teamscale project to which to upload.
     /// </summary>
     public string Project;
+
 }

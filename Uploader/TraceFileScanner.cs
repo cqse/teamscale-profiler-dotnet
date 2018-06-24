@@ -18,10 +18,10 @@ class TraceFileScanner
     private readonly string traceDirectory;
     private readonly Regex versionAssemblyRegex;
 
-    TraceFileScanner(string traceDirectory, string versionAssembly)
+    public TraceFileScanner(string traceDirectory, string versionAssembly)
     {
         this.traceDirectory = traceDirectory;
-        this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*", RegexOptions.IgnoreCase);
+        this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
     }
 
     /// <summary>
@@ -77,19 +77,11 @@ class TraceFileScanner
             return null;
         }
 
-        if (ContainsVersionAssembly(lines))
-        {
-            return new ScannedFile
-            {
-                FilePath = filePath,
-                Result = EScanResult.READY_FOR_UPLOAD
-            };
-        }
-
+        string version = FindVersion(lines);
         return new ScannedFile
         {
             FilePath = filePath,
-            Result = EScanResult.MISSING_VERSION_ASSEMBLY
+            Version = version,
         };
     }
 
@@ -98,30 +90,21 @@ class TraceFileScanner
         return lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
     }
 
-    private bool ContainsVersionAssembly(string[] lines)
+    private string FindVersion(string[] lines)
     {
-        return lines.Any(line => versionAssemblyRegex.IsMatch(line));
+        string matchingLine = lines.First(line => versionAssemblyRegex.IsMatch(line));
+        if (matchingLine == null)
+        {
+            return null;
+        }
+
+        Match match = versionAssemblyRegex.Match(matchingLine);
+        return match.Groups[1].Value;
     }
 
     private bool IsTraceFile(string fileName)
     {
         return TRACE_FILE_REGEX.IsMatch(fileName);
-    }
-
-    /// <summary>
-    /// Indicates the result state of a scanned file.
-    /// </summary>
-    public enum EScanResult
-    {
-        /// <summary>
-        /// File can be uploaded.
-        /// </summary>
-        READY_FOR_UPLOAD,
-
-        /// <summary>
-        /// File does not contain the version assembly, i.e. should be archived.
-        /// </summary>
-        MISSING_VERSION_ASSEMBLY
     }
 
     /// <summary>
@@ -135,8 +118,9 @@ class TraceFileScanner
         public string FilePath;
 
         /// <summary>
-        /// The result of the scan.
+        /// The parsed version of the version assembly or null in case the version assembly was not in the file.
         /// </summary>
-        public EScanResult Result;
+        public string Version;
+
     }
 }

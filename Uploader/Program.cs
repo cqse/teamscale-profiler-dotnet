@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Timers;
+using Newtonsoft.Json;
 
 /// <summary>
 /// Main entry point of the program
@@ -15,7 +16,10 @@ public class Uploader
 
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    private string traceDirectory;
+    private readonly string traceDirectory;
+    private readonly Config config;
+    private readonly TraceFileScanner scanner;
+    private readonly IUpload upload;
 
     /// <summary>
     /// Main entry point. Expects a single argument: the path to a directory that contains the trace files to upload.
@@ -53,26 +57,51 @@ public class Uploader
 
     Uploader(string[] args)
     {
-        ParseArguments(args);
+        this.traceDirectory = ParseArguments(args);
+        this.config = ReadConfig();
+        this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly);
+        this.upload = new TeamscaleUpload(config.Teamscale);
     }
 
-    private void ParseArguments(string[] args)
+    private Config ReadConfig()
+    {
+        string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Uploader.json");
+
+        try
+        {
+            string json = File.ReadAllText(configPath);
+            return JsonConvert.DeserializeObject<Config>(json);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Failed to read config file {configPath}", configPath);
+            Environment.Exit(1);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parses the command line arguments and returns the trace directory.
+    /// </summary>
+    private string ParseArguments(string[] args)
     {
         if (args.Length != 1 || args[0] == "--help")
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine("The uploader reads its configuration from a file called Uploader.config" +
+            Console.Error.WriteLine("The uploader reads its configuration from a file called Uploader.json" +
                 " that must reside in the same directory as Uploader.exe");
             Environment.Exit(1);
         }
 
-        traceDirectory = Path.GetFullPath(args[0]);
+        string traceDirectory = Path.GetFullPath(args[0]);
         if (!Directory.Exists(traceDirectory))
         {
             logger.Error("Directory {traceDirectory} does not exist", traceDirectory);
             Environment.Exit(1);
         }
+
+        return traceDirectory;
     }
 
     private void Run()
@@ -89,6 +118,22 @@ public class Uploader
 
     private void OnTimerTriggered(object sender, ElapsedEventArgs arguments)
     {
+        foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
+        {
+            if (file.Version == null)
+            {
+                Archive(file);
+            }
+            else
+            {
+                upload.UploadAsync(file.FilePath, file.Version, "TODO", config.Partition);
+            }
+        }
+    }
+
+    private void Archive(TraceFileScanner.ScannedFile file)
+    {
+        throw new NotImplementedException();
     }
 
     /// <summary>
