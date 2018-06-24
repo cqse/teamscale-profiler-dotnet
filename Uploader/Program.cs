@@ -6,14 +6,14 @@ using System.Reflection;
 using System.Threading;
 using System.Timers;
 using Newtonsoft.Json;
+using System.IO.Abstractions;
 
 /// <summary>
-/// Main entry point of the program
+/// Main entry point of the program.
 /// </summary>
 public class Uploader
 {
     private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
-
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
     
     private readonly TimerAction timerAction;
@@ -55,25 +55,9 @@ public class Uploader
     Uploader(string[] args)
     {
         string traceDirectory = ParseArguments(args);
-        Config config = ReadConfig();
-        this.timerAction = new TimerAction(traceDirectory, config);
-    }
-
-    private Config ReadConfig()
-    {
-        string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Uploader.json");
-
-        try
-        {
-            string json = File.ReadAllText(configPath);
-            return JsonConvert.DeserializeObject<Config>(json);
-        }
-        catch (Exception e)
-        {
-            logger.Error(e, "Failed to read config file {configPath}", configPath);
-            Environment.Exit(1);
-            return null;
-        }
+        FileSystem fileSystem = new FileSystem();
+        Config config = Config.ReadConfig(fileSystem);
+        timerAction = new TimerAction(traceDirectory, config, fileSystem);
     }
 
     /// <summary>

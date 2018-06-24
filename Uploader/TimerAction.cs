@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO.Abstractions;
 using System.Timers;
 
 /// <summary>
@@ -11,10 +12,10 @@ class TimerAction
     private readonly TraceFileScanner scanner;
     private readonly IUpload upload;
 
-    public TimerAction(string traceDirectory, Config config)
+    public TimerAction(string traceDirectory, Config config, IFileSystem fileSystem)
     {
         this.config = config;
-        this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly);
+        this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
         this.upload = new TeamscaleUpload(config.Teamscale);
     }
 

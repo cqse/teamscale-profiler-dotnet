@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,11 +18,13 @@ class TraceFileScanner
 
     private readonly string traceDirectory;
     private readonly Regex versionAssemblyRegex;
+    private readonly IFileSystem fileSystem;
 
-    public TraceFileScanner(string traceDirectory, string versionAssembly)
+    public TraceFileScanner(string traceDirectory, string versionAssembly, IFileSystem fileSystem)
     {
         this.traceDirectory = traceDirectory;
         this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
+        this.fileSystem = fileSystem;
     }
 
     /// <summary>
@@ -32,7 +35,7 @@ class TraceFileScanner
         IEnumerable<string> files;
         try
         {
-            files = Directory.EnumerateFiles(traceDirectory);
+            files = fileSystem.Directory.EnumerateFiles(traceDirectory);
         }
         catch (Exception e)
         {
@@ -64,7 +67,7 @@ class TraceFileScanner
         string[] lines;
         try
         {
-            lines = File.ReadAllLines(filePath);
+            lines = fileSystem.File.ReadAllLines(filePath);
         }
         catch (Exception e)
         {
