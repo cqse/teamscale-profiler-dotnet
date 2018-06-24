@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 /// <summary>
 /// Scans the trace directory for trace files that are ready to upload or archive.
 /// </summary>
-class TraceFileScanner
+public class TraceFileScanner
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
     private static readonly Regex TRACE_FILE_REGEX = new Regex(@"^coverage_\d*_\d*.txt$");
@@ -43,14 +43,14 @@ class TraceFileScanner
             yield break;
         }
 
-        foreach (string fileName in files)
+        foreach (string filePath in files)
         {
+            string fileName = Path.GetFileName(filePath);
             if (!IsTraceFile(fileName))
             {
                 continue;
             }
 
-            string filePath = Path.Combine(traceDirectory, fileName);
             ScannedFile scannedFile = ScanFile(filePath);
             if (scannedFile != null)
             {
@@ -95,7 +95,7 @@ class TraceFileScanner
 
     private string FindVersion(string[] lines)
     {
-        string matchingLine = lines.First(line => versionAssemblyRegex.IsMatch(line));
+        string matchingLine = lines.FirstOrDefault(line => versionAssemblyRegex.IsMatch(line));
         if (matchingLine == null)
         {
             return null;
@@ -125,5 +125,20 @@ class TraceFileScanner
         /// </summary>
         public string Version;
 
+        public override bool Equals(object obj)
+        {
+            var file = obj as ScannedFile;
+            return file != null &&
+                   FilePath == file.FilePath &&
+                   Version == file.Version;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1491167301;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FilePath);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Version);
+            return hashCode;
+        }
     }
 }
