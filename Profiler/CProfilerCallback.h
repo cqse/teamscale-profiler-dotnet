@@ -1,8 +1,7 @@
-#ifndef _ProfilerCallback_H_
-#define _ProfilerCallback_H_
-
+#pragma once
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
+#include "Log.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -64,12 +63,6 @@ public:
 	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
 						BOOL *pbHookFunction);
 
-	/** Writes the given string to the log file. */
-	int writeToFile(const char* string); 
-
-	/** Writes the given name-value pair to the log file. */
-	void writeTupleToFile(const char* key, const char* value);
-
 	/** Create method info object for a function id. */
 	HRESULT getFunctionInfo( FunctionID functionID, FunctionInfo* info);
 
@@ -119,24 +112,18 @@ private:
 	* Stores all declared options from the config file.
 	*/
 	std::map<std::string, std::string> configOptions;
-
-	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
-	HANDLE logFile = INVALID_HANDLE_VALUE;
 	
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
-
-	/** Path of the result file. */
-	TCHAR logFilePath[_MAX_PATH];
 
 	/** Path of the process we are in. */
 	wchar_t appPath[_MAX_PATH];
 
 	/** Name of the profiled application. */
 	wchar_t appName[_MAX_FNAME];
-	
-	/** Synchronizes access to the result file. */
-	CRITICAL_SECTION criticalSection;
+
+	/** The log file to write all results and messages to. */
+	Log log;
 
 	/**
 	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
@@ -149,9 +136,6 @@ private:
 	/** Returns information about the profiled process. */
 	std::string getProcessInfo(); 
 
-	/** Create the log file and add general information. */
-	void createLogFile();
-
 	/** Starts the upload process. */
 	void startUpload();
 
@@ -161,21 +145,11 @@ private:
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
-	/** Writes the fileVersionInfo into the provided buffer. */
-	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
-
-	/** Write all information about the given functions to the log. */
-	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
-
-	/** Write all information about the given function to the log. */
-	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
-
 	/** Fills the given function info for the function represented by the given IDs and tokens. */
 	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
 
-	/** Fills the given buffer with a string representing the current time. */
-	void getFormattedCurrentTime(char *result, size_t size);
+	/** Writes the fileVersionInfo into the provided buffer. */
+	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
 };
 
-#endif
