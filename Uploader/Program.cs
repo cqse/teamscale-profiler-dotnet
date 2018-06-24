@@ -68,7 +68,7 @@ public class Uploader
         }
         catch (Exception e)
         {
-            logger.Error(e, "Failed to read config file {configName}", Config.CONFIG_FILE_NAME);
+            logger.Error(e, "Failed to read config file {configPath}", Config.CONFIG_FILE_PATH);
             Environment.Exit(1);
             return null;
         }
@@ -83,8 +83,7 @@ public class Uploader
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The uploader reads its configuration from a file called {Config.CONFIG_FILE_NAME}" +
-                " that must reside in the same directory as Uploader.exe");
+            Console.Error.WriteLine($"The uploader reads its configuration from {Config.CONFIG_FILE_PATH}");
             Environment.Exit(1);
         }
 
