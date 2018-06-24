@@ -15,11 +15,8 @@ public class Uploader
     private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
 
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-    private readonly string traceDirectory;
-    private readonly Config config;
-    private readonly TraceFileScanner scanner;
-    private readonly IUpload upload;
+    
+    private readonly TimerAction timerAction;
 
     /// <summary>
     /// Main entry point. Expects a single argument: the path to a directory that contains the trace files to upload.
@@ -57,10 +54,9 @@ public class Uploader
 
     Uploader(string[] args)
     {
-        this.traceDirectory = ParseArguments(args);
-        this.config = ReadConfig();
-        this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly);
-        this.upload = new TeamscaleUpload(config.Teamscale);
+        string traceDirectory = ParseArguments(args);
+        Config config = ReadConfig();
+        this.timerAction = new TimerAction(traceDirectory, config);
     }
 
     private Config ReadConfig()
@@ -109,31 +105,11 @@ public class Uploader
         logger.Info("Starting loop");
 
         System.Timers.Timer timer = new System.Timers.Timer();
-        timer.Elapsed += new ElapsedEventHandler(OnTimerTriggered);
+        timer.Elapsed += new ElapsedEventHandler(timerAction.Run);
         timer.Interval = TIMER_INTERVAL_MILLISECONDS;
         timer.Enabled = true;
 
         SuspendThread();
-    }
-
-    private void OnTimerTriggered(object sender, ElapsedEventArgs arguments)
-    {
-        foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
-        {
-            if (file.Version == null)
-            {
-                Archive(file);
-            }
-            else
-            {
-                upload.UploadAsync(file.FilePath, file.Version, "TODO", config.Partition);
-            }
-        }
-    }
-
-    private void Archive(TraceFileScanner.ScannedFile file)
-    {
-        throw new NotImplementedException();
     }
 
     /// <summary>

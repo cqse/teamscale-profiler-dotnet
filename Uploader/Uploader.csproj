@@ -55,10 +55,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config.cs" />
+    <Compile Include="TimerAction.cs" />
     <Compile Include="TraceFileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeamscaleServer.cs" />
-    <Compile Include="TeamscaleUpload.cs" />
+    <Compile Include="upload\IUpload.cs" />
+    <Compile Include="upload\TeamscaleUpload.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
