@@ -99,7 +99,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>corguids.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>corguids.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)Profiler32.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)Profiler32.pdb</ProgramDatabaseFile>
@@ -195,13 +195,16 @@
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
+    <ClCompile Include="Uploader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
+    <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Uploader.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

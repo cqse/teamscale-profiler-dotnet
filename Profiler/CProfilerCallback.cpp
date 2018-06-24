@@ -1,10 +1,10 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "Uploader.h"
+#include "FileSYstemUtils.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-#include <Shlwapi.h>
 
 using namespace std;
 
@@ -113,13 +113,11 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	return S_OK;
 }
 
-std::string CProfilerCallback::startUpload() {
-	std::string uploaderPath = getConfigValueFromEnvironment("PATH");
-	PathRemoveFileSpec(uploaderPath.c_str());
-	std::string coverageDir = getLogFilePath();
-	PathRemoveFileSpec(coverageDir.c_str());
+void CProfilerCallback::startUpload() {
+	std::string uploaderPath = removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
+	std::string traceDirectory = removeLastPartOfPath(getLogFilePath());
 	
-	Uploader uploader = new Uploader(uploaderPath, coverageDir);
+	Uploader uploader(uploaderPath, traceDirectory);
 	uploader.launch();
 }
 
@@ -206,6 +204,8 @@ void CProfilerCallback::createLogFile() {
 	
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
 
+	char timeStamp[BUFFER_SIZE];
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
 	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
 }

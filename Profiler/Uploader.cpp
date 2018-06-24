@@ -1,5 +1,4 @@
 #include "Uploader.h"
-#include "stdafx.h"
 #include "windows.h"
 #include "shellapi.h"
 
@@ -25,6 +24,5 @@ void Uploader::launch()
 	shExecInfo.hInstApp = NULL;
 
 	ShellExecuteEx(&shExecInfo);
-
-	return 0;
+	// ToDO handle errors
 }

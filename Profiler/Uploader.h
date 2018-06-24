@@ -1,6 +1,4 @@
-#ifndef _Uploader_H_
-#define _Uploader_H_
-
+#pragma once
 #include <string>
 
 /**
@@ -10,7 +8,7 @@ class Uploader {
 public:
 
 	/** Constructor. */
-	Uploader(std::string uploaderPath);
+	Uploader(std::string uploaderPath, std::string traceDirectory);
 
 	/** Starts the uploader in a new process. */
 	void launch();
@@ -24,5 +22,3 @@ private:
 	std::string traceDirectory;
 
 };
-
-#endif
