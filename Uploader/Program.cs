@@ -89,7 +89,6 @@ public class Uploader
 
     private void OnTimerTriggered(object sender, ElapsedEventArgs arguments)
     {
-
     }
 
     /// <summary>
