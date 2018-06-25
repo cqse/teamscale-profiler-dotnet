@@ -26,6 +26,9 @@ test_script:
   - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
+  - ps: dotnet test Uploader_Test/Uploader_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
+  - ps: $wc = New-Object System.Net.WebClient
+  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 after_test:
   # Convert GitHub Wiki to PDF
@@ -38,7 +41,7 @@ after_test:
   - cmd: wkhtmltopdf -V
   - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   # Create release zip with profiler & documentation
-  - cmd: 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf
+  - cmd: 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf .\Uploader\bin\Uploader.* .\Uploader\bin\nlog.*
 
 artifacts:
   - path: $(release_zip)
@@ -62,3 +65,4 @@ init:
   - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
 on_finish:
   - ps: if ($env:RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+
