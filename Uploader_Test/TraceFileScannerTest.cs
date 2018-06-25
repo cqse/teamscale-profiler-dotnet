@@ -18,21 +18,13 @@ public class TraceFileScannerTest
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            {  File("coverage_1_1.txt"), new MockFileData(@"
-Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050
-") },
-            { File("coverage_1_2.txt"), new MockFileData(@"
-Assembly=VersionAssembly:1 Version:4.0.0.0
-") },
-            {  File("coverage_1_3.txt"), new MockFileData(@"
-Assembly=OtherAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050
-") },
-            {  File("unrelated.txt"), new MockFileData(@"
-Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050
-") },
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050" },
+            { FileInTraceDirectory("coverage_1_2.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
+            { FileInTraceDirectory("coverage_1_3.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050" },
+            { FileInTraceDirectory("unrelated.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050" },
         });
 
         IEnumerable<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TRACE_DIRECTORY, VERSION_ASSEMBLY, fileSystem).ListTraceFilesReadyForUpload();
@@ -41,12 +33,12 @@ Inlined=1:33555646:100678050
         {
             new TraceFileScanner.ScannedFile()
             {
-                FilePath = File("coverage_1_1.txt"),
+                FilePath = FileInTraceDirectory("coverage_1_1.txt"),
                 Version = "4.0.0.0",
             },
             new TraceFileScanner.ScannedFile()
             {
-                FilePath = File("coverage_1_3.txt"),
+                FilePath = FileInTraceDirectory("coverage_1_3.txt"),
                 Version = null,
             }
         });
@@ -86,7 +78,7 @@ Inlined=1:33555646:100678050
     /// <summary>
     /// Returns a file with the given name in the trace directory.
     /// </summary>
-    private string File(string fileName)
+    private string FileInTraceDirectory(string fileName)
     {
         return Path.Combine(TRACE_DIRECTORY, fileName);
     }
