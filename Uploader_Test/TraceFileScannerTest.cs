@@ -47,20 +47,18 @@ Inlined=1:33555646:100678050" },
     [TestMethod]
     public void ExceptionsShouldLeadToFileBeingIgnored()
     {
-        Mock<IFileSystem> fileSystemMock = new Mock<IFileSystem>();
-        Mock<FileBase> fileMock = new Mock<FileBase>();
-        Mock<DirectoryBase> directoryMock = new Mock<DirectoryBase>();
-
-        fileMock.Setup(file => file.ReadAllLines("coverage_1_1.txt")).Throws<IOException>();
-        fileMock.Setup(file => file.ReadAllLines("coverage_1_2.txt")).Returns(new string[] {
-            "Assembly=VersionAssembly:1 Version:4.0.0.0",
-            "Inlined=1:33555646:100678050",
+        Mock<IFileSystem> fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
+        {
+            fileMock.Setup(file => file.ReadAllLines("coverage_1_1.txt")).Throws<IOException>();
+            fileMock.Setup(file => file.ReadAllLines("coverage_1_2.txt")).Returns(new string[] {
+                "Assembly=VersionAssembly:1 Version:4.0.0.0",
+                "Inlined=1:33555646:100678050",
+            });
+        }, directoryMock =>
+        {
+            directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
+                .Returns(new string[] { "coverage_1_1.txt", "coverage_1_2.txt" });
         });
-        directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
-            .Returns(new string[] { "coverage_1_1.txt", "coverage_1_2.txt" });
-
-        fileSystemMock.Setup(fileSystem => fileSystem.File).Returns(fileMock.Object);
-        fileSystemMock.Setup(fileSystem => fileSystem.Directory).Returns(directoryMock.Object);
 
         IEnumerable<TraceFileScanner.ScannedFile> files =
             new TraceFileScanner(TRACE_DIRECTORY, VERSION_ASSEMBLY, fileSystemMock.Object).ListTraceFilesReadyForUpload();
@@ -83,25 +81,5 @@ Inlined=1:33555646:100678050" },
         return Path.Combine(TRACE_DIRECTORY, fileName);
     }
 
-    public class ThrowingMockFileData : MockFileData
-    {
-        public ThrowingMockFileData() : base("")
-        {
-            // nothing to do
-        }
-
-        new byte[] Contents
-        {
-            get
-            {
-                throw new IOException("IO failed");
-            }
-
-            set
-            {
-                throw new IOException("IO failed");
-            }
-        }
-    }
 }
 

@@ -74,6 +74,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArchiverTest.cs" />
+    <Compile Include="FileSystemMockingUtils.cs" />
     <Compile Include="TraceFileScannerTest.cs" />
     <Compile Include="ConfigTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

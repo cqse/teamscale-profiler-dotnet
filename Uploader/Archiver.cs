@@ -30,6 +30,19 @@ public class Archiver
 
     private void Archive(string tracePath, string targetDirectory)
     {
+        if (!fileSystem.Directory.Exists(targetDirectory))
+        {
+            try
+            {
+                fileSystem.Directory.CreateDirectory(targetDirectory);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Unable to create archive directory {archivePath}. Trace file {tracePath} cannot be archived and will be processed again later", targetDirectory, tracePath);
+                return;
+            }
+        }
+
         string targetPath = Path.Combine(targetDirectory, Path.GetFileName(tracePath));
         try
         {
