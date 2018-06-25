@@ -14,6 +14,7 @@ public class ConfigTest
         {
             {
                 Config.CONFIG_FILE_PATH, new MockFileData(@"{
+                    /* line comment */
                     versionAssembly: ""Assembly"",
                     partition: ""partition"",
                     teamscale: {
