@@ -32,6 +32,11 @@ public class Config
     public string Partition;
 
     /// <summary>
+    /// Template for the commit message for the upload commit.
+    /// </summary>
+    public string Message = "Test coverage for version %v from %p created at %t";
+
+    /// <summary>
     /// Tries to read the config JSON file.
     /// </summary>
     /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>

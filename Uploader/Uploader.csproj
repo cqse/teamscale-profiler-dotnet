@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="Archiver.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="MessageFormatter.cs" />
     <Compile Include="TimerAction.cs" />
     <Compile Include="TraceFileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
