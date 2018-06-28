@@ -16,6 +16,8 @@ public class Uploader
     private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+    private readonly string traceDirectory;
+    private readonly Config config;
     private readonly TimerAction timerAction;
 
     /// <summary>
@@ -40,7 +42,7 @@ public class Uploader
         {
             return false;
         }
-
+    
         Process[] processes = Process.GetProcessesByName(current.ProcessName);
         foreach (Process process in processes)
         {
@@ -54,14 +56,16 @@ public class Uploader
 
     Uploader(string[] args)
     {
-        string traceDirectory = ParseArguments(args);
+        traceDirectory = ParseArguments(args);
         FileSystem fileSystem = new FileSystem();
-        Config config = ReadConfig(fileSystem);
+        config = ReadConfig(fileSystem);
         timerAction = new TimerAction(traceDirectory, config, fileSystem);
     }
 
     private static Config ReadConfig(FileSystem fileSystem)
     {
+        logger.Debug("Reading config from {configFile}", Config.CONFIG_FILE_PATH);
+
         try
         {
             return Config.ReadConfig(fileSystem);
@@ -79,6 +83,8 @@ public class Uploader
     /// </summary>
     private string ParseArguments(string[] args)
     {
+        logger.Debug("Parsing arguments {arguments}", args);
+
         if (args.Length != 1 || args[0] == "--help")
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
@@ -99,10 +105,13 @@ public class Uploader
 
     private void Run()
     {
-        logger.Info("Starting loop");
+        logger.Info("Reading traces from {traceDirectory} and uploading them to {teamscale} with partition {partition} and version assembly {versionAssembly}",
+            traceDirectory, config.Teamscale, config.Partition, config.VersionAssembly);
+
+        timerAction.Run();
 
         System.Timers.Timer timer = new System.Timers.Timer();
-        timer.Elapsed += new ElapsedEventHandler(timerAction.Run);
+        timer.Elapsed += new ElapsedEventHandler(timerAction.HandleTimerEvent);
         timer.Interval = TIMER_INTERVAL_MILLISECONDS;
         timer.Enabled = true;
 

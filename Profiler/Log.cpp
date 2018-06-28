@@ -106,15 +106,19 @@ void Log::createLogFile() {
 	char targetDir[BUFFER_SIZE];
 	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
 		sizeof(targetDir))) {
-		// c:/users/public is usually writable for everyone
-		strcpy_s(targetDir, "c:/users/public/");
+		// c:\users\public is usually writable for everyone
+		// we must use backslashes here or the WinAPI path manipulation functions will fail
+		// to split the path correctly
+		strcpy_s(targetDir, "c:\\users\\public\\");
 	}
 
 	char logFileName[BUFFER_SIZE];
 	char timeStamp[BUFFER_SIZE];
 	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
 
-	sprintf_s(logFileName, "%s/coverage_%s.txt", targetDir, timeStamp);
+	// we must use backslash here or the WinAPI path manipulation functions will fail
+	// to split the path correctly
+	sprintf_s(logFileName, "%s\\coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(logFilePath, logFileName);
 
 	EnterCriticalSection(&criticalSection);
@@ -136,8 +140,6 @@ void Log::getFormattedCurrentTime(char *result, size_t size) {
 		time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 		time.wMilliseconds);
 }
-
-
 
 void Log::writeTupleToFile(const char* key, const char* value) {
 	char buffer[BUFFER_SIZE];

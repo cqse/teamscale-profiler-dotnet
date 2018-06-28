@@ -72,7 +72,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	message += GetCommandLine();
 	log.info(message);
 
-	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface(IID_ICorProfilerInfo2, (LPVOID*)&profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
 	}
@@ -89,7 +89,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 void CProfilerCallback::startUpload() {
 	std::string uploaderPath = removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = removeLastPartOfPath(log.getLogFilePath());
-	
+
 	Uploader uploader(uploaderPath, traceDirectory, &log);
 	uploader.launch();
 }
@@ -134,7 +134,7 @@ std::string CProfilerCallback::getOption(std::string optionName) {
 	return this->configOptions[optionName];
 }
 
-std::string CProfilerCallback::getProcessInfo(){
+std::string CProfilerCallback::getProcessInfo() {
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -190,7 +190,7 @@ DWORD CProfilerCallback::getEventMask() {
 }
 
 UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
-		BOOL* pbHookFunction) {
+	BOOL* pbHookFunction) {
 	// Disable hooking of functions.
 	*pbHookFunction = false;
 
@@ -218,14 +218,14 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		assemblyName, assemblyNumber);
 
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
-		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
+		metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
 
 	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
 		writtenChars += writeFileVersionInfo(assemblyPath, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
 	}
-	
+
 	if (getOption("ASSEMBLY_PATHS") == "1") {
-		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S",	assemblyPath);
+		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
 	log.logAssembly(assemblyInfo);
 
@@ -246,7 +246,7 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 	ModuleID moduleId = 0;
 	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
 		&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
-	
+
 	// We need the module info to get the path of the assembly
 	LPCBYTE baseLoadAddress;
 	ULONG assemblyPathSize = 0;
@@ -331,13 +331,13 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
-		FunctionInfo* info) {
+	FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
 	IMetaDataImport* pMDImport = NULL;
 	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
 
 	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
-			IID_IMetaDataImport, (IUnknown**) &pMDImport, &functionToken);
+		IID_IMetaDataImport, (IUnknown**)&pMDImport, &functionToken);
 	if (!SUCCEEDED(hr)) {
 		return hr;
 	}
@@ -348,14 +348,14 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
 	ULONG sigSize = 0;
 	ModuleID moduleId = 0;
 	hr = pMDImport->GetMethodProps(functionToken, &classToken, functionName,
-			sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
-			NULL);
+		sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
+		NULL);
 	if (SUCCEEDED(hr)) {
 		fillFunctionInfo(info, functionId, functionToken, moduleId);
 	}
-	
+
 	pMDImport->Release();
-	
+
 	return hr;
 }
 

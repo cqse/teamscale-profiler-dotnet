@@ -25,16 +25,25 @@ class TimerAction
         this.messageFormatter = new MessageFormatter(config);
     }
 
-    public async void Run(object sender, ElapsedEventArgs arguments)
+    public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
     {
+        Run();
+    }
+
+    public async void Run()
+    {
+        logger.Info("Scanning for coverage files");
+
         foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
         {
             if (file.Version == null)
             {
+                logger.Info("Archiving {tracePath} because it does not have version assembly", file.FilePath);
                 archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
             }
             else
             {
+                logger.Info("Uploading {tracePath}", file.FilePath);
                 bool success = await upload.UploadAsync(file.FilePath, file.Version, messageFormatter.Format(file.Version), config.Partition);
                 if (success)
                 {
@@ -46,6 +55,8 @@ class TimerAction
                 }
             }
         }
+
+        logger.Info("Finished scan");
     }
 
 }

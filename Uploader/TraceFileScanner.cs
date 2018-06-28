@@ -32,27 +32,29 @@ public class TraceFileScanner
     /// </summary>
     public IEnumerable<ScannedFile> ListTraceFilesReadyForUpload()
     {
-        IEnumerable<string> files;
+        List<string> files;
         try
         {
-            files = fileSystem.Directory.EnumerateFiles(traceDirectory);
+            files = fileSystem.Directory.EnumerateFiles(traceDirectory).ToList();
         }
         catch (Exception e)
         {
             logger.Error(e, "Unable to list files in {traceDirectory}. Will retry later", traceDirectory);
             yield break;
         }
-
+        
+        logger.Debug("Scanning {fileCount} files", files.Count);
         foreach (string filePath in files)
         {
             string fileName = Path.GetFileName(filePath);
             if (!IsTraceFile(fileName))
             {
+                logger.Debug("Skipping file that does not look like a trace file: {unknownFilePath}", filePath);
                 continue;
             }
 
             ScannedFile scannedFile = ScanFile(filePath);
-            if (scannedFile != null)
+            if (scannedFile == null)
             {
                 yield return scannedFile;
             }
@@ -77,10 +79,11 @@ public class TraceFileScanner
 
         if (!IsFinished(lines))
         {
+            logger.Debug("Ignoring unfinished trace {tracePath}", filePath);
             return null;
         }
 
-        string version = FindVersion(lines);
+        string version = FindVersion(lines, filePath);
         return new ScannedFile
         {
             FilePath = filePath,
@@ -93,11 +96,12 @@ public class TraceFileScanner
         return lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
     }
 
-    private string FindVersion(string[] lines)
+    private string FindVersion(string[] lines, string tracePath)
     {
         string matchingLine = lines.FirstOrDefault(line => versionAssemblyRegex.IsMatch(line));
         if (matchingLine == null)
         {
+            logger.Debug("Did not find the version assembly in {tracePath}", tracePath);
             return null;
         }
 

@@ -31,6 +31,7 @@ class TeamscaleUpload : IUpload
     /// <returns>Whether the upload was successful.</returns>
     public async Task<bool> UploadAsync(string filePath, string version, string message, string partition)
     {
+        logger.Debug("Uploading {tracePath} to {teamscale} with version {version} into partition {partition}", filePath, server.ToString(), version, partition);
         using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
         {
             string fileName = Path.GetFileName(filePath);
@@ -46,7 +47,7 @@ class TeamscaleUpload : IUpload
             {
                 if (response.IsSuccessStatusCode)
                 {
-                    logger.Info("Successfully uploaded {trace} to {teamscale}", filePath, server.ToString());
+                    logger.Info("Successfully uploaded {trace} to {teamscale} with version {version} into partition {partition}", filePath, server.ToString(), version, partition);
                     return true;
                 }
                 else
