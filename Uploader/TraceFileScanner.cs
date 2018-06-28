@@ -54,7 +54,7 @@ public class TraceFileScanner
             }
 
             ScannedFile scannedFile = ScanFile(filePath);
-            if (scannedFile == null)
+            if (scannedFile != null)
             {
                 yield return scannedFile;
             }
