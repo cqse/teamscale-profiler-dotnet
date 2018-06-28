@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using NLog;
@@ -12,12 +14,15 @@ class TeamscaleUpload : IUpload
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    private static readonly HttpClient client = new HttpClient();
+    private readonly HttpClient client;
 
-    private TeamscaleServer server;
+    private readonly TeamscaleServer server;
 
     public TeamscaleUpload(TeamscaleServer server)
     {
+        this.client = new HttpClient();
+        var byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         this.server = server;
     }
 
