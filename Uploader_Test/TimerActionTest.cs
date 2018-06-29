@@ -11,11 +11,11 @@ using Moq;
 [TestClass]
 public class TimerActionTest
 {
-    private const string TRACE_DIRECTORY = @"C:\users\public\traces";
-    private const string VERSION_ASSEMBLY = "VersionAssembly";
+    private const string TraceDirectory = @"C:\users\public\traces";
+    private const string VersionAssembly = "VersionAssembly";
     private static readonly Config config = new Config()
     {
-        VersionAssembly = VERSION_ASSEMBLY
+        VersionAssembly = VersionAssembly
     };
 
     [TestMethod]
@@ -27,11 +27,11 @@ public class TimerActionTest
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VERSION_ASSEMBLY;
+        config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TRACE_DIRECTORY, config, new MockUpload(true), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(true), fileSystem).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(1).And.Contain(new string[] {
             FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
         });
@@ -46,11 +46,11 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VERSION_ASSEMBLY;
+        config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TRACE_DIRECTORY, config, new MockUpload(false), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(1).And.Contain(new string[] {
             FileInTraceDirectory(@"coverage_1_1.txt"),
         });
@@ -65,11 +65,11 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VERSION_ASSEMBLY;
+        config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TRACE_DIRECTORY, config, new MockUpload(false), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(1).And.Contain(new string[] {
             FileInTraceDirectory(@"missing-version\coverage_1_1.txt"),
         });
@@ -83,11 +83,11 @@ Inlined=1:33555646:100678050" },
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
         });
 
-        config.VersionAssembly = VERSION_ASSEMBLY;
+        config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TRACE_DIRECTORY, config, new MockUpload(false), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(1).And.Contain(new string[] {
             FileInTraceDirectory(@"coverage_1_1.txt"),
         });
@@ -101,11 +101,11 @@ Inlined=1:33555646:100678050" },
             { FileInTraceDirectory("unrelated.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
         });
 
-        config.VersionAssembly = VERSION_ASSEMBLY;
+        config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TRACE_DIRECTORY, config, new MockUpload(false), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(1).And.Contain(new string[] {
             FileInTraceDirectory(@"unrelated.txt"),
         });
@@ -134,7 +134,7 @@ Inlined=1:33555646:100678050" },
     /// </summary>
     private string FileInTraceDirectory(string fileName)
     {
-        return Path.Combine(TRACE_DIRECTORY, fileName);
+        return Path.Combine(TraceDirectory, fileName);
     }
 
 }

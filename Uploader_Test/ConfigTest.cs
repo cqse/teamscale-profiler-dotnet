@@ -13,7 +13,7 @@ public class ConfigTest
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             {
-                Config.CONFIG_FILE_PATH, new MockFileData(@"{
+                Config.ConfigFilePath, new MockFileData(@"{
                     /* line comment */
                     versionAssembly: ""Assembly"",
                     teamscale: {
@@ -37,7 +37,7 @@ public class ConfigTest
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             {
-                Config.CONFIG_FILE_PATH, new MockFileData(@"{
+                Config.ConfigFilePath, new MockFileData(@"{
                 }")
             }
         });

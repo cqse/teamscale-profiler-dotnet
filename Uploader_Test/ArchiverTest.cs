@@ -10,8 +10,8 @@ using Moq;
 [TestClass]
 public class ArchiverTest
 {
-    private const string TRACE_DIRECTORY = @"C:\users\public\traces";
-    private const string VERSION_ASSEMBLY = "VersionAssembly";
+    private const string TraceDirectory = @"C:\users\public\traces";
+    private const string VersionAssembly = "VersionAssembly";
 
     [TestMethod]
     public void ShouldMoveFilesToCorrectSubfolders()
@@ -22,10 +22,10 @@ public class ArchiverTest
             { FileInTraceDirectory("coverage_1_2.txt"), @"missing version" },
         });
 
-        new Archiver(TRACE_DIRECTORY, fileSystem).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
-        new Archiver(TRACE_DIRECTORY, fileSystem).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
+        new Archiver(TraceDirectory, fileSystem).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+        new Archiver(TraceDirectory, fileSystem).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
 
-        string[] files = fileSystem.Directory.GetFiles(TRACE_DIRECTORY, "*.txt", SearchOption.AllDirectories);
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
         files.Should().HaveCount(2).And.Contain(new string[] {
             FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
             FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
@@ -41,7 +41,7 @@ public class ArchiverTest
             fileMock.Setup(file => file.ReadAllLines(FileInTraceDirectory("coverage_1_1.txt"))).Throws<IOException>();
         }, directoryMock => { });
         
-        new Archiver(TRACE_DIRECTORY, fileSystemMock.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+        new Archiver(TraceDirectory, fileSystemMock.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class ArchiverTest
     /// </summary>
     private string FileInTraceDirectory(string fileName)
     {
-        return Path.Combine(TRACE_DIRECTORY, fileName);
+        return Path.Combine(TraceDirectory, fileName);
     }
 
 }

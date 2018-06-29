@@ -14,7 +14,7 @@ using System.Collections.Generic;
 /// </summary>
 public class Uploader
 {
-    private const long TIMER_INTERVAL_MILLISECONDS = 1000 * 60 * 5;
+    private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     private readonly string traceDirectory;
@@ -66,7 +66,7 @@ public class Uploader
 
     private static Config ReadConfig(FileSystem fileSystem)
     {
-        logger.Debug("Reading config from {configFile}", Config.CONFIG_FILE_PATH);
+        logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
 
         Config config;
         try
@@ -75,7 +75,7 @@ public class Uploader
         }
         catch (Exception e)
         {
-            logger.Error(e, "Failed to read config file {configPath}", Config.CONFIG_FILE_PATH);
+            logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
             Environment.Exit(1);
             return null;
         }
@@ -86,7 +86,7 @@ public class Uploader
             return config;
         }
 
-        logger.Error("Invalid config file {configPath}: {errorMessages}", Config.CONFIG_FILE_PATH, String.Join("; ", errorMessages));
+        logger.Error("Invalid config file {configPath}: {errorMessages}", Config.ConfigFilePath, String.Join("; ", errorMessages));
         Environment.Exit(1);
         return null;
     }
@@ -102,7 +102,7 @@ public class Uploader
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The uploader reads its configuration from {Config.CONFIG_FILE_PATH}");
+            Console.Error.WriteLine($"The uploader reads its configuration from {Config.ConfigFilePath}");
             Environment.Exit(1);
         }
 
@@ -125,7 +125,7 @@ public class Uploader
 
         System.Timers.Timer timer = new System.Timers.Timer();
         timer.Elapsed += new ElapsedEventHandler(timerAction.HandleTimerEvent);
-        timer.Interval = TIMER_INTERVAL_MILLISECONDS;
+        timer.Interval = TimerIntervalInMilliseconds;
         timer.Enabled = true;
 
         SuspendThread();

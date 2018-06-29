@@ -10,8 +10,8 @@ using Moq;
 [TestClass]
 public class TraceFileScannerTest
 {
-    private const string TRACE_DIRECTORY = @"C:\users\public\traces";
-    private const string VERSION_ASSEMBLY = "VersionAssembly";
+    private const string TraceDirectory = @"C:\users\public\traces";
+    private const string VersionAssembly = "VersionAssembly";
 
     [TestMethod]
     public void TestAllFileContents()
@@ -27,7 +27,7 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-        IEnumerable<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TRACE_DIRECTORY, VERSION_ASSEMBLY, fileSystem).ListTraceFilesReadyForUpload();
+        IEnumerable<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystem).ListTraceFilesReadyForUpload();
 
         files.Should().HaveCount(2).And.Contain(new TraceFileScanner.ScannedFile[]
         {
@@ -61,7 +61,7 @@ Inlined=1:33555646:100678050" },
         });
 
         IEnumerable<TraceFileScanner.ScannedFile> files =
-            new TraceFileScanner(TRACE_DIRECTORY, VERSION_ASSEMBLY, fileSystemMock.Object).ListTraceFilesReadyForUpload();
+            new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystemMock.Object).ListTraceFilesReadyForUpload();
 
         files.Should().HaveCount(1).And.Contain(new TraceFileScanner.ScannedFile[]
         {
@@ -78,7 +78,7 @@ Inlined=1:33555646:100678050" },
     /// </summary>
     private string FileInTraceDirectory(string fileName)
     {
-        return Path.Combine(TRACE_DIRECTORY, fileName);
+        return Path.Combine(TraceDirectory, fileName);
     }
 
 }

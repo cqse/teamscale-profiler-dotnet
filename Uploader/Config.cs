@@ -10,8 +10,8 @@ using System.IO.Abstractions;
 /// </summary>
 public class Config
 {
-    private const string CONFIG_FILE_NAME = "Uploader.json";
-    public static readonly string CONFIG_FILE_PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CONFIG_FILE_NAME);
+    private const string ConfigFileName = "Uploader.json";
+    public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     /// <summary>
@@ -64,7 +64,7 @@ public class Config
     /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>
     public static Config ReadConfig(IFileSystem fileSystem)
     {
-        string json = fileSystem.File.ReadAllText(CONFIG_FILE_PATH);
+        string json = fileSystem.File.ReadAllText(ConfigFilePath);
         return JsonConvert.DeserializeObject<Config>(json);
     }
 }
