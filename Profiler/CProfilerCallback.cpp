@@ -1,7 +1,7 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "Uploader.h"
-#include "FileSystemUtils.h"
+#include "FileSystemUtils.cpp"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -13,9 +13,11 @@ using namespace std;
 
 
 CProfilerCallback::CProfilerCallback() {
+	// nothing to do
 }
 
 CProfilerCallback::~CProfilerCallback() {
+	// nothing to do
 }
 
 /** Whether the given value ends with the given suffix. */

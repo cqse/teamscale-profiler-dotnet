@@ -1,13 +1,18 @@
 #include "Uploader.h"
 #include "windows.h"
 #include "shellapi.h"
-#include "WindowsUtils.h"
+#include "WindowsUtils.cpp"
 
 Uploader::Uploader(std::string uploaderPath, std::string traceDirectory, Log* log)
 {
 	this->pathToExe = uploaderPath + "\\uploader.exe";
 	this->traceDirectory = traceDirectory;
 	this->log = log;
+}
+
+Uploader::~Uploader()
+{
+	// nothing to do
 }
 
 void Uploader::launch()

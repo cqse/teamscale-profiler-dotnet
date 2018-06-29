@@ -11,17 +11,20 @@ public:
 	/** Constructor. */
 	Uploader(std::string uploaderPath, std::string traceDirectory, Log* log);
 
+	/** Destructor. */
+	virtual ~Uploader();
+
 	/** Starts the uploader in a new background process. */
 	void launch();
 
 private:
 
 	/** The log for error reporting. */
-	Log* log;
+	Log * log;
 
 	/** Path to the executable of the uploader. */
 	std::string pathToExe;
-	
+
 	/** Path to the directory that contains the trace files. */
 	std::string traceDirectory;
 

@@ -10,7 +10,7 @@ class Log
 {
 public:
 	Log();
-	~Log();
+	virtual ~Log();
 
 	/** Create the log file and add general information. Must be the first method called on this object otherwise other calls will be ignored. */
 	void createLogFile();

@@ -53,14 +53,14 @@
     <ClInclude Include="Uploader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileSystemUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WindowsUtils.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="WindowsUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystemUtils.cpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -201,10 +201,10 @@
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClInclude Include="FileSystemUtils.h" />
+    <ClInclude Include="FileSystemUtils.cpp" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
-    <ClInclude Include="WindowsUtils.h" />
+    <ClInclude Include="WindowsUtils.cpp" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Uploader.h" />
