@@ -21,7 +21,7 @@ class TeamscaleUpload : IUpload
     public TeamscaleUpload(TeamscaleServer server)
     {
         this.client = new HttpClient();
-        var byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
+        byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         this.server = server;
     }
