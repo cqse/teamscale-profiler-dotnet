@@ -11,7 +11,6 @@ using Moq;
 public class ArchiverTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
-    private const string VersionAssembly = "VersionAssembly";
 
     [TestMethod]
     public void ShouldMoveFilesToCorrectSubfolders()
@@ -39,7 +38,9 @@ public class ArchiverTest
         Mock<IFileSystem> fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
         {
             fileMock.Setup(file => file.ReadAllLines(FileInTraceDirectory("coverage_1_1.txt"))).Throws<IOException>();
-        }, directoryMock => { });
+        }, directoryMock => {
+            // not needed
+        });
         
         new Archiver(TraceDirectory, fileSystemMock.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
     }

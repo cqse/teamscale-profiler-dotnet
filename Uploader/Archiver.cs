@@ -3,6 +3,9 @@ using System;
 using System.IO;
 using System.IO.Abstractions;
 
+/// <summary>
+/// Archives processed traces to different archive directories.
+/// </summary>
 public class Archiver
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
@@ -18,11 +21,17 @@ public class Archiver
         this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
     }
 
+    /// <summary>
+    /// Archives a file that was successfully uploaded.
+    /// </summary>
     public void ArchiveUploadedFile(string tracePath)
     {
         Archive(tracePath, uploadedDirectory);
     }
 
+    /// <summary>
+    /// Archives a file that has no version assembly.
+    /// </summary>
     public void ArchiveFileWithoutVersionAssembly(string tracePath)
     {
         Archive(tracePath, missingVersionDirectory);

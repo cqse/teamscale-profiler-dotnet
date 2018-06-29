@@ -23,11 +23,17 @@ public class TimerAction
         this.archiver = new Archiver(traceDirectory, fileSystem);
     }
 
+    /// <summary>
+    /// Event handler for the timer event. Runs the action.
+    /// </summary>
     public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
     {
         Run();
     }
 
+    /// <summary>
+    /// Scans the trace directory for traces to process and either tries to upload or archive them.
+    /// </summary>
     public async void Run()
     {
         logger.Info("Scanning for coverage files");

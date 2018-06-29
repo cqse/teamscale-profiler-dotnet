@@ -11,8 +11,11 @@ using System.IO.Abstractions;
 public class Config
 {
     private const string ConfigFileName = "Uploader.json";
+
+    /// <summary>
+    /// Path to the config file.
+    /// </summary>
     public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
-    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
     /// <summary>
     /// The Teamscale server to upload to.
