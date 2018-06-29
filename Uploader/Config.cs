@@ -46,6 +46,19 @@ public class Config
     }
 
     /// <summary>
+    /// Creates an IUpload based on this configuration.
+    /// </summary>
+    /// <param name="fileSystem">The file system to use</param>
+    public IUpload CreateUpload(IFileSystem fileSystem)
+    {
+        if (Teamscale != null)
+        {
+            return new TeamscaleUpload(Teamscale);
+        }
+        return new FileSystemUpload(Directory, fileSystem);
+    }
+
+    /// <summary>
     /// Tries to read the config JSON file.
     /// </summary>
     /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>
