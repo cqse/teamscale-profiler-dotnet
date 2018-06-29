@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -17,13 +18,21 @@ class TeamscaleUpload : IUpload
     private readonly HttpClient client;
 
     private readonly TeamscaleServer server;
+    private readonly MessageFormatter messageFormatter;
 
     public TeamscaleUpload(TeamscaleServer server)
     {
-        this.client = new HttpClient();
-        byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         this.server = server;
+        this.messageFormatter = new MessageFormatter(server);
+
+        this.client = new HttpClient();
+        SetUpBasicAuthentication();
+    }
+
+    private void SetUpBasicAuthentication()
+    {
+        byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
     }
 
     /// <summary>
@@ -31,28 +40,28 @@ class TeamscaleUpload : IUpload
     /// </summary>
     /// <param name="filePath">Path to the file to upload.</param>
     /// <param name="version">The application version (read from a version assembly).</param>
-    /// <param name="message">The upload commit message.</param>
-    /// <param name="partition">The partition to upload to.</param>
     /// <returns>Whether the upload was successful.</returns>
-    public async Task<bool> UploadAsync(string filePath, string version, string message, string partition)
+    public async Task<bool> UploadAsync(string filePath, string version)
     {
-        logger.Debug("Uploading {tracePath} to {teamscale} with version {version} into partition {partition}", filePath, server.ToString(), version, partition);
+        logger.Debug("Uploading {tracePath} with version {version} to {teamscale}", filePath, version, server.ToString());
         using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
         {
             string fileName = Path.GetFileName(filePath);
             content.Add(new StreamContent(new FileStream(filePath, FileMode.Open)), "report", fileName);
 
-            string encodedVersion = HttpUtility.UrlEncode(version);
+            string message = messageFormatter.Format(version);
             string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedPartition = HttpUtility.UrlEncode(partition);
-            string url = $"{server.Url}/p/{server.Project}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
+            string encodedProject = HttpUtility.UrlEncode(server.Project);
+            string encodedVersion = HttpUtility.UrlEncode(version);
+            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
+            string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
 
             using (HttpResponseMessage response = await client.PostAsync(url, content))
             {
                 if (response.IsSuccessStatusCode)
                 {
-                    logger.Info("Successfully uploaded {trace} to {teamscale} with version {version} into partition {partition}", filePath, server.ToString(), version, partition);
+                    logger.Info("Successfully uploaded {tracePath} with version {version} to {teamscale}", filePath, version, server.ToString());
                     return true;
                 }
                 else

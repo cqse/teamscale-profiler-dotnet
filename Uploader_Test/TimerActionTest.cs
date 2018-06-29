@@ -123,7 +123,7 @@ Inlined=1:33555646:100678050" },
         /// <summary>
         /// Fakes an upload and returns the result passed to the constructor.
         /// </summary>
-        public Task<bool> UploadAsync(string filePath, string version, string message, string partition)
+        public Task<bool> UploadAsync(string filePath, string version)
         {
             return Task.FromResult(returnValue);
         }

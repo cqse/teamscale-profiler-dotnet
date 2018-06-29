@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 
@@ -16,8 +17,7 @@ public class Config
     /// <summary>
     /// The Teamscale server to upload to.
     /// </summary>
-    [JsonProperty(Required = Required.Always)]
-    public TeamscaleServer Teamscale;
+    public TeamscaleServer Teamscale = null;
 
     /// <summary>
     /// The assembly from which to read the version number.
@@ -26,15 +26,24 @@ public class Config
     public string VersionAssembly;
 
     /// <summary>
-    /// Partition within the Teamscale project to which to upload.
+    /// The directory to upload the traces to.
     /// </summary>
-    [JsonProperty(Required = Required.Always)]
-    public string Partition;
+    public string Directory = null;
 
     /// <summary>
-    /// Template for the commit message for the upload commit.
+    /// Validates the configuration and returns all collected error messages. An empty list
+    /// means the configuration is valid.
     /// </summary>
-    public string Message = "Test coverage for version %v from %p created at %t";
+    /// <returns></returns>
+    public List<string> Validate()
+    {
+        List<string> errorMessages = new List<string>();
+        if (Teamscale == null && Directory == null)
+        {
+            errorMessages.Add(@"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") to upload trace files to.");
+        }
+        return errorMessages;
+    }
 
     /// <summary>
     /// Tries to read the config JSON file.

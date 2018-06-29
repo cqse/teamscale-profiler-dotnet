@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 /// </summary>
 public class MessageFormatter
 {
-    private readonly Config config;
+    private readonly TeamscaleServer server;
 
-    public MessageFormatter(Config config)
+    public MessageFormatter(TeamscaleServer server)
     {
-        this.config = config;
+        this.server = server;
     }
 
     /// <summary>
@@ -25,7 +25,7 @@ public class MessageFormatter
     public string Format(string assemblyVersion)
     {
         string formattedTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-        return config.Message.Replace("%v", assemblyVersion).Replace("%p", config.Partition).Replace("%t", formattedTime);
+        return server.Message.Replace("%v", assemblyVersion).Replace("%p", server.Partition).Replace("%t", formattedTime);
     }
 }
 

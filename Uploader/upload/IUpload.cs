@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 public interface IUpload
 {
-    Task<bool> UploadAsync(string filePath, string version, string message, string partition);
+    Task<bool> UploadAsync(string filePath, string version);
 }

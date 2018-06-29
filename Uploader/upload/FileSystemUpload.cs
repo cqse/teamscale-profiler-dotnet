@@ -29,10 +29,8 @@ class FileSystemUpload : IUpload
     /// </summary>
     /// <param name="filePath">Path to the file to upload.</param>
     /// <param name="version">The application version (read from a version assembly).</param>
-    /// <param name="message">The upload commit message.</param>
-    /// <param name="partition">The partition to upload to.</param>
     /// <returns>Whether the upload was successful.</returns>
-    public Task<bool> UploadAsync(string filePath, string version, string message, string partition)
+    public Task<bool> UploadAsync(string filePath, string version)
     {
         logger.Debug("Uploading {tracePath} to {targetDirectory}", filePath, targetDirectory);
 

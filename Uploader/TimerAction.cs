@@ -14,7 +14,6 @@ public class TimerAction
     private readonly TraceFileScanner scanner;
     private readonly IUpload upload;
     private readonly Archiver archiver;
-    private readonly MessageFormatter messageFormatter;
 
     public TimerAction(string traceDirectory, Config config, IUpload upload, IFileSystem fileSystem)
     {
@@ -22,7 +21,6 @@ public class TimerAction
         this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
         this.upload = upload;
         this.archiver = new Archiver(traceDirectory, fileSystem);
-        this.messageFormatter = new MessageFormatter(config);
     }
 
     public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
@@ -38,13 +36,13 @@ public class TimerAction
         {
             if (file.Version == null)
             {
-                logger.Info("Archiving {tracePath} because it does not have version assembly", file.FilePath);
+                logger.Info("Archiving {tracePath} because it does not contain the version assembly", file.FilePath);
                 archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
             }
             else
             {
                 logger.Info("Uploading {tracePath}", file.FilePath);
-                bool success = await upload.UploadAsync(file.FilePath, file.Version, messageFormatter.Format(file.Version), config.Partition);
+                bool success = await upload.UploadAsync(file.FilePath, file.Version);
                 if (success)
                 {
                     archiver.ArchiveUploadedFile(file.FilePath);

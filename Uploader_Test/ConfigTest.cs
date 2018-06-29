@@ -16,12 +16,12 @@ public class ConfigTest
                 Config.CONFIG_FILE_PATH, new MockFileData(@"{
                     /* line comment */
                     versionAssembly: ""Assembly"",
-                    partition: ""partition"",
                     teamscale: {
                         url: ""url"",
                         username: ""user"",
                         accessToken: ""token"",
                         project: ""project"",
+                        partition: ""partition"",
                     },
                 }")
             }
@@ -38,8 +38,6 @@ public class ConfigTest
         {
             {
                 Config.CONFIG_FILE_PATH, new MockFileData(@"{
-                    versionAssembly: ""Assembly"",
-                    partition: ""partition"",
                 }")
             }
         });

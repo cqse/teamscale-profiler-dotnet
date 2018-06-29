@@ -7,6 +7,7 @@ using System.Threading;
 using System.Timers;
 using Newtonsoft.Json;
 using System.IO.Abstractions;
+using System.Collections.Generic;
 
 /// <summary>
 /// Main entry point of the program.
@@ -42,7 +43,7 @@ public class Uploader
         {
             return false;
         }
-    
+
         Process[] processes = Process.GetProcessesByName(current.ProcessName);
         foreach (Process process in processes)
         {
@@ -67,9 +68,10 @@ public class Uploader
     {
         logger.Debug("Reading config from {configFile}", Config.CONFIG_FILE_PATH);
 
+        Config config;
         try
         {
-            return Config.ReadConfig(fileSystem);
+            config = Config.ReadConfig(fileSystem);
         }
         catch (Exception e)
         {
@@ -77,6 +79,16 @@ public class Uploader
             Environment.Exit(1);
             return null;
         }
+
+        List<string> errorMessages = config.Validate();
+        if (errorMessages.Count == 0)
+        {
+            return config;
+        }
+
+        logger.Error("Invalid config file {configPath}: {errorMessages}", Config.CONFIG_FILE_PATH, String.Join("; ", errorMessages));
+        Environment.Exit(1);
+        return null;
     }
 
     /// <summary>
@@ -106,8 +118,8 @@ public class Uploader
 
     private void Run()
     {
-        logger.Info("Reading traces from {traceDirectory} and uploading them to {teamscale} with partition {partition} and version assembly {versionAssembly}",
-            traceDirectory, config.Teamscale, config.Partition, config.VersionAssembly);
+        logger.Info("Reading traces with version assembly {versionAssembly} from {traceDirectory} and uploading them to {teamscale}",
+            config.VersionAssembly, traceDirectory, config.Teamscale);
 
         timerAction.Run();
 
