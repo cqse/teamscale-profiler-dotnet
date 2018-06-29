@@ -6,7 +6,7 @@ using System.Timers;
 /// <summary>
 /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
 /// </summary>
-class TimerAction
+public class TimerAction
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -16,11 +16,11 @@ class TimerAction
     private readonly Archiver archiver;
     private readonly MessageFormatter messageFormatter;
 
-    public TimerAction(string traceDirectory, Config config, IFileSystem fileSystem)
+    public TimerAction(string traceDirectory, Config config, IUpload upload, IFileSystem fileSystem)
     {
         this.config = config;
         this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
-        this.upload = new TeamscaleUpload(config.Teamscale);
+        this.upload = upload;
         this.archiver = new Archiver(traceDirectory, fileSystem);
         this.messageFormatter = new MessageFormatter(config);
     }

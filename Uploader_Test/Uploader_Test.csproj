@@ -74,6 +74,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TimerActionTest.cs" />
     <Compile Include="ArchiverTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />
     <Compile Include="TraceFileScannerTest.cs" />

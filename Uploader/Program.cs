@@ -59,7 +59,8 @@ public class Uploader
         traceDirectory = ParseArguments(args);
         FileSystem fileSystem = new FileSystem();
         config = ReadConfig(fileSystem);
-        timerAction = new TimerAction(traceDirectory, config, fileSystem);
+        IUpload upload = new TeamscaleUpload(config.Teamscale);
+        timerAction = new TimerAction(traceDirectory, config, upload, fileSystem);
     }
 
     private static Config ReadConfig(FileSystem fileSystem)
