@@ -6,7 +6,7 @@
  * Returns the message for the last WinAPI error (retrieved via GetLastError).
  * Adapted from https://stackoverflow.com/a/17387176/1396068
  */
-std::string GetLastErrorAsString()
+std::string getLastErrorAsString()
 {
 	DWORD errorMessageID = ::GetLastError();
 	if (errorMessageID == 0) {

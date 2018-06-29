@@ -34,6 +34,6 @@ void Uploader::launch()
 
 	bool successful = ShellExecuteEx(&shExecInfo);
 	if (!successful) {
-		log->error("Failed to launch uploader " + pathToExe + ": " + GetLastErrorAsString());
+		log->error("Failed to launch uploader " + pathToExe + ": " + getLastErrorAsString());
 	}
 }

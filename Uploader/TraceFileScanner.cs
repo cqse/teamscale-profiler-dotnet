@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 public class TraceFileScanner
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-    private static readonly Regex TRACE_FILE_REGEX = new Regex(@"^coverage_\d*_\d*.txt$");
+    private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
 
     private readonly string traceDirectory;
     private readonly Regex versionAssemblyRegex;
@@ -111,7 +111,7 @@ public class TraceFileScanner
 
     private bool IsTraceFile(string fileName)
     {
-        return TRACE_FILE_REGEX.IsMatch(fileName);
+        return TraceFileRegex.IsMatch(fileName);
     }
 
     /// <summary>

@@ -12,7 +12,7 @@ public:
 	Uploader(std::string uploaderPath, std::string traceDirectory, Log* log);
 
 	/** Destructor. */
-	virtual ~Uploader();
+	virtual ~Uploader() noexcept;
 
 	/** Starts the uploader in a new background process. */
 	void launch();
