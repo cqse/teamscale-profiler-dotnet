@@ -131,15 +131,14 @@ public class TraceFileScanner
 
         public override bool Equals(object obj)
         {
-            var file = obj as ScannedFile;
-            return file != null &&
+            return obj is ScannedFile file &&
                    FilePath == file.FilePath &&
                    Version == file.Version;
         }
 
         public override int GetHashCode()
         {
-            var hashCode = -1491167301;
+            int hashCode = -1491167301;
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FilePath);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Version);
             return hashCode;

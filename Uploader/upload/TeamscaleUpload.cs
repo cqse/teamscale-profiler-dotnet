@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -26,13 +25,13 @@ class TeamscaleUpload : IUpload
         this.messageFormatter = new MessageFormatter(server);
 
         this.client = new HttpClient();
-        SetUpBasicAuthentication();
+        SetUpBasicAuthentication(server);
     }
 
-    private void SetUpBasicAuthentication()
+    private void SetUpBasicAuthentication(TeamscaleServer server)
     {
         byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
     }
 
     /// <summary>
@@ -43,7 +42,7 @@ class TeamscaleUpload : IUpload
     /// <returns>Whether the upload was successful.</returns>
     public async Task<bool> UploadAsync(string filePath, string version)
     {
-        logger.Debug("Uploading {tracePath} with version {version} to {teamscale}", filePath, version, server.ToString());
+        logger.Debug("Uploading {tracePath} with version {version} to {teamscale}", filePath, server.ToString(), version);
         using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
         {
             string fileName = Path.GetFileName(filePath);
@@ -57,22 +56,35 @@ class TeamscaleUpload : IUpload
             string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
 
-            using (HttpResponseMessage response = await client.PostAsync(url, content))
+            try
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    logger.Info("Successfully uploaded {tracePath} with version {version} to {teamscale}", filePath, version, server.ToString());
-                    return true;
-                }
-                else
-                {
-                    string body = await response.Content.ReadAsStringAsync();
-                    logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
-                        filePath, server.ToString(), response.StatusCode, body);
-                    return false;
-                }
+                return await PerformUpload(url, content, filePath, version);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Upload of {trace} to {teamscale} failed due to an exception",
+                    filePath, server.ToString());
+                return false;
             }
         }
     }
 
+    private async Task<bool> PerformUpload(string url, MultipartFormDataContent content, string filePath, string version)
+    {
+        using (HttpResponseMessage response = await client.PostAsync(url, content))
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                logger.Info("Successfully uploaded {tracePath} with version {version} to {teamscale}", filePath, server.ToString(), version);
+                return true;
+            }
+            else
+            {
+                string body = await response.Content.ReadAsStringAsync();
+                logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
+                    filePath, server.ToString(), response.StatusCode, body);
+                return false;
+            }
+        }
+    }
 }
