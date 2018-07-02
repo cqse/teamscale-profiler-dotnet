@@ -10,7 +10,7 @@ using NLog;
 /// <summary>
 /// Uploads trace files to Teamscale.
 /// </summary>
-class TeamscaleUpload : IUpload
+internal class TeamscaleUpload : IUpload
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -69,6 +69,9 @@ class TeamscaleUpload : IUpload
         }
     }
 
+    /// <summary>
+    /// Performs an upload of the given content to the given URL. May throw exceptions when the upload fails.
+    /// </summary>
     private async Task<bool> PerformUpload(string url, MultipartFormDataContent content, string filePath, string version)
     {
         using (HttpResponseMessage response = await client.PostAsync(url, content))
