@@ -55,7 +55,7 @@ public class Uploader
         return false;
     }
 
-    Uploader(string[] args)
+    private Uploader(string[] args)
     {
         traceDirectory = ParseArguments(args);
         FileSystem fileSystem = new FileSystem();
@@ -118,6 +118,7 @@ public class Uploader
 
     private void Run()
     {
+        logger.Info("Starting uploader v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
         logger.Info("Reading traces with version assembly {versionAssembly} from {traceDirectory} and uploading them to {teamscale}",
             config.VersionAssembly, traceDirectory, config.Teamscale);
 
