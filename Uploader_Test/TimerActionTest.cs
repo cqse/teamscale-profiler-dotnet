@@ -12,7 +12,9 @@ using Moq;
 public class TimerActionTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
+    private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
     private const string VersionAssembly = "VersionAssembly";
+
     private static readonly Config config = new Config()
     {
         VersionAssembly = VersionAssembly
@@ -111,6 +113,25 @@ Inlined=1:33555646:100678050" },
         });
     }
 
+    [TestMethod]
+    public void TestPathsWithSpaces()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050" },
+        });
+
+        config.VersionAssembly = VersionAssembly;
+
+        new TimerAction(TraceDirectoryWithSpace, config, new MockUpload(false), fileSystem).Run();
+
+        string[] files = fileSystem.Directory.GetFiles(TraceDirectoryWithSpace, "*.txt", SearchOption.AllDirectories);
+        files.Should().HaveCount(1).And.Contain(new string[] {
+            FileInTraceDirectoryWithSpace(@"coverage_1_1.txt"),
+        });
+    }
+
     private class MockUpload : IUpload
     {
         private readonly bool returnValue;
@@ -137,5 +158,11 @@ Inlined=1:33555646:100678050" },
         return Path.Combine(TraceDirectory, fileName);
     }
 
+    /// <summary>
+    /// Returns a file with the given name in the trace directory (which contains a space in the path).
+    /// </summary>
+    private string FileInTraceDirectoryWithSpace(string fileName)
+    {
+        return Path.Combine(TraceDirectoryWithSpace, fileName);
+    }
 }
-
