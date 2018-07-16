@@ -66,7 +66,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		try {
 			eagerness = std::stoi(eagernessValue);
 		} catch (std::exception e) {
-			writeTupleToFile(LOG_KEY_WARN, "Eagerness must be number that indicates the amount of method calls until traces are written: " + eagernessValue);
+			writeTupleToFile(LOG_KEY_WARN, "Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
 		}
 	}
 	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
@@ -370,21 +370,18 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 
 	EnterCriticalSection(&criticalSection);
 
-	if (eagerness == 1) {
-		// Directly write to log if we want to record each function immediatelly
-		// This is solely for performance reasons as we are writing data live
-		writeSingleFunctionInfoToLog(logKey, info);
-	} else {
-		// otherwise record function info
-		recordedFunctionInfos->push_back(info);
+	recordedFunctionInfos->push_back(info);
 
-		// if eager and on threshold write to log
-		if (eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness) {
-			writeFunctionInfosToLog();
-		}
+	if (shouldWriteEagerly()) {
+		writeFunctionInfosToLog();
 	}
 
 	LeaveCriticalSection(&criticalSection);
+}
+
+inline bool CProfilerCallback::shouldWriteEagerly()
+{
+	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,

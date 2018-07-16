@@ -79,7 +79,8 @@ private:
 
 	/** 
 	 * Whether to run in eager mode and write a batch of recorded invocations to the trace 
-	 * file instead of waiting until shutdown. If 0, everything is written on shutdown.
+	 * file instead of waiting until shutdown. If 0, everything is written on shutdown,
+	 * otherwise the sepcified amount of method calls is recorded and written thereafter.
 	 */
 	size_t eagerness = 0;
 
@@ -154,6 +155,9 @@ private:
 
 	/** Triggers eagerly writing of function infos to log. */
 	void recordFunctionInfo(std::vector<FunctionInfo>* list, const char* key, FunctionID calleeId);
+
+	/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
+	bool shouldWriteEagerly();
 
 	/** Writes the given string to the log file. */
 	int writeToFile(const char* string);
