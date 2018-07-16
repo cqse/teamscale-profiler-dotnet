@@ -1,4 +1,6 @@
-﻿/.vs/
+/.vs/
 bin/
 obj/
 test-tmp/
+*.aps
+test-data/test-programs/output.pdf

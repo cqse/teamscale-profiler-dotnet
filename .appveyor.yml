@@ -1,18 +1,25 @@
 image: Visual Studio 2017
 
-version: 18.2.0.{build}
+version: 18.2.1.{build}
+
+pull_requests:
+  do_not_increment_build_number: true
+
+skip_branch_with_pr: true
 
 configuration: Release
 
-#init:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+environment:
+  release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
 before_build:
-  - nuget restore
+  - cmd: nuget restore
+  # Patch C++ Version Info
+  - ps: (Get-Content Profiler/version.h) | ForEach-Object { $_.Replace("1.0.0.0", $env:APPVEYOR_BUILD_VERSION).Replace("1,0,0,0", $env:APPVEYOR_BUILD_VERSION.Replace(".", ",").Split("-")[0]) } | Set-Content Profiler/version.h
 
 build_script:
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
   - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
@@ -20,5 +27,38 @@ test_script:
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+after_test:
+  # Convert GitHub Wiki to PDF
+  - cmd: git clone --depth=5 https://github.com/cqse/teamscale-profiler-dotnet.wiki.git wiki
+  - cmd: npm install -g github-wikito-converter
+  - cmd: curl -L https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_msvc2015-win64.exe --output wkhtmltox.exe
+  - cmd: wkhtmltox.exe /S /D=C:\wkhtmltox
+  - cmd: set PATH=%PATH%;C:\wkhtmltox\bin
+  - cmd: sc start spooler # ensure the printer service is running for generating the PDF
+  - cmd: wkhtmltopdf -V
+  - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
+  # Create release zip with profiler & documentation
+  - cmd: 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf
+
+artifacts:
+  - path: $(release_zip)
+    name: profiler
+
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: zewFCJVMsIobb85iuyXSs0UbTgh53yZzNJK8KNOl+3W+MfkaUoe4BGOLE+fuQ9WJ
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    artifact: $(release_zip)
+    description: Release v$(appveyor_build_version)
+    draft: true
+    prerelease: false
+    on:
+      branch: master
+      appveyor_repo_tag: true 
+
+# Enable RDP
+init:
+  - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+on_finish:
+  - ps: if ($env:RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}

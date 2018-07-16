@@ -1,4 +1,5 @@
 #include "CProfilerCallback.h"
+#include "version.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -30,15 +31,6 @@ namespace {
 
 	/** The key to log information about the profiler shutdown. */
 	const char* LOG_KEY_STOPPED = "Stopped";
-
-	/** The version of the profiler */
-	const char* PROFILER_VERSION_INFO =
-#ifdef _WIN64
-		"Coverage profiler version 0.11.0 (64bit)"
-#else
-		"Coverage profiler version 0.11.0 (32bit)"
-#endif
-		;
 }
 
 CProfilerCallback::CProfilerCallback() {
@@ -49,7 +41,26 @@ CProfilerCallback::~CProfilerCallback() {
 	DeleteCriticalSection(&criticalSection);
 }
 
+/** Whether the given value ends with the given suffix. */
+inline bool endsWith(std::string const & value, std::string const & suffix)
+{
+	if (suffix.size() > value.size()) {
+		return false;
+	}
+	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+}
+
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
+	std::string process = getProcessInfo();
+	std::string processToProfile = getConfigValueFromEnvironment("PROCESS");
+	std::transform(process.begin(), process.end(), process.begin(), toupper);
+	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
+
+	isProfilingEnabled = processToProfile.empty() || endsWith(process, processToProfile);
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	createLogFile();
 	readConfig();
 
@@ -70,7 +81,20 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		}
 	}
 	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
-	
+
+	writeTupleToFile(LOG_KEY_PROCESS, process);
+
+	char appPool[BUFFER_SIZE];
+	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
+		std::string message = "IIS AppPool: ";
+		message += appPool;
+		writeTupleToFile(LOG_KEY_INFO, message);
+	}
+
+	std::string message = "Command Line: ";
+	message += GetCommandLine();
+	writeTupleToFile(LOG_KEY_INFO, message);
+
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
@@ -79,11 +103,13 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	DWORD dwEventMask = getEventMask();
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
-	writeProcessInfoToLogFile();
+
 	return S_OK;
 }
 
-std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
+
+
+std::string CProfilerCallback::getConfigValueFromEnvironment(std::string suffix) {
 	char value[BUFFER_SIZE];
 	std::string name = "COR_PROFILER_" + suffix;
 	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
@@ -93,9 +119,9 @@ std::string CProfilerCallback::getEnvironmentVariable(std::string suffix) {
 }
 
 void CProfilerCallback::readConfig() {
-	std::string configFile = getEnvironmentVariable("CONFIG");
+	std::string configFile = getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
-		configFile = getEnvironmentVariable("PATH") + ".config";
+		configFile = getConfigValueFromEnvironment("PATH") + ".config";
 	}
 	writeTupleToFile(LOG_KEY_INFO, "looking for configuration options in: " + configFile);
 
@@ -116,14 +142,14 @@ void CProfilerCallback::readConfig() {
 }
 
 std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = getEnvironmentVariable(optionName);
+	std::string value = getConfigValueFromEnvironment(optionName);
 	if (!value.empty()) {
 		return value;
 	}
 	return this->configOptions[optionName];
 }
 
-void CProfilerCallback::writeProcessInfoToLogFile(){
+std::string CProfilerCallback::getProcessInfo(){
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -137,7 +163,7 @@ void CProfilerCallback::writeProcessInfoToLogFile(){
 	char process[BUFFER_SIZE];
 	// turn application path from wide to normal character string
 	sprintf_s(process, "%S", appPath);
-	writeTupleToFile(LOG_KEY_PROCESS, process);
+	return process;
 }
 
 void CProfilerCallback::createLogFile() {
@@ -159,7 +185,7 @@ void CProfilerCallback::createLogFile() {
 	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-	writeTupleToFile(LOG_KEY_INFO, PROFILER_VERSION_INFO);
+	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
 
 	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 	LeaveCriticalSection(&criticalSection);
@@ -176,6 +202,9 @@ void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
 
 	EnterCriticalSection(&criticalSection);
 
@@ -225,8 +254,11 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 	return functionId;
 }
 
-HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId,
-		HRESULT hrStatus) {
+HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
+	if (!isProfilingEnabled) {
+		return S_OK;
+	}
+
 	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
@@ -347,14 +379,17 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
+	if (isProfilingEnabled) {
+		recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
+	}
+
 	return S_OK;
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
 	// Save information about inlined method (if not already seen)
-	if (inlinedMethodIds.insert(calleeId).second == true) {
+	if (isProfilingEnabled && inlinedMethodIds.insert(calleeId).second == true) {
 		recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
 	}
 

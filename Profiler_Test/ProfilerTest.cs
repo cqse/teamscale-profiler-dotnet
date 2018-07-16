@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.Text;
 
@@ -14,6 +15,53 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 	public class ProfilerTest : ProfilerTestBase
 	{
 		/// <summary>
+		/// Runs the profiler with command line argument and asserts its content is logged into the trace.
+		/// </summary>
+		[Test]
+		public void TestCommandLine()
+		{
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
+		}
+
+		/// <summary>
+		/// Makes sure that processes not matching the given process name are not profiled.
+		/// </summary>
+		[TestCase("w3wp.exe", ExpectedResult = 0)]
+		[TestCase("ProfilerTestee.exe", ExpectedResult = 1)]
+		[TestCase("profilerTesTEE.EXE", ExpectedResult = 1)]
+		public int TestProcessSelection(string process)
+		{
+			var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
+			return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+		}
+
+
+		/// <summary>
+		/// Runs the profiler with the environment variable APP_POOL_ID set and asserts its content is logged into the trace.
+		/// </summary>
+		[Test]
+		public void TestWithAppPool()
+		{
+			var environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));
+		}
+
+		/// <summary>
+		/// Runs the profiler without the environment variable APP_POOL_ID set and asserts the trace does not contain a line for the app pool.
+		/// </summary>
+		[Test]
+		public void TestWihoutAppPool()
+		{
+			FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86));
+			string[] lines = File.ReadAllLines(actualTrace.FullName);
+			Assert.That(!lines.Any(line => line.StartsWith("Info=IIS AppPool:")));
+		}
+
+		/// <summary>
 		/// Executes a test for the given profiler with the given application mode.
 		/// </summary>
 		[Test, Pairwise]
@@ -21,7 +69,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 			[Values("none", "all")] string applicationMode,
 			[Values(true, false)] bool isLightMode)
 		{
-			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x68);
+			List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x86);
 			AssertNormalizedTraceFileEqualsReference(traces, new[] { 2 });
 		}
 

@@ -1,25 +1,35 @@
 Teamscale Ephemeral .NET Profiler
-[![Build status](https://ci.appveyor.com/api/projects/status/mhdeqjyg3u3osjm6/branch/master?svg=true)](https://ci.appveyor.com/project/mpdeimos/teamscale-profiler-dotnet/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/pamrby3g6dm26074/branch/master?svg=true)](https://ci.appveyor.com/project/cqse/teamscale-profiler-dotnet/branch/master)
 ===================================
 
-These are the sources of the profiler for .NET framework 4.0 and up.
+Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
 
-# Compiling
+## Download
 
-The code can be compiled with Visual Studio 2013 for 32bit and 64bit (target: "Release").
+The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
 
-# Profiling .NET framework 2.0 - 3.5 applications
+## Documentation
 
-For these old applications, you need to use the old, no longer updated profiler binary under `resources/profiler-dotnet-v2`, since the interface has changed drastically.
-The current profiler code CANNOT be used to profile these old applications!
+Documentation on installation and usage of the profiler can be found in the [GitHub Wiki](https://github.com/cqse/teamscale-profiler-dotnet/wiki).
 
-[Info about changes to the profiling API in .NET 4.0][1]
+## Contributing
 
-# Tests
+The coverage profiler can be compiled using Visual Studio 2017. Ensure to have the Windows and .NET SDK installed.
 
-There is some code and precompiled binaries under test-data, but these were all produced with .NET framework 2.0 and are undocumented. Thus, they cannot be used to test the current profiler version.
+Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler. Ensure to build both flavors of the Profiler (`Win32` and `x64`) before running the tests.
 
-If you have Eclipse under Windows, you can run the DotNetProfilerRegressionTest.
+Automatic build and testing is performed with an AppVeyor build definition.
 
+## Release Process
 
-    [1]: https://msdn.microsoft.com/en-us/library/vstudio/dd778910%28v=vs.100%29.aspx
+The release process is outomated with GitHub Releases and Appveyor:
+
+We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
+
+1. Edit `.appveyor.yml` and adjust the `version` property.
+2. Go to GitHub Releases and draft a new release
+3. Enter the tag name and release name. It is good practice to give both the same name, e.g. `v18.2.0`.
+4. Enter a short description of changes
+5. Publish the release
+
+AppVeyor will then take care of attaching the release binary.

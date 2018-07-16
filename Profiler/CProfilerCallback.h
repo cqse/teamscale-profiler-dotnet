@@ -26,7 +26,7 @@ public:
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
 	/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
-	std::string getEnvironmentVariable(std::string suffix);
+	std::string getConfigValueFromEnvironment(std::string suffix);
 
 	/** Reads all options from the config file into memory. */
 	void readConfig();
@@ -84,6 +84,9 @@ private:
 	 */
 	size_t eagerness = 0;
 
+	/** Whether the current process should be profiled. */
+	bool isProfilingEnabled = false;
+
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
 	 * It is used to identify the declaring assembly for functions.
@@ -138,11 +141,8 @@ private:
 	*/
 	DWORD getEventMask();
 
-	/**
-	 * Writes information about the profiled process to the
-	 * log file.
-	 */
-	void writeProcessInfoToLogFile(); 
+	/** Returns information about the profiled process. */
+	std::string getProcessInfo(); 
 
 	/** Create the log file and add general information. */
 	void createLogFile();
