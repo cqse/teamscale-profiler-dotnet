@@ -433,40 +433,11 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
-		FunctionInfo* info) {
+HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
 	mdToken functionToken = mdTypeDefNil;
-	IMetaDataImport* pMDImport = NULL;
-	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
-
-	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
-			IID_IMetaDataImport, (IUnknown**) &pMDImport, &functionToken);
-	if (!SUCCEEDED(hr)) {
-		return hr;
-	}
-
-	mdTypeDef classToken = mdTypeDefNil;
-	DWORD methodAttr = 0;
-	PCCOR_SIGNATURE sigBlob = NULL;
-	ULONG sigSize = 0;
 	ModuleID moduleId = 0;
-	hr = pMDImport->GetMethodProps(functionToken, &classToken, functionName,
-			sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
-			NULL);
-	if (SUCCEEDED(hr)) {
-		fillFunctionInfo(info, functionId, functionToken, moduleId);
-	}
-	
-	pMDImport->Release();
-	
-	return hr;
-}
-
-void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId) {
-	ClassID classId = 0;
-	ULONG32 values = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		&classId, &moduleId, &functionToken, 0, &values, NULL);
+		NULL, &moduleId, &functionToken, 0, NULL, NULL);
 
 	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
@@ -480,6 +451,8 @@ void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID function
 
 	info->assemblyNumber = assemblyNumber;
 	info->functionToken = functionToken;
+	
+	return hr;
 }
 
 void CProfilerCallback::writeTupleToFile(const char* key, const char* value) {

@@ -167,9 +167,6 @@ private:
 	/** Write all information about the given function to the log. */
 	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
 
-	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
-
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);
 
