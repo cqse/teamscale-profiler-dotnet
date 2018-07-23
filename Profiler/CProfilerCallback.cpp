@@ -270,8 +270,6 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return S_OK;
 	}
 
-	int assemblyNumber = registerAssembly(assemblyId);
-
 	char assemblyInfo[BUFFER_SIZE];
 	int writtenChars = 0;
 
@@ -282,7 +280,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
-		assemblyName, assemblyNumber);
+		assemblyName, (u_int) assemblyId);
 
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
 		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
@@ -298,13 +296,6 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 
 	// Always return OK
 	return S_OK;
-}
-
-int CProfilerCallback::registerAssembly(AssemblyID assemblyId) {
-	int assemblyNumber = assemblyCounter;
-	assemblyCounter++;
-	assemblyMap[assemblyId] = assemblyNumber;
-	return assemblyNumber;
 }
 
 void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA *metadata) {
@@ -401,7 +392,9 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT
 	}
 	else {
 		// Notify monitor that method has been jitted.
+		EnterCriticalSection(&criticalSection);
 		jittedMethods.push_back(info);
+		LeaveCriticalSection(&criticalSection);
 	}
 
 	// Always return OK
@@ -421,9 +414,11 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	}
 	else {
 		// Save information about inlined method.
+		EnterCriticalSection(&criticalSection);
 		if (inlinedMethodIds.insert(calleeId).second == true) {
 			inlinedMethods.push_back(info);
 		}
+		LeaveCriticalSection(&criticalSection);
 	}
 
 	// Always allow inlining.
@@ -434,23 +429,13 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
-	mdToken functionToken = mdTypeDefNil;
 	ModuleID moduleId = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		NULL, &moduleId, &functionToken, 0, NULL, NULL);
+		NULL, &moduleId, &info->functionToken, 0, NULL, NULL);
 
-	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
-		AssemblyID assemblyId;
-		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
-			NULL, NULL, &assemblyId);
-		if (SUCCEEDED(hr)) {
-			assemblyNumber = assemblyMap[assemblyId];
-		}
+		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL, NULL, NULL, &info->assemblyID);
 	}
-
-	info->assemblyNumber = assemblyNumber;
-	info->functionToken = functionToken;
 	
 	return hr;
 }
@@ -491,7 +476,7 @@ void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionIn
 	EnterCriticalSection(&criticalSection);
 	char signature[BUFFER_SIZE];
 	signature[0] = '\0';
-	sprintf_s(signature, "%i:%i", info.assemblyNumber,
+	sprintf_s(signature, "%i:%i", (u_int) info.assemblyID,
 		info.functionToken);
 	writeTupleToFile(key, signature);
 	LeaveCriticalSection(&criticalSection);
