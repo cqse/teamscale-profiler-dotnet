@@ -8,8 +8,8 @@
  */
 struct FunctionInfo {
 
-	/** Index into the assemblyMap of the assembly that contains the function. */
-	int assemblyNumber;
+	/** The assembly ID that contains the function. */
+	AssemblyID assemblyID;
 
 	/** Metadata token of the function. */
 	mdToken functionToken;

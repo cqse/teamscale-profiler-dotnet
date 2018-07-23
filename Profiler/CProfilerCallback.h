@@ -77,9 +77,6 @@ private:
 	/** Default size for arrays. */
 	static const int BUFFER_SIZE = 2048;
 
-	/** Counts the number of assemblies loaded. */
-	int assemblyCounter = 1;
-
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
 	bool isLightMode = false;
 
@@ -91,12 +88,6 @@ private:
 
 	/** Whether the current process should be profiled. */
 	bool isProfilingEnabled = false;
-
-	/**
-	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
-	 * It is used to identify the declaring assembly for functions.
-	 */
-	std::map<AssemblyID, int> assemblyMap;
 
 	/**
 	 * Info object that keeps track of jitted methods.
@@ -152,9 +143,6 @@ private:
 	/** Create the log file and add general information. */
 	void createLogFile();
 
-	/**  Store assembly counter for id. */
-	int registerAssembly(AssemblyID assemblyId);
-
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
@@ -166,9 +154,6 @@ private:
 
 	/** Write all information about the given function to the log. */
 	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
-
-	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
 
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);
