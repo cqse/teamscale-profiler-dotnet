@@ -380,7 +380,11 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	if (isProfilingEnabled) {
+		EnterCriticalSection(&criticalSection);
+
 		recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
+
+		LeaveCriticalSection(&criticalSection);
 	}
 
 	return S_OK;
@@ -389,8 +393,14 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 		BOOL* pfShouldInline) {
 	// Save information about inlined method (if not already seen)
-	if (isProfilingEnabled && inlinedMethodIds.insert(calleeId).second == true) {
-		recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
+	if (isProfilingEnabled) {
+		EnterCriticalSection(&criticalSection);
+		
+		if (inlinedMethodIds.insert(calleeId).second == true) {
+			recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
+		}
+
+		LeaveCriticalSection(&criticalSection);
 	}
 
 	// Always allow inlining.
@@ -403,15 +413,11 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
-	EnterCriticalSection(&criticalSection);
-
 	recordedFunctionInfos->push_back(info);
 
 	if (shouldWriteEagerly()) {
 		writeFunctionInfosToLog();
 	}
-
-	LeaveCriticalSection(&criticalSection);
 }
 
 inline bool CProfilerCallback::shouldWriteEagerly()
