@@ -270,6 +270,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return S_OK;
 	}
 
+	EnterCriticalSection(&criticalSection);
+
 	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
@@ -279,6 +281,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	WCHAR assemblyPath[BUFFER_SIZE];
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
+
+	LeaveCriticalSection(&criticalSection);
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
@@ -434,23 +438,18 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
-	mdToken functionToken = mdTypeDefNil;
 	ModuleID moduleId = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		NULL, &moduleId, &functionToken, 0, NULL, NULL);
+		NULL, &moduleId, &info->functionToken, 0, NULL, NULL);
 
-	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
 		AssemblyID assemblyId;
 		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 			NULL, NULL, &assemblyId);
 		if (SUCCEEDED(hr)) {
-			assemblyNumber = assemblyMap[assemblyId];
+			info->assemblyNumber = assemblyMap[assemblyId];
 		}
 	}
-
-	info->assemblyNumber = assemblyNumber;
-	info->functionToken = functionToken;
 	
 	return hr;
 }
