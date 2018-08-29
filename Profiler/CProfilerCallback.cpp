@@ -259,6 +259,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return S_OK;
 	}
 
+	EnterCriticalSection(&criticalSection);
+
 	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
@@ -268,6 +270,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	WCHAR assemblyPath[BUFFER_SIZE];
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
+
+	LeaveCriticalSection(&criticalSection);
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
@@ -425,53 +429,21 @@ inline bool CProfilerCallback::shouldWriteEagerly()
 	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
 }
 
-HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
-		FunctionInfo* info) {
-	mdToken functionToken = mdTypeDefNil;
-	IMetaDataImport* pMDImport = NULL;
-	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
-
-	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
-			IID_IMetaDataImport, (IUnknown**) &pMDImport, &functionToken);
-	if (!SUCCEEDED(hr)) {
-		return hr;
-	}
-
-	mdTypeDef classToken = mdTypeDefNil;
-	DWORD methodAttr = 0;
-	PCCOR_SIGNATURE sigBlob = NULL;
-	ULONG sigSize = 0;
+HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
 	ModuleID moduleId = 0;
-	hr = pMDImport->GetMethodProps(functionToken, &classToken, functionName,
-			sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
-			NULL);
-	if (SUCCEEDED(hr)) {
-		fillFunctionInfo(info, functionId, functionToken, moduleId);
-	}
-	
-	pMDImport->Release();
-	
-	return hr;
-}
-
-void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId) {
-	ClassID classId = 0;
-	ULONG32 values = 0;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		&classId, &moduleId, &functionToken, 0, &values, NULL);
+		NULL, &moduleId, &info->functionToken, 0, NULL, NULL);
 
-	int assemblyNumber = -1;
 	if (SUCCEEDED(hr) && moduleId != 0) {
 		AssemblyID assemblyId;
 		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 			NULL, NULL, &assemblyId);
 		if (SUCCEEDED(hr)) {
-			assemblyNumber = assemblyMap[assemblyId];
+			info->assemblyNumber = assemblyMap[assemblyId];
 		}
 	}
-
-	info->assemblyNumber = assemblyNumber;
-	info->functionToken = functionToken;
+	
+	return hr;
 }
 
 void CProfilerCallback::writeTupleToFile(const char* key, std::string value) {
