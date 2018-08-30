@@ -42,7 +42,7 @@ public class TraceFileScanner
             logger.Error(e, "Unable to list files in {traceDirectory}. Will retry later", traceDirectory);
             yield break;
         }
-        
+
         logger.Debug("Scanning {fileCount} files", files.Count);
         foreach (string filePath in files)
         {
@@ -98,15 +98,14 @@ public class TraceFileScanner
 
     private string FindVersion(string[] lines, string tracePath)
     {
-        string matchingLine = lines.FirstOrDefault(line => versionAssemblyRegex.IsMatch(line));
+        Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
         if (matchingLine == null)
         {
             logger.Debug("Did not find the version assembly in {tracePath}", tracePath);
             return null;
         }
 
-        Match match = versionAssemblyRegex.Match(matchingLine);
-        return match.Groups[1].Value;
+        return matchingLine.Groups[1].Value;
     }
 
     private bool IsTraceFile(string fileName)

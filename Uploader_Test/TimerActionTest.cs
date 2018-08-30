@@ -4,11 +4,10 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Threading.Tasks;
-using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using NUnit.Framework;
 
-[TestClass]
+[TestFixture]
 public class TimerActionTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
@@ -20,7 +19,7 @@ public class TimerActionTest
         VersionAssembly = VersionAssembly
     };
 
-    [TestMethod]
+    [Test]
     public void TestSuccessfulUpload()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -34,12 +33,11 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectory, config, new MockUpload(true), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectory(@"uploaded\coverage_1_1.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void TestFailedUpload()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -53,12 +51,11 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectory(@"coverage_1_1.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectory(@"coverage_1_1.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void TestArchivingTraceWithMissingVersion()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -72,12 +69,11 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectory(@"missing-version\coverage_1_1.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectory(@"missing-version\coverage_1_1.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void TestUnfinishedTrace()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -90,12 +86,11 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectory(@"coverage_1_1.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectory(@"coverage_1_1.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void TestUnrelatedFile()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -108,12 +103,11 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectory(@"unrelated.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectory(@"unrelated.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void TestPathsWithSpaces()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -127,9 +121,8 @@ Inlined=1:33555646:100678050" },
         new TimerAction(TraceDirectoryWithSpace, config, new MockUpload(false), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectoryWithSpace, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(1).And.Contain(new string[] {
-            FileInTraceDirectoryWithSpace(@"coverage_1_1.txt"),
-        });
+        Assert.AreEqual(1, files.Length, "Expecting exactly 1 trace file");
+        Assert.Contains(FileInTraceDirectoryWithSpace(@"coverage_1_1.txt"), files);
     }
 
     private class MockUpload : IUpload

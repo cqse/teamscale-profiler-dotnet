@@ -11,7 +11,6 @@ using namespace std;
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-
 CProfilerCallback::CProfilerCallback() {
 	// nothing to do
 }
@@ -89,8 +88,8 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 void CProfilerCallback::startUpload() {
-	std::string uploaderPath = removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
-	std::string traceDirectory = removeLastPartOfPath(log.getLogFilePath());
+	std::string uploaderPath = FileSystemUtils::removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
+	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 
 	Uploader uploader(uploaderPath, traceDirectory, &log);
 	uploader.launch();
@@ -418,4 +417,3 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 	delete versionInfo;
 	return writtenChars;
 }
-

@@ -122,7 +122,7 @@ private:
 	/** Name of the profiled application. */
 	wchar_t appName[_MAX_FNAME];
 
-	/** The log file to write all results and messages to. */
+	/** The log to write all results and messages to. */
 	Log log;
 
 	/**

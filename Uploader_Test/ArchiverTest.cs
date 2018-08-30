@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
-using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using NUnit.Framework;
 
-[TestClass]
+[TestFixture]
 public class ArchiverTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
 
-    [TestMethod]
+    [Test]
     public void ShouldMoveFilesToCorrectSubfolders()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -25,24 +24,24 @@ public class ArchiverTest
         new Archiver(TraceDirectory, fileSystem).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-        files.Should().HaveCount(2).And.Contain(new string[] {
-            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-            FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
-        });
+
+        Assert.AreEqual(2, files.Length, "Expecting 2 traces under the root directory");
+        Assert.Contains(FileInTraceDirectory(@"uploaded\coverage_1_1.txt"), files);
+        Assert.Contains(FileInTraceDirectory(@"missing-version\coverage_1_2.txt"), files);
     }
 
-    [TestMethod]
+    [Test]
     public void ShouldHandleExceptionsGracefully()
     {
-
-        Mock<IFileSystem> fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
+        IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
         {
             fileMock.Setup(file => file.ReadAllLines(FileInTraceDirectory("coverage_1_1.txt"))).Throws<IOException>();
-        }, directoryMock => {
+        }, directoryMock =>
+        {
             // not needed
         });
-        
-        new Archiver(TraceDirectory, fileSystemMock.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+
+        new Archiver(TraceDirectory, fileSystemMock).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
     }
 
     /// <summary>
@@ -52,6 +51,4 @@ public class ArchiverTest
     {
         return Path.Combine(TraceDirectory, fileName);
     }
-
 }
-

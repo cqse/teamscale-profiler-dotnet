@@ -25,7 +25,6 @@ public class Config
     /// <summary>
     /// The assembly from which to read the version number.
     /// </summary>
-    [JsonProperty(Required = Required.Always)]
     public string VersionAssembly;
 
     /// <summary>
@@ -38,14 +37,16 @@ public class Config
     /// means the configuration is valid.
     /// </summary>
     /// <returns></returns>
-    public List<string> Validate()
+    public IEnumerable<string> Validate()
     {
-        List<string> errorMessages = new List<string>();
         if (Teamscale == null && Directory == null)
         {
-            errorMessages.Add(@"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") to upload trace files to.");
+            yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") to upload trace files to.";
         }
-        return errorMessages;
+        if (VersionAssembly == null)
+        {
+            yield return @"You must provide an assembly name (property ""versionAssembly"", without the file extension) to read the program version from";
+        }
     }
 
     /// <summary>

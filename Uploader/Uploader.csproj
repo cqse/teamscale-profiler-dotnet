@@ -67,7 +67,7 @@
     <Compile Include="upload\IUpload.cs" />
     <Compile Include="upload\FileSystemUpload.cs" />
     <Compile Include="upload\TeamscaleUpload.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Uploader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

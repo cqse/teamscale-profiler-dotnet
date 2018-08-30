@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
+using NUnit.Framework;
 
-[TestClass]
+[TestFixture]
 public class ConfigTest
 {
-    [TestMethod]
+    [Test]
     public void ValidJson()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -31,26 +32,17 @@ public class ConfigTest
         Config.ReadConfig(fileSystem);
     }
 
-    [TestMethod]
+    [Test]
     public void MissingAttribute()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             {
-                Config.ConfigFilePath, new MockFileData(@"{
-                }")
+                Config.ConfigFilePath, new MockFileData(@"{}")
             }
         });
-        
-        try
-        {
-            Config.ReadConfig(fileSystem);
-        }
-        catch
-        {
-            return;
-        }
-        Assert.Fail("Did not throw an exception");
+
+        List<string> errors = Config.ReadConfig(fileSystem).Validate().ToList();
+        Assert.IsNotEmpty(errors, "Empty configuration should cause errors");
     }
 }
-

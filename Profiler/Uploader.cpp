@@ -1,6 +1,6 @@
 #include "Uploader.h"
-#include "windows.h"
-#include "shellapi.h"
+#include <windows.h>
+#include <shellapi.h>
 #include "WindowsUtils.cpp"
 
 Uploader::Uploader(std::string uploaderPath, std::string traceDirectory, Log* log)
@@ -34,6 +34,6 @@ void Uploader::launch()
 
 	bool successful = ShellExecuteEx(&shExecInfo);
 	if (!successful) {
-		log->error("Failed to launch uploader " + pathToExe + ": " + getLastErrorAsString());
+		log->error("Failed to launch uploader " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
 	}
 }

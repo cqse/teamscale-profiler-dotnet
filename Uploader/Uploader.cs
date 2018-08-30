@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using System.IO.Abstractions;
 using System.Collections.Generic;
 
+using System.Linq;
+
 /// <summary>
 /// Main entry point of the program.
 /// </summary>
@@ -16,6 +18,11 @@ public class Uploader
 {
     private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+    private static readonly List<string> HELP_COMMAND_LINE_ARGUMENTS = new List<string>()
+    {
+        "--help", "/h", "/?", "-h", "/help"
+    };
 
     private readonly string traceDirectory;
     private readonly Config config;
@@ -31,6 +38,7 @@ public class Uploader
             Console.WriteLine("Another instance is already running.");
             return;
         }
+
         new Uploader(args).Run();
     }
 
@@ -44,15 +52,7 @@ public class Uploader
             return false;
         }
 
-        Process[] processes = Process.GetProcessesByName(current.ProcessName);
-        foreach (Process process in processes)
-        {
-            if (process.Id != current.Id)
-            {
-                return true;
-            }
-        }
-        return false;
+        return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
     }
 
     private Uploader(string[] args)
@@ -80,7 +80,7 @@ public class Uploader
             return null;
         }
 
-        List<string> errorMessages = config.Validate();
+        List<string> errorMessages = config.Validate().ToList();
         if (errorMessages.Count == 0)
         {
             return config;
@@ -98,7 +98,7 @@ public class Uploader
     {
         logger.Debug("Parsing arguments {arguments}", args);
 
-        if (args.Length != 1 || args[0] == "--help")
+        if (args.Length != 1 || HELP_COMMAND_LINE_ARGUMENTS.Contains(args[0]))
         {
             Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
