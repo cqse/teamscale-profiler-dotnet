@@ -44,10 +44,11 @@ after_test:
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
   # The batch magic after the robocopy commands is to fix its broken error codes (anything <= 8 is still a success)
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
-  - cmd: (robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll) ^& IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0
-  - cmd: (robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader Uploader.* *.dll *.xml *.json *.config /xf *.pdb) ^& IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0
-  - cmd: (robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf) ^& IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0
-  - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
+  - cmd: >-
+      robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll
+      robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader Uploader.* *.dll *.xml *.json *.config /xf *.pdb
+      robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf
+      7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:
   - path: $(release_zip)
