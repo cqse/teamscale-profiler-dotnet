@@ -40,7 +40,12 @@ after_test:
   - cmd: wkhtmltopdf -V
   - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   # Create release zip with profiler & documentation
-  - cmd: 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf .\Uploader\bin\Release\Uploader.* .\Uploader\bin\Release\*.dll .\Uploader\bin\Release\*.xml .\Uploader\bin\Release\*.json .\Uploader\bin\Release\*.config -xr!*.pdb
+  - cmd: mkdir teamscale_dotnet_profiler\Uploader
+  - cmd: mkdir teamscale_dotnet_profiler\Documentation
+  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll
+  - cmd: robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader Uploader.* *.dll *.xml *.json *.config /xf *.pdb
+  - cmd: robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf
+  - 7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:
   - path: $(release_zip)

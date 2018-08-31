@@ -3,9 +3,9 @@
 #include <shellapi.h>
 #include "WindowsUtils.cpp"
 
-Uploader::Uploader(std::string uploaderPath, std::string traceDirectory, Log* log)
+Uploader::Uploader(std::string profilerPath, std::string traceDirectory, Log* log)
 {
-	this->pathToExe = uploaderPath + "\\uploader.exe";
+	this->pathToExe = profilerPath + "\\Uploader\\uploader.exe";
 	this->traceDirectory = traceDirectory;
 	this->log = log;
 }

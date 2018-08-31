@@ -9,7 +9,7 @@ class Uploader {
 public:
 
 	/** Constructor. */
-	Uploader(std::string uploaderPath, std::string traceDirectory, Log* log);
+	Uploader(std::string profilerPath, std::string traceDirectory, Log* log);
 
 	/** Destructor. */
 	virtual ~Uploader() noexcept;
@@ -27,5 +27,4 @@ private:
 
 	/** Path to the directory that contains the trace files. */
 	std::string traceDirectory;
-
 };

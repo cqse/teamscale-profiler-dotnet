@@ -88,10 +88,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 void CProfilerCallback::startUploadService() {
-	std::string uploaderPath = FileSystemUtils::removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
+	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 
-	Uploader uploader(uploaderPath, traceDirectory, &log);
+	Uploader uploader(profilerPath, traceDirectory, &log);
 	uploader.launch();
 }
 
