@@ -45,6 +45,11 @@ public class TimerAction
                 logger.Info("Archiving {tracePath} because it does not contain the version assembly", file.FilePath);
                 archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
             }
+            else if (file.IsEmpty)
+            {
+                logger.Info("Archiving {tracePath} because it does not contain any coverage", file.FilePath);
+                archiver.ArchiveEmptyFile(file.FilePath);
+            }
             else
             {
                 logger.Info("Uploading {tracePath}", file.FilePath);
@@ -62,5 +67,4 @@ public class TimerAction
 
         logger.Info("Finished scan");
     }
-
 }

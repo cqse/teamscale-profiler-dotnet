@@ -80,7 +80,7 @@ Inlined=1:33555646:100678050" },
     }
 
     [Test]
-    public void TestUnfinishedTrace()
+    public void TestEmptyTrace()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
@@ -89,13 +89,34 @@ Inlined=1:33555646:100678050" },
 
         config.VersionAssembly = VersionAssembly;
 
-        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
+        new TimerAction(TraceDirectory, config, new MockUpload(true), fileSystem).Run();
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
         Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"coverage_1_1.txt"),
+            FileInTraceDirectory(@"empty-traces\coverage_1_1.txt"),
         }));
+    }
+
+    [Test]
+    public void TestUnfinishedTrace()
+    {
+        FileSystemMockingUtils.FileSystemMock fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
+        {
+            fileMock.Setup(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>())).Throws<IOException>();
+        }, directoryMock =>
+        {
+            directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
+                .Returns(new string[] { "coverage_1_1.txt" });
+        });
+        IFileSystem fileSystem = fileSystemMock.Object;
+
+        config.VersionAssembly = VersionAssembly;
+
+        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
+
+        fileSystemMock.FileMock.Verify(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>()));
+        fileSystemMock.FileMock.VerifyNoOtherCalls();
     }
 
     [Test]
@@ -103,7 +124,7 @@ Inlined=1:33555646:100678050" },
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { FileInTraceDirectory("unrelated.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
+            { FileInTraceDirectory("unrelated.txt"), @"foobar" },
         });
 
         config.VersionAssembly = VersionAssembly;
@@ -123,7 +144,8 @@ Inlined=1:33555646:100678050" },
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646:100678050
+Stopped=1234556" },
         });
 
         config.VersionAssembly = VersionAssembly;

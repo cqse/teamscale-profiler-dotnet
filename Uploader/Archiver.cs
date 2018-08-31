@@ -13,12 +13,14 @@ public class Archiver
     private readonly IFileSystem fileSystem;
     private readonly string uploadedDirectory;
     private readonly string missingVersionDirectory;
+    private readonly string emptyFileDirectory;
 
     public Archiver(string traceDirectory, IFileSystem fileSystem)
     {
         this.fileSystem = fileSystem;
         this.uploadedDirectory = Path.Combine(traceDirectory, "uploaded");
         this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
+        this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
     }
 
     /// <summary>
@@ -35,6 +37,11 @@ public class Archiver
     public void ArchiveFileWithoutVersionAssembly(string tracePath)
     {
         Archive(tracePath, missingVersionDirectory);
+    }
+
+    public void ArchiveEmptyFile(string tracePath)
+    {
+        Archive(tracePath, emptyFileDirectory);
     }
 
     private void Archive(string tracePath, string targetDirectory)

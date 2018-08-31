@@ -63,9 +63,20 @@ public class TraceFileScanner
 
     /// <summary>
     /// Scans the given file path and returns the resulting ScannedFile or null in case the file should be ignored.
+    ///
+    /// Please note that we deliberately chose to only check the locking status of a file, not whether it contains the
+    /// Stopped= line in order to decide if the file should be processed or not. We did this to also be able to process
+    /// files when the profiler was hard-killed while writing the coverage info (e.g. in eager mode with certain unit
+    /// test frameworks).
     /// </summary>
     private ScannedFile ScanFile(string filePath)
     {
+        if (IsLocked(filePath))
+        {
+            logger.Debug("Ignoring locked trace {tracePath}", filePath);
+            return null;
+        }
+
         string[] lines;
         try
         {
@@ -77,23 +88,37 @@ public class TraceFileScanner
             return null;
         }
 
-        if (!IsFinished(lines))
-        {
-            logger.Debug("Ignoring unfinished trace {tracePath}", filePath);
-            return null;
-        }
-
         string version = FindVersion(lines, filePath);
         return new ScannedFile
         {
             FilePath = filePath,
             Version = version,
+            IsEmpty = IsEmpty(lines),
         };
     }
 
-    private bool IsFinished(string[] lines)
+    private bool IsEmpty(string[] lines)
     {
-        return lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+        return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+    }
+
+    private bool IsLocked(string tracePath)
+    {
+        try
+        {
+            using (fileSystem.File.Open(tracePath, FileMode.Open))
+            {
+                // we just open the file to see if it's writable
+            }
+        }
+        catch (Exception e)
+        {
+            logger.Debug(e, "Failed to open {tracePath}. Assuming it's locked", tracePath);
+            // this is slightly inaccurate as the error might stem from permission problems etc.
+            // but we log it
+            return true;
+        }
+        return false;
     }
 
     private string FindVersion(string[] lines, string tracePath)
@@ -121,18 +146,25 @@ public class TraceFileScanner
         /// <summary>
         /// The path to the file.
         /// </summary>
-        public string FilePath;
+        public string FilePath { get; set; }
 
         /// <summary>
         /// The parsed version of the version assembly or null in case the version assembly was not in the file.
         /// </summary>
-        public string Version;
+        public string Version { get; set; }
+
+        /// <summary>
+        /// If this is true then the trace file contains no coverage information (may happen when the profiler
+        /// is killed before it can write the information to disk).
+        /// </summary>
+        public bool IsEmpty { get; set; }
 
         public override bool Equals(object obj)
         {
             return obj is ScannedFile file &&
                    FilePath == file.FilePath &&
-                   Version == file.Version;
+                   Version == file.Version &&
+                   IsEmpty == file.IsEmpty;
         }
 
         public override int GetHashCode()
@@ -140,7 +172,13 @@ public class TraceFileScanner
             int hashCode = -1491167301;
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FilePath);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Version);
+            hashCode = hashCode * -1521134295 + EqualityComparer<bool>.Default.GetHashCode(IsEmpty);
             return hashCode;
+        }
+
+        public override string ToString()
+        {
+            return $"ScannedFile[{FilePath} Version={Version} IsEmpty={IsEmpty}]";
         }
     }
 }

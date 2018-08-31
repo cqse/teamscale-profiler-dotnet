@@ -17,13 +17,16 @@ public class TraceFileScannerTest
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
+            // finished trace
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Inlined=1:33555646:100678050" },
+            // empty trace
             { FileInTraceDirectory("coverage_1_2.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
+            // no version assembly
             { FileInTraceDirectory("coverage_1_3.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
 Inlined=1:33555646:100678050" },
-            { FileInTraceDirectory("unrelated.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050" },
+            // unrelated file
+            { FileInTraceDirectory("unrelated.txt"), @"whatever" },
         });
 
         List<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystem).ListTraceFilesReadyForUpload().ToList();
@@ -33,12 +36,39 @@ Inlined=1:33555646:100678050" },
             {
                 FilePath = FileInTraceDirectory("coverage_1_1.txt"),
                 Version = "4.0.0.0",
-            },new TraceFileScanner.ScannedFile()
+                IsEmpty = false,
+            },
+            new TraceFileScanner.ScannedFile()
+            {
+                FilePath = FileInTraceDirectory("coverage_1_2.txt"),
+                Version = "4.0.0.0",
+                IsEmpty = true,
+            },
+            new TraceFileScanner.ScannedFile()
             {
                 FilePath = FileInTraceDirectory("coverage_1_3.txt"),
                 Version = null,
+                IsEmpty = false,
             },
         }));
+    }
+
+    [Test]
+    public void LockedFileShouldBeIgnored()
+    {
+        IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
+        {
+            fileMock.Setup(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>())).Throws<IOException>();
+        }, directoryMock =>
+        {
+            directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
+                .Returns(new string[] { "coverage_1_1.txt" });
+        }).Object;
+
+        List<TraceFileScanner.ScannedFile> files =
+            new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
+
+        Assert.That(files, Is.Empty);
     }
 
     [Test]
@@ -55,7 +85,7 @@ Inlined=1:33555646:100678050" },
         {
             directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
                 .Returns(new string[] { "coverage_1_1.txt", "coverage_1_2.txt" });
-        });
+        }).Object;
 
         List<TraceFileScanner.ScannedFile> files =
             new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
@@ -65,6 +95,7 @@ Inlined=1:33555646:100678050" },
             {
                 FilePath = "coverage_1_2.txt",
                 Version = "4.0.0.0",
+                IsEmpty = false,
             },
         }));
     }
