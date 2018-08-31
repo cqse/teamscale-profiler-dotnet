@@ -28,8 +28,8 @@ public class ConfigTest
             }
         });
 
-        // must not throw an exception
-        Config.ReadConfig(fileSystem);
+        IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
+        Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class ConfigTest
             }
         });
 
-        List<string> errors = Config.ReadConfig(fileSystem).Validate().ToList();
-        Assert.IsNotEmpty(errors, "Empty configuration should cause errors");
+        IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
+        Assert.That(errors, Is.Not.Empty, "Empty configuration should cause errors");
     }
 }

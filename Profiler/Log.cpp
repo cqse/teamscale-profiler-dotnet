@@ -8,7 +8,6 @@
 static const int BUFFER_SIZE = 2048;
 
 namespace {
-
 	/** The key to log information useful when interpreting the traces. */
 	const char* LOG_KEY_INFO = "Info";
 
@@ -35,7 +34,6 @@ namespace {
 
 	/** The key to log information about the profiler shutdown. */
 	const char* LOG_KEY_STOPPED = "Stopped";
-
 }
 
 Log::Log()
@@ -121,14 +119,11 @@ void Log::createLogFile() {
 	sprintf_s(logFileName, "%s\\coverage_%s.txt", targetDir, timeStamp);
 	_tcscpy_s(logFilePath, logFileName);
 
-	EnterCriticalSection(&criticalSection);
 	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
-
 	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
-	LeaveCriticalSection(&criticalSection);
 }
 
 void Log::getFormattedCurrentTime(char *result, size_t size) {

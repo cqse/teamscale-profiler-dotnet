@@ -50,7 +50,7 @@ public:
 
 	/**
 	 * Defines whether the given function should trigger a callback everytime it is executed.
-	 * 
+	 *
 	 * We do not register a single function callback in order to not affect
 	 * performance. In effect, we disable this feature here. It has been tested via
 	 * a performance benchmark, that this implementation does not impact call
@@ -61,10 +61,10 @@ public:
 	 * a function, independent of whether a pre-jitted version exists.)
 	 */
 	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
-						BOOL *pbHookFunction);
+		BOOL *pbHookFunction);
 
 	/** Create method info object for a function id. */
-	HRESULT getFunctionInfo( FunctionID functionID, FunctionInfo* info);
+	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
 
 private:
 	/** Default size for arrays. */
@@ -76,9 +76,9 @@ private:
 	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
 	bool isLightMode = false;
 
-	/** 
-	 * Whether to run in eager mode and write all invocations to the trace 
-	 * file directly instead of waiting until shutdown. 
+	/**
+	 * Whether to run in eager mode and write all invocations to the trace
+	 * file directly instead of waiting until shutdown.
 	 */
 	bool isEagerMode = false;
 
@@ -112,9 +112,9 @@ private:
 	* Stores all declared options from the config file.
 	*/
 	std::map<std::string, std::string> configOptions;
-	
+
 	/** Smart pointer to the .NET framework profiler info. */
-	CComQIPtr<ICorProfilerInfo2> profilerInfo;	
+	CComQIPtr<ICorProfilerInfo2> profilerInfo;
 
 	/** Path of the process we are in. */
 	wchar_t appPath[_MAX_PATH];
@@ -134,10 +134,10 @@ private:
 	DWORD getEventMask();
 
 	/** Returns information about the profiled process. */
-	std::string getProcessInfo(); 
+	std::string getProcessInfo();
 
 	/** Starts the upload process. */
-	void startUpload();
+	void startUploadService();
 
 	/**  Store assembly counter for id. */
 	int registerAssembly(AssemblyID assemblyId);
@@ -150,6 +150,4 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
-
 };
-

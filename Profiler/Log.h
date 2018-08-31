@@ -6,13 +6,20 @@
 #include <map>
 #include <set>
 
+/**
+ * Manages a log file on the file system to which both diagnostic messages and trace information is written.
+ * Unless mentioned otherwise, all methods in this class are thread-safe and perform their own synchronization.
+ */
 class Log
 {
 public:
 	Log();
 	virtual ~Log() noexcept;
 
-	/** Create the log file and add general information. Must be the first method called on this object otherwise other calls will be ignored. */
+	/**
+	 * Create the log file and add general information. Must be the first method called on this object.
+	 * This method is not thread-safe or reentrant.
+	 */
 	void createLogFile();
 
 	/** Closes the log. Further calls to logging methods will be ignored. */
@@ -68,4 +75,3 @@ private:
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);
 };
-

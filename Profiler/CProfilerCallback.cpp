@@ -59,7 +59,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 
 	if (getOption("UPLOAD") == "1") {
-		startUpload();
+		startUploadService();
 	}
 
 	char appPool[BUFFER_SIZE];
@@ -87,7 +87,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	return S_OK;
 }
 
-void CProfilerCallback::startUpload() {
+void CProfilerCallback::startUploadService() {
 	std::string uploaderPath = FileSystemUtils::removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 

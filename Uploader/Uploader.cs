@@ -80,8 +80,8 @@ public class Uploader
             return null;
         }
 
-        List<string> errorMessages = config.Validate().ToList();
-        if (errorMessages.Count == 0)
+        IEnumerable<string> errorMessages = config.Validate();
+        if (!errorMessages.Any())
         {
             return config;
         }
@@ -98,12 +98,16 @@ public class Uploader
     {
         logger.Debug("Parsing arguments {arguments}", args);
 
-        if (args.Length != 1 || HELP_COMMAND_LINE_ARGUMENTS.Contains(args[0]))
+        if (args.Length != 1)
         {
-            Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
-            Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The uploader reads its configuration from {Config.ConfigFilePath}");
+            PrintUsage();
             Environment.Exit(1);
+        }
+
+        if (HELP_COMMAND_LINE_ARGUMENTS.Contains(args[0]))
+        {
+            PrintUsage();
+            Environment.Exit(0);
         }
 
         string traceDirectory = Path.GetFullPath(args[0]);
@@ -114,6 +118,13 @@ public class Uploader
         }
 
         return traceDirectory;
+    }
+
+    private static void PrintUsage()
+    {
+        Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
+        Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
+        Console.Error.WriteLine($"The uploader reads its configuration from {Config.ConfigFilePath}");
     }
 
     private void Run()

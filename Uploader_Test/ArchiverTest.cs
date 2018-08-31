@@ -25,9 +25,10 @@ public class ArchiverTest
 
         string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
-        Assert.AreEqual(2, files.Length, "Expecting 2 traces under the root directory");
-        Assert.Contains(FileInTraceDirectory(@"uploaded\coverage_1_1.txt"), files);
-        Assert.Contains(FileInTraceDirectory(@"missing-version\coverage_1_2.txt"), files);
+        Assert.That(files, Is.EquivalentTo(new string[] {
+            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
+            FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
+        }));
     }
 
     [Test]
