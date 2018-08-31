@@ -14,7 +14,7 @@ internal class TeamscaleUpload : IUpload
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    private readonly HttpClient client;
+    private readonly HttpClient client = new HttpClient();
 
     private readonly TeamscaleServer server;
     private readonly MessageFormatter messageFormatter;
@@ -24,7 +24,6 @@ internal class TeamscaleUpload : IUpload
         this.server = server;
         this.messageFormatter = new MessageFormatter(server);
 
-        this.client = new HttpClient();
         SetUpBasicAuthentication(server);
     }
 

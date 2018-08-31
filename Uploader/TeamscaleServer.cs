@@ -9,31 +9,31 @@ public class TeamscaleServer
     /// URL of the Teamscale server.
     /// </summary>
     [JsonProperty(Required = Required.Always)]
-    public string Url;
+    public string Url { get; set; }
 
     /// <summary>
     /// Username to authenticate with.
     /// </summary>
     [JsonProperty(Required = Required.Always)]
-    public string Username;
+    public string Username { get; set; }
 
     /// <summary>
     /// Access token to authenticate with.
     /// </summary>
     [JsonProperty(Required = Required.Always)]
-    public string AccessToken;
+    public string AccessToken { get; set; }
 
     /// <summary>
     /// Teamscale project to which to upload.
     /// </summary>
     [JsonProperty(Required = Required.Always)]
-    public string Project;
+    public string Project { get; set; }
 
     /// <summary>
     /// Partition within the Teamscale project to which to upload.
     /// </summary>
     [JsonProperty(Required = Required.Always)]
-    public string Partition;
+    public string Partition { get; set; }
 
     /// <summary>
     /// Template for the commit message for the upload commit.
@@ -44,5 +44,4 @@ public class TeamscaleServer
     {
         return $"Teamscale {Url} project {Project} with user {Username} into partition {Partition}";
     }
-
 }

@@ -20,17 +20,17 @@ public class Config
     /// <summary>
     /// The Teamscale server to upload to.
     /// </summary>
-    public TeamscaleServer Teamscale = null;
+    public TeamscaleServer Teamscale { get; set; } = null;
 
     /// <summary>
     /// The assembly from which to read the version number.
     /// </summary>
-    public string VersionAssembly;
+    public string VersionAssembly { get; set; }
 
     /// <summary>
     /// The directory to upload the traces to.
     /// </summary>
-    public string Directory = null;
+    public string Directory { get; set; } = null;
 
     /// <summary>
     /// Validates the configuration and returns all collected error messages. An empty list
