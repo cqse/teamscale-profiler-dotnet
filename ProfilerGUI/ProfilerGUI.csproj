@@ -69,7 +69,6 @@
     <Compile Include="Source\Configurator\MachineTypeExtractor.cs" />
     <Compile Include="Source\Configurator\MainViewModel.cs" />
     <Compile Include="Source\Configurator\WindowsShortcutReader.cs" />
-    <Compile Include="Source\Runner\TraceFileCopyEventArgs.cs" />
     <Compile Include="Source\Shared\ProcessOutput.cs" />
     <Compile Include="Source\Shared\ProfilerConfiguration.cs" />
     <Compile Include="Source\Shared\ProfilerConstants.cs" />

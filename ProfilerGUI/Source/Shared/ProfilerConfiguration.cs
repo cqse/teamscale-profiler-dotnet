@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ProfilerGUI.Source.Configurator;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -12,7 +13,12 @@ namespace ProfilerGUI.Source.Shared
         /// <summary>
         /// The name of the config file.
         /// </summary>
-        private const string ConfigFile = "ProfilerGUI.json";
+        private const string ConfigFileName = "ProfilerGUI.json";
+
+        /// <summary>
+        /// Path to the config file.
+        /// </summary>
+        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
 
         /// <summary>
         /// Folder to which the profiler should write trace files.
@@ -40,26 +46,25 @@ namespace ProfilerGUI.Source.Shared
         public EApplicationType ApplicationType { get; set; }
 
         /// <summary>
-        /// Tries to read the config from the given JSON file.
+        /// Tries to read the config from the ConfigFilePath.
         /// </summary>
         /// <exception cref="JsonException">If JSON deserialization fails</exception>
         /// <exception cref="IOException">If reading the file fails</exception>
-        public static ProfilerConfiguration ReadFromFile(string filePath)
+        public static ProfilerConfiguration ReadFromFile()
         {
-            // TODO (FS) should determine assembly dir and read from fixed config. write as well
-            string fileContent = File.ReadAllText(filePath);
+            string fileContent = File.ReadAllText(ConfigFilePath);
             return JsonConvert.DeserializeObject<ProfilerConfiguration>(fileContent);
         }
 
         /// <summary>
-        /// Saves the config to the given file as JSON.
+        /// Saves the config to the ConfigFilePath as JSON.
         /// </summary>
         /// <exception cref="JsonException">If JSON serialization fails</exception>
         /// <exception cref="IOException">If writing the file fails</exception>
-        public void WriteToFile(string filePath)
+        public void WriteToFile()
         {
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
-            File.WriteAllText(filePath, json, Encoding.UTF8);
+            File.WriteAllText(ConfigFilePath, json, Encoding.UTF8);
         }
     }
 }

@@ -87,9 +87,9 @@ namespace ProfilerGUI.Source.Configurator
         /// A default config must exist for this to do anything.</param>
         public MainViewModel(bool launchTargetAppDirectly)
         {
-            if (File.Exists(ProfilerConstants.DefaultConfigFile))
+            if (File.Exists(ProfilerConfiguration.ConfigFilePath))
             {
-                Configuration = ProfilerConfiguration.ReadFromFile(ProfilerConstants.DefaultConfigFile);
+                Configuration = ProfilerConfiguration.ReadFromFile();
 
                 if (launchTargetAppDirectly)
                 {
@@ -221,11 +221,11 @@ namespace ProfilerGUI.Source.Configurator
                 }
             }
 
-            LogLine("Storing config file as " + ProfilerConstants.DefaultConfigFile);
+            LogLine("Storing config file as " + ProfilerConfiguration.ConfigFilePath);
 
             try
             {
-                Configuration.WriteToFile(ProfilerConstants.DefaultConfigFile);
+                Configuration.WriteToFile();
                 LogLine("-> Success");
             }
             catch (Exception e)

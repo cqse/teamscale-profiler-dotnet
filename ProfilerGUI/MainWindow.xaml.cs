@@ -29,12 +29,6 @@ namespace ProfilerGUI
             OpenFolderChooser(selectedPath => ViewModel.TargetTraceDirectory = selectedPath);
         }
 
-
-        private void OnChooseFinalTargetDirectoryClick(object sender, EventArgs args)
-        {
-            OpenFolderChooser(selectedPath => ViewModel.TargetFolderToCopyTo = selectedPath);
-        }
-
         private void OpenFolderChooser(Action<string> pathSelectedAction)
         {
             using (var dialog = new FolderBrowserDialog())
@@ -46,7 +40,6 @@ namespace ProfilerGUI
                 }
             }
         }
-
 
         private void OnChooseApplicationButtonClick(object sender, EventArgs args)
         {
@@ -79,11 +72,6 @@ namespace ProfilerGUI
         private void OnTargetAppStartInChange(object sender, EventArgs args)
         {
             ViewModel.TargetAppWorkingDirectory = (sender as System.Windows.Controls.TextBox).Text;
-        }
-
-        private void OnProcessNamesChanged(object sender, EventArgs args)
-        {
-            ViewModel.ProcessNamesToWaitFor = (sender as System.Windows.Controls.TextBox).Text;
         }
     }
 }
