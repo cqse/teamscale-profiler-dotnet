@@ -5,23 +5,30 @@ using System.IO;
 
 namespace ProfilerGUI.Source.Shared
 {
+    /// <summary>
+    /// System utility functions.
+    /// </summary>
     public static class SystemUtils
     {
         /// <summary>
-        ///  Sets the given environment variable on the 'Machine' level, unless it is already configured. Returns <code>true</code> 
+        ///  Sets the given environment variable on the 'Process' level, unless it is already configured. I.e. this process and any of its children
+        ///  will see the environment variable. Returns <code>true</code>
         ///  if changes were made, i.e. the variable was not already set to the target value.
         /// </summary>
         public static bool SetEnvironmentVariable(string variableName, string value)
         {
-            if (!Equals(Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Machine), value))
+            if (!Equals(Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Process), value))
             {
-                Environment.SetEnvironmentVariable(variableName, value, EnvironmentVariableTarget.Machine);
+                Environment.SetEnvironmentVariable(variableName, value, EnvironmentVariableTarget.Process);
                 return true;
             }
             return false;
         }
 
-        public static ProcessOutput RunProcessAndWait(string processPath, string args = "")
+        /// <summary>
+        /// Runs the given executable with the given command line arguments and waits for the process to terminate.
+        /// </summary>
+        public static ProcessResult RunProcessAndWait(string processPath, string args = "")
         {
             Process process = new Process
             {
@@ -30,15 +37,17 @@ namespace ProfilerGUI.Source.Shared
 
             process.Start();
 
-            List<string> output = new List<string>();
-            CollectOuput(process.StandardOutput, output);
-            CollectOuput(process.StandardError, output);
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
 
             process.WaitForExit();
 
-            return new ProcessOutput(process.ExitCode, output);
+            return new ProcessResult(process.ExitCode, stdout, stderr);
         }
 
+        /// <summary>
+        /// Asynchronously runs the given executable with the given command line arguments, working dir and environment.
+        /// </summary>
         public static Process RunNonBlocking(string processPath, string args, string workingDir, params Tuple<string, string>[] environmentVariables)
         {
             Process process = new Process
@@ -50,7 +59,8 @@ namespace ProfilerGUI.Source.Shared
             return process;
         }
 
-        private static ProcessStartInfo CreateStartInfo(string processPath, string args, bool runAsIndependentApplication, string workingDir = "", params Tuple<string, string>[] environmentVariables)
+        private static ProcessStartInfo CreateStartInfo(string processPath, string args, bool runAsIndependentApplication, string workingDir = "",
+            params Tuple<string, string>[] environmentVariables)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -60,14 +70,11 @@ namespace ProfilerGUI.Source.Shared
 
             startInfo.UseShellExecute = false;
 
-            if (environmentVariables != null)
+            foreach (Tuple<string, string> environmentVariableAndValue in environmentVariables)
             {
-                foreach (Tuple<string, string> environmentVariableAndValue in environmentVariables)
-                {
-                    string variableName = environmentVariableAndValue.Item1;
-                    startInfo.EnvironmentVariables.Remove(variableName);
-                    startInfo.EnvironmentVariables.Add(variableName, environmentVariableAndValue.Item2);
-                }
+                string variableName = environmentVariableAndValue.Item1;
+                startInfo.EnvironmentVariables.Remove(variableName);
+                startInfo.EnvironmentVariables.Add(variableName, environmentVariableAndValue.Item2);
             }
 
             if (runAsIndependentApplication)
@@ -78,20 +85,13 @@ namespace ProfilerGUI.Source.Shared
             }
             else
             {
+                // TODO (FS) doesn't that mess with our output collection above?
                 startInfo.RedirectStandardOutput = true;
                 startInfo.RedirectStandardError = true;
                 startInfo.CreateNoWindow = true;
             }
 
             return startInfo;
-        }
-
-        private static void CollectOuput(StreamReader outputStream, List<string> output)
-        {
-            while (!outputStream.EndOfStream)
-            {
-                output.Add(outputStream.ReadLine());
-            }
         }
     }
 }

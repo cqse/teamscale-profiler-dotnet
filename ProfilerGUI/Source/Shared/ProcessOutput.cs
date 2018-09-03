@@ -2,17 +2,34 @@
 
 namespace ProfilerGUI.Source.Shared
 {
-    public class ProcessOutput
+    /// <summary>
+    /// Data class that encapsulates the result of running a process.
+    /// </summary>
+    public class ProcessResult
     {
+        /// <summary>
+        /// Return code the process emitted.
+        /// </summary>
         public int ReturnCode { get; }
 
-        // TODO (FS) why is this a string? are these lines? if so, how about renaming to OutputLines?
-        public List<string> Output { get; }
+        /// <summary>
+        /// Text printed to stdout.
+        /// </summary>
+        public string StdOut { get; }
 
-        public ProcessOutput(int returnCode, List<string> output = null)
+        /// <summary>
+        /// Text printed to stderr.
+        /// </summary>
+        public string StdErr { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ProcessResult(int returnCode, string stdout = null, string stderr = null)
         {
             ReturnCode = returnCode;
-            Output = output ?? new List<string>();
+            StdOut = stdout ?? string.Empty;
+            StdErr = stderr ?? string.Empty;
         }
     }
 }

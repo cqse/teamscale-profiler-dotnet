@@ -200,10 +200,10 @@ namespace ProfilerGUI.Source.Configurator
 
             List<Tuple<string, string>> argumentValueTuples = new List<Tuple<string, string>>
                 {
-                    Tuple.Create(ProfilerConstants.ProfilerIdArgName, ProfilerConstants.ProfilerIdArgValue),
-                    Tuple.Create(ProfilerConstants.TargetDirectoryForTracesArg, TargetTraceDirectory),
+                    Tuple.Create(ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
+                    Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, TargetTraceDirectory),
                     // TODO (FS) make configurable?
-                    Tuple.Create(ProfilerConstants.ProfilerLightModeArg, "1"),
+                    Tuple.Create(ProfilerConstants.LightModeEnvironmentVariable, "1"),
                 };
 
             foreach (Tuple<string, string> argumentValueTuple in argumentValueTuples)
@@ -234,25 +234,13 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// Starts the profiled application with the profiler attached.
+        /// </summary>
         internal async void RunProfiledApplication()
         {
-            SaveConfiguration();
-
             LogLine("Profiling " + Configuration.TargetApplicationPath);
-            ProfilerConfiguration configuration = ProfilerConfiguration.ReadFromFile(ProfilerConstants.DefaultConfigFile);
-            ProfilerRunner runner = new ProfilerRunner(configuration);
-            runner.ProfilingEnd += delegate
-            {
-                if (configuration.QuitToolAfterProcessesEnded)
-                {
-                    Environment.Exit(0);
-                }
-            };
-            runner.TraceFileCopy += (sender, args) =>
-            {
-                // TODO (FS) can we log the error messages if any exist? that might be helpful to the user to debug problems during the copy
-                LogLine($"Copied {args.SuccessfulCopiedFiles.Count} trace files, errors: {args.FailedCopiedFiles.Count}");
-            };
+            ProfilerRunner runner = new ProfilerRunner(Configuration);
             await runner.Run();
         }
 
@@ -273,13 +261,11 @@ namespace ProfilerGUI.Source.Configurator
             LogText = string.Empty;
         }
 
-        private void ReportSuccessOrFailure(ProcessOutput output)
+        private void ReportSuccessOrFailure(ProcessResult output)
         {
             if (output.ReturnCode != 0)
             {
-                LogLine("ERROR:\n" + string.Join("\t\n", output.Output));
-                // TODO (FS) useless return. delete?
-                return;
+                LogLine("ERROR:\n" + string.Join("\t\n", output.StdOut));
             }
             else
             {
