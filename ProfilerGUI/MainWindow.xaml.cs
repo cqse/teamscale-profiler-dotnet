@@ -12,6 +12,10 @@ namespace ProfilerGUI
     {
         private readonly MainViewModel ViewModel;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="launchTargetAppDirectly">If this is true, the target application will be started right away</param>
         public MainWindow(bool launchTargetAppDirectly)
         {
             InitializeComponent();
@@ -47,7 +51,7 @@ namespace ProfilerGUI
             {
                 // This lets the user select lnk-files (shortcuts), which can be helpful in our context
                 DereferenceLinks = false,
-                Filter = "Applications or shortcuts|*.lnk;*.exe;*.dll)|All files|*.*"
+                Filter = "Applications or shortcuts|*.lnk;*.exe;*.dll|All files|*.*"
             })
             {
                 DialogResult result = dialog.ShowDialog();
