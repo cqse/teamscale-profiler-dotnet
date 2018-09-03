@@ -1,7 +1,7 @@
 #include "Uploader.h"
 #include <windows.h>
 #include <shellapi.h>
-#include "WindowsUtils.cpp"
+#include "WindowsUtils.h"
 
 Uploader::Uploader(std::string profilerPath, std::string traceDirectory, Log* log)
 {

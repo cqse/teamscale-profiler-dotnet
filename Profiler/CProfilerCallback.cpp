@@ -1,7 +1,8 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "Uploader.h"
-#include "FileSystemUtils.cpp"
+#include "FileSystemUtils.h"
+#include "WindowsUtils.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -30,7 +31,7 @@ inline bool endsWith(std::string const & value, std::string const & suffix)
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	std::string process = getProcessInfo();
-	std::string processToProfile = getConfigValueFromEnvironment("PROCESS");
+	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
@@ -88,26 +89,17 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 void CProfilerCallback::startUploadService() {
-	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(getConfigValueFromEnvironment("PATH"));
+	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 
 	Uploader uploader(profilerPath, traceDirectory, &log);
 	uploader.launch();
 }
 
-std::string CProfilerCallback::getConfigValueFromEnvironment(std::string suffix) {
-	char value[BUFFER_SIZE];
-	std::string name = "COR_PROFILER_" + suffix;
-	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
-		return "";
-	}
-	return value;
-}
-
 void CProfilerCallback::readConfig() {
-	std::string configFile = getConfigValueFromEnvironment("CONFIG");
+	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
-		configFile = getConfigValueFromEnvironment("PATH") + ".config";
+		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".config";
 	}
 	log.info("looking for configuration options in: " + configFile);
 
@@ -128,7 +120,7 @@ void CProfilerCallback::readConfig() {
 }
 
 std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = getConfigValueFromEnvironment(optionName);
+	std::string value = WindowsUtils::getConfigValueFromEnvironment(optionName);
 	if (!value.empty()) {
 		return value;
 	}

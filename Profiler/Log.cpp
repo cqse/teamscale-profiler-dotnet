@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
+#include "WindowsUtils.h"
 
 static const int BUFFER_SIZE = 2048;
 
@@ -101,25 +102,22 @@ void Log::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 }
 
 void Log::createLogFile() {
-	char targetDir[BUFFER_SIZE];
-	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
-		sizeof(targetDir))) {
+	std::string targetDir = WindowsUtils::getConfigValueFromEnvironment("TARGETDIR");
+	if (targetDir.empty()) {
 		// c:\users\public is usually writable for everyone
 		// we must use backslashes here or the WinAPI path manipulation functions will fail
 		// to split the path correctly
-		strcpy_s(targetDir, "c:\\users\\public\\");
+		targetDir = "c:\\users\\public\\";
 	}
 
-	char logFileName[BUFFER_SIZE];
 	char timeStamp[BUFFER_SIZE];
 	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
 
 	// we must use backslash here or the WinAPI path manipulation functions will fail
 	// to split the path correctly
-	sprintf_s(logFileName, "%s\\coverage_%s.txt", targetDir, timeStamp);
-	_tcscpy_s(logFilePath, logFileName);
+	logFilePath = targetDir + "\\coverage_" + timeStamp + ".txt";
 
-	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
+	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);

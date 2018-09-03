@@ -24,9 +24,6 @@ public:
 	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
-	/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
-	std::string getConfigValueFromEnvironment(std::string suffix);
-
 	/** Reads all options from the config file into memory. */
 	void readConfig();
 

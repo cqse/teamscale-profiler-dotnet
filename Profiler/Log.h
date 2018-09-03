@@ -58,7 +58,7 @@ private:
 	HANDLE logFile = INVALID_HANDLE_VALUE;
 
 	/** Path of the result file. */
-	TCHAR logFilePath[_MAX_PATH];
+	std::string logFilePath;
 
 	/** Writes the given string to the log file. */
 	int writeToFile(const char* string);
