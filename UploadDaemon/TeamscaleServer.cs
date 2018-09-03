@@ -38,7 +38,7 @@ public class TeamscaleServer
     /// <summary>
     /// Template for the commit message for the upload commit.
     /// </summary>
-    public string Message = "Test coverage for version %v from %p created at %t";
+    public string Message { get; set; } = "Test coverage for version %v from %p created at %t";
 
     public override string ToString()
     {
