@@ -47,12 +47,14 @@ after_test:
   - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   # Create release zip with profiler & documentation
   - cmd: mkdir teamscale_dotnet_profiler\Uploader
+  - cmd: mkdir teamscale_dotnet_profiler\GUI
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll & exit 0
-  - cmd: robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader Uploader.* *.dll *.xml *.json *.config /xf *.pdb & exit 0
+  - cmd: robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader *.* /xf *.pdb & exit 0
+  - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 
