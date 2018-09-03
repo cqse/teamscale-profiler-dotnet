@@ -3,7 +3,7 @@
        This is used to determine the PDB files to use to map the
        profiler output back to the source code. */
     "versionAssembly": "YourAssembly",
-    /* Connection details for the upload to Teamscale. Delete this if you don't 
+    /* Connection details for the upload to Teamscale. Delete this if you don't
        want to upload to Teamscale. */
     "teamscale": {
         "url": "http://localhost:8080",
@@ -18,14 +18,14 @@
            within Teamscale. Different partitions can be toggled on
            and off individually in the UI. */
         "partition": "Manual Tests",
+        /* Template for the upload commit message.
+           %v will be replaced with the version number read from the version assembly.
+           %p will be replaced with the partition you configured above.
+           %t will be replaced with the date and time of the upload. */
+        "message": "Test coverage for version %v from %p created at %t",
     },
     /* Directory to upload finished trace files to. May be a UNC path. Please escape backslashes properly!
        Delete this if you don't want to upload to a directory. This property will be ignored if a
        Teamscale server is configured above. */
     "directory": "C:\\some\\directory",
-    /* Template for the upload commit message.
-       %v will be replaced with the version number read from the version assembly.
-       %p will be replaced with the partition you configured above.
-       %t will be replaced with the date and time of the upload. */
-    "message": "Test coverage for version %v from %p created at %t",
 }
