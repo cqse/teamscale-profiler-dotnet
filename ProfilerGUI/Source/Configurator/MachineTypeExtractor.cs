@@ -3,6 +3,9 @@ using System.IO;
 
 namespace ProfilerGUI.Source.Configurator
 {
+    /// <summary>
+    /// Utilities to determine the machine type of a PE executable.
+    /// </summary>
     internal class MachineTypeUtils
     {
         private const int ExpectedPEHead = 0x00004550;
@@ -21,20 +24,22 @@ namespace ProfilerGUI.Source.Configurator
             // followed by a 2-byte machine type field (see the document above for the enum).
             //
             using (FileStream stream = new FileStream(executablePath, FileMode.Open, FileAccess.Read))
-            using (BinaryReader reader = new BinaryReader(stream))
             {
-                stream.Seek(0x3c, SeekOrigin.Begin);
-                Int32 peOffset = reader.ReadInt32();
-                stream.Seek(peOffset, SeekOrigin.Begin);
-                UInt32 peHead = reader.ReadUInt32();
-
-                if (peHead != ExpectedPEHead)
+                using (BinaryReader reader = new BinaryReader(stream))
                 {
-                    // the PE header wasn't found
-                    return MachineType.Unknown;
-                }
+                    stream.Seek(0x3c, SeekOrigin.Begin);
+                    Int32 peOffset = reader.ReadInt32();
+                    stream.Seek(peOffset, SeekOrigin.Begin);
+                    UInt32 peHead = reader.ReadUInt32();
 
-                return (MachineType)reader.ReadUInt16();
+                    if (peHead != ExpectedPEHead)
+                    {
+                        // the PE header wasn't found
+                        return MachineType.Unknown;
+                    }
+
+                    return (MachineType)reader.ReadUInt16();
+                }
             }
         }
 

@@ -56,8 +56,6 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        // TODO (FS) need to have a flag whether to trigger the uploader
-
         /// <summary>
         /// Path to the application that should be started.
         /// </summary>
@@ -118,7 +116,7 @@ namespace ProfilerGUI.Source.Configurator
             MachineTypeUtils.MachineType typeOfExecutable = MachineTypeUtils.GetExecutableType(TargetApplicationPath);
             if (typeOfExecutable == MachineTypeUtils.MachineType.Unknown)
             {
-                LogLine("Warning: Could not determine if target app is 32 or 64 bit, please set manually");
+                LogWarn("Could not determine if target app is 32 or 64 bit, please set manually");
                 return;
             }
 
@@ -141,10 +139,9 @@ namespace ProfilerGUI.Source.Configurator
                 TargetAppWorkingDirectory = shortcutInfo.WorkingDirectory;
                 TargetAppArguments = shortcutInfo.Arguments;
             }
-            catch (Exception)
+            catch
             {
-                // TODO (FS) add proper logging levels
-                LogLine("Could not read .lnk file. Please set values manually");
+                LogError("Could not read .lnk file. Please set values manually");
             }
         }
 
@@ -198,39 +195,14 @@ namespace ProfilerGUI.Source.Configurator
         {
             ClearLog();
 
-            List<Tuple<string, string>> argumentValueTuples = new List<Tuple<string, string>>
-                {
-                    Tuple.Create(ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
-                    Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, TargetTraceDirectory),
-                    // TODO (FS) make configurable?
-                    Tuple.Create(ProfilerConstants.LightModeEnvironmentVariable, "1"),
-                };
-
-            foreach (Tuple<string, string> argumentValueTuple in argumentValueTuples)
-            {
-                // TODO (FS) don't set at machine level
-                LogLine($"Setting {argumentValueTuple.Item1} = {argumentValueTuple.Item2} ... ");
-                bool changesMade = SystemUtils.SetEnvironmentVariable(argumentValueTuple.Item1, argumentValueTuple.Item2);
-                if (changesMade)
-                {
-                    Log("OK");
-                }
-                else
-                {
-                    Log("(already set)");
-                }
-            }
-
-            LogLine("Storing config file as " + ProfilerConfiguration.ConfigFilePath);
-
             try
             {
                 Configuration.WriteToFile();
-                LogLine("-> Success");
+                LogInfo("Wrote config to " + ProfilerConfiguration.ConfigFilePath);
             }
             catch (Exception e)
             {
-                LogLine("ERROR: Could not save file: " + e.Message);
+                LogError($"Could not save configuration to {ProfilerConfiguration.ConfigFilePath}: {e.Message}");
             }
         }
 
@@ -239,38 +211,29 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal async void RunProfiledApplication()
         {
-            LogLine("Profiling " + Configuration.TargetApplicationPath);
+            LogInfo("Profiling " + Configuration.TargetApplicationPath);
             ProfilerRunner runner = new ProfilerRunner(Configuration);
             await runner.Run();
         }
 
-        private void LogLine(string line)
+        private void LogError(string message)
         {
-            // TODO (FS) it's a bit weird that logline prepends the newline chars. I expected it to append them. can you either make this clear
-            // from the method name or change the code so this can append the newline chars (like println vs print in java)
-            Log("\r\n" + line);
+            LogText += $"ERROR: {message}\r\n";
         }
 
-        private void Log(string text)
+        private void LogWarn(string message)
         {
-            LogText += text;
+            LogText += $"WARN:  {message}\r\n";
+        }
+
+        private void LogInfo(string message)
+        {
+            LogText += $"INFO:  {message}\r\n";
         }
 
         private void ClearLog()
         {
             LogText = string.Empty;
-        }
-
-        private void ReportSuccessOrFailure(ProcessResult output)
-        {
-            if (output.ReturnCode != 0)
-            {
-                LogLine("ERROR:\n" + string.Join("\t\n", output.StdOut));
-            }
-            else
-            {
-                LogLine("OK");
-            }
         }
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = "")

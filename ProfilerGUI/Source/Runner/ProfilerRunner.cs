@@ -33,11 +33,15 @@ namespace ProfilerGUI.Source.Runner
         {
             return Task.Factory.StartNew(() =>
             {
-                Tuple<string, string> dllEnvironmentTuple = CreateProfilerDllVariableTuple();
-                Tuple<string, string> enableProfilingTuple = Tuple.Create(ProfilerConstants.EnableProfilingEnvironmentVariable, "1");
-                Tuple<string, string> targetDirTuple = Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder);
+                Tuple<string, string> guidVariable = Tuple.Create(ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid);
+                Tuple<string, string> dllVariable = CreateProfilerDllVariableTuple();
+                Tuple<string, string> enableVariable = Tuple.Create(ProfilerConstants.EnableProfilingEnvironmentVariable, "1");
+                Tuple<string, string> targetDirVariable = Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder);
+                // TODO (FS) make configurable? uploader!
+                Tuple<string, string> lightModeVariable = Tuple.Create(ProfilerConstants.LightModeEnvironmentVariable, "1");
 
-                Process process = SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments, configuration.WorkingDirectory, dllEnvironmentTuple, enableProfilingTuple, targetDirTuple);
+                Process process = SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments,
+                    configuration.WorkingDirectory, guidVariable, dllVariable, enableVariable, targetDirVariable, lightModeVariable);
                 process.Exited += OnTargetProcessEnd;
             });
         }

@@ -26,40 +26,20 @@ namespace ProfilerGUI.Source.Shared
         }
 
         /// <summary>
-        /// Runs the given executable with the given command line arguments and waits for the process to terminate.
-        /// </summary>
-        public static ProcessResult RunProcessAndWait(string processPath, string args = "")
-        {
-            Process process = new Process
-            {
-                StartInfo = CreateStartInfo(processPath, args, false)
-            };
-
-            process.Start();
-
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            return new ProcessResult(process.ExitCode, stdout, stderr);
-        }
-
-        /// <summary>
         /// Asynchronously runs the given executable with the given command line arguments, working dir and environment.
         /// </summary>
         public static Process RunNonBlocking(string processPath, string args, string workingDir, params Tuple<string, string>[] environmentVariables)
         {
             Process process = new Process
             {
-                StartInfo = CreateStartInfo(processPath, args, true, workingDir, environmentVariables)
+                StartInfo = CreateStartInfo(processPath, args, workingDir, environmentVariables)
             };
             process.EnableRaisingEvents = true;
             process.Start();
             return process;
         }
 
-        private static ProcessStartInfo CreateStartInfo(string processPath, string args, bool runAsIndependentApplication, string workingDir = "",
+        private static ProcessStartInfo CreateStartInfo(string processPath, string args, string workingDir = "",
             params Tuple<string, string>[] environmentVariables)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo
@@ -77,19 +57,9 @@ namespace ProfilerGUI.Source.Shared
                 startInfo.EnvironmentVariables.Add(variableName, environmentVariableAndValue.Item2);
             }
 
-            if (runAsIndependentApplication)
-            {
-                startInfo.WindowStyle = ProcessWindowStyle.Normal;
-                startInfo.WorkingDirectory = workingDir;
-                startInfo.CreateNoWindow = false;
-            }
-            else
-            {
-                // TODO (FS) doesn't that mess with our output collection above?
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-                startInfo.CreateNoWindow = true;
-            }
+            startInfo.WindowStyle = ProcessWindowStyle.Normal;
+            startInfo.WorkingDirectory = workingDir;
+            startInfo.CreateNoWindow = false;
 
             return startInfo;
         }
