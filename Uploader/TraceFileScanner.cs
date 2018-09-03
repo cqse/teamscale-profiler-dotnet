@@ -108,7 +108,7 @@ public class TraceFileScanner
         {
             using (fileSystem.File.Open(tracePath, FileMode.Open))
             {
-                // we just open the file to see if it's writable
+                return false;
             }
         }
         catch (Exception e)
@@ -118,7 +118,6 @@ public class TraceFileScanner
             // but we log it
             return true;
         }
-        return false;
     }
 
     private string FindVersion(string[] lines, string tracePath)
