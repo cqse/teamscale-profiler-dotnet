@@ -30,6 +30,12 @@
     <ClCompile Include="Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WindowsUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystemUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -55,12 +61,6 @@
     </ClInclude>
     <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowsUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileSystemUtils.cpp">
-      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="WindowsUtils.h">
       <Filter>Header Files</Filter>
