@@ -1,21 +1,21 @@
-#include "Uploader.h"
+#include "UploadDaemon.h"
 #include <windows.h>
 #include <shellapi.h>
 #include "WindowsUtils.h"
 
-Uploader::Uploader(std::string profilerPath, std::string traceDirectory, Log* log)
+UploadDaemon::UploadDaemon(std::string profilerPath, std::string traceDirectory, Log* log)
 {
-	this->pathToExe = profilerPath + "\\Uploader\\uploader.exe";
+	this->pathToExe = profilerPath + "\\UploadDaemon\\UploadDaemon.exe";
 	this->traceDirectory = traceDirectory;
 	this->log = log;
 }
 
-Uploader::~Uploader()
+UploadDaemon::~UploadDaemon()
 {
 	// nothing to do
 }
 
-void Uploader::launch()
+void UploadDaemon::launch()
 {
 	std::string arguments = "\"" + traceDirectory + "\"";
 
@@ -34,6 +34,6 @@ void Uploader::launch()
 
 	bool successful = ShellExecuteEx(&shExecInfo);
 	if (!successful) {
-		log->error("Failed to launch uploader " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
+		log->error("Failed to launch upload daemon " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
 	}
 }

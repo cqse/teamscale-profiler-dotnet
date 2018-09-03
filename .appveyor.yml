@@ -32,7 +32,7 @@ test_script:
   - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
-  - ps: dotnet test Uploader_Test/Uploader_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
+  - ps: dotnet test UploaderDaemon_Test/UploaderDaemon_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 after_test:
@@ -46,13 +46,13 @@ after_test:
   - cmd: wkhtmltopdf -V
   - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   # Create release zip with profiler & documentation
-  - cmd: mkdir teamscale_dotnet_profiler\Uploader
+  - cmd: mkdir teamscale_dotnet_profiler\UploaderDaemon
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll & exit 0
-  - cmd: robocopy .\Uploader\bin\Release teamscale_dotnet_profiler\Uploader Uploader.* *.dll *.xml *.json *.config /xf *.pdb & exit 0
+  - cmd: robocopy .\UploaderDaemon\bin\Release teamscale_dotnet_profiler\UploaderDaemon *.* /xf *.pdb & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 

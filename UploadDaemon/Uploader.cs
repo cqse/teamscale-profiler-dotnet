@@ -122,14 +122,14 @@ public class Uploader
 
     private static void PrintUsage()
     {
-        Console.Error.WriteLine("Usage: Uploader.exe [DIR]");
+        Console.Error.WriteLine("Usage: UploadDaemon.exe [DIR]");
         Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-        Console.Error.WriteLine($"The uploader reads its configuration from {Config.ConfigFilePath}");
+        Console.Error.WriteLine($"The upload daemon reads its configuration from {Config.ConfigFilePath}");
     }
 
     private void Run()
     {
-        logger.Info("Starting uploader v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+        logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
         logger.Info("Reading traces with version assembly {versionAssembly} from {traceDirectory} and uploading them to {teamscale}",
             config.VersionAssembly, traceDirectory, config.Teamscale);
 

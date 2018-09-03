@@ -79,9 +79,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Uploader\Uploader.csproj">
+    <ProjectReference Include="..\UploadDaemon\UploadDaemon.csproj">
       <Project>{a01a7519-e10d-4153-8cd4-678935721df3}</Project>
-      <Name>Uploader</Name>
+      <Name>UploadDaemon</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // <copyright company="CQSE GmbH">
 //   Copyright (c) CQSE GmbH
 // </copyright>
@@ -18,9 +18,13 @@
 //------------------------------------------------------------------------------
 
 using System.Reflection;
+using System.Runtime.InteropServices;
 
-[assembly: AssemblyProduct("CQSE .NET Profiler Uploader")]
+[assembly: AssemblyProduct("UploadDaemon_Test")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 [assembly: AssemblyCompany("CQSE GmbH")]
 [assembly: AssemblyCopyright("Copyright © CQSE GmbH")]
+[assembly: AssemblyTitle("UploadDaemon_Test")]
+[assembly: ComVisible(false)]
+[assembly: Guid("1405b69b-d9a6-47f6-9c05-8b839db3a0e4")]
