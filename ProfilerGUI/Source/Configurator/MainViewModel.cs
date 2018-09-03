@@ -1,5 +1,4 @@
-﻿
-using ProfilerGUI.Source.Runner;
+﻿using ProfilerGUI.Source.Runner;
 using ProfilerGUI.Source.Shared;
 using System;
 using System.Collections.Generic;
@@ -18,11 +17,19 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary> <inheritDoc /> </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        // TODO (FS) please add  missing comments to public stuff
+        /// <summary>
+        /// The configuration.
+        /// </summary>
         public readonly ProfilerConfiguration Configuration = new ProfilerConfiguration();
 
+        /// <summary>
+        /// Whether to show the additional application fields.
+        /// </summary>
         public bool ShowAdditionalApplicationFields { get => !string.IsNullOrEmpty(TargetApplicationPath); }
 
+        /// <summary>
+        /// The directory into which to write the trace files.
+        /// </summary>
         public string TargetTraceDirectory
         {
             get => Configuration.TraceTargetFolder;
@@ -33,6 +40,9 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// Index of the selected bitness (32bit vs 64bit).
+        /// </summary>
         public int SelectedBitnessIndex
         {
             get
@@ -46,33 +56,11 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        public string TargetFolderToCopyTo
-        {
-            get => Configuration.TraceFolderToCopyTo;
-            set
-            {
-                Configuration.TraceFolderToCopyTo = value;
-                OnPropertyChanged();
-            }
-        }
+        // TODO (FS) need to have a flag whether to trigger the uploader
 
-        public string ProcessNamesToWaitFor
-        {
-            get => string.Join(",", Configuration.ExecutablesToWaitFor);
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    Configuration.ExecutablesToWaitFor.Clear();
-                }
-                else
-                {
-                    Configuration.ExecutablesToWaitFor = value.Split(',').Select(name => name.Trim()).ToList();
-                }
-                OnPropertyChanged();
-            }
-        }
-
+        /// <summary>
+        /// Path to the application that should be started.
+        /// </summary>
         public string TargetApplicationPath
         {
             get => Configuration.TargetApplicationPath;
@@ -81,7 +69,7 @@ namespace ProfilerGUI.Source.Configurator
                 Configuration.TargetApplicationPath = value;
                 if (Configuration.TargetApplicationPath?.EndsWith(WindowsShortcutReader.ShortcutExtension) == true)
                 {
-                    FillValuesFromInkFile(Configuration.TargetApplicationPath);
+                    FillValuesFromLnkFile(Configuration.TargetApplicationPath);
                 }
                 else
                 {
@@ -92,6 +80,11 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="launchTargetAppDirectly">If this is set, then the target application is started right away.
+        /// A default config must exist for this to do anything.</param>
         public MainViewModel(bool launchTargetAppDirectly)
         {
             if (File.Exists(ProfilerConstants.DefaultConfigFile))
@@ -105,6 +98,9 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// Resets the fields that describe the application that should be profiled.
+        /// </summary>
         internal void ClearTargetAppFields()
         {
             TargetApplicationPath = null;
@@ -112,22 +108,21 @@ namespace ProfilerGUI.Source.Configurator
             TargetAppArguments = null;
         }
 
-
         private void UpdateExecutableMachineType()
         {
             if (string.IsNullOrEmpty(TargetApplicationPath))
             {
                 return;
             }
-            MachineTypeExtractor.MachineType typeOfExecutable = MachineTypeExtractor.GetExecutableType(TargetApplicationPath);
-            if (typeOfExecutable == MachineTypeExtractor.MachineType.Unknown)
+
+            MachineTypeUtils.MachineType typeOfExecutable = MachineTypeUtils.GetExecutableType(TargetApplicationPath);
+            if (typeOfExecutable == MachineTypeUtils.MachineType.Unknown)
             {
-                LogLine("Warning: Could not determine if target app is 32 or 64 bit, please set manually.");
+                LogLine("Warning: Could not determine if target app is 32 or 64 bit, please set manually");
                 return;
             }
 
-            bool is32BitApp = typeOfExecutable == MachineTypeExtractor.MachineType.I386;
-            if (is32BitApp)
+            if (typeOfExecutable == MachineTypeUtils.MachineType.I386)
             {
                 SelectedBitnessIndex = (int)EApplicationType.Type32Bit;
             }
@@ -137,8 +132,7 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        // TODO (FS) isn't it Lnk not Ink (like "l(i)nk")? If so, please fix this here and at other locations
-        private void FillValuesFromInkFile(string targetApplicationPath)
+        private void FillValuesFromLnkFile(string targetApplicationPath)
         {
             try
             {
@@ -149,12 +143,16 @@ namespace ProfilerGUI.Source.Configurator
             }
             catch (Exception)
             {
-                LogLine("Could not read ink-file, please set values manually.");
+                // TODO (FS) add proper logging levels
+                LogLine("Could not read .lnk file. Please set values manually");
             }
         }
 
-        private string InternalLogText = "No log yet...";
+        private string InternalLogText = "";
 
+        /// <summary>
+        /// Stores the log's text.
+        /// </summary>
         public string LogText
         {
             get => InternalLogText;
@@ -165,6 +163,9 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// The command line arguments of the profiled application.
+        /// </summary>
         public string TargetAppArguments
         {
             get => Configuration.TargetApplicationArguments;
@@ -175,6 +176,11 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        // TODO (FS) move properties to the top
+
+        /// <summary>
+        /// The working directory of the profiled application.
+        /// </summary>
         public string TargetAppWorkingDirectory
         {
             get => Configuration.WorkingDirectory;
@@ -185,22 +191,24 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        /// <summary>
+        /// Saves the current configuration to a file.
+        /// </summary>
         internal void SaveConfiguration()
         {
             ClearLog();
-
 
             List<Tuple<string, string>> argumentValueTuples = new List<Tuple<string, string>>
                 {
                     Tuple.Create(ProfilerConstants.ProfilerIdArgName, ProfilerConstants.ProfilerIdArgValue),
                     Tuple.Create(ProfilerConstants.TargetDirectoryForTracesArg, TargetTraceDirectory),
+                    // TODO (FS) make configurable?
                     Tuple.Create(ProfilerConstants.ProfilerLightModeArg, "1"),
                 };
 
-
             foreach (Tuple<string, string> argumentValueTuple in argumentValueTuples)
             {
-                // TODO (FS) extract a method for the loop content?
+                // TODO (FS) don't set at machine level
                 LogLine($"Setting {argumentValueTuple.Item1} = {argumentValueTuple.Item2} ... ");
                 bool changesMade = SystemUtils.SetEnvironmentVariable(argumentValueTuple.Item1, argumentValueTuple.Item2);
                 if (changesMade)
@@ -209,8 +217,7 @@ namespace ProfilerGUI.Source.Configurator
                 }
                 else
                 {
-                    // TODO (FS) why does this have a space at the beginning but the OK does not?
-                    Log(" (already set)");
+                    Log("(already set)");
                 }
             }
 
@@ -220,7 +227,6 @@ namespace ProfilerGUI.Source.Configurator
             {
                 Configuration.WriteToFile(ProfilerConstants.DefaultConfigFile);
                 LogLine("-> Success");
-                LogLine("--- Ready to run profiled app --- ");
             }
             catch (Exception e)
             {
@@ -230,6 +236,8 @@ namespace ProfilerGUI.Source.Configurator
 
         internal async void RunProfiledApplication()
         {
+            SaveConfiguration();
+
             LogLine("Profiling " + Configuration.TargetApplicationPath);
             ProfilerConfiguration configuration = ProfilerConfiguration.ReadFromFile(ProfilerConstants.DefaultConfigFile);
             ProfilerRunner runner = new ProfilerRunner(configuration);
