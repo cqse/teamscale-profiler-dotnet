@@ -196,7 +196,7 @@
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="Uploader.cpp" />
+    <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
@@ -210,7 +210,7 @@
     </ClCompile>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Uploader.h" />
+    <ClInclude Include="UploadDaemon.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="WindowsUtils.h" />
   </ItemGroup>

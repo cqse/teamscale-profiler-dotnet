@@ -10,7 +10,7 @@ using System.IO.Abstractions;
 /// </summary>
 public class Config
 {
-    private const string ConfigFileName = "Uploader.json";
+    private const string ConfigFileName = "UploadDaemon.json";
 
     /// <summary>
     /// Path to the config file.

@@ -1,6 +1,6 @@
 #include "CProfilerCallback.h"
 #include "version.h"
-#include "Uploader.h"
+#include "UploadDaemon.h"
 #include "FileSystemUtils.h"
 #include "WindowsUtils.h"
 #include <fstream>
@@ -59,8 +59,8 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		log.info("Mode: lazy");
 	}
 
-	if (getOption("UPLOAD") == "1") {
-		startUploadService();
+	if (getOption("UPLOAD_DAEMON") == "1") {
+		startUploadDeamon();
 	}
 
 	char appPool[BUFFER_SIZE];
@@ -88,12 +88,12 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	return S_OK;
 }
 
-void CProfilerCallback::startUploadService() {
+void CProfilerCallback::startUploadDeamon() {
 	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 
-	Uploader uploader(profilerPath, traceDirectory, &log);
-	uploader.launch();
+	UploadDaemon daemon(profilerPath, traceDirectory, &log);
+	daemon.launch();
 }
 
 void CProfilerCallback::readConfig() {

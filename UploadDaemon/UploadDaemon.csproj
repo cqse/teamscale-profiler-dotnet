@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A01A7519-E10D-4153-8CD4-678935721DF3}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Uploader</RootNamespace>
-    <AssemblyName>Uploader</AssemblyName>
+    <RootNamespace>UploadDaemon</RootNamespace>
+    <AssemblyName>UploadDaemon</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -72,7 +72,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-    <None Include="Uploader.json">
+    <None Include="UploadDaemon.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

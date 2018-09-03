@@ -133,8 +133,8 @@ private:
 	/** Returns information about the profiled process. */
 	std::string getProcessInfo();
 
-	/** Starts the upload process. */
-	void startUploadService();
+	/** Starts the upload daemon. */
+	void startUploadDeamon();
 
 	/**  Store assembly counter for id. */
 	int registerAssembly(AssemblyID assemblyId);

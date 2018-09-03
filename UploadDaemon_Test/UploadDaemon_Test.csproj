@@ -8,8 +8,8 @@
     <ProjectGuid>{1405B69B-D9A6-47F6-9C05-8B839DB3A0E4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Uploader_Test</RootNamespace>
-    <AssemblyName>Uploader_Test</AssemblyName>
+    <RootNamespace>UploadDaemon_Test</RootNamespace>
+    <AssemblyName>UploadDaemon_Test</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -79,9 +79,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Uploader\Uploader.csproj">
+    <ProjectReference Include="..\UploadDaemon\UploadDaemon.csproj">
       <Project>{a01a7519-e10d-4153-8cd4-678935721df3}</Project>
-      <Name>Uploader</Name>
+      <Name>UploadDaemon</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
