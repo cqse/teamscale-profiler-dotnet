@@ -9,6 +9,12 @@ skip_branch_with_pr: true
 
 configuration: Release
 
+assembly_info:
+  patch: true
+  file: AssemblyInfo.cs
+  assembly_version: $(appveyor_build_version)
+  assembly_file_version: $(appveyor_build_version)
+
 environment:
   release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
