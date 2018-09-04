@@ -1,11 +1,10 @@
-#ifndef _CProfilerCallbackBase_H_
-#define _CProfilerCallbackBase_H_
-
+#pragma once
 #include <windows.h>
 #include <stdio.h>
-
 #include <cor.h>
 #include <corprof.h>
+
+#pragma comment(lib, "corguids.lib")
 
 /**
  * Base class of the coverage profiler that adds default implementations for all unneeded callback functions.
@@ -139,4 +138,3 @@ private:
 	long referenceCount; 
 
 };
-#endif

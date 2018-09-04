@@ -9,6 +9,12 @@ skip_branch_with_pr: true
 
 configuration: Release
 
+assembly_info:
+  patch: true
+  file: AssemblyInfo.cs
+  assembly_version: $(appveyor_build_version)
+  assembly_file_version: $(appveyor_build_version)
+
 environment:
   release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
@@ -26,6 +32,8 @@ test_script:
   - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
   - ps: $wc = New-Object System.Net.WebClient
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
+  - ps: dotnet test UploadDaemon_Test/UploadDaemon_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
+  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 after_test:
   # Convert GitHub Wiki to PDF
@@ -38,7 +46,15 @@ after_test:
   - cmd: wkhtmltopdf -V
   - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
   # Create release zip with profiler & documentation
-  - cmd: 7z a %release_zip% .\Profiler\bin\Release\*.dll documentation.pdf
+  - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon
+  - cmd: mkdir teamscale_dotnet_profiler\Documentation
+  # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
+  # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
+  # we achieve this by following up the robocopy commands with "exit 0"
+  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll & exit 0
+  - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf & exit 0
+  - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:
   - path: $(release_zip)
@@ -62,3 +78,4 @@ init:
   - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
 on_finish:
   - ps: if ($env:RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+

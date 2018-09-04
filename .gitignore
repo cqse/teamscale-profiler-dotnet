@@ -4,3 +4,5 @@ obj/
 test-tmp/
 *.aps
 test-data/test-programs/output.pdf
+/packages/
+!packages/repositories.config
