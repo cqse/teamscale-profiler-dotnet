@@ -23,7 +23,7 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Model for the application to profile.
         /// </summary>
-        public readonly TargetAppModel TargetApp;
+        public TargetAppModel TargetApp { get; private set; }
 
         /// <summary>
         /// Whether to show the additional application fields.
@@ -48,7 +48,13 @@ namespace ProfilerGUI.Source.Configurator
                 }
             }
 
+            configuration.TraceTargetFolder = "testing";
+
             TargetApp = new TargetAppModel(configuration);
+            TargetApp.PropertyChanged += (sender, args) =>
+            {
+                OnPropertyChanged(nameof(TargetApp) + "." + args.PropertyName);
+            };
         }
 
         /// <summary>
@@ -80,6 +86,12 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal async void RunProfiledApplication()
         {
+            if (string.IsNullOrEmpty(TargetApp.ApplicationPath))
+            {
+                logger.Error("You did not configure an application to profile");
+                return;
+            }
+
             logger.Info("Profiling {targetAppPath}", TargetApp.Configuration.TargetApplicationPath);
             ProfilerRunner runner = new ProfilerRunner(TargetApp.Configuration);
             await runner.Run();

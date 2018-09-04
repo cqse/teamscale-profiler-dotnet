@@ -6,6 +6,7 @@
 		xmlns:local="clr-namespace:ProfilerGUI"
 		mc:Ignorable="d"
 		Title="CQSE Profiler"
+        Loaded="OnMainWindowLoaded"
 		Height="600" Width="800">
     <Grid>
 
@@ -15,7 +16,7 @@
                 <Label Content="Target application" FontWeight="Bold" />
                 <StackPanel Orientation="Horizontal">
                     <Button Width="160"  Content="Select app"  Click="OnChooseApplicationButtonClick" />
-                    <TextBox Width="500" Margin="5 0 0 0" Text="{Binding TargetApp.ApplicationPath}" />
+                    <TextBox Width="500" Margin="5 0 0 0" Text="{Binding Path=TargetApp.ApplicationPath, Mode=TwoWay}" />
                     <ComboBox SelectedIndex="{Binding SelectedBitnessIndex}" Visibility="{Binding Path=ShowAdditionalApplicationFields, Converter={StaticResource BoolToVisibility}}">
                         <ComboBoxItem>32 bit</ComboBoxItem>
                         <ComboBoxItem>64 bit</ComboBoxItem>
@@ -34,11 +35,11 @@
                 <Label Content="Target folder for trace files" FontWeight="Bold" />
                 <StackPanel Orientation="Horizontal">
                     <Button Width="160"  Content="Select folder"  Click="OnChooseTargetDirButtonClick" />
-                    <TextBox Margin="5 0 0 0" Width="500" Text="{Binding TargetApp.TraceDirectory}" />
+                    <TextBox Margin="5 0 0 0" Width="500" Text="{Binding Path=TargetApp.TraceDirectory, Mode=TwoWay}" />
                 </StackPanel>
                 <StackPanel Margin="10 0 0 0" Orientation="Horizontal" />
 
-                <TextBox MinHeight="200" Margin="10" Height="Auto" Background="White" Text="{Binding LogText}" IsReadOnly="True" TextWrapping="Wrap" />
+                <RichTextBox Name="LogBox" MinHeight="200" Height="Auto" Background="White" IsReadOnly="True" Margin="0,10" />
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Click="OnSaveConfigurationButtonClick" Margin="0 0 10 0"  FontSize="16" Width="150">Save configuration</Button>

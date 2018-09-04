@@ -1,4 +1,7 @@
-﻿using ProfilerGUI.Source.Configurator;
+﻿using NLog;
+using NLog.Config;
+using NLog.Targets.Wrappers;
+using ProfilerGUI.Source.Configurator;
 using System;
 using System.Windows;
 using System.Windows.Forms;
@@ -21,6 +24,33 @@ namespace ProfilerGUI
             InitializeComponent();
             ViewModel = new MainViewModel(launchTargetAppDirectly);
             this.DataContext = ViewModel;
+        }
+
+        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            if (true)
+            {
+                return;
+            }
+            Dispatcher.Invoke(() =>
+            {
+                var target = new Helper.WpfRichTextBoxTarget
+                {
+                    Name = "RichText",
+                    Layout =
+                        "[${longdate:useUTC=false}] :: [${level:uppercase=true}] :: ${logger}:${callsite} :: ${message} ${exception:innerFormat=tostring:maxInnerExceptionLevel=10:separator=,:format=tostring}",
+                    ControlName = LogBox.Name,
+                    FormName = GetType().Name,
+                    AutoScroll = true,
+                    MaxLines = 100000,
+                    UseDefaultRowColoringRules = true,
+                };
+                var asyncWrapper = new AsyncTargetWrapper { Name = "RichTextAsync", WrappedTarget = target };
+
+                LogManager.Configuration.AddTarget(asyncWrapper.Name, asyncWrapper);
+                LogManager.Configuration.LoggingRules.Insert(0, new LoggingRule("*", LogLevel.Info, asyncWrapper));
+                LogManager.ReconfigExistingLoggers();
+            });
         }
 
         private void OnSaveConfigurationButtonClick(object sender, EventArgs args)

@@ -3,16 +3,6 @@
   <assemblyIdentity version="1.0.0.0"
      processorArchitecture="X86"
      name="ProfilerGUI"
-     type="win32"/>
-  <description>Installs and runs the CQSE profiler</description>
-  <!-- Identify the application security requirements. -->
-  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
-    <security>
-      <requestedPrivileges>
-        <requestedExecutionLevel
-          level="requireAdministrator"
-          uiAccess="false"/>
-      </requestedPrivileges>
-    </security>
-  </trustInfo>
+     type="win32" />
+  <description>Runs the CQSE .NET profiler</description>
 </assembly>

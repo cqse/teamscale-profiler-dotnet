@@ -74,9 +74,9 @@ namespace ProfilerGUI.Source.Configurator
                 }
                 else
                 {
-                    OnPropertyChanged(null);
                     UpdateExecutableMachineType();
                 }
+                OnPropertyChanged(null);
             }
         }
 
