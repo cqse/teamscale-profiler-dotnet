@@ -1,4 +1,5 @@
-﻿using ProfilerGUI.Source.Runner;
+﻿using NLog;
+using ProfilerGUI.Source.Runner;
 using ProfilerGUI.Source.Shared;
 using System;
 using System.Collections.Generic;
@@ -14,69 +15,20 @@ namespace ProfilerGUI.Source.Configurator
     /// </summary>
     public class MainViewModel : INotifyPropertyChanged
     {
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         /// <summary> <inheritDoc /> </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
-        /// The configuration.
+        /// Model for the application to profile.
         /// </summary>
-        public readonly ProfilerConfiguration Configuration = new ProfilerConfiguration();
+        public readonly TargetAppModel TargetApp;
 
         /// <summary>
         /// Whether to show the additional application fields.
         /// </summary>
-        public bool ShowAdditionalApplicationFields { get => !string.IsNullOrEmpty(TargetApplicationPath); }
-
-        /// <summary>
-        /// The directory into which to write the trace files.
-        /// </summary>
-        public string TargetTraceDirectory
-        {
-            get => Configuration.TraceTargetFolder;
-            set
-            {
-                Configuration.TraceTargetFolder = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Index of the selected bitness (32bit vs 64bit).
-        /// </summary>
-        public int SelectedBitnessIndex
-        {
-            get
-            {
-                return (int)Configuration.ApplicationType;
-            }
-            set
-            {
-                Configuration.ApplicationType = (EApplicationType)value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// Path to the application that should be started.
-        /// </summary>
-        public string TargetApplicationPath
-        {
-            get => Configuration.TargetApplicationPath;
-            set
-            {
-                Configuration.TargetApplicationPath = value;
-                if (Configuration.TargetApplicationPath?.EndsWith(WindowsShortcutReader.ShortcutExtension) == true)
-                {
-                    FillValuesFromLnkFile(Configuration.TargetApplicationPath);
-                }
-                else
-                {
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(ShowAdditionalApplicationFields));
-                    UpdateExecutableMachineType();
-                }
-            }
-        }
+        public bool ShowAdditionalApplicationFields { get => !string.IsNullOrEmpty(TargetApp.ApplicationPath); }
 
         /// <summary>
         /// Constructor.
@@ -85,15 +37,18 @@ namespace ProfilerGUI.Source.Configurator
         /// A default config must exist for this to do anything.</param>
         public MainViewModel(bool launchTargetAppDirectly)
         {
+            ProfilerConfiguration configuration = new ProfilerConfiguration();
             if (File.Exists(ProfilerConfiguration.ConfigFilePath))
             {
-                Configuration = ProfilerConfiguration.ReadFromFile();
+                configuration = ProfilerConfiguration.ReadFromFile();
 
                 if (launchTargetAppDirectly)
                 {
                     RunProfiledApplication();
                 }
             }
+
+            TargetApp = new TargetAppModel(configuration);
         }
 
         /// <summary>
@@ -101,91 +56,7 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal void ClearTargetAppFields()
         {
-            TargetApplicationPath = null;
-            TargetAppWorkingDirectory = null;
-            TargetAppArguments = null;
-        }
-
-        private void UpdateExecutableMachineType()
-        {
-            if (string.IsNullOrEmpty(TargetApplicationPath))
-            {
-                return;
-            }
-
-            MachineTypeUtils.MachineType typeOfExecutable = MachineTypeUtils.GetExecutableType(TargetApplicationPath);
-            if (typeOfExecutable == MachineTypeUtils.MachineType.Unknown)
-            {
-                LogWarn("Could not determine if target app is 32 or 64 bit, please set manually");
-                return;
-            }
-
-            if (typeOfExecutable == MachineTypeUtils.MachineType.I386)
-            {
-                SelectedBitnessIndex = (int)EApplicationType.Type32Bit;
-            }
-            else
-            {
-                SelectedBitnessIndex = (int)EApplicationType.Type64Bit;
-            }
-        }
-
-        private void FillValuesFromLnkFile(string targetApplicationPath)
-        {
-            try
-            {
-                WindowsShortcutReader.ShortcutInfo shortcutInfo = WindowsShortcutReader.ReadShortcutInfo(targetApplicationPath);
-                TargetApplicationPath = shortcutInfo.TargetPath;
-                TargetAppWorkingDirectory = shortcutInfo.WorkingDirectory;
-                TargetAppArguments = shortcutInfo.Arguments;
-            }
-            catch
-            {
-                LogError("Could not read .lnk file. Please set values manually");
-            }
-        }
-
-        private string InternalLogText = "";
-
-        /// <summary>
-        /// Stores the log's text.
-        /// </summary>
-        public string LogText
-        {
-            get => InternalLogText;
-            set
-            {
-                InternalLogText = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
-        /// The command line arguments of the profiled application.
-        /// </summary>
-        public string TargetAppArguments
-        {
-            get => Configuration.TargetApplicationArguments;
-            internal set
-            {
-                Configuration.TargetApplicationArguments = value;
-                OnPropertyChanged();
-            }
-        }
-
-        // TODO (FS) move properties to the top
-
-        /// <summary>
-        /// The working directory of the profiled application.
-        /// </summary>
-        public string TargetAppWorkingDirectory
-        {
-            get => Configuration.WorkingDirectory;
-            set
-            {
-                Configuration.WorkingDirectory = value;
-                OnPropertyChanged();
-            }
+            TargetApp.Clear();
         }
 
         /// <summary>
@@ -193,16 +64,14 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal void SaveConfiguration()
         {
-            ClearLog();
-
             try
             {
-                Configuration.WriteToFile();
-                LogInfo("Wrote config to " + ProfilerConfiguration.ConfigFilePath);
+                TargetApp.Configuration.WriteToFile();
+                logger.Info("Wrote config to {configPath}", ProfilerConfiguration.ConfigFilePath);
             }
             catch (Exception e)
             {
-                LogError($"Could not save configuration to {ProfilerConfiguration.ConfigFilePath}: {e.Message}");
+                logger.Error(e, "Could not save configuration to {configPath}", ProfilerConfiguration.ConfigFilePath);
             }
         }
 
@@ -211,29 +80,9 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal async void RunProfiledApplication()
         {
-            LogInfo("Profiling " + Configuration.TargetApplicationPath);
-            ProfilerRunner runner = new ProfilerRunner(Configuration);
+            logger.Info("Profiling {targetAppPath}", TargetApp.Configuration.TargetApplicationPath);
+            ProfilerRunner runner = new ProfilerRunner(TargetApp.Configuration);
             await runner.Run();
-        }
-
-        private void LogError(string message)
-        {
-            LogText += $"ERROR: {message}\r\n";
-        }
-
-        private void LogWarn(string message)
-        {
-            LogText += $"WARN:  {message}\r\n";
-        }
-
-        private void LogInfo(string message)
-        {
-            LogText += $"INFO:  {message}\r\n";
-        }
-
-        private void ClearLog()
-        {
-            LogText = string.Empty;
         }
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = "")

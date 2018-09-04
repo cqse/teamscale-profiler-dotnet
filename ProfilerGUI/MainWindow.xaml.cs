@@ -30,7 +30,7 @@ namespace ProfilerGUI
 
         private void OnChooseTargetDirButtonClick(object sender, EventArgs args)
         {
-            OpenFolderChooser(selectedPath => ViewModel.TargetTraceDirectory = selectedPath);
+            OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
         }
 
         private void OpenFolderChooser(Action<string> pathSelectedAction)
@@ -58,7 +58,7 @@ namespace ProfilerGUI
                 if (result == System.Windows.Forms.DialogResult.OK)
                 {
                     ViewModel.ClearTargetAppFields();
-                    ViewModel.TargetApplicationPath = dialog.FileName;
+                    ViewModel.TargetApp.ApplicationPath = dialog.FileName;
                 }
             }
         }
@@ -70,12 +70,12 @@ namespace ProfilerGUI
 
         private void OnTargetAppArgumentsChange(object sender, EventArgs args)
         {
-            ViewModel.TargetAppArguments = (sender as System.Windows.Controls.TextBox).Text;
+            ViewModel.TargetApp.Arguments = (sender as System.Windows.Controls.TextBox).Text;
         }
 
         private void OnTargetAppStartInChange(object sender, EventArgs args)
         {
-            ViewModel.TargetAppWorkingDirectory = (sender as System.Windows.Controls.TextBox).Text;
+            ViewModel.TargetApp.WorkingDirectory = (sender as System.Windows.Controls.TextBox).Text;
         }
     }
 }
