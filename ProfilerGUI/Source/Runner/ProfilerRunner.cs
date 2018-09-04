@@ -31,10 +31,17 @@ namespace ProfilerGUI.Source.Runner
         /// </summary>
         public void RunAsynchronously()
         {
+            string profilerDllPath = LocateProfilerDll();
+            if (!File.Exists(profilerDllPath))
+            {
+                logger.Error("The profiler DLL was not found at {profilerPath}. Cannot profile the application", profilerDllPath);
+                return;
+            }
+
             List<(string, string)> environmentVariables = new List<(string, string)>()
                 {
                     (ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
-                    (ProfilerConstants.ProfilerPathEnvironmentVariable, LocateProfilerDll()),
+                    (ProfilerConstants.ProfilerPathEnvironmentVariable, profilerDllPath),
                     (ProfilerConstants.EnableProfilingEnvironmentVariable, "1"),
                     (ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder),
                     (ProfilerConstants.LightModeEnvironmentVariable, "1"),
