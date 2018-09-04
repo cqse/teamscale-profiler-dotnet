@@ -37,7 +37,6 @@ namespace ProfilerGUI.Source.Runner
                 Tuple<string, string> dllVariable = CreateProfilerDllVariableTuple();
                 Tuple<string, string> enableVariable = Tuple.Create(ProfilerConstants.EnableProfilingEnvironmentVariable, "1");
                 Tuple<string, string> targetDirVariable = Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder);
-                // TODO (FS) make configurable? uploader!
                 Tuple<string, string> lightModeVariable = Tuple.Create(ProfilerConstants.LightModeEnvironmentVariable, "1");
 
                 Process process = SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments,

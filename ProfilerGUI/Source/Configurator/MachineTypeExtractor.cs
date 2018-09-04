@@ -18,28 +18,37 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public static MachineType GetExecutableType(string executablePath)
         {
-            // See http://www.microsoft.com/whdc/system/platform/firmware/PECOFF.mspx
-            // Offset to PE header is always at 0x3C.
-            // The PE header starts with "PE\0\0" =  0x50 0x45 0x00 0x00,
-            // followed by a 2-byte machine type field (see the document above for the enum).
-            //
-            using (FileStream stream = new FileStream(executablePath, FileMode.Open, FileAccess.Read))
+            try
             {
-                using (BinaryReader reader = new BinaryReader(stream))
+                // See http://www.microsoft.com/whdc/system/platform/firmware/PECOFF.mspx
+                // Offset to PE header is always at 0x3C.
+                // The PE header starts with "PE\0\0" =  0x50 0x45 0x00 0x00,
+                // followed by a 2-byte machine type field (see the document above for the enum).
+                //
+                using (FileStream stream = new FileStream(executablePath, FileMode.Open, FileAccess.Read))
                 {
-                    stream.Seek(0x3c, SeekOrigin.Begin);
-                    Int32 peOffset = reader.ReadInt32();
-                    stream.Seek(peOffset, SeekOrigin.Begin);
-                    UInt32 peHead = reader.ReadUInt32();
-
-                    if (peHead != ExpectedPEHead)
+                    using (BinaryReader reader = new BinaryReader(stream))
                     {
-                        // the PE header wasn't found
-                        return MachineType.Unknown;
-                    }
+                        stream.Seek(0x3c, SeekOrigin.Begin);
+                        Int32 peOffset = reader.ReadInt32();
+                        stream.Seek(peOffset, SeekOrigin.Begin);
+                        UInt32 peHead = reader.ReadUInt32();
 
-                    return (MachineType)reader.ReadUInt16();
+                        if (peHead != ExpectedPEHead)
+                        {
+                            // the PE header wasn't found
+                            return MachineType.Unknown;
+                        }
+
+                        return (MachineType)reader.ReadUInt16();
+                    }
                 }
+            }
+            catch
+            {
+                // IO errors must be handled gracefully as the user might input an invalid path
+                // and we don't want to crash that case
+                return MachineType.Unknown;
             }
         }
 

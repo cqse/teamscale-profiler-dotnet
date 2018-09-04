@@ -26,9 +26,20 @@ namespace ProfilerGUI.Source.Configurator
         public TargetAppModel TargetApp { get; private set; }
 
         /// <summary>
-        /// Whether to show the additional application fields.
+        /// Index of the selected bitness (32bit vs 64bit).
         /// </summary>
-        public bool ShowAdditionalApplicationFields { get => !string.IsNullOrEmpty(TargetApp.ApplicationPath); }
+        public int SelectedBitnessIndex
+        {
+            get
+            {
+                return (int)TargetApp.ApplicationType;
+            }
+            set
+            {
+                TargetApp.ApplicationType = (EApplicationType)value;
+                OnPropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Constructor.
@@ -48,12 +59,15 @@ namespace ProfilerGUI.Source.Configurator
                 }
             }
 
-            configuration.TraceTargetFolder = "testing";
-
             TargetApp = new TargetAppModel(configuration);
             TargetApp.PropertyChanged += (sender, args) =>
             {
                 OnPropertyChanged(nameof(TargetApp) + "." + args.PropertyName);
+
+                if (args.PropertyName == nameof(TargetApp.ApplicationType))
+                {
+                    OnPropertyChanged(nameof(SelectedBitnessIndex));
+                }
             };
         }
 

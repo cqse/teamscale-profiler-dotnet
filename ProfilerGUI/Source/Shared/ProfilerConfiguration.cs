@@ -23,27 +23,30 @@ namespace ProfilerGUI.Source.Shared
         /// <summary>
         /// Folder to which the profiler should write trace files.
         /// </summary>
-        public string TraceTargetFolder { get; set; }
+        [JsonProperty(Required = Required.Always)]
+        public string TraceTargetFolder { get; set; } = string.Empty;
 
         /// <summary>
         /// The profiled application's executable.
         /// </summary>
-        public string TargetApplicationPath { get; set; }
+        [JsonProperty(Required = Required.Always)]
+        public string TargetApplicationPath { get; set; } = string.Empty;
 
         /// <summary>
         /// The command line arguments to the profiled application.
         /// </summary>
-        public string TargetApplicationArguments { get; set; }
+        public string TargetApplicationArguments { get; set; } = string.Empty;
 
         /// <summary>
         /// The working directory of the target application.
         /// </summary>
-        public string WorkingDirectory { get; set; }
+        public string WorkingDirectory { get; set; } = string.Empty;
 
         /// <summary>
         /// The bitness (32bit vs 64bit) of the target application.
         /// </summary>
-        public EApplicationType ApplicationType { get; set; }
+        [JsonProperty(Required = Required.Always)]
+        public EApplicationType ApplicationType { get; set; } = EApplicationType.Type64Bit;
 
         /// <summary>
         /// Tries to read the config from the ConfigFilePath.

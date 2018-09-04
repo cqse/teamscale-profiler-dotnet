@@ -44,17 +44,14 @@ namespace ProfilerGUI.Source.Configurator
         }
 
         /// <summary>
-        /// Index of the selected bitness (32bit vs 64bit).
+        /// The selected bitness (32bit vs 64bit).
         /// </summary>
-        public int SelectedBitnessIndex
+        public EApplicationType ApplicationType
         {
-            get
-            {
-                return (int)Configuration.ApplicationType;
-            }
+            get => Configuration.ApplicationType;
             set
             {
-                Configuration.ApplicationType = (EApplicationType)value;
+                Configuration.ApplicationType = value;
                 OnPropertyChanged();
             }
         }
@@ -76,7 +73,7 @@ namespace ProfilerGUI.Source.Configurator
                 {
                     UpdateExecutableMachineType();
                 }
-                OnPropertyChanged(null);
+                OnPropertyChanged();
             }
         }
 
@@ -132,11 +129,11 @@ namespace ProfilerGUI.Source.Configurator
 
             if (typeOfExecutable == MachineTypeUtils.MachineType.I386)
             {
-                SelectedBitnessIndex = (int)EApplicationType.Type32Bit;
+                ApplicationType = EApplicationType.Type32Bit;
             }
             else
             {
-                SelectedBitnessIndex = (int)EApplicationType.Type64Bit;
+                ApplicationType = EApplicationType.Type64Bit;
             }
         }
 

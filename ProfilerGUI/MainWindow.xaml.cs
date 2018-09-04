@@ -97,15 +97,5 @@ namespace ProfilerGUI
         {
             ViewModel.RunProfiledApplication();
         }
-
-        private void OnTargetAppArgumentsChange(object sender, EventArgs args)
-        {
-            ViewModel.TargetApp.Arguments = (sender as System.Windows.Controls.TextBox).Text;
-        }
-
-        private void OnTargetAppStartInChange(object sender, EventArgs args)
-        {
-            ViewModel.TargetApp.WorkingDirectory = (sender as System.Windows.Controls.TextBox).Text;
-        }
     }
 }

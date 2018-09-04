@@ -17,20 +17,20 @@
                 <StackPanel Orientation="Horizontal">
                     <Button Width="160"  Content="Select app"  Click="OnChooseApplicationButtonClick" />
                     <TextBox Width="500" Margin="5 0 0 0" Text="{Binding Path=TargetApp.ApplicationPath, Mode=TwoWay}" />
-                    <ComboBox SelectedIndex="{Binding SelectedBitnessIndex}" Visibility="{Binding Path=ShowAdditionalApplicationFields, Converter={StaticResource BoolToVisibility}}">
+                    <ComboBox SelectedIndex="{Binding Path=SelectedBitnessIndex, Mode=TwoWay}">
                         <ComboBoxItem>32 bit</ComboBoxItem>
                         <ComboBoxItem>64 bit</ComboBoxItem>
                     </ComboBox>
                 </StackPanel>
-                <StackPanel Visibility="{Binding Path=ShowAdditionalApplicationFields, Converter={StaticResource BoolToVisibility}}" Orientation="Horizontal" Margin="0 5 0 0">
+                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                     <Label Width="160" Content="Arguments (optional)" />
-                    <TextBox Margin="5 0 0 0" Text="{Binding TargetApp.Arguments}" TextChanged="OnTargetAppArgumentsChange" Width="300" />
+                    <TextBox Margin="5 0 0 0" Text="{Binding Path=TargetApp.Arguments, Mode=TwoWay}" Width="300" />
                 </StackPanel>
-                <StackPanel Visibility="{Binding Path=ShowAdditionalApplicationFields, Converter={StaticResource BoolToVisibility}}" Orientation="Horizontal" Margin="0 5 0 0">
+                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                     <Label Width="160" Content="Working directory (optional)" />
-                    <TextBox Margin="5 0 0 0" Text="{Binding TargetApp.WorkingDirectory}" TextChanged="OnTargetAppStartInChange" Width="300" />
+                    <TextBox Margin="5 0 0 0" Text="{Binding Path=TargetApp.WorkingDirectory, Mode=TwoWay}" Width="300" />
                 </StackPanel>
-                <StackPanel Visibility="{Binding Path=ShowAdditionalApplicationFields, Converter={StaticResource BoolToVisibility}}" Orientation="Horizontal" Margin="0 5 0 0" />
+                <StackPanel Orientation="Horizontal" Margin="0 5 0 0" />
 
                 <Label Content="Target folder for trace files" FontWeight="Bold" />
                 <StackPanel Orientation="Horizontal">
