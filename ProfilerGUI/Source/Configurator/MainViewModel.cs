@@ -51,6 +51,7 @@ namespace ProfilerGUI.Source.Configurator
             ProfilerConfiguration configuration = new ProfilerConfiguration();
             if (File.Exists(ProfilerConfiguration.ConfigFilePath))
             {
+                logger.Info("Loaded config from {configPath}", ProfilerConfiguration.ConfigFilePath);
                 configuration = ProfilerConfiguration.ReadFromFile();
 
                 if (launchTargetAppDirectly)

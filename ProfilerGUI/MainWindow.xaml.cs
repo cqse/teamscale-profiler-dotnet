@@ -28,29 +28,29 @@ namespace ProfilerGUI
 
         private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
-            if (true)
-            {
-                return;
-            }
             Dispatcher.Invoke(() =>
             {
-                var target = new Helper.WpfRichTextBoxTarget
-                {
-                    Name = "RichText",
-                    Layout =
-                        "[${longdate:useUTC=false}] :: [${level:uppercase=true}] :: ${logger}:${callsite} :: ${message} ${exception:innerFormat=tostring:maxInnerExceptionLevel=10:separator=,:format=tostring}",
-                    ControlName = LogBox.Name,
-                    FormName = GetType().Name,
-                    AutoScroll = true,
-                    MaxLines = 100000,
-                    UseDefaultRowColoringRules = true,
-                };
-                var asyncWrapper = new AsyncTargetWrapper { Name = "RichTextAsync", WrappedTarget = target };
-
-                LogManager.Configuration.AddTarget(asyncWrapper.Name, asyncWrapper);
-                LogManager.Configuration.LoggingRules.Insert(0, new LoggingRule("*", LogLevel.Info, asyncWrapper));
-                LogManager.ReconfigExistingLoggers();
+                ConfigureLogBox();
             });
+        }
+
+        private void ConfigureLogBox()
+        {
+            var target = new Helper.WpfRichTextBoxTarget
+            {
+                Name = "RichText",
+                Layout = "[${level:uppercase=true:padding=5}] ${message} (${logger})${onexception:inner=${newline}${exception:format=ShortType,Message:innerFormat=ShortType,Message:maxInnerExceptionLevel=10}}${newline}",
+                ControlName = LogBox.Name,
+                FormName = GetType().Name,
+                AutoScroll = true,
+                MaxLines = 100000,
+                UseDefaultRowColoringRules = true,
+            };
+            var asyncWrapper = new AsyncTargetWrapper { Name = "RichTextAsync", WrappedTarget = target };
+
+            LogManager.Configuration.AddTarget(asyncWrapper.Name, asyncWrapper);
+            LogManager.Configuration.LoggingRules.Insert(0, new LoggingRule("*", LogLevel.Info, asyncWrapper));
+            LogManager.ReconfigExistingLoggers();
         }
 
         private void OnSaveConfigurationButtonClick(object sender, EventArgs args)

@@ -12,7 +12,7 @@ namespace ProfilerGUI
 
         private void OnApplicationStart(object sender, StartupEventArgs e)
         {
-            bool launchTargetApp = e.Args != null && e.Args.ToList().Contains(LaunchAppDirectlyArg);
+            bool launchTargetApp = e.Args != null && e.Args.Any(argument => argument == LaunchAppDirectlyArg);
             new MainWindow(launchTargetApp).Show();
         }
     }
