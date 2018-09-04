@@ -8,11 +8,15 @@
 		Title="CQSE Profiler"
         Loaded="OnMainWindowLoaded"
 		Height="600" Width="800">
-    <Grid>
+    <Border Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <Border Padding="10">
-            <StackPanel Orientation="Vertical">
-
+            <StackPanel Orientation="Vertical" Grid.Row="0">
                 <Label Content="Target application" FontWeight="Bold" />
                 <StackPanel Orientation="Horizontal">
                     <Button Width="160"  Content="Select app"  Click="OnChooseApplicationButtonClick" />
@@ -37,21 +41,20 @@
                     <Button Width="160"  Content="Select folder"  Click="OnChooseTargetDirButtonClick" />
                     <TextBox Margin="5 0 0 0" Width="500" Text="{Binding Path=TargetApp.TraceDirectory, Mode=TwoWay}" />
                 </StackPanel>
-                <StackPanel Margin="10 0 0 0" Orientation="Horizontal" />
-
-                <RichTextBox Name="LogBox" MinHeight="200" Height="Auto" Background="White" IsReadOnly="True" Margin="0,10">
-                    <RichTextBox.Resources>
-                        <Style TargetType="{x:Type Paragraph}">
-                            <Setter Property="Margin" Value="0" />
-                        </Style>
-                    </RichTextBox.Resources>
-                </RichTextBox>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Click="OnSaveConfigurationButtonClick" Margin="0 0 10 0"  FontSize="16" Width="150">Save configuration</Button>
-                    <Button Click="OnRunProfiledAppButtonClick" Margin="10 0 0 0" FontSize="16" Width="150">Run app (profiled)</Button>
-                </StackPanel>
             </StackPanel>
-        </Border>
-    </Grid>
+
+            <RichTextBox Name="LogBox" MinHeight="200" Height="Auto" Background="White" IsReadOnly="True" Margin="0,10" VerticalScrollBarVisibility="Auto" Grid.Row="1">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
+                <Button Click="OnSaveConfigurationButtonClick" Margin="0 0 10 0"  Width="150" Content="Save configuration" />
+                <Button Click="OnRunProfiledAppButtonClick" Margin="10 0 0 0" Width="150" Content="Run app (profiled)" />
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>

@@ -39,7 +39,7 @@ namespace ProfilerGUI
             var target = new Helper.WpfRichTextBoxTarget
             {
                 Name = "RichText",
-                Layout = "[${level:uppercase=true:padding=5}] ${message} (${logger})${onexception:inner=${newline}${exception:format=ShortType,Message:innerFormat=ShortType,Message:maxInnerExceptionLevel=10}}${newline}",
+                Layout = "[${level:uppercase=true}] ${message} (${logger})${onexception:inner=${newline}${exception:format=ShortType,Message:innerFormat=ShortType,Message:maxInnerExceptionLevel=10}}${newline}",
                 ControlName = LogBox.Name,
                 FormName = GetType().Name,
                 AutoScroll = true,
