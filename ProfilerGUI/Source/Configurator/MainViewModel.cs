@@ -99,7 +99,7 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Starts the profiled application with the profiler attached.
         /// </summary>
-        internal async void RunProfiledApplication()
+        internal void RunProfiledApplication()
         {
             if (string.IsNullOrEmpty(TargetApp.ApplicationPath))
             {
@@ -107,9 +107,8 @@ namespace ProfilerGUI.Source.Configurator
                 return;
             }
 
-            logger.Info("Profiling {targetAppPath}", TargetApp.Configuration.TargetApplicationPath);
             ProfilerRunner runner = new ProfilerRunner(TargetApp.Configuration);
-            await runner.Run();
+            runner.RunAsynchronously();
         }
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = "")

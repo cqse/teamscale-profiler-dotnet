@@ -27,20 +27,19 @@ namespace ProfilerGUI.Source.Shared
 
         /// <summary>
         /// Asynchronously runs the given executable with the given command line arguments, working dir and environment.
+        /// Does not enable process events.
         /// </summary>
-        public static Process RunNonBlocking(string processPath, string args, string workingDir, params Tuple<string, string>[] environmentVariables)
+        public static Process RunNonBlocking(string processPath, string args, string workingDir, List<(string, string)> environmentVariables)
         {
             Process process = new Process
             {
                 StartInfo = CreateStartInfo(processPath, args, workingDir, environmentVariables)
             };
-            process.EnableRaisingEvents = true;
             process.Start();
             return process;
         }
 
-        private static ProcessStartInfo CreateStartInfo(string processPath, string args, string workingDir = "",
-            params Tuple<string, string>[] environmentVariables)
+        private static ProcessStartInfo CreateStartInfo(string processPath, string args, string workingDir, List<(string, string)> environmentVariables)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -50,11 +49,10 @@ namespace ProfilerGUI.Source.Shared
 
             startInfo.UseShellExecute = false;
 
-            foreach (Tuple<string, string> environmentVariableAndValue in environmentVariables)
+            foreach (var (environmentVariable, value) in environmentVariables)
             {
-                string variableName = environmentVariableAndValue.Item1;
-                startInfo.EnvironmentVariables.Remove(variableName);
-                startInfo.EnvironmentVariables.Add(variableName, environmentVariableAndValue.Item2);
+                startInfo.EnvironmentVariables.Remove(environmentVariable);
+                startInfo.EnvironmentVariables.Add(environmentVariable, value);
             }
 
             startInfo.WindowStyle = ProcessWindowStyle.Normal;

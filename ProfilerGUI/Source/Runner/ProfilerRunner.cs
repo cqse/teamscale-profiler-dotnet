@@ -1,4 +1,5 @@
-﻿using ProfilerGUI.Source.Configurator;
+﻿using NLog;
+using ProfilerGUI.Source.Configurator;
 using ProfilerGUI.Source.Shared;
 using System;
 using System.Collections.Generic;
@@ -16,10 +17,9 @@ namespace ProfilerGUI.Source.Runner
     /// </summary>
     public class ProfilerRunner
     {
-        private readonly ProfilerConfiguration configuration;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <summary> Called if the profiling ended, i.e. all processes to profile were stopped. </summary>
-        public event EventHandler<EventArgs> ProfilingEndHandler;
+        private readonly ProfilerConfiguration configuration;
 
         public ProfilerRunner(ProfilerConfiguration configuration)
         {
@@ -29,35 +29,39 @@ namespace ProfilerGUI.Source.Runner
         /// <summary>
         /// Asynchronously runs the target process with the profiler attached.
         /// </summary>
-        public Task Run()
+        public void RunAsynchronously()
         {
-            return Task.Factory.StartNew(() =>
-            {
-                Tuple<string, string> guidVariable = Tuple.Create(ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid);
-                Tuple<string, string> dllVariable = CreateProfilerDllVariableTuple();
-                Tuple<string, string> enableVariable = Tuple.Create(ProfilerConstants.EnableProfilingEnvironmentVariable, "1");
-                Tuple<string, string> targetDirVariable = Tuple.Create(ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder);
-                Tuple<string, string> lightModeVariable = Tuple.Create(ProfilerConstants.LightModeEnvironmentVariable, "1");
+            List<(string, string)> environmentVariables = new List<(string, string)>()
+                {
+                    (ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
+                    (ProfilerConstants.ProfilerPathEnvironmentVariable, LocateProfilerDll()),
+                    (ProfilerConstants.EnableProfilingEnvironmentVariable, "1"),
+                    (ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder),
+                    (ProfilerConstants.LightModeEnvironmentVariable, "1"),
+                };
 
-                Process process = SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments,
-                    configuration.WorkingDirectory, guidVariable, dllVariable, enableVariable, targetDirVariable, lightModeVariable);
-                process.Exited += OnTargetProcessEnd;
-            });
+            logger.Info("Running {bitness} application {appPath} in working dir {workingDir} with arguments [{arguments}] and environment [{env}]",
+                configuration.ApplicationType, configuration.TargetApplicationPath, configuration.WorkingDirectory, configuration.TargetApplicationArguments, environmentVariables);
+
+            try
+            {
+                SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments,
+                    configuration.WorkingDirectory, environmentVariables);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to launch application {appPath}", configuration.TargetApplicationPath);
+            }
         }
 
-        private Tuple<string, string> CreateProfilerDllVariableTuple()
+        private string LocateProfilerDll()
         {
             string profilerDll = ProfilerConstants.ProfilerDll64Bit;
             if (configuration.ApplicationType == EApplicationType.Type32Bit)
             {
                 profilerDll = ProfilerConstants.ProfilerDll32Bit;
             }
-            return Tuple.Create(ProfilerConstants.ProfilerPathEnvironmentVariable, Directory.GetParent(Environment.CurrentDirectory) + @"\" + profilerDll);
-        }
-
-        private void OnTargetProcessEnd(object sender, EventArgs e)
-        {
-            ProfilingEndHandler?.Invoke(this, EventArgs.Empty);
+            return Directory.GetParent(Environment.CurrentDirectory) + @"\" + profilerDll;
         }
     }
 }
