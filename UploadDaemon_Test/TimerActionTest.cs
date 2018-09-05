@@ -6,6 +6,8 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
+using UploadDaemon;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class TimerActionTest

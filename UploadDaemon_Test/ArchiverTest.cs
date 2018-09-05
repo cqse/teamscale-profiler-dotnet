@@ -5,6 +5,7 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Moq;
 using NUnit.Framework;
+using UploadDaemon;
 
 [TestFixture]
 public class ArchiverTest

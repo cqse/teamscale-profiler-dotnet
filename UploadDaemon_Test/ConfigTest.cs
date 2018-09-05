@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using NUnit.Framework;
+using UploadDaemon;
 
 [TestFixture]
 public class ConfigTest
