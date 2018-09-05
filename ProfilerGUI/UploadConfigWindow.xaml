@@ -1,0 +1,91 @@
+﻿<Window x:Class="ProfilerGUI.UploadConfigWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:ProfilerGUI"
+		mc:Ignorable="d"
+		Title="CQSE Profiler"
+        Loaded="OnMainWindowLoaded"
+		Height="600" Width="800">
+    <Border Padding="10">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="26" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="26" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                <Label Content="Should generated coverage files be uploaded?" FontWeight="Bold" />
+                <ComboBox SelectedIndex="{Binding Path=UploadTypeIndex, Mode=TwoWay}" Margin="5 0 0 0">
+                    <ComboBoxItem>No</ComboBoxItem>
+                    <ComboBoxItem>To Teamscale</ComboBoxItem>
+                    <ComboBoxItem>To a Directory</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+
+            <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0" />
+            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label Grid.Row="4" Grid.Column="1">
+                <TextBlock TextWrapping="Wrap">
+                   The assembly from which to read the version number. Must be the assembly name without the file extension, e.g. My.Assembly
+                </TextBlock>
+            </Label>
+
+            <Label  Content="Directory" Grid.Row="6" Grid.Column="0" />
+            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Directory, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Teamscale URL" Grid.Row="6" Grid.Column="0" />
+            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Url, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Project ID" Grid.Row="8" Grid.Column="0" />
+            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Teamscale.Project, Mode=TwoWay}" Grid.Row="8" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Username" Grid.Row="10" Grid.Column="0" />
+            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Username, Mode=TwoWay}" Grid.Row="10" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Access Token" Grid.Row="12" Grid.Column="0" />
+            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.AccessToken, Mode=TwoWay}" Grid.Row="12" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Partition" Grid.Row="14" Grid.Column="0" />
+            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Partition, Mode=TwoWay}" Grid.Row="14" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label  Content="Message" Grid.Row="16" Grid.Column="0" />
+            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Message, Mode=TwoWay}" Grid.Row="16" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Label Grid.Row="18" Grid.Column="1">
+                <TextBlock TextWrapping="Wrap">
+                   Template for the commit message for the upload commit. %v will be replaced with the assembly version, %p with the partition and %t with the time
+                </TextBlock>
+            </Label>
+
+            <Button  Content="Validate" Grid.Row="20" Grid.Column="0" />
+            <Label Margin="5,0,0,0" Content="{Binding Path=ValidationMessage}" Foreground="{Binding Path=ValidationMessageColor}" Grid.Row="20" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+    </Border>
+</Window>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -69,7 +70,7 @@ namespace ProfilerGUI.Source.Configurator
                         Config.Teamscale = null;
                         break;
                 }
-                // force all properties to be reread since this affects almost all of them
+                // force all UI elements to be refreshed since this affects almost all of them
                 PropertyChanged.Raise(this, null);
             }
         }
@@ -84,9 +85,52 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public bool IsDirectoryConfigVisible { get => Config != null && Config.Teamscale == null; }
 
+        private string connectionErrorMessage = null;
+        private bool validationWasRun = false;
+
+        /// <summary>
+        /// The validation message to show next to the validate button.
+        /// </summary>
+        public String ValidationMessage
+        {
+            get
+            {
+                if (!validationWasRun)
+                {
+                    return string.Empty;
+                }
+                if (connectionErrorMessage == null)
+                {
+                    return "Connected successfully";
+                }
+                return $"Failed to connect: {connectionErrorMessage}";
+            }
+        }
+
+        /// <summary>
+        /// The color of the validation message.
+        /// </summary>
+        public Brush ValidationMessageColor
+        {
+            get
+            {
+                if (connectionErrorMessage == null)
+                {
+                    return new SolidColorBrush(Colors.Green);
+                }
+                return new SolidColorBrush(Colors.Red);
+            }
+        }
+
         public UploadViewModel(UploadDaemon.Config config)
         {
             this.Config = config;
+        }
+
+        public void ValidateTeamscale()
+        {
+            // TODO
+            PropertyChanged.Raise(this, nameof(ValidationMessage));
         }
     }
 }

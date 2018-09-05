@@ -78,8 +78,13 @@
     <Compile Include="Helper\WpfRichTextBoxRowColoringRule.cs" />
     <Compile Include="Helper\WpfRichTextBoxTarget.cs" />
     <Compile Include="Helper\WpfRichTextBoxWordColoringRule.cs" />
+    <Compile Include="UploadConfigWindow.xaml.cs">
+      <DependentUpon>UploadConfigWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Source\Configurator\EApplicationType.cs" />
     <Compile Include="Source\Configurator\TargetAppModel.cs" />
+    <Compile Include="Source\Configurator\UploadViewModel.cs" />
+    <Compile Include="Source\Configurator\WpfExtensions.cs" />
     <Compile Include="Source\Runner\ProfilerRunner.cs" />
     <Compile Include="Source\Configurator\MachineTypeExtractor.cs" />
     <Compile Include="Source\Configurator\MainViewModel.cs" />
@@ -88,6 +93,10 @@
     <Compile Include="Source\Shared\ProfilerConfiguration.cs" />
     <Compile Include="Source\Shared\ProfilerConstants.cs" />
     <Compile Include="Source\Shared\SystemUtils.cs" />
+    <Page Include="UploadConfigWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
