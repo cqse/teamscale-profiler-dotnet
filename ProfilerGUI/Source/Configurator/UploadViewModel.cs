@@ -24,6 +24,8 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public UploadDaemon.Config Config { get; private set; }
 
+        private readonly UploadDaemon.Config originalConfig;
+
         /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
         ///
@@ -70,6 +72,9 @@ namespace ProfilerGUI.Source.Configurator
                         Config.Teamscale = null;
                         break;
                 }
+
+                validationWasRun = false;
+
                 // force all UI elements to be refreshed since this affects almost all of them
                 PropertyChanged.Raise(this, null);
             }
@@ -122,15 +127,27 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        public UploadViewModel(UploadDaemon.Config config)
+        public UploadViewModel()
         {
-            this.Config = config;
+            // TODO
+            this.Config = null;
         }
 
-        public void ValidateTeamscale()
+        public async void ValidateTeamscale()
         {
             // TODO
             PropertyChanged.Raise(this, nameof(ValidationMessage));
+            PropertyChanged.Raise(this, nameof(ValidationMessageColor));
+        }
+
+        public void RestoreOriginalConfig()
+        {
+            Config = originalConfig;
+        }
+
+        public void SaveConfig()
+        {
+            // TODO
         }
     }
 }

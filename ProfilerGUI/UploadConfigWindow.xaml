@@ -6,86 +6,110 @@
 		xmlns:local="clr-namespace:ProfilerGUI"
 		mc:Ignorable="d"
 		Title="CQSE Profiler"
-        Loaded="OnMainWindowLoaded"
-		Height="600" Width="800">
+		Height="530" Width="800" ResizeMode="NoResize">
     <Border Padding="10">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="26" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="5" />
-                <RowDefinition Height="26" />
-            </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
-                <Label Content="Should generated coverage files be uploaded?" FontWeight="Bold" />
-                <ComboBox SelectedIndex="{Binding Path=UploadTypeIndex, Mode=TwoWay}" Margin="5 0 0 0">
-                    <ComboBoxItem>No</ComboBoxItem>
-                    <ComboBoxItem>To Teamscale</ComboBoxItem>
-                    <ComboBoxItem>To a Directory</ComboBoxItem>
-                </ComboBox>
-            </StackPanel>
+                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                    <Label Content="Should generated coverage files be uploaded?" FontWeight="Bold" />
+                    <ComboBox SelectedIndex="{Binding Path=UploadTypeIndex, Mode=TwoWay}" Margin="5 0 0 0">
+                        <ComboBoxItem>No</ComboBoxItem>
+                        <ComboBoxItem>To Teamscale</ComboBoxItem>
+                        <ComboBoxItem>To a Directory</ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>
 
-            <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0" />
-            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
 
-            <Label Grid.Row="4" Grid.Column="1">
-                <TextBlock TextWrapping="Wrap">
+                <Label Grid.Row="4" Grid.Column="1">
+                    <TextBlock TextWrapping="Wrap">
                    The assembly from which to read the version number. Must be the assembly name without the file extension, e.g. My.Assembly
-                </TextBlock>
-            </Label>
+                    </TextBlock>
+                </Label>
+            </Grid>
+            <Grid Margin="0 10 0 0" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToCollapsingConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
-            <Label  Content="Directory" Grid.Row="6" Grid.Column="0" />
-            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Directory, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <Label  Content="Teamscale URL" Grid.Row="6" Grid.Column="0" />
-            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Url, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Directory" Grid.Row="1" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Directory, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" />
+            </Grid>
+            <Grid Margin="0 10 0 0"  Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
-            <Label  Content="Project ID" Grid.Row="8" Grid.Column="0" />
-            <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Teamscale.Project, Mode=TwoWay}" Grid.Row="8" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                </Grid.RowDefinitions>
 
-            <Label  Content="Username" Grid.Row="10" Grid.Column="0" />
-            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Username, Mode=TwoWay}" Grid.Row="10" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Teamscale URL" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Url, Mode=TwoWay}" Grid.Column="1" />
 
-            <Label  Content="Access Token" Grid.Row="12" Grid.Column="0" />
-            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.AccessToken, Mode=TwoWay}" Grid.Row="12" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Project ID" Grid.Row="2" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Teamscale.Project, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" />
 
-            <Label  Content="Partition" Grid.Row="14" Grid.Column="0" />
-            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Partition, Mode=TwoWay}" Grid.Row="14" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Username" Grid.Row="4" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Username, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" />
 
-            <Label  Content="Message" Grid.Row="16" Grid.Column="0" />
-            <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Message, Mode=TwoWay}" Grid.Row="16" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Access Token" Grid.Row="6" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.AccessToken, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" />
 
-            <Label Grid.Row="18" Grid.Column="1">
-                <TextBlock TextWrapping="Wrap">
+                <Label  Content="Partition" Grid.Row="8" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Partition, Mode=TwoWay}" Grid.Row="8" Grid.Column="1" />
+
+                <Label  Content="Message" Grid.Row="10" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Message, Mode=TwoWay}" Grid.Row="10" Grid.Column="1" />
+
+                <Label Grid.Row="12" Grid.Column="1">
+                    <TextBlock TextWrapping="Wrap">
                    Template for the commit message for the upload commit. %v will be replaced with the assembly version, %p with the partition and %t with the time
-                </TextBlock>
-            </Label>
+                    </TextBlock>
+                </Label>
 
-            <Button  Content="Validate" Grid.Row="20" Grid.Column="0" />
-            <Label Margin="5,0,0,0" Content="{Binding Path=ValidationMessage}" Foreground="{Binding Path=ValidationMessageColor}" Grid.Row="20" Grid.Column="1" Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}" />
-        </Grid>
+                <Button  Content="Validate" Grid.Row="14" Grid.Column="0" Click="OnValidateClicked" />
+                <Label Margin="5,0,0,0" Content="{Binding Path=ValidationMessage}" Foreground="{Binding Path=ValidationMessageColor}" Grid.Row="14" Grid.Column="1" />
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="26" Margin="0 20 0 0">
+                <Button Click="OnCancel" Margin="0 0 10 0"  Width="150" Content="Cancel" />
+                <Button Click="OnSave" Margin="10 0 0 0" Width="150" Content="Save" />
+            </StackPanel>
+        </StackPanel>
     </Border>
 </Window>

@@ -13,89 +13,32 @@ namespace ProfilerGUI
     /// </summary>
     public partial class UploadConfigWindow : Window
     {
-        private readonly MainViewModel ViewModel;
+        private readonly UploadViewModel ViewModel;
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="launchTargetAppDirectly">If this is true, the target application will be started right away</param>
-        public UploadConfigWindow(bool launchTargetAppDirectly)
+        public UploadDaemon.Config Config { get => ViewModel.Config; }
+
+        public UploadConfigWindow()
         {
             InitializeComponent();
-            ViewModel = new MainViewModel(launchTargetAppDirectly);
+            ViewModel = new UploadViewModel();
             this.DataContext = ViewModel;
         }
 
-        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        private void OnValidateClicked(object sender, RoutedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
-            {
-                ConfigureLogBox();
-            });
+            ViewModel.ValidateTeamscale();
         }
 
-        private void ConfigureLogBox()
+        private void OnSave(object sender, RoutedEventArgs e)
         {
-            var target = new Helper.WpfRichTextBoxTarget
-            {
-                Name = "RichText",
-                Layout = "[${level:uppercase=true}] ${message} (${logger})${onexception:inner=${newline}${exception:format=ShortType,Message:innerFormat=ShortType,Message:maxInnerExceptionLevel=10}}${newline}",
-                ControlName = LogBox.Name,
-                FormName = GetType().Name,
-                AutoScroll = true,
-                MaxLines = 100000,
-                UseDefaultRowColoringRules = true,
-            };
-            var asyncWrapper = new AsyncTargetWrapper { Name = "RichTextAsync", WrappedTarget = target };
-
-            LogManager.Configuration.AddTarget(asyncWrapper.Name, asyncWrapper);
-            LogManager.Configuration.LoggingRules.Insert(0, new LoggingRule("*", LogLevel.Info, asyncWrapper));
-            LogManager.ReconfigExistingLoggers();
+            ViewModel.SaveConfig();
+            Close();
         }
 
-        private void OnSaveConfigurationButtonClick(object sender, EventArgs args)
+        private void OnCancel(object sender, RoutedEventArgs e)
         {
-            ViewModel.SaveConfiguration();
-        }
-
-        private void OnChooseTargetDirButtonClick(object sender, EventArgs args)
-        {
-            OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
-        }
-
-        private void OpenFolderChooser(Action<string> pathSelectedAction)
-        {
-            using (var dialog = new FolderBrowserDialog())
-            {
-                DialogResult result = dialog.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    pathSelectedAction.Invoke(dialog.SelectedPath);
-                }
-            }
-        }
-
-        private void OnChooseApplicationButtonClick(object sender, EventArgs args)
-        {
-            using (var dialog = new OpenFileDialog
-            {
-                // This lets the user select lnk-files (shortcuts), which can be helpful in our context
-                DereferenceLinks = false,
-                Filter = "Applications or shortcuts|*.lnk;*.exe;*.dll|All files|*.*"
-            })
-            {
-                DialogResult result = dialog.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    ViewModel.ClearTargetAppFields();
-                    ViewModel.TargetApp.ApplicationPath = dialog.FileName;
-                }
-            }
-        }
-
-        private void OnRunProfiledAppButtonClick(object sender, EventArgs args)
-        {
-            ViewModel.RunProfiledApplication();
+            ViewModel.RestoreOriginalConfig();
+            Close();
         }
     }
 }
