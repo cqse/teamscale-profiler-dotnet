@@ -26,7 +26,14 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public static void ReRaise(this PropertyChangedEventHandler handler, INotifyPropertyChanged sender, string originalSenderName, PropertyChangedEventArgs originalArgs)
         {
-            handler?.Invoke(sender, new PropertyChangedEventArgs(originalSenderName + "." + originalArgs.PropertyName));
+            if (originalArgs.PropertyName == null)
+            {
+                handler.Raise(sender, null);
+            }
+            else
+            {
+                handler.Raise(sender, originalSenderName + "." + originalArgs.PropertyName);
+            }
         }
     }
 }
