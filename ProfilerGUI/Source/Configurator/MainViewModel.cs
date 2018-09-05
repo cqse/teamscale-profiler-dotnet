@@ -37,7 +37,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 TargetApp.ApplicationType = (EApplicationType)value;
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -63,11 +63,11 @@ namespace ProfilerGUI.Source.Configurator
             TargetApp = new TargetAppModel(configuration);
             TargetApp.PropertyChanged += (sender, args) =>
             {
-                OnPropertyChanged(nameof(TargetApp) + "." + args.PropertyName);
+                PropertyChanged.ReRaise(this, nameof(TargetApp), args);
 
                 if (args.PropertyName == nameof(TargetApp.ApplicationType))
                 {
-                    OnPropertyChanged(nameof(SelectedBitnessIndex));
+                    PropertyChanged.Raise(this, nameof(SelectedBitnessIndex));
                 }
             };
         }
@@ -109,11 +109,6 @@ namespace ProfilerGUI.Source.Configurator
 
             ProfilerRunner runner = new ProfilerRunner(TargetApp.Configuration);
             runner.RunAsynchronously();
-        }
-
-        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

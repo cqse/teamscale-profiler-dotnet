@@ -39,7 +39,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.TraceTargetFolder = value;
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -52,7 +52,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.ApplicationType = value;
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -73,7 +73,7 @@ namespace ProfilerGUI.Source.Configurator
                 {
                     UpdateExecutableMachineType();
                 }
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -86,7 +86,7 @@ namespace ProfilerGUI.Source.Configurator
             internal set
             {
                 Configuration.TargetApplicationArguments = value;
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -99,7 +99,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.WorkingDirectory = value;
-                OnPropertyChanged();
+                PropertyChanged.Raise(this);
             }
         }
 
@@ -150,11 +150,6 @@ namespace ProfilerGUI.Source.Configurator
             {
                 logger.Error("Could not read .lnk file. Please set values manually");
             }
-        }
-
-        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
