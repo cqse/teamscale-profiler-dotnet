@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,7 +18,9 @@ namespace ProfilerGUI.Source.Configurator
     /// </summary>
     internal class UploadViewModel : INotifyPropertyChanged
     {
-        private readonly static string ConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        private static readonly string ConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
 
         /// <summary>
         /// <inheritDoc />
@@ -95,6 +98,21 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public bool IsDirectoryConfigVisible { get => Config != null && Config.Teamscale == null; }
 
+        private string internalValidationErrorMessage = string.Empty;
+
+        /// <summary>
+        /// The general error message.
+        /// </summary>
+        public string ErrorMessage
+        {
+            get => internalValidationErrorMessage;
+            set
+            {
+                internalValidationErrorMessage = value;
+                PropertyChanged.Raise(this);
+            }
+        }
+
         private string connectionErrorMessage = null;
         private bool validationWasRun = false;
 
@@ -139,8 +157,15 @@ namespace ProfilerGUI.Source.Configurator
 
         private void ReadConfigFromDisk()
         {
-            Config = JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(ConfigFilePath));
-            // TODO exn handling
+            try
+            {
+                Config = JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(ConfigFilePath));
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to load configuration from {uploadConfigPath}", ConfigFilePath);
+                ErrorMessage = $"Failed to load configuration from {ConfigFilePath}:\n{e.GetType()}: {e.Message}";
+            }
         }
 
         public async void ValidateTeamscale()
@@ -157,8 +182,15 @@ namespace ProfilerGUI.Source.Configurator
 
         public void SaveConfig()
         {
-            File.WriteAllText(ConfigFilePath, JsonConvert.SerializeObject(Config));
-            // TODO exn handling
+            try
+            {
+                File.WriteAllText(ConfigFilePath, JsonConvert.SerializeObject(Config));
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to save configuration to {uploadConfigPath}", ConfigFilePath);
+                ErrorMessage = $"Failed to save configuration to {ConfigFilePath}:\n{e.GetType()}: {e.Message}";
+            }
         }
     }
 }
