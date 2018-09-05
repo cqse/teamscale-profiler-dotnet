@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +17,8 @@ namespace ProfilerGUI.Source.Configurator
     /// </summary>
     internal class UploadViewModel : INotifyPropertyChanged
     {
+        private readonly static string ConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
+
         /// <summary>
         /// <inheritDoc />
         /// </summary>
@@ -22,9 +27,9 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// The config for the daemon.
         /// </summary>
-        public UploadDaemon.Config Config { get; private set; }
+        public UploadDaemon.Config Config { get; private set; } = null;
 
-        private readonly UploadDaemon.Config originalConfig;
+        private readonly UploadDaemon.Config originalConfig = null;
 
         /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
@@ -129,25 +134,31 @@ namespace ProfilerGUI.Source.Configurator
 
         public UploadViewModel()
         {
-            // TODO
-            this.Config = null;
+            ReadConfigFromDisk();
+        }
+
+        private void ReadConfigFromDisk()
+        {
+            Config = JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(ConfigFilePath));
+            // TODO exn handling
         }
 
         public async void ValidateTeamscale()
         {
-            // TODO
+            // TODO network request
             PropertyChanged.Raise(this, nameof(ValidationMessage));
             PropertyChanged.Raise(this, nameof(ValidationMessageColor));
         }
 
         public void RestoreOriginalConfig()
         {
-            Config = originalConfig;
+            ReadConfigFromDisk();
         }
 
         public void SaveConfig()
         {
-            // TODO
+            File.WriteAllText(ConfigFilePath, JsonConvert.SerializeObject(Config));
+            // TODO exn handling
         }
     }
 }

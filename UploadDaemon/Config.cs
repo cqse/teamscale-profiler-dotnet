@@ -13,7 +13,10 @@ namespace UploadDaemon
     /// </summary>
     public class Config
     {
-        private const string ConfigFileName = "UploadDaemon.json";
+        /// <summary>
+        /// Name of the JSON config file.
+        /// </summary>
+        public const string ConfigFileName = "UploadDaemon.json";
 
         /// <summary>
         /// Path to the config file.
