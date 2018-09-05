@@ -6,7 +6,8 @@
 		xmlns:local="clr-namespace:ProfilerGUI"
 		mc:Ignorable="d"
 		Title="CQSE Profiler"
-		Height="530" Width="800" ResizeMode="NoResize">
+		Height="570" Width="800"
+        MinHeight="570" MinWidth="800">
     <Border Padding="10">
         <StackPanel Orientation="Vertical">
             <Grid>
@@ -111,7 +112,7 @@
                 <Button Click="OnSave" Margin="10 0 0 0" Width="150" Content="Save" />
             </StackPanel>
 
-            <Label Grid.Row="4" Grid.Column="1" HorizontalAlignment="Center" Content="{Binding Path=ErrorMessage}" Foreground="Red" />
+            <Label HorizontalAlignment="Center" Content="{Binding Path=ErrorMessage}" Foreground="Red" />
         </StackPanel>
     </Border>
 </Window>
