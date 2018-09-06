@@ -175,10 +175,9 @@ namespace ProfilerGUI.Source.Configurator
                 string url = $"{Config.Teamscale.Url}/p/{Config.Teamscale.Project}/baselines";
                 using (HttpResponseMessage response = await client.GetAsync(url))
                 {
-                    string body = await response.Content.ReadAsStringAsync();
-                    logger.Info("resp: {s} {b}", response.StatusCode, body);
                     if (!response.IsSuccessStatusCode)
                     {
+                        string body = await response.Content.ReadAsStringAsync();
                         logger.Error("Failed to connect to {teamscale}. HTTP status: {statusCode}\n{responseBody}",
                             Config.Teamscale, response.StatusCode, body);
                         ShowErrorMessage($"Failed to connect to {Config.Teamscale}. HTTP status: {response.StatusCode}");
