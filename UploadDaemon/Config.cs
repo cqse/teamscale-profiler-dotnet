@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -47,11 +48,21 @@ namespace UploadDaemon
         {
             if (Teamscale == null && Directory == null)
             {
-                yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") to upload trace files to.";
+                yield return @"You must provide either a Teamscale server or a directory to upload trace files to.";
             }
             if (VersionAssembly == null)
             {
-                yield return @"You must provide an assembly name (property ""versionAssembly"", without the file extension) to read the program version from";
+                yield return @"You must provide an assembly name (without the file extension) to read the program version from";
+            }
+            if (Directory != null && !File.Exists(Directory))
+            {
+                yield return $"The directory {Directory} does not exist";
+            }
+
+            IEnumerable<string> errors = Teamscale?.Validate() ?? Enumerable.Empty<string>();
+            foreach (string error in errors)
+            {
+                yield return error;
             }
         }
 

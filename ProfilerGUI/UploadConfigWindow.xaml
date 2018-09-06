@@ -103,8 +103,7 @@
                     </TextBlock>
                 </Label>
 
-                <Button  Content="Validate" Grid.Row="14" Grid.Column="0" Click="OnValidateClicked" />
-                <Label Margin="5,0,0,0" Content="{Binding Path=ValidationMessage}" Foreground="{Binding Path=ValidationMessageColor}" Grid.Row="14" Grid.Column="1" />
+                <Button  Width="160" Content="Check Connection" Grid.Row="14" Grid.Column="1" Click="OnValidateClicked" HorizontalAlignment="Right" />
             </Grid>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="26" Margin="0 20 0 0">
@@ -112,7 +111,7 @@
                 <Button Click="OnSave" Margin="10 0 0 0" Width="150" Content="Save" />
             </StackPanel>
 
-            <Label HorizontalAlignment="Center" Content="{Binding Path=ErrorMessage}" Foreground="Red" />
+            <Label HorizontalAlignment="Center" Content="{Binding Path=ValidationResult.Message}" Foreground="{Binding ValidationResult.Color}" />
         </StackPanel>
     </Border>
 </Window>

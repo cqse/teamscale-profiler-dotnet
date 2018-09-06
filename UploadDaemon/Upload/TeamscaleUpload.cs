@@ -26,13 +26,7 @@ namespace UploadDaemon.Upload
             this.server = server;
             this.messageFormatter = new MessageFormatter(server);
 
-            SetUpBasicAuthentication(server);
-        }
-
-        private void SetUpBasicAuthentication(TeamscaleServer server)
-        {
-            byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            HttpClientUtils.SetUpBasicAuthentication(client, server);
         }
 
         /// <summary>

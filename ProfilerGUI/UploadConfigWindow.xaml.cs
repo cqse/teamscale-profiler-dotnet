@@ -26,7 +26,7 @@ namespace ProfilerGUI
 
         private void OnValidateClicked(object sender, RoutedEventArgs e)
         {
-            ViewModel.ValidateTeamscale();
+            ViewModel.CheckTeamscaleConnection();
         }
 
         private void OnSave(object sender, RoutedEventArgs e)

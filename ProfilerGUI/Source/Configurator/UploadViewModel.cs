@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using UploadDaemon.Upload;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -22,6 +24,8 @@ namespace ProfilerGUI.Source.Configurator
 
         private static readonly string ConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
 
+        private readonly HttpClient client = new HttpClient();
+
         /// <summary>
         /// <inheritDoc />
         /// </summary>
@@ -31,8 +35,6 @@ namespace ProfilerGUI.Source.Configurator
         /// The config for the daemon.
         /// </summary>
         public UploadDaemon.Config Config { get; private set; } = null;
-
-        private readonly UploadDaemon.Config originalConfig = null;
 
         /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
@@ -81,8 +83,6 @@ namespace ProfilerGUI.Source.Configurator
                         break;
                 }
 
-                validationWasRun = false;
-
                 // force all UI elements to be refreshed since this affects almost all of them
                 PropertyChanged.Raise(this, null);
             }
@@ -98,55 +98,18 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public bool IsDirectoryConfigVisible { get => Config != null && Config.Teamscale == null; }
 
-        private string internalValidationErrorMessage = string.Empty;
+        private ValidationResult internalValidationResult = null;
 
         /// <summary>
         /// The general error message.
         /// </summary>
-        public string ErrorMessage
+        public ValidationResult ValidationResult
         {
-            get => internalValidationErrorMessage;
+            get => internalValidationResult;
             set
             {
-                internalValidationErrorMessage = value;
+                internalValidationResult = value;
                 PropertyChanged.Raise(this);
-            }
-        }
-
-        private string connectionErrorMessage = null;
-        private bool validationWasRun = false;
-
-        /// <summary>
-        /// The validation message to show next to the validate button.
-        /// </summary>
-        public String ValidationMessage
-        {
-            get
-            {
-                if (!validationWasRun)
-                {
-                    return string.Empty;
-                }
-                if (connectionErrorMessage == null)
-                {
-                    return "Connected successfully";
-                }
-                return $"Failed to connect: {connectionErrorMessage}";
-            }
-        }
-
-        /// <summary>
-        /// The color of the validation message.
-        /// </summary>
-        public Brush ValidationMessageColor
-        {
-            get
-            {
-                if (connectionErrorMessage == null)
-                {
-                    return new SolidColorBrush(Colors.Green);
-                }
-                return new SolidColorBrush(Colors.Red);
             }
         }
 
@@ -164,24 +127,79 @@ namespace ProfilerGUI.Source.Configurator
             catch (Exception e)
             {
                 logger.Error(e, "Failed to load configuration from {uploadConfigPath}", ConfigFilePath);
-                ErrorMessage = $"Failed to load configuration from {ConfigFilePath}:\n{e.GetType()}: {e.Message}";
+                ShowErrorMessage($"Failed to load configuration from {ConfigFilePath}:\n{e.GetType()}: {e.Message}");
             }
         }
 
-        public async void ValidateTeamscale()
+        private void ShowErrorMessage(String message)
         {
-            // TODO network request
-            PropertyChanged.Raise(this, nameof(ValidationMessage));
-            PropertyChanged.Raise(this, nameof(ValidationMessageColor));
+            ValidationResult = new ValidationResult(false, message);
         }
 
+        private async Task<bool> Validate()
+        {
+            IEnumerable<string> errors = Config.Validate();
+            if (errors.Any())
+            {
+                ShowErrorMessage(string.Join("\r\n", errors));
+                return false;
+            }
+
+            return await CheckTeamscaleConnection();
+        }
+
+        /// <summary>
+        /// Checks if the connection to Teamscale can be established.
+        /// Show an error message in the UI if not.
+        /// </summary>
+        public async Task<bool> CheckTeamscaleConnection()
+        {
+            try
+            {
+                HttpClientUtils.SetUpBasicAuthentication(client, Config.Teamscale);
+
+                string url = $"{Config.Teamscale.Url}/p/{Config.Teamscale.Project}/baselines";
+                using (HttpResponseMessage response = await client.GetAsync(url))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string body = await response.Content.ReadAsStringAsync();
+                        logger.Error("Failed to connect to {teamscale}. HTTP status code: {statusCode}\n{responseBody}",
+                            Config.Teamscale, response.StatusCode, body);
+                        ShowErrorMessage($"Failed to connect to {Config.Teamscale}. HTTP status code: {response.StatusCode}");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to connect to {teamscale}", Config.Teamscale);
+                ShowErrorMessage($"Failed to connect to {Config.Teamscale}. {e.GetType()} {e.Message}");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Rereads the config as it is on disk currently.
+        /// </summary>
         public void RestoreOriginalConfig()
         {
             ReadConfigFromDisk();
         }
 
-        public void SaveConfig()
+        /// <summary>
+        /// Validates the config and saves it if it is valid.
+        /// </summary>
+        public async void SaveConfig()
         {
+            bool isValid = await Validate();
+            if (!isValid)
+            {
+                return;
+            }
+
             try
             {
                 File.WriteAllText(ConfigFilePath, JsonConvert.SerializeObject(Config));
@@ -189,7 +207,7 @@ namespace ProfilerGUI.Source.Configurator
             catch (Exception e)
             {
                 logger.Error(e, "Failed to save configuration to {uploadConfigPath}", ConfigFilePath);
-                ErrorMessage = $"Failed to save configuration to {ConfigFilePath}:\n{e.GetType()}: {e.Message}";
+                ShowErrorMessage($"Failed to save configuration to {ConfigFilePath}:\n{e.GetType()}: {e.Message}");
             }
         }
     }

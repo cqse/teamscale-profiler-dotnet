@@ -79,6 +79,7 @@
     <Compile Include="Helper\WpfRichTextBoxRowColoringRule.cs" />
     <Compile Include="Helper\WpfRichTextBoxTarget.cs" />
     <Compile Include="Helper\WpfRichTextBoxWordColoringRule.cs" />
+    <Compile Include="Source\Configurator\ValidationResult.cs" />
     <Compile Include="UploadConfigWindow.xaml.cs">
       <DependentUpon>UploadConfigWindow.xaml</DependentUpon>
     </Compile>

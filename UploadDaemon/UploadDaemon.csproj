@@ -64,6 +64,7 @@
     <Compile Include="TraceFileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeamscaleServer.cs" />
+    <Compile Include="Upload\HttpClientUtils.cs" />
     <Compile Include="Upload\IUpload.cs" />
     <Compile Include="Upload\FileSystemUpload.cs" />
     <Compile Include="Upload\TeamscaleUpload.cs" />
