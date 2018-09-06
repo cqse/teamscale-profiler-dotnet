@@ -161,7 +161,7 @@ namespace ProfilerGUI.Source.Configurator
         /// Checks if the connection to Teamscale can be established.
         /// Shows an error message in the UI if not.
         /// </summary>
-        public async Task<bool> CheckTeamscaleConnection()
+        private async Task<bool> CheckTeamscaleConnection()
         {
             if (Config.Teamscale == null)
             {

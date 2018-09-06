@@ -54,6 +54,10 @@ namespace UploadDaemon
             {
                 yield return @"You must provide an assembly name (without the file extension) to read the program version from";
             }
+            if (VersionAssembly != null && (VersionAssembly.EndsWith(".dll") || VersionAssembly.EndsWith(".exe")))
+            {
+                yield return @"The version assembly must be given without the file extension";
+            }
             if (Directory != null && !System.IO.Directory.Exists(Directory))
             {
                 yield return $"The directory {Directory} does not exist";

@@ -3,6 +3,7 @@ using NLog.Config;
 using NLog.Targets.Wrappers;
 using ProfilerGUI.Source.Configurator;
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 
@@ -32,7 +33,7 @@ namespace ProfilerGUI
 
         private void OnValidateClicked(object sender, RoutedEventArgs e)
         {
-            ViewModel.CheckTeamscaleConnection();
+            Task<bool> _ = ViewModel.Validate();
         }
 
         private async void OnOk(object sender, RoutedEventArgs e)

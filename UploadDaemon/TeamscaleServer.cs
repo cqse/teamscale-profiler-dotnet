@@ -14,6 +14,11 @@ namespace UploadDaemon
         public string Url { get; set; }
 
         /// <summary>
+        /// Teamscale project to which to upload.
+        /// </summary>
+        public string Project { get; set; }
+
+        /// <summary>
         /// Username to authenticate with.
         /// </summary>
         public string Username { get; set; }
@@ -22,11 +27,6 @@ namespace UploadDaemon
         /// Access token to authenticate with.
         /// </summary>
         public string AccessToken { get; set; }
-
-        /// <summary>
-        /// Teamscale project to which to upload.
-        /// </summary>
-        public string Project { get; set; }
 
         /// <summary>
         /// Partition within the Teamscale project to which to upload.
@@ -49,6 +49,14 @@ namespace UploadDaemon
         /// </summary>
         public IEnumerable<string> Validate()
         {
+            if (Url == null)
+            {
+                yield return @"You must provide a valid URL to connect to Teamscale";
+            }
+            if (Project == null)
+            {
+                yield return @"You must provide a project into which the coverage will be uploaded";
+            }
             if (Username == null)
             {
                 yield return @"You must provide a username to connect to Teamscale";
@@ -57,17 +65,9 @@ namespace UploadDaemon
             {
                 yield return @"You must provide an access token to connect to Teamscale. Obtain it from the user's profile in Teamscale";
             }
-            if (Url == null)
-            {
-                yield return @"You must provide a valid URL to connect to Teamscale";
-            }
             if (Partition == null)
             {
                 yield return @"You must provide a partition into which the coverage will be uploaded";
-            }
-            if (Project == null)
-            {
-                yield return @"You must provide a project into which the coverage will be uploaded";
             }
         }
 
