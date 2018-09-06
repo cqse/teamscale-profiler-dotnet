@@ -17,7 +17,7 @@ namespace UploadDaemon.Upload
         /// </summary>
         public static void SetUpBasicAuthentication(HttpClient client, TeamscaleServer server)
         {
-            byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessToken}");
+            byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessKey}");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
     }

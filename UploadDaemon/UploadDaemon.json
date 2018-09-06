@@ -9,8 +9,8 @@
         "url": "http://localhost:8080",
         /* This user must have the "Perform external uploads" permission on the project. */
         "username": "admin",
-        /* You can generate access tokens either from your personal user settings or via Admin > Users. */
-        "accessToken": "token",
+        /* You can generate access keys either from your personal user settings or via Admin > Users. */
+        "accessKey": "accesskey",
         /* Teamscale project ID or alias. */
         "project": "project",
         /* The partition in the Teamscale project to which to upload the coverage.

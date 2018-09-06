@@ -21,7 +21,7 @@ public class ConfigTest
                     teamscale: {
                         url: ""url"",
                         username: ""user"",
-                        accessToken: ""token"",
+                        accessKey: ""token"",
                         project: ""project"",
                         partition: ""partition"",
                     },

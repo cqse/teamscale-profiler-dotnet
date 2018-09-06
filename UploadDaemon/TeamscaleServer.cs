@@ -24,9 +24,9 @@ namespace UploadDaemon
         public string Username { get; set; }
 
         /// <summary>
-        /// Access token to authenticate with.
+        /// Access key to authenticate with.
         /// </summary>
-        public string AccessToken { get; set; }
+        public string AccessKey { get; set; }
 
         /// <summary>
         /// Partition within the Teamscale project to which to upload.
@@ -61,9 +61,9 @@ namespace UploadDaemon
             {
                 yield return @"You must provide a username to connect to Teamscale";
             }
-            if (AccessToken == null)
+            if (AccessKey == null)
             {
-                yield return @"You must provide an access token to connect to Teamscale. Obtain it from the user's profile in Teamscale";
+                yield return @"You must provide an access key to connect to Teamscale. Obtain it from the user's profile in Teamscale";
             }
             if (Partition == null)
             {

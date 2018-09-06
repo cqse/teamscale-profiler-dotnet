@@ -88,8 +88,8 @@
                 <Label  Content="Username" Grid.Row="4" Grid.Column="0" />
                 <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Username, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" />
 
-                <Label  Content="Access Token" Grid.Row="6" Grid.Column="0" />
-                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.AccessToken, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" />
+                <Label  Content="Access Key" Grid.Row="6" Grid.Column="0" />
+                <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.AccessKey, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" />
 
                 <Label  Content="Partition" Grid.Row="8" Grid.Column="0" />
                 <TextBox Margin="5,0,0,0" Text="{Binding Path=Config.Teamscale.Partition, Mode=TwoWay}" Grid.Row="8" Grid.Column="1" />
