@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Threading.Tasks;
+using Common;
 using Moq;
 using NUnit.Framework;
 using UploadDaemon;
@@ -16,7 +17,7 @@ public class TimerActionTest
     private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
     private const string VersionAssembly = "VersionAssembly";
 
-    private static readonly Config config = new Config()
+    private static readonly UploadConfig config = new UploadConfig()
     {
         VersionAssembly = VersionAssembly
     };

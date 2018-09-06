@@ -1,18 +1,15 @@
-﻿using Newtonsoft.Json;
-using System.Linq;
-using NLog;
+﻿using Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
-using UploadDaemon.Upload;
+using System.Linq;
 
-namespace UploadDaemon
+namespace Common
 {
     /// <summary>
     /// Data class that is deserialized from the JSON configuration file.
     /// </summary>
-    public class Config
+    public class UploadConfig
     {
         /// <summary>
         /// Name of the JSON config file.
@@ -71,34 +68,11 @@ namespace UploadDaemon
         }
 
         /// <summary>
-        /// Creates an IUpload based on this configuration.
-        /// </summary>
-        /// <param name="fileSystem">The file system to use</param>
-        public IUpload CreateUpload(IFileSystem fileSystem)
-        {
-            if (Teamscale != null)
-            {
-                return new TeamscaleUpload(Teamscale);
-            }
-            return new FileSystemUpload(Directory, fileSystem);
-        }
-
-        /// <summary>
-        /// Tries to read the config JSON file.
-        /// </summary>
-        /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>
-        public static Config ReadConfig(IFileSystem fileSystem)
-        {
-            string json = fileSystem.File.ReadAllText(ConfigFilePath);
-            return JsonConvert.DeserializeObject<Config>(json);
-        }
-
-        /// <summary>
         /// Returns a deep copy of this config.
         /// </summary>
-        public Config Clone()
+        public UploadConfig Clone()
         {
-            return new Config()
+            return new UploadConfig()
             {
                 Teamscale = Teamscale?.Clone(),
                 Directory = Directory,

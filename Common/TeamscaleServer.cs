@@ -1,7 +1,6 @@
-using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace UploadDaemon
+namespace Common
 {
     /// <summary>
     /// Data class that holds all details needed to connect to Teamscale.

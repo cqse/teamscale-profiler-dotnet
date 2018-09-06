@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using Common;
 
 namespace ProfilerGUI
 {
@@ -22,9 +23,9 @@ namespace ProfilerGUI
         /// <summary>
         /// The config the user edited.
         /// </summary>
-        public UploadDaemon.Config Config { get => ViewModel.Config; }
+        public UploadConfig Config { get => ViewModel.Config; }
 
-        public UploadConfigWindow(UploadDaemon.Config config)
+        public UploadConfigWindow(UploadConfig config)
         {
             InitializeComponent();
             ViewModel = new UploadViewModel(config?.Clone());

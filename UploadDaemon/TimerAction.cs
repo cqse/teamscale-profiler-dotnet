@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Common;
+using NLog;
 using System;
 using System.IO.Abstractions;
 using System.Timers;
@@ -13,12 +14,12 @@ namespace UploadDaemon
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly Config config;
+        private readonly UploadConfig config;
         private readonly TraceFileScanner scanner;
         private readonly IUpload upload;
         private readonly Archiver archiver;
 
-        public TimerAction(string traceDirectory, Config config, IUpload upload, IFileSystem fileSystem)
+        public TimerAction(string traceDirectory, UploadConfig config, IUpload upload, IFileSystem fileSystem)
         {
             this.config = config;
             this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);

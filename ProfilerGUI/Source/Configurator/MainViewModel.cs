@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Common;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -18,7 +19,7 @@ namespace ProfilerGUI.Source.Configurator
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly string UploadConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
+        private static readonly string UploadConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadConfig.ConfigFileName);
 
         /// <summary> <inheritDoc /> </summary>
         public event PropertyChangedEventHandler PropertyChanged;
@@ -44,7 +45,7 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        private UploadDaemon.Config uploadConfig = null;
+        private UploadConfig uploadConfig = null;
 
         /// <summary>
         /// Summary of the configured upload.
@@ -137,7 +138,7 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        private UploadDaemon.Config ReadUploadConfigFromDisk()
+        private UploadConfig ReadUploadConfigFromDisk()
         {
             if (!File.Exists(UploadConfigFilePath))
             {
@@ -146,7 +147,7 @@ namespace ProfilerGUI.Source.Configurator
 
             try
             {
-                return JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(UploadConfigFilePath));
+                return JsonConvert.DeserializeObject<UploadConfig>(File.ReadAllText(UploadConfigFilePath));
             }
             catch (Exception e)
             {

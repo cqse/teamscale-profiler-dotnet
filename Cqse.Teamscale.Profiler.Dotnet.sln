@@ -16,7 +16,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfilerGUI", "ProfilerGUI\
 		{A01A7519-E10D-4153-8CD4-678935721DF3} = {A01A7519-E10D-4153-8CD4-678935721DF3}
 	EndProjectSection
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{AC9B3CCA-44B4-429A-BEC8-C516A6013CC7}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{0bb237cf-2c22-48dc-95e3-e9f58ab6a398}*SharedItemsImports = 4
+		Common\Common.projitems*{a01a7519-e10d-4153-8cd4-678935721df3}*SharedItemsImports = 4
+		Common\Common.projitems*{ac9b3cca-44b4-429a-bec8-c516a6013cc7}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Win32 = Debug|Win32

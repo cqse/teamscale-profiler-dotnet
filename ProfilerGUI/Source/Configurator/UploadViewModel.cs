@@ -1,17 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using Common;
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Media;
-using UploadDaemon.Upload;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -32,7 +26,7 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// The config for the daemon.
         /// </summary>
-        public UploadDaemon.Config Config { get; private set; } = null;
+        public UploadConfig Config { get; private set; } = null;
 
         /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
@@ -67,16 +61,16 @@ namespace ProfilerGUI.Source.Configurator
                     case 1:
                         if (Config == null)
                         {
-                            Config = new UploadDaemon.Config();
+                            Config = new UploadConfig();
                         }
-                        Config.Teamscale = new UploadDaemon.TeamscaleServer();
+                        Config.Teamscale = new TeamscaleServer();
                         Config.Directory = null;
                         break;
 
                     case 2:
                         if (Config == null)
                         {
-                            Config = new UploadDaemon.Config();
+                            Config = new UploadConfig();
                         }
                         Config.Teamscale = null;
                         Config.Directory = string.Empty;
@@ -131,7 +125,7 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        public UploadViewModel(UploadDaemon.Config config)
+        public UploadViewModel(UploadConfig config)
         {
             Config = config;
         }

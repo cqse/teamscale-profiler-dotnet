@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace UploadDaemon.Upload
+namespace Common
 {
     /// <summary>
     /// Utilities for using the HttpClient

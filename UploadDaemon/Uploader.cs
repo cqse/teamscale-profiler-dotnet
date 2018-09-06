@@ -11,6 +11,7 @@ using System.Collections.Generic;
 
 using System.Linq;
 using UploadDaemon.Upload;
+using Common;
 
 namespace UploadDaemon
 {
@@ -28,8 +29,9 @@ namespace UploadDaemon
         };
 
         private readonly string traceDirectory;
-        private readonly Config config;
+        private readonly UploadConfig config;
         private readonly TimerAction timerAction;
+        private readonly FileSystem fileSystem;
 
         /// <summary>
         /// Main entry point. Expects a single argument: the path to a directory that contains the trace files to upload.
@@ -43,6 +45,18 @@ namespace UploadDaemon
             }
 
             new Uploader(args).Run();
+        }
+
+        /// <summary>
+        /// Creates an IUpload based on the given configuration.
+        /// </summary>
+        public IUpload CreateUpload(UploadConfig config)
+        {
+            if (config.Teamscale != null)
+            {
+                return new TeamscaleUpload(config.Teamscale);
+            }
+            return new FileSystemUpload(config.Directory, fileSystem);
         }
 
         private static bool IsAlreadyRunning()
@@ -61,24 +75,25 @@ namespace UploadDaemon
         private Uploader(string[] args)
         {
             traceDirectory = ParseArguments(args);
-            FileSystem fileSystem = new FileSystem();
+            fileSystem = new FileSystem();
             config = ReadConfig(fileSystem);
-            IUpload upload = config.CreateUpload(fileSystem);
+            IUpload upload = CreateUpload(config);
             timerAction = new TimerAction(traceDirectory, config, upload, fileSystem);
         }
 
-        private static Config ReadConfig(FileSystem fileSystem)
+        private static UploadConfig ReadConfig(FileSystem fileSystem)
         {
-            logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+            logger.Debug("Reading config from {configFile}", UploadConfig.ConfigFilePath);
 
-            Config config;
+            UploadConfig config;
             try
             {
-                config = Config.ReadConfig(fileSystem);
+                string json = fileSystem.File.ReadAllText(UploadConfig.ConfigFilePath);
+                config = JsonConvert.DeserializeObject<UploadConfig>(json);
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+                logger.Error(e, "Failed to read config file {configPath}", UploadConfig.ConfigFilePath);
                 Environment.Exit(1);
                 return null;
             }
@@ -89,7 +104,7 @@ namespace UploadDaemon
                 return config;
             }
 
-            logger.Error("Invalid config file {configPath}: {errorMessages}", Config.ConfigFilePath, String.Join("; ", errorMessages));
+            logger.Error("Invalid config file {configPath}: {errorMessages}", UploadConfig.ConfigFilePath, String.Join("; ", errorMessages));
             Environment.Exit(1);
             return null;
         }
@@ -127,7 +142,7 @@ namespace UploadDaemon
         {
             Console.Error.WriteLine("Usage: UploadDaemon.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The upload daemon reads its configuration from {Config.ConfigFilePath}");
+            Console.Error.WriteLine($"The upload daemon reads its configuration from {UploadConfig.ConfigFilePath}");
         }
 
         private void Run()
