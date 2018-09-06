@@ -97,5 +97,10 @@ namespace ProfilerGUI
         {
             ViewModel.RunProfiledApplication();
         }
+
+        private void OnChangeUpload(object sender, RoutedEventArgs e)
+        {
+            ViewModel.OpenUploadConfigDialog();
+        }
     }
 }

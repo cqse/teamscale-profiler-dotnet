@@ -41,6 +41,27 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
+        private readonly UploadConfigWindow uploadConfigWindow = new UploadConfigWindow();
+
+        /// <summary>
+        /// Summary of the configured upload.
+        /// </summary>
+        public string UploadSummary
+        {
+            get
+            {
+                if (uploadConfigWindow.Config == null)
+                {
+                    return "No upload";
+                }
+                if (uploadConfigWindow.Config.Teamscale != null)
+                {
+                    return $"Upload to {uploadConfigWindow.Config.Teamscale}";
+                }
+                return $"Upload to directory {uploadConfigWindow.Config.Directory}";
+            }
+        }
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -70,6 +91,15 @@ namespace ProfilerGUI.Source.Configurator
                     PropertyChanged.Raise(this, nameof(SelectedBitnessIndex));
                 }
             };
+        }
+
+        /// <summary>
+        /// Shows the dialog to configure the trace upload.
+        /// </summary>
+        internal void OpenUploadConfigDialog()
+        {
+            uploadConfigWindow.ShowDialog();
+            PropertyChanged.Raise(this, nameof(UploadSummary));
         }
 
         /// <summary>

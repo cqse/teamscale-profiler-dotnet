@@ -111,7 +111,7 @@
                 <Button Click="OnSave" Margin="10 0 0 0" Width="150" Content="Save" />
             </StackPanel>
 
-            <Label HorizontalAlignment="Center" Content="{Binding Path=ValidationResult.Message}" Foreground="{Binding ValidationResult.Color}" />
+            <Label HorizontalAlignment="Center" Content="{Binding Path=ValidationResult.Message}" Foreground="{Binding Path=ValidationResult.Color}" />
         </StackPanel>
     </Border>
 </Window>
