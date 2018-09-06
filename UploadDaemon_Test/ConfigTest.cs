@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Abstractions;
-using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
-using Common;
-using NUnit.Framework;
-using UploadDaemon;
+﻿using Common;
 using Newtonsoft.Json;
-using NUnit.Framework.Constraints;
+using NUnit.Framework;
+using System.Collections.Generic;
 
 [TestFixture]
 public class ConfigTest

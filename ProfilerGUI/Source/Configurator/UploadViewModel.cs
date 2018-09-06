@@ -141,8 +141,8 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public async Task<bool> Validate()
         {
-            IEnumerable<string> errors = Config.Validate();
-            if (errors.Any())
+            IEnumerable<string> errors = Config?.Validate();
+            if (errors != null && errors.Any())
             {
                 ShowErrorMessage(string.Join("\r\n", errors));
                 return false;
@@ -157,7 +157,7 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         private async Task<bool> CheckTeamscaleConnection()
         {
-            if (Config.Teamscale == null)
+            if (Config?.Teamscale == null)
             {
                 return true;
             }

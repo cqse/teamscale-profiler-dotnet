@@ -39,7 +39,7 @@ namespace Common
 
         public override string ToString()
         {
-            return $"Teamscale {Url} project {Project} with user {Username} into partition {Partition}";
+            return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";
         }
 
         /// <summary>
