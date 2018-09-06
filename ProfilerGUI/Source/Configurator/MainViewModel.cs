@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Newtonsoft.Json;
+using NLog;
 using ProfilerGUI.Source.Runner;
 using ProfilerGUI.Source.Shared;
 using System;
@@ -16,6 +17,8 @@ namespace ProfilerGUI.Source.Configurator
     public class MainViewModel : INotifyPropertyChanged
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        private static readonly string UploadConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
 
         /// <summary> <inheritDoc /> </summary>
         public event PropertyChangedEventHandler PropertyChanged;
@@ -41,7 +44,7 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        private readonly UploadConfigWindow uploadConfigWindow = new UploadConfigWindow();
+        private UploadDaemon.Config uploadConfig = null;
 
         /// <summary>
         /// Summary of the configured upload.
@@ -50,15 +53,15 @@ namespace ProfilerGUI.Source.Configurator
         {
             get
             {
-                if (uploadConfigWindow.Config == null)
+                if (uploadConfig == null)
                 {
                     return "No upload";
                 }
-                if (uploadConfigWindow.Config.Teamscale != null)
+                if (uploadConfig.Teamscale != null)
                 {
-                    return $"Upload to {uploadConfigWindow.Config.Teamscale}";
+                    return $"Upload to {uploadConfig.Teamscale}";
                 }
-                return $"Upload to directory {uploadConfigWindow.Config.Directory}";
+                return $"Upload to directory {uploadConfig.Directory}";
             }
         }
 
@@ -91,6 +94,8 @@ namespace ProfilerGUI.Source.Configurator
                     PropertyChanged.Raise(this, nameof(SelectedBitnessIndex));
                 }
             };
+
+            uploadConfig = ReadUploadConfigFromDisk();
         }
 
         /// <summary>
@@ -98,7 +103,11 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         internal void OpenUploadConfigDialog()
         {
-            uploadConfigWindow.ShowDialog();
+            UploadConfigWindow dialog = new UploadConfigWindow(uploadConfig);
+            if (dialog.ShowDialog() == true)
+            {
+                uploadConfig = dialog.Config;
+            }
             PropertyChanged.Raise(this, nameof(UploadSummary));
         }
 
@@ -119,10 +128,45 @@ namespace ProfilerGUI.Source.Configurator
             {
                 TargetApp.Configuration.WriteToFile();
                 logger.Info("Wrote config to {configPath}", ProfilerConfiguration.ConfigFilePath);
+                SaveUploadConfig();
             }
             catch (Exception e)
             {
                 logger.Error(e, "Could not save configuration to {configPath}", ProfilerConfiguration.ConfigFilePath);
+            }
+        }
+
+        private UploadDaemon.Config ReadUploadConfigFromDisk()
+        {
+            if (!File.Exists(UploadConfigFilePath))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(UploadConfigFilePath));
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to load upload deamon configuration from {uploadConfigPath}", UploadConfigFilePath);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Saves the config for the upload daemon.
+        /// </summary>
+        private void SaveUploadConfig()
+        {
+            try
+            {
+                File.WriteAllText(UploadConfigFilePath, JsonConvert.SerializeObject(uploadConfig));
+                logger.Info("Wrote upload deamon config to {configPath}", UploadConfigFilePath);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to save upload deamon configuration to {uploadConfigPath}", UploadConfigFilePath);
             }
         }
 

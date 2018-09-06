@@ -10,17 +10,23 @@ namespace ProfilerGUI
 {
     /// <summary>
     /// Interaction logic for UploadConfigWindow.xaml
+    ///
+    /// This window returns a DialogResult indicating whether the user wants to accept the
+    /// changes to the upload config or not.
     /// </summary>
     public partial class UploadConfigWindow : Window
     {
         private readonly UploadViewModel ViewModel;
 
+        /// <summary>
+        /// The config the user edited.
+        /// </summary>
         public UploadDaemon.Config Config { get => ViewModel.Config; }
 
-        public UploadConfigWindow()
+        public UploadConfigWindow(UploadDaemon.Config config)
         {
             InitializeComponent();
-            ViewModel = new UploadViewModel();
+            ViewModel = new UploadViewModel(config);
             this.DataContext = ViewModel;
         }
 
@@ -29,15 +35,21 @@ namespace ProfilerGUI
             ViewModel.CheckTeamscaleConnection();
         }
 
-        private void OnSave(object sender, RoutedEventArgs e)
+        private async void OnSave(object sender, RoutedEventArgs e)
         {
-            ViewModel.SaveConfig();
+            bool isValid = await ViewModel.Validate();
+            if (!isValid)
+            {
+                return;
+            }
+
+            DialogResult = true;
             Close();
         }
 
         private void OnCancel(object sender, RoutedEventArgs e)
         {
-            ViewModel.RestoreOriginalConfig();
+            DialogResult = false;
             Close();
         }
     }

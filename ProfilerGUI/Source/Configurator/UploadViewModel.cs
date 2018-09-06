@@ -22,8 +22,6 @@ namespace ProfilerGUI.Source.Configurator
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly string ConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadDaemon.Config.ConfigFileName);
-
         private readonly HttpClient client = new HttpClient();
 
         /// <summary>
@@ -52,7 +50,7 @@ namespace ProfilerGUI.Source.Configurator
                 {
                     return 0;
                 }
-                else if (Config.Teamscale == null)
+                if (Config.Teamscale != null)
                 {
                     return 1;
                 }
@@ -72,6 +70,7 @@ namespace ProfilerGUI.Source.Configurator
                             Config = new UploadDaemon.Config();
                         }
                         Config.Teamscale = new UploadDaemon.TeamscaleServer();
+                        Config.Directory = null;
                         break;
 
                     case 2:
@@ -80,6 +79,7 @@ namespace ProfilerGUI.Source.Configurator
                             Config = new UploadDaemon.Config();
                         }
                         Config.Teamscale = null;
+                        Config.Directory = string.Empty;
                         break;
                 }
 
@@ -98,6 +98,11 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public bool IsDirectoryConfigVisible { get => Config != null && Config.Teamscale == null; }
 
+        /// <summary>
+        /// Whether the configuration UI for the version assembly should be shown.
+        /// </summary>
+        public bool IsVersionAssemblyVisible { get => Config != null; }
+
         private ValidationResult internalValidationResult = null;
 
         /// <summary>
@@ -113,22 +118,9 @@ namespace ProfilerGUI.Source.Configurator
             }
         }
 
-        public UploadViewModel()
+        public UploadViewModel(UploadDaemon.Config config)
         {
-            ReadConfigFromDisk();
-        }
-
-        private void ReadConfigFromDisk()
-        {
-            try
-            {
-                Config = JsonConvert.DeserializeObject<UploadDaemon.Config>(File.ReadAllText(ConfigFilePath));
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to load configuration from {uploadConfigPath}", ConfigFilePath);
-                ShowErrorMessage($"Failed to load configuration from {ConfigFilePath}:\n{e.GetType()}: {e.Message}");
-            }
+            Config = config;
         }
 
         private void ShowErrorMessage(String message)
@@ -136,7 +128,11 @@ namespace ProfilerGUI.Source.Configurator
             ValidationResult = new ValidationResult(false, message);
         }
 
-        private async Task<bool> Validate()
+        /// <summary>
+        /// Checks if current config is valid.
+        /// Shows an error message in the UI if not.
+        /// </summary>
+        public async Task<bool> Validate()
         {
             IEnumerable<string> errors = Config.Validate();
             if (errors.Any())
@@ -150,7 +146,7 @@ namespace ProfilerGUI.Source.Configurator
 
         /// <summary>
         /// Checks if the connection to Teamscale can be established.
-        /// Show an error message in the UI if not.
+        /// Shows an error message in the UI if not.
         /// </summary>
         public async Task<bool> CheckTeamscaleConnection()
         {
@@ -179,36 +175,6 @@ namespace ProfilerGUI.Source.Configurator
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Rereads the config as it is on disk currently.
-        /// </summary>
-        public void RestoreOriginalConfig()
-        {
-            ReadConfigFromDisk();
-        }
-
-        /// <summary>
-        /// Validates the config and saves it if it is valid.
-        /// </summary>
-        public async void SaveConfig()
-        {
-            bool isValid = await Validate();
-            if (!isValid)
-            {
-                return;
-            }
-
-            try
-            {
-                File.WriteAllText(ConfigFilePath, JsonConvert.SerializeObject(Config));
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to save configuration to {uploadConfigPath}", ConfigFilePath);
-                ShowErrorMessage($"Failed to save configuration to {ConfigFilePath}:\n{e.GetType()}: {e.Message}");
-            }
         }
     }
 }

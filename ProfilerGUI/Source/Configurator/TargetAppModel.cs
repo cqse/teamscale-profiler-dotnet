@@ -83,7 +83,7 @@ namespace ProfilerGUI.Source.Configurator
         public string Arguments
         {
             get => Configuration.TargetApplicationArguments;
-            internal set
+            set
             {
                 Configuration.TargetApplicationArguments = value;
                 PropertyChanged.Raise(this);

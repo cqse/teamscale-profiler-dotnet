@@ -5,9 +5,9 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:ProfilerGUI"
 		mc:Ignorable="d"
-		Title="CQSE Profiler"
+		Title="Trace Upload settings"
 		Height="570" Width="800"
-        MinHeight="570" MinWidth="800">
+        MinHeight="600" MinWidth="800">
     <Border Padding="10">
         <StackPanel Orientation="Vertical">
             <Grid>
@@ -33,12 +33,12 @@
                     </ComboBox>
                 </StackPanel>
 
-                <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0" />
-                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}" />
+                <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}" />
 
-                <Label Grid.Row="4" Grid.Column="1">
+                <Label Grid.Row="4" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}">
                     <TextBlock TextWrapping="Wrap">
-                   The assembly from which to read the version number. Must be the assembly name without the file extension, e.g. My.Assembly
+                        The assembly from which to read the version number. Must be the assembly name without the file extension, e.g. My.Assembly
                     </TextBlock>
                 </Label>
             </Grid>
