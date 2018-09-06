@@ -49,11 +49,11 @@
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="26" />
                 </Grid.RowDefinitions>
 
-                <Label  Content="Directory" Grid.Row="1" Grid.Column="0" />
-                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.Directory, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" />
+                <Button Grid.Row="1" Grid.Column="0" Content="Select Directory" Click="OnSelectDirectory" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Directory, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" />
             </Grid>
             <Grid Margin="0 10 0 0"  Visibility="{Binding Path=IsTeamscaleConfigVisible, Converter={StaticResource BoolToVisibility}}">
                 <Grid.ColumnDefinitions>
@@ -108,7 +108,7 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="26" Margin="0 20 0 0">
                 <Button Click="OnCancel" Margin="0 0 10 0"  Width="150" Content="Cancel" />
-                <Button Click="OnSave" Margin="10 0 0 0" Width="150" Content="Save" />
+                <Button Click="OnOk" Margin="10 0 0 0" Width="150" Content="OK" />
             </StackPanel>
 
             <Label HorizontalAlignment="Center" Content="{Binding Path=ValidationResult.Message}" Foreground="{Binding Path=ValidationResult.Color}" />

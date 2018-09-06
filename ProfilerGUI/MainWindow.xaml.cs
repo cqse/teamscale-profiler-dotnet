@@ -60,24 +60,12 @@ namespace ProfilerGUI
 
         private void OnChooseTargetDirButtonClick(object sender, EventArgs args)
         {
-            OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
-        }
-
-        private void OpenFolderChooser(Action<string> pathSelectedAction)
-        {
-            using (var dialog = new FolderBrowserDialog())
-            {
-                DialogResult result = dialog.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    pathSelectedAction.Invoke(dialog.SelectedPath);
-                }
-            }
+            WpfUtils.OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
         }
 
         private void OnChooseApplicationButtonClick(object sender, EventArgs args)
         {
-            using (var dialog = new OpenFileDialog
+            using (OpenFileDialog dialog = new OpenFileDialog
             {
                 // This lets the user select lnk-files (shortcuts), which can be helpful in our context
                 DereferenceLinks = false,

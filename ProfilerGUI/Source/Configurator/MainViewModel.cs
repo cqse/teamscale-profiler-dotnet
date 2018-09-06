@@ -104,7 +104,8 @@ namespace ProfilerGUI.Source.Configurator
         internal void OpenUploadConfigDialog()
         {
             UploadConfigWindow dialog = new UploadConfigWindow(uploadConfig);
-            if (dialog.ShowDialog() == true)
+            bool? result = dialog.ShowDialog();
+            if (result == true)
             {
                 uploadConfig = dialog.Config;
             }

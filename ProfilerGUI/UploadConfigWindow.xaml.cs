@@ -26,7 +26,7 @@ namespace ProfilerGUI
         public UploadConfigWindow(UploadDaemon.Config config)
         {
             InitializeComponent();
-            ViewModel = new UploadViewModel(config);
+            ViewModel = new UploadViewModel(config?.Clone());
             this.DataContext = ViewModel;
         }
 
@@ -35,7 +35,7 @@ namespace ProfilerGUI
             ViewModel.CheckTeamscaleConnection();
         }
 
-        private async void OnSave(object sender, RoutedEventArgs e)
+        private async void OnOk(object sender, RoutedEventArgs e)
         {
             bool isValid = await ViewModel.Validate();
             if (!isValid)
@@ -51,6 +51,11 @@ namespace ProfilerGUI
         {
             DialogResult = false;
             Close();
+        }
+
+        private void OnSelectDirectory(object sender, RoutedEventArgs e)
+        {
+            WpfUtils.OpenFolderChooser(path => ViewModel.Directory = path);
         }
     }
 }

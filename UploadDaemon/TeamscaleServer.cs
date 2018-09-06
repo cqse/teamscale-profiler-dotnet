@@ -70,5 +70,13 @@ namespace UploadDaemon
                 yield return @"You must provide a project into which the coverage will be uploaded";
             }
         }
+
+        /// <summary>
+        /// Returns a deep copy of this object.
+        /// </summary>
+        public TeamscaleServer Clone()
+        {
+            return (TeamscaleServer)MemberwiseClone();
+        }
     }
 }

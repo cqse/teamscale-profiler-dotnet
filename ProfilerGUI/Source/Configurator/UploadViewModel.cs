@@ -89,6 +89,19 @@ namespace ProfilerGUI.Source.Configurator
         }
 
         /// <summary>
+        /// The directory to upload traces to.
+        /// </summary>
+        public string Directory
+        {
+            get => Config?.Directory;
+            set
+            {
+                Config.Directory = value;
+                PropertyChanged.Raise(this);
+            }
+        }
+
+        /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
         /// </summary>
         public bool IsTeamscaleConfigVisible { get => Config != null && Config.Teamscale != null; }
@@ -150,6 +163,11 @@ namespace ProfilerGUI.Source.Configurator
         /// </summary>
         public async Task<bool> CheckTeamscaleConnection()
         {
+            if (Config.Teamscale == null)
+            {
+                return true;
+            }
+
             try
             {
                 HttpClientUtils.SetUpBasicAuthentication(client, Config.Teamscale);

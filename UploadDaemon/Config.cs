@@ -54,7 +54,7 @@ namespace UploadDaemon
             {
                 yield return @"You must provide an assembly name (without the file extension) to read the program version from";
             }
-            if (Directory != null && !File.Exists(Directory))
+            if (Directory != null && !System.IO.Directory.Exists(Directory))
             {
                 yield return $"The directory {Directory} does not exist";
             }
@@ -87,6 +87,19 @@ namespace UploadDaemon
         {
             string json = fileSystem.File.ReadAllText(ConfigFilePath);
             return JsonConvert.DeserializeObject<Config>(json);
+        }
+
+        /// <summary>
+        /// Returns a deep copy of this config.
+        /// </summary>
+        public Config Clone()
+        {
+            return new Config()
+            {
+                Teamscale = Teamscale?.Clone(),
+                Directory = Directory,
+                VersionAssembly = VersionAssembly,
+            };
         }
     }
 }

@@ -86,7 +86,7 @@
     <Compile Include="Source\Configurator\EApplicationType.cs" />
     <Compile Include="Source\Configurator\TargetAppModel.cs" />
     <Compile Include="Source\Configurator\UploadViewModel.cs" />
-    <Compile Include="Source\Configurator\WpfExtensions.cs" />
+    <Compile Include="Source\Configurator\WpfUtils.cs" />
     <Compile Include="Source\Runner\ProfilerRunner.cs" />
     <Compile Include="Source\Configurator\MachineTypeExtractor.cs" />
     <Compile Include="Source\Configurator\MainViewModel.cs" />

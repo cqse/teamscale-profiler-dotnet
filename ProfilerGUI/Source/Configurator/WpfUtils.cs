@@ -5,14 +5,30 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace ProfilerGUI.Source.Configurator
 {
     /// <summary>
     /// Extensions to make working with WPF easier.
     /// </summary>
-    public static class WpfExtensions
+    public static class WpfUtils
     {
+        /// <summary>
+        /// Opens a folder chooser and calls the given action with the selected folder if the user chose one.
+        /// </summary>
+        public static void OpenFolderChooser(Action<string> pathSelectedAction)
+        {
+            using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+            {
+                DialogResult result = dialog.ShowDialog();
+                if (result == System.Windows.Forms.DialogResult.OK)
+                {
+                    pathSelectedAction.Invoke(dialog.SelectedPath);
+                }
+            }
+        }
+
         /// <summary>
         /// Raises the OnPropertyChangedEvent of an INotifyPropertyChanged object.
         /// </summary>
