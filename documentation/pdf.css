@@ -566,6 +566,7 @@ body table {
   display: block;
   width: 100%;
   overflow: auto;
+  font-size: 8px;
 }
 
 body table th {
