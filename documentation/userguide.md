@@ -16,7 +16,7 @@ In the case of long running processes it must be taken into account that the rep
 
 The .NET profiler supports both the .NET Standard and .NET Core runtime. For both variants the profiler has to be registered by environment variables before the application start. This can be achieved by either setting these variables in a startup script or by setting the variables globally. The former is preferred as otherwise all .NET aplications will be profiled.
 
-The default directory where traces are written to is `C:\Users\Public\`. See [Configuration](Configuration) for specifying a custom output directory.
+The default directory where traces are written to is `C:\Users\Public\`. See the Configuration section for specifying a custom output directory.
 
 The second part of this documentation handles special environments like applications running on IIS or Azure.
 
@@ -95,7 +95,7 @@ After restarting the IIS/recycling the pool and opening the application in a bro
 
 ### Azure Cloud
 
-Azure instantly kills the application when it is stopped/restarted, thus the profiler has no time to write anything to the trace file. To remedy this, enable eager mode (see [Configuration](Configuration). Please note that eager mode should only be used together with light mode as it will otherwise drastically increase lag during the application startup.
+Azure instantly kills the application when it is stopped/restarted, thus the profiler has no time to write anything to the trace file. To remedy this, enable eager mode (see the Configuration section. Please note that eager mode should only be used together with light mode as it will otherwise drastically increase lag during the application startup.
 
 To deploy the profiler to the Azure cloud, enable the FTP account. Store the profiler in a directory that will not be overwritten by a new deployment, e.g. `D:\home\site\repository\profiler\`
 Also create a new directory to write the traces to, e.g. `D:\home\site\repository\traces\`
@@ -248,7 +248,7 @@ The application development lead must provide the following information:
 
 Operations (DevOps) must perform the following tasks:
 
-* Installation of the profiler on the test machines (client and/or server, see [Installation](Installation))
+* Installation of the profiler on the test machines (client and/or server, see the Installation section)
 * Facilitating access to the traces and binaries. These can either be made available on the test machine via a shared folder or transferred to a network share after test.
 * For client applications: installation of an Heartbeat application and activation of the profiler. Setup of a time-based execution. This enables a regular, automatic check of whether a client machine is able to send trace data to Teamscale.
 
