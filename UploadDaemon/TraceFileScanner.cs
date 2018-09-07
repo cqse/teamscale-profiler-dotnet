@@ -17,12 +17,14 @@ public class TraceFileScanner
     private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
 
     private readonly string traceDirectory;
+    private readonly string versionAssembly;
     private readonly Regex versionAssemblyRegex;
     private readonly IFileSystem fileSystem;
 
     public TraceFileScanner(string traceDirectory, string versionAssembly, IFileSystem fileSystem)
     {
         this.traceDirectory = traceDirectory;
+        this.versionAssembly = versionAssembly;
         this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
         this.fileSystem = fileSystem;
     }
@@ -73,7 +75,7 @@ public class TraceFileScanner
     {
         if (IsLocked(filePath))
         {
-            logger.Debug("Ignoring locked trace {tracePath}", filePath);
+            logger.Debug("Ignoring locked trace {trace}", filePath);
             return null;
         }
 
@@ -113,7 +115,7 @@ public class TraceFileScanner
         }
         catch (Exception e)
         {
-            logger.Debug(e, "Failed to open {tracePath}. Assuming it's locked", tracePath);
+            logger.Debug(e, "Failed to open {trace}. Assuming it's locked", tracePath);
             // this is slightly inaccurate as the error might stem from permission problems etc.
             // but we log it
             return true;
@@ -125,7 +127,7 @@ public class TraceFileScanner
         Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
         if (matchingLine == null)
         {
-            logger.Debug("Did not find the version assembly in {tracePath}", tracePath);
+            logger.Debug("Did not find the version assembly {versionAssembly} in {trace}", versionAssembly, tracePath);
             return null;
         }
 

@@ -54,7 +54,7 @@ public class Archiver
             }
             catch (Exception e)
             {
-                logger.Error(e, "Unable to create archive directory {archivePath}. Trace file {tracePath} cannot be archived and will be processed again later", targetDirectory, tracePath);
+                logger.Error(e, "Unable to create archive directory {archivePath}. Trace {trace} cannot be archived and will be processed again later", targetDirectory, tracePath);
                 return;
             }
         }
@@ -66,7 +66,7 @@ public class Archiver
         }
         catch (Exception e)
         {
-            logger.Error(e, "Unable to archive {tracePath} to {archivePath}. The file will remain there" +
+            logger.Error(e, "Unable to archive {trace} to {archivePath}. The file will remain there" +
                 " which may lead to it being uploaded multiple times", tracePath, targetDirectory);
         }
     }
