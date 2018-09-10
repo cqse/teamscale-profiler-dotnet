@@ -38,7 +38,7 @@ test_script:
 after_test:
   # Convert documentation
   - cmd: npm install markdown-pdf
-  - cmd: node_modules\.bin\markdown-pdf -c documentation -s pdf.css -f A4 documentation/userguide.md
+  - cmd: node_modules\.bin\markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
   # Create release zip with profiler & documentation
   - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
