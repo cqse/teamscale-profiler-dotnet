@@ -1,11 +1,11 @@
 # Teamscale .NET Profiler
 
-Test Gap analysis is a tool, which brings more transparency to the testing process. To this end, changes within an application are identified and matched against information about test execution. From a technical perspective, this requires two types of information: 
+Test Gap analysis is a tool, which brings more transparency to the testing process. To this end, changes within an application are identified and matched against information about test execution. From a technical perspective, this requires two types of information:
 
 * the source code at the current revision
 * execution information, which is collected via the .NET Profiler
 
-The profiler writes method coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the standard .NET profiling interface and therefore can be used with any .NET application.
+The profiler writes method coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the builtin .NET profiling interface and therefore can be used with any .NET application.
 
 The trace file is created immediately after the first call of a .NET method. However, it remains mostly empty as long as the process runs. This avoids an unnecessary performance overhead due to file accesses. As soon as the process ends gracefully, the report is finished and all collected information is written to the trace file.
 
@@ -14,13 +14,13 @@ In the case of long running processes it must be taken into account that the rep
 
 # Installation
 
-The .NET profiler supports both the .NET Standard and .NET Core runtime. For both variants the profiler has to be registered by environment variables before the application start. This can be achieved by either setting these variables in a startup script or by setting the variables globally. The former is preferred as otherwise all .NET aplications will be profiled.
+The .NET profiler supports both the .NET Framework and .NET Core runtime. For both variants the profiler has to be registered by environment variables before the application start. This can be achieved by either setting these variables in a startup script or by setting the variables globally. The former is preferred as otherwise all .NET aplications will be profiled.
 
 The default directory where traces are written to is `C:\Users\Public\`. See the Configuration section for specifying a custom output directory.
 
 The second part of this documentation handles special environments like applications running on IIS or Azure.
 
-## .NET Standard
+## .NET Framework
 
 ### Determine which Profiler DLL to use
 
@@ -43,7 +43,7 @@ From the last section, you should know which profiler is the right one in your s
 The profiler can be installed into any directory on the target machine, but we recommend the following steps:
 
 1. Create directory `C:\Program Files\Coverage Profiler`.
-2. Copy the `Profiler32.dll` file and optionally a Heartbeat application to this directory.
+2. Copy the `Profiler32.dll` file
 3. Create and share a target directory where trace files can be written, e.g. `C:\Users\Public\Traces`. **Important:** The user whose account runs the analyzed application must have write access to this directory.
 4. Good practice for client applications: Create a job that profiles the heartbeat application daily, including copying the created trace files into the shared directory.
 5. Set the following environment variables for the user that starts the application or integrate the variables into the application's start scripts (using `set`). The latter is preferred:
@@ -74,7 +74,7 @@ Please note that the profiler is **still** configured with variables with the `C
 If the application is running in an IIS application server, the following steps need to be taken:
 
 * Make the relevant application pool see the environment variables
-* Regularly recycle the relevant application pool
+* Regularly recycle the relevant application pool or configure eager mode
 
 The environment variables must be set either system-wide or preferably for the account that runs the respective IIS app pool. For the latter, the app pool needs to have “Load User Profile” enabled in the Advanced Settings, and the environment variables need to be set for that user as follows:
 
@@ -91,7 +91,7 @@ In any case, when running inside IIS, the trace file will contain an additional 
 
 IIS must be restarted after setting the environment variables in order for them to have any effect (e.g. by running iisreset in an administrator command prompt). On more recent IIS versions (tested with IIS 7), if you set the variables for the app pool account and not the service, recycling the application pool is enough and a full restart is not required.
 
-After restarting the IIS/recycling the pool and opening the application in a browser, a trace file should be created. As web applications are long running processes, it must be taken into account that the report file is written only after the process has ended, e.g. after stopping IIS, after stopping the profiled web site, or after recycling the application pool (cf. Section “When will the Report File be Written” TODO). In these cases, it must be ensured that the application is stopped and restarted in regular intervals. In the case of IIS, we suggest to adjust the configuration to automatically recycle the application pool every night.
+After restarting the IIS/recycling the pool and opening the application in a browser, a trace file should be created. As web applications are long running processes, it must be taken into account that the report file is written only after the process has ended, e.g. after stopping IIS, after stopping the profiled web site, or after recycling the application pool. In these cases, it must be ensured that the application is stopped and restarted in regular intervals or eager mode is enabled. In the case of IIS, we suggest to adjust the configuration to automatically recycle the application pool every night.
 
 ### Azure Cloud
 
@@ -250,7 +250,6 @@ Operations (DevOps) must perform the following tasks:
 
 * Installation of the profiler on the test machines (client and/or server, see the Installation section)
 * Facilitating access to the traces and binaries. These can either be made available on the test machine via a shared folder or transferred to a network share after test.
-* For client applications: installation of an Heartbeat application and activation of the profiler. Setup of a time-based execution. This enables a regular, automatic check of whether a client machine is able to send trace data to Teamscale.
 
 ## Teamscale Administrator
 
@@ -258,13 +257,5 @@ Once all the above-mentioned information is available and the Operations tasks h
 
 * Creation of one or more dashboards, depending on the test environment.
 * Customization of the dashboard, in order to collect the necessary data from the network share and start the preprocessing of the data.
-* For client applications: Creation of a Heartbeat dashboard and listing of all clients from which a regular Heartbeat trace is expected.
 * Setup of the exclusion criteria as parameters of the dashboard.
-
-
-# Client Heartbeat
-
-In addition to the profiler, a console application is provided that can be used for testing purposes, since it starts very fast and produces small trace files when profiled. Furthermore, this application can be used to regularly create small traces on client machines, e.g. for a daily test whether the profiler and the copy scripts are working.
-
-
 
