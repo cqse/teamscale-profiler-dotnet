@@ -34,6 +34,9 @@ public:
 	/** Writes an error message. */
 	void error(std::string message);
 
+	/** Log a single environment variable definition. */
+	void logEnvironmentVariable(std::string variable);
+
 	/** Writes the profiled process into the log. Should only be called once. */
 	void logProcess(std::string process);
 

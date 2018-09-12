@@ -206,7 +206,7 @@
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
     <ClCompile Include="WindowsUtils.cpp">
-      <FileType>CppClass</FileType>
+      <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
