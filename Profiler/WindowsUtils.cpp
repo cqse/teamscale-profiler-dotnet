@@ -35,7 +35,7 @@ std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
 	return value;
 }
 
-std::vector<std::string> WindowsUtils::listEnvirnomentVariables() {
+std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
 	std::vector<std::string> variables;
 
 	if (_environ == NULL) {
@@ -43,7 +43,7 @@ std::vector<std::string> WindowsUtils::listEnvirnomentVariables() {
 	}
 
 	char** nextVariable = _environ;
-	while (nextVariable) {
+	while (*nextVariable) {
 		variables.push_back(*nextVariable);
 		nextVariable++;
 	}

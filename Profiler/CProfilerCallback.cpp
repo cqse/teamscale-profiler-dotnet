@@ -93,7 +93,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 void CProfilerCallback::dumpEnvironment() {
-	std::vector<std::string> environmentVariables = WindowsUtils::listEnvirnomentVariables();
+	std::vector<std::string> environmentVariables = WindowsUtils::listEnvironmentVariables();
 	if (environmentVariables.empty()) {
 		log.error("Failed to list the environment variables");
 		return;
