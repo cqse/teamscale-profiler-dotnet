@@ -13,13 +13,14 @@ using namespace std;
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 CProfilerCallback::CProfilerCallback() {
-	// nothing to do
+	InitializeCriticalSection(&callbackSynchronization);
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	// nothing to do
+	DeleteCriticalSection(&callbackSynchronization);
 }
 
+// TODO move to util
 /** Whether the given value ends with the given suffix. */
 inline bool endsWith(std::string const & value, std::string const & suffix)
 {
@@ -57,10 +58,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 			eagerness = std::stoi(eagernessValue);
 		}
 		catch (std::exception e) {
-			writeTupleToFile(LOG_KEY_WARN, "Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
+			log.warn("Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
 		}
 	}
-	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
+	log.info("Eagerness: " + std::to_string(eagerness));
 
 	if (getOption("UPLOAD_DAEMON") == "1") {
 		startUploadDeamon();
@@ -153,16 +154,10 @@ HRESULT CProfilerCallback::Shutdown() {
 		return S_OK;
 	}
 
-	// TODO needed?
-	EnterCriticalSection(&criticalSection);
-
 	writeFunctionInfosToLog();
 
 	log.shutdown();
 	profilerInfo->ForceGC();
-
-	// FIXME?
-	LeaveCriticalSection(&criticalSection);
 
 	return S_OK;
 }
@@ -194,7 +189,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return S_OK;
 	}
 
-	EnterCriticalSection(&criticalSection);
+	EnterCriticalSection(&callbackSynchronization);
 
 	int assemblyNumber = registerAssembly(assemblyId);
 
@@ -206,7 +201,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
 
-	LeaveCriticalSection(&criticalSection);
+	LeaveCriticalSection(&callbackSynchronization);
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
@@ -278,78 +273,39 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 		NULL, 0, NULL, metadata, NULL);
 }
 
-// TODO check move?
-int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
-	DWORD infoSize = GetFileVersionInfoSizeW(assemblyPath, NULL);
-	if (!infoSize) {
-		return 0;
-	}
-
-	BYTE* versionInfo = new BYTE[infoSize];
-	if (!GetFileVersionInfoW(assemblyPath, NULL, infoSize, versionInfo)) {
-		return 0;
-	}
-
-	VS_FIXEDFILEINFO* fileInfo = NULL;
-	UINT fileInfoLength = 0;
-	if (!VerQueryValueW(versionInfo, L"\\", (void**)&fileInfo, &fileInfoLength)) {
-		return 0;
-	}
-
-	int	 version[4];
-	version[0] = HIWORD(fileInfo->dwFileVersionMS);
-	version[1] = LOWORD(fileInfo->dwFileVersionMS);
-	version[2] = HIWORD(fileInfo->dwFileVersionLS);
-	version[3] = LOWORD(fileInfo->dwFileVersionLS);
-
-	int writtenChars = sprintf_s(buffer, bufferSize, " FileVersion:%i.%i.%i.%i",
-		version[0], version[1], version[2], version[3]);
-
-	version[0] = HIWORD(fileInfo->dwProductVersionMS);
-	version[1] = LOWORD(fileInfo->dwProductVersionMS);
-	version[2] = HIWORD(fileInfo->dwProductVersionLS);
-	version[3] = LOWORD(fileInfo->dwProductVersionLS);
-
-	writtenChars += sprintf_s(buffer + writtenChars, bufferSize - writtenChars, " ProductVersion:%i.%i.%i.%i",
-		version[0], version[1], version[2], version[3]);
-
-	delete versionInfo;
-	return writtenChars;
-}
-
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	if (isProfilingEnabled) {
-		EnterCriticalSection(&criticalSection);
+		EnterCriticalSection(&callbackSynchronization);
 
-		recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
+		recordFunctionInfo(&jittedMethods, functionId);
 
-	LeaveCriticalSection(&criticalSection);
-}
+		LeaveCriticalSection(&callbackSynchronization);
+	}
 
-return S_OK;
+	return S_OK;
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
-		BOOL* pfShouldInline) {
+	BOOL* pfShouldInline) {
 	// Save information about inlined method (if not already seen)
 	if (isProfilingEnabled) {
-		EnterCriticalSection(&criticalSection);
+		EnterCriticalSection(&callbackSynchronization);
 
-	if (inlinedMethodIds.insert(calleeId).second == true) {
-		recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
+		if (inlinedMethodIds.insert(calleeId).second == true) {
+			recordFunctionInfo(&inlinedMethods, calleeId);
+		}
+
+		LeaveCriticalSection(&callbackSynchronization);
 	}
 
-	LeaveCriticalSection(&criticalSection);
+	// Always allow inlining.
+	*pfShouldInline = true;
+
+	return S_OK;
 }
 
-// Always allow inlining.
-*pfShouldInline = true;
-
-return S_OK;
-}
-
-void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, const char* logKey, FunctionID calleeId) {
+void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, FunctionID calleeId) {
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
@@ -382,8 +338,16 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* 
 	return hr;
 }
 
-void CProfilerCallback::writeTupleToFile(const char* key, std::string value) {
-	writeTupleToFile(key, value.c_str());
+void CProfilerCallback::writeFunctionInfosToLog() {
+	EnterCriticalSection(&callbackSynchronization);
+
+	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
+	inlinedMethods.clear();
+
+	log.writeJittedFunctionInfosToLog(&jittedMethods);
+	jittedMethods.clear();
+
+	LeaveCriticalSection(&callbackSynchronization);
 }
 
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
@@ -419,27 +383,7 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 	writtenChars += sprintf_s(buffer + writtenChars, bufferSize - writtenChars, " ProductVersion:%i.%i.%i.%i",
 		version[0], version[1], version[2], version[3]);
-void CProfilerCallback::writeFunctionInfosToLog() {
-	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
-	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
-}
-
-void CProfilerCallback::writeFunctionInfosToLog(const char* key,
-		std::vector<FunctionInfo>* functions) {
-	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end();
-			i++) {
-		writeSingleFunctionInfoToLog(key, *i);
-	}
-	functions->clear();
-}
 
 	delete versionInfo;
 	return writtenChars;
-}
-void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	char signature[BUFFER_SIZE];
-	signature[0] = '\0';
-	sprintf_s(signature, "%i:%i", info.assemblyNumber,
-		info.functionToken);
-	writeTupleToFile(key, signature);
 }

@@ -64,6 +64,9 @@ public:
 	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
 
 private:
+	/** Synchronizes profiling callbacks. */
+	CRITICAL_SECTION callbackSynchronization;
+
 	/** Default size for arrays. */
 	static const int BUFFER_SIZE = 2048;
 
@@ -144,13 +147,13 @@ private:
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
 	/** Triggers eagerly writing of function infos to log. */
-	void recordFunctionInfo(std::vector<FunctionInfo>* list, const char* key, FunctionID calleeId);
+	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
 
 	/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
 	bool shouldWriteEagerly();
 
-	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
+	/** Write all information about the recorded functions to the log and clears the log. */
+	void writeFunctionInfosToLog();
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
