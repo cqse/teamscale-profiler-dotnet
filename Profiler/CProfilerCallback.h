@@ -24,6 +24,9 @@ public:
 	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
+	/** Dumps all environment variables to the log file. */
+	void dumpEnvironment();
+
 	/** Reads all options from the config file into memory. */
 	void readConfig();
 

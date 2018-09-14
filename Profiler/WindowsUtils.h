@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 class WindowsUtils {
 public:
@@ -16,4 +17,7 @@ public:
 
 	/** Returns information about the profiled process. */
 	static std::string getProcessInfo();
+
+  /** Returns a list of all environment variables (in the format VAR=VALUE). Returns an empty list in case of errors. */
+	static std::vector<std::string> listEnvironmentVariables();
 };
