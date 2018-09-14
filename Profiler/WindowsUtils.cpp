@@ -1,5 +1,9 @@
 #include "WindowsUtils.h"
 #include <Windows.h>
+#include <vector>
+#include "Debug.h"
+
+extern char** _environ;
 
 /**
 * Returns the message for the last WinAPI error (retrieved via GetLastError).
@@ -30,4 +34,20 @@ std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
 		return "";
 	}
 	return value;
+}
+
+std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
+	std::vector<std::string> variables;
+
+	if (_environ == NULL) {
+		return variables;
+	}
+
+	char** nextVariable = _environ;
+	while (*nextVariable) {
+		variables.push_back(*nextVariable);
+		nextVariable++;
+	}
+
+	return variables;
 }

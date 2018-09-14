@@ -74,6 +74,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	message += GetCommandLine();
 	log.info(message);
 
+	if (getOption("DUMP_ENVIRONMENT") == "1") {
+		dumpEnvironment();
+	}
+
 	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface(IID_ICorProfilerInfo2, (LPVOID*)&profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
@@ -86,6 +90,19 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	log.logProcess(getProcessInfo());
 
 	return S_OK;
+}
+
+void CProfilerCallback::dumpEnvironment() {
+	std::vector<std::string> environmentVariables = WindowsUtils::listEnvironmentVariables();
+	if (environmentVariables.empty()) {
+		log.error("Failed to list the environment variables");
+		return;
+	}
+
+	for (size_t i = 0; i < environmentVariables.size(); i++)
+	{
+		log.logEnvironmentVariable(environmentVariables.at(i));
+	}
 }
 
 void CProfilerCallback::startUploadDeamon() {
