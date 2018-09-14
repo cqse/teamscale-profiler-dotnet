@@ -1,6 +1,7 @@
 #include "WindowsUtils.h"
 #include <Windows.h>
 #include <vector>
+#include "Debug.h"
 
 extern char** _environ;
 

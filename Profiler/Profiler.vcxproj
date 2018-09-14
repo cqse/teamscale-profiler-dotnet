@@ -195,6 +195,7 @@
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
+    <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
@@ -202,6 +203,7 @@
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="FileSystemUtils.cpp" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
