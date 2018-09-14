@@ -16,9 +16,18 @@ Documentation on installation and usage of the profiler can be found in the [Git
 
 The coverage profiler can be compiled using Visual Studio 2017. Ensure to have the Windows and .NET SDK installed.
 
-Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler. Ensure to build both flavors of the Profiler (`Win32` and `x64`) before running the tests.
+Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler.
+Ensure to build both `Release` flavors of the Profiler (`Win32` and `x64`) before running the tests.
 
 Automatic build and testing is performed with an AppVeyor build definition.
+
+### Linking against System Libraries
+
+We use `#pragma comment(lib, "LIBRARYNAME.lib")` to specify link-time dependencies directly in the source file
+that needs the dependency. This way, the dependencies are versioned more explicitly with the code and it's immediately
+clear which parts of the code need the linked library.
+
+So please don't add any linked libraries to the solution configuration unless absolutely necessary.
 
 ## Release Process
 

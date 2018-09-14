@@ -1,44 +1,23 @@
 #include "CProfilerCallback.h"
 #include "version.h"
+#include "UploadDaemon.h"
+#include "FileSystemUtils.h"
+#include "WindowsUtils.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
 
+using namespace std;
+
+#pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-namespace {
-
-	/** The key to log information useful when interpreting the traces. */
-	const char* LOG_KEY_INFO = "Info";
-
-	/** The key to log information about non-critical error conditions. */
-	const char* LOG_KEY_WARN= "Warn";
-
-	/** The key to log information about a single assembly. */
-	const char* LOG_KEY_ASSEMBLY = "Assembly";
-
-	/** The key to log information about the profiled process. */
-	const char* LOG_KEY_PROCESS = "Process";
-
-	/** The key to log information about inlined methods. */
-	const char* LOG_KEY_INLINED = "Inlined";
-
-	/** The key to log information about jitted methods. */
-	const char* LOG_KEY_JITTED = "Jitted";
-
-	/** The key to log information about the profiler startup. */
-	const char* LOG_KEY_STARTED = "Started";
-
-	/** The key to log information about the profiler shutdown. */
-	const char* LOG_KEY_STOPPED = "Stopped";
-}
-
 CProfilerCallback::CProfilerCallback() {
-	InitializeCriticalSection(&criticalSection);
+	// nothing to do
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	DeleteCriticalSection(&criticalSection);
+	// nothing to do
 }
 
 /** Whether the given value ends with the given suffix. */
@@ -52,7 +31,7 @@ inline bool endsWith(std::string const & value, std::string const & suffix)
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	std::string process = getProcessInfo();
-	std::string processToProfile = getConfigValueFromEnvironment("PROCESS");
+	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
@@ -61,41 +40,44 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		return S_OK;
 	}
 
-	createLogFile();
+	log.createLogFile();
 	readConfig();
 
 	if (getOption("LIGHT_MODE") == "1") {
 		isLightMode = true;
-		writeTupleToFile(LOG_KEY_INFO, "Mode: light");
+		log.info("Mode: light");
 	}
 	else {
-		writeTupleToFile(LOG_KEY_INFO, "Mode: force re-jitting");
+		log.info("Mode: force re-jitting");
 	}
 
 	std::string eagernessValue = getOption("EAGERNESS");
 	if (!eagernessValue.empty()) {
 		try {
 			eagerness = std::stoi(eagernessValue);
-		} catch (std::exception e) {
+		}
+		catch (std::exception e) {
 			writeTupleToFile(LOG_KEY_WARN, "Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
 		}
 	}
 	writeTupleToFile(LOG_KEY_INFO, "Eagerness: " + std::to_string(eagerness));
 
-	writeTupleToFile(LOG_KEY_PROCESS, process);
+	if (getOption("UPLOAD_DAEMON") == "1") {
+		startUploadDeamon();
+	}
 
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
 		std::string message = "IIS AppPool: ";
 		message += appPool;
-		writeTupleToFile(LOG_KEY_INFO, message);
+		log.info(message);
 	}
 
 	std::string message = "Command Line: ";
 	message += GetCommandLine();
-	writeTupleToFile(LOG_KEY_INFO, message);
+	log.info(message);
 
-	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface( IID_ICorProfilerInfo2, (LPVOID*) &profilerInfo);
+	HRESULT hr = pICorProfilerInfoUnkown->QueryInterface(IID_ICorProfilerInfo2, (LPVOID*)&profilerInfo);
 	if (FAILED(hr) || profilerInfo.p == NULL) {
 		return E_INVALIDARG;
 	}
@@ -104,33 +86,32 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
+	log.logProcess(getProcessInfo());
+
 	return S_OK;
 }
 
+void CProfilerCallback::startUploadDeamon() {
+	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
 
-
-std::string CProfilerCallback::getConfigValueFromEnvironment(std::string suffix) {
-	char value[BUFFER_SIZE];
-	std::string name = "COR_PROFILER_" + suffix;
-	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
-		return "";
-	}
-	return value;
+	UploadDaemon daemon(profilerPath, traceDirectory, &log);
+	daemon.launch();
 }
 
 void CProfilerCallback::readConfig() {
-	std::string configFile = getConfigValueFromEnvironment("CONFIG");
+	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
-		configFile = getConfigValueFromEnvironment("PATH") + ".config";
+		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".config";
 	}
-	writeTupleToFile(LOG_KEY_INFO, "looking for configuration options in: " + configFile);
+	log.info("looking for configuration options in: " + configFile);
 
 	std::ifstream inputStream(configFile);
 	this->configOptions = std::map<std::string, std::string>();
 	for (std::string line; getline(inputStream, line);) {
 		size_t delimiterPosition = line.find("=");
 		if (delimiterPosition == std::string::npos) {
-			writeTupleToFile(LOG_KEY_WARN, "invalid line in config file: " + line);
+			log.warn("invalid line in config file: " + line);
 			continue;
 		}
 
@@ -142,14 +123,15 @@ void CProfilerCallback::readConfig() {
 }
 
 std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = getConfigValueFromEnvironment(optionName);
+	std::string value = WindowsUtils::getConfigValueFromEnvironment(optionName);
 	if (!value.empty()) {
 		return value;
 	}
 	return this->configOptions[optionName];
 }
 
-std::string CProfilerCallback::getProcessInfo(){
+// TODO move to windows utils
+std::string CProfilerCallback::getProcessInfo() {
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -166,67 +148,20 @@ std::string CProfilerCallback::getProcessInfo(){
 	return process;
 }
 
-void CProfilerCallback::createLogFile() {
-	char targetDir[BUFFER_SIZE];
-	if (!GetEnvironmentVariable("COR_PROFILER_TARGETDIR", targetDir,
-			sizeof(targetDir))) {
-		// c:/users/public is usually writable for everyone
-		strcpy_s(targetDir, "c:/users/public/");
-	}
-
-	char logFileName[BUFFER_SIZE];
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
-
-	sprintf_s(logFileName, "%s/coverage_%s.txt", targetDir, timeStamp);
-	_tcscpy_s(logFilePath, logFileName);
-
-	EnterCriticalSection(&criticalSection);
-	logFile = CreateFile(logFilePath, GENERIC_WRITE, FILE_SHARE_READ,
-			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	
-	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
-
-	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
-	LeaveCriticalSection(&criticalSection);
-}
-
-void CProfilerCallback::getFormattedCurrentTime(char *result, size_t size) {
-	SYSTEMTIME time;
-	GetSystemTime (&time);
-	// Four digits for milliseconds means we always have a leading 0 there.
-	// We consider this legacy and keep it here for compatibility reasons.
-	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
-			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
-			time.wMilliseconds);
-}
-
 HRESULT CProfilerCallback::Shutdown() {
 	if (!isProfilingEnabled) {
 		return S_OK;
 	}
 
+	// TODO needed?
 	EnterCriticalSection(&criticalSection);
 
 	writeFunctionInfosToLog();
 
-	// Write timestamp.
-	char timeStamp[BUFFER_SIZE];
-
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
-	writeTupleToFile(LOG_KEY_STOPPED, timeStamp);
-
-	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler" );
-
-	LeaveCriticalSection(&criticalSection);
-
+	log.shutdown();
 	profilerInfo->ForceGC();
 
-	// Close the log file.
-	EnterCriticalSection(&criticalSection);
-	if(logFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(logFile);
-	}
+	// FIXME?
 	LeaveCriticalSection(&criticalSection);
 
 	return S_OK;
@@ -246,7 +181,7 @@ DWORD CProfilerCallback::getEventMask() {
 }
 
 UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
-		BOOL* pbHookFunction) {
+	BOOL* pbHookFunction) {
 	// Disable hooking of functions.
 	*pbHookFunction = false;
 
@@ -278,16 +213,16 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		assemblyName, assemblyNumber);
 
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
-		metadata.usMajorVersion, metadata.usMinorVersion,	metadata.usBuildNumber, metadata.usRevisionNumber);
+		metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
 
 	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
 		writtenChars += writeFileVersionInfo(assemblyPath, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
 	}
-	
+
 	if (getOption("ASSEMBLY_PATHS") == "1") {
-		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S",	assemblyPath);
+		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
-	writeTupleToFile(LOG_KEY_ASSEMBLY, assemblyInfo);
+	log.logAssembly(assemblyInfo);
 
 	// Always return OK
 	return S_OK;
@@ -306,7 +241,7 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 	ModuleID moduleId = 0;
 	profilerInfo->GetAssemblyInfo(assemblyId, BUFFER_SIZE,
 		&assemblyNameSize, assemblyName, &appDomainId, &moduleId);
-	
+
 	// We need the module info to get the path of the assembly
 	LPCBYTE baseLoadAddress;
 	ULONG assemblyPathSize = 0;
@@ -343,6 +278,7 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 		NULL, 0, NULL, metadata, NULL);
 }
 
+// TODO check move?
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
 	DWORD infoSize = GetFileVersionInfoSizeW(assemblyPath, NULL);
 	if (!infoSize) {
@@ -388,10 +324,10 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 
 		recordFunctionInfo(&jittedMethods, LOG_KEY_JITTED, functionId);
 
-		LeaveCriticalSection(&criticalSection);
-	}
+	LeaveCriticalSection(&criticalSection);
+}
 
-	return S_OK;
+return S_OK;
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
@@ -399,18 +335,18 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	// Save information about inlined method (if not already seen)
 	if (isProfilingEnabled) {
 		EnterCriticalSection(&criticalSection);
-		
-		if (inlinedMethodIds.insert(calleeId).second == true) {
-			recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
-		}
 
-		LeaveCriticalSection(&criticalSection);
+	if (inlinedMethodIds.insert(calleeId).second == true) {
+		recordFunctionInfo(&inlinedMethods, LOG_KEY_INLINED, calleeId);
 	}
 
-	// Always allow inlining.
-	*pfShouldInline = true;
+	LeaveCriticalSection(&criticalSection);
+}
 
-	return S_OK;
+// Always allow inlining.
+*pfShouldInline = true;
+
+return S_OK;
 }
 
 void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, const char* logKey, FunctionID calleeId) {
@@ -442,7 +378,7 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* 
 			info->assemblyNumber = assemblyMap[assemblyId];
 		}
 	}
-	
+
 	return hr;
 }
 
@@ -450,30 +386,39 @@ void CProfilerCallback::writeTupleToFile(const char* key, std::string value) {
 	writeTupleToFile(key, value.c_str());
 }
 
-void CProfilerCallback::writeTupleToFile(const char* key, const char* value) {
-	char buffer[BUFFER_SIZE];
-	sprintf_s(buffer, "%s=%s\r\n", key, value);
-	writeToFile(buffer);
-}
-
-int CProfilerCallback::writeToFile(const char* string) {
-	int retVal = 0;
-	DWORD dwWritten = 0;
-
-	if (logFile != INVALID_HANDLE_VALUE) {
-		EnterCriticalSection(&criticalSection);
-		if (TRUE == WriteFile(logFile, string,
-			(DWORD)strlen(string), &dwWritten, NULL)) {
-			retVal = dwWritten;
-		} else {
-			retVal = 0;
-		}
-		LeaveCriticalSection(&criticalSection);
+int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
+	DWORD infoSize = GetFileVersionInfoSizeW(assemblyPath, NULL);
+	if (!infoSize) {
+		return 0;
 	}
-	
-	return retVal;
-}
 
+	BYTE* versionInfo = new BYTE[infoSize];
+	if (!GetFileVersionInfoW(assemblyPath, NULL, infoSize, versionInfo)) {
+		return 0;
+	}
+
+	VS_FIXEDFILEINFO* fileInfo = NULL;
+	UINT fileInfoLength = 0;
+	if (!VerQueryValueW(versionInfo, L"\\", (void**)&fileInfo, &fileInfoLength)) {
+		return 0;
+	}
+
+	int	 version[4];
+	version[0] = HIWORD(fileInfo->dwFileVersionMS);
+	version[1] = LOWORD(fileInfo->dwFileVersionMS);
+	version[2] = HIWORD(fileInfo->dwFileVersionLS);
+	version[3] = LOWORD(fileInfo->dwFileVersionLS);
+
+	int writtenChars = sprintf_s(buffer, bufferSize, " FileVersion:%i.%i.%i.%i",
+		version[0], version[1], version[2], version[3]);
+
+	version[0] = HIWORD(fileInfo->dwProductVersionMS);
+	version[1] = LOWORD(fileInfo->dwProductVersionMS);
+	version[2] = HIWORD(fileInfo->dwProductVersionLS);
+	version[3] = LOWORD(fileInfo->dwProductVersionLS);
+
+	writtenChars += sprintf_s(buffer + writtenChars, bufferSize - writtenChars, " ProductVersion:%i.%i.%i.%i",
+		version[0], version[1], version[2], version[3]);
 void CProfilerCallback::writeFunctionInfosToLog() {
 	writeFunctionInfosToLog(LOG_KEY_INLINED, &inlinedMethods);
 	writeFunctionInfosToLog(LOG_KEY_JITTED, &jittedMethods);
@@ -488,6 +433,9 @@ void CProfilerCallback::writeFunctionInfosToLog(const char* key,
 	functions->clear();
 }
 
+	delete versionInfo;
+	return writtenChars;
+}
 void CProfilerCallback::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
 	char signature[BUFFER_SIZE];
 	signature[0] = '\0';
