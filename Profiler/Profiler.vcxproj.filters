@@ -30,10 +30,10 @@
     <ClCompile Include="WindowsUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileSystemUtils.cpp">
+    <ClCompile Include="UploadDaemon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UploadDaemon.cpp">
+    <ClCompile Include="StringUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,10 +62,10 @@
     <ClInclude Include="WindowsUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileSystemUtils.h">
+    <ClInclude Include="UploadDaemon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UploadDaemon.h">
+    <ClInclude Include="StringUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

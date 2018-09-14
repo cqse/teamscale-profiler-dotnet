@@ -13,4 +13,7 @@ public:
 
 	/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
 	static std::string getConfigValueFromEnvironment(std::string suffix);
+
+	/** Returns information about the profiled process. */
+	static std::string getProcessInfo();
 };

@@ -1,7 +1,7 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "UploadDaemon.h"
-#include "FileSystemUtils.h"
+#include "StringUtils.h"
 #include "WindowsUtils.h"
 #include <fstream>
 #include <algorithm>
@@ -20,23 +20,13 @@ CProfilerCallback::~CProfilerCallback() {
 	DeleteCriticalSection(&callbackSynchronization);
 }
 
-// TODO move to util
-/** Whether the given value ends with the given suffix. */
-inline bool endsWith(std::string const & value, std::string const & suffix)
-{
-	if (suffix.size() > value.size()) {
-		return false;
-	}
-	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
-}
-
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	std::string process = getProcessInfo();
 	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
-	isProfilingEnabled = processToProfile.empty() || endsWith(process, processToProfile);
+	isProfilingEnabled = processToProfile.empty() || StringUtils::endsWith(process, processToProfile);
 	if (!isProfilingEnabled) {
 		return S_OK;
 	}
@@ -87,14 +77,14 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(getProcessInfo());
+	log.logProcess(process);
 
 	return S_OK;
 }
 
 void CProfilerCallback::startUploadDeamon() {
-	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
-	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
+	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	std::string traceDirectory = StringUtils::removeLastPartOfPath(log.getLogFilePath());
 
 	UploadDaemon daemon(profilerPath, traceDirectory, &log);
 	daemon.launch();
@@ -131,7 +121,6 @@ std::string CProfilerCallback::getOption(std::string optionName) {
 	return this->configOptions[optionName];
 }
 
-// TODO move to windows utils
 std::string CProfilerCallback::getProcessInfo() {
 	appPath[0] = 0;
 	appName[0] = 0;
@@ -154,10 +143,12 @@ HRESULT CProfilerCallback::Shutdown() {
 		return S_OK;
 	}
 
+	EnterCriticalSection(&callbackSynchronization);
 	writeFunctionInfosToLog();
 
 	log.shutdown();
 	profilerInfo->ForceGC();
+	LeaveCriticalSection(&callbackSynchronization);
 
 	return S_OK;
 }
@@ -306,6 +297,8 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 }
 
 void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, FunctionID calleeId) {
+	// Must be called from synchronized context
+
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
@@ -316,9 +309,20 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 	}
 }
 
-inline bool CProfilerCallback::shouldWriteEagerly()
-{
+inline bool CProfilerCallback::shouldWriteEagerly() {
+	// Must be called from synchronized context
+
 	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
+}
+
+void CProfilerCallback::writeFunctionInfosToLog() {
+	// Must be called from synchronized context
+
+	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
+	inlinedMethods.clear();
+
+	log.writeJittedFunctionInfosToLog(&jittedMethods);
+	jittedMethods.clear();
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
@@ -336,18 +340,6 @@ HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* 
 	}
 
 	return hr;
-}
-
-void CProfilerCallback::writeFunctionInfosToLog() {
-	EnterCriticalSection(&callbackSynchronization);
-
-	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
-	inlinedMethods.clear();
-
-	log.writeJittedFunctionInfosToLog(&jittedMethods);
-	jittedMethods.clear();
-
-	LeaveCriticalSection(&callbackSynchronization);
 }
 
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {
