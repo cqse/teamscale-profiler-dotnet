@@ -22,29 +22,21 @@ namespace ProfilerGUI
         public MainWindow(bool launchTargetAppDirectly)
         {
             InitializeComponent();
-            ViewModel = new MainViewModel(launchTargetAppDirectly);
-            this.DataContext = ViewModel;
+            this.ViewModel = new MainViewModel(launchTargetAppDirectly);
+            this.DataContext = this.ViewModel;
         }
 
         private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
-            {
-                ConfigureLogBox();
-            });
+            Dispatcher.Invoke(ConfigureLogBox);
         }
 
         private void ConfigureLogBox()
         {
-            var target = new Helper.WpfRichTextBoxTarget
+            var target = new WpfRichTextTarget(LogBox)
             {
                 Name = "RichText",
                 Layout = "[${level:uppercase=true}] ${message} (${logger})${onexception:inner=${newline}${exception:format=ShortType,Message:innerFormat=ShortType,Message:maxInnerExceptionLevel=10}}${newline}",
-                ControlName = LogBox.Name,
-                FormName = GetType().Name,
-                AutoScroll = true,
-                MaxLines = 100000,
-                UseDefaultRowColoringRules = true,
             };
             var asyncWrapper = new AsyncTargetWrapper { Name = "RichTextAsync", WrappedTarget = target };
 

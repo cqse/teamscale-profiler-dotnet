@@ -76,10 +76,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Source\Configurator\BoolToCollapsingConverter.cs" />
-    <Compile Include="Helper\WpfRichTextBoxRowColoringRule.cs" />
-    <Compile Include="Helper\WpfRichTextBoxTarget.cs" />
-    <Compile Include="Helper\WpfRichTextBoxWordColoringRule.cs" />
     <Compile Include="Source\Configurator\ValidationResult.cs" />
+    <Compile Include="Source\Configurator\WpfRichTextLoggingRule.cs" />
     <Compile Include="Source\Configurator\WpfUtils.cs" />
     <Compile Include="Source\Shared\SystemUtils.cs" />
     <Compile Include="UploadConfigWindow.xaml.cs">
@@ -158,9 +156,6 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Helper\README_NLog_WpfRichTextBox.txt" />
   </ItemGroup>
   <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
