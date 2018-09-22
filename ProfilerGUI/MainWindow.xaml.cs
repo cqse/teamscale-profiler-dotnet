@@ -13,7 +13,7 @@ namespace ProfilerGUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MainViewModel ViewModel;
+        private MainViewModel ViewModel => DataContext as MainViewModel;
 
         /// <summary>
         /// Constructor
@@ -22,8 +22,7 @@ namespace ProfilerGUI
         public MainWindow(bool launchTargetAppDirectly)
         {
             InitializeComponent();
-            this.ViewModel = new MainViewModel(launchTargetAppDirectly);
-            this.DataContext = this.ViewModel;
+            DataContext = new MainViewModel(launchTargetAppDirectly);
         }
 
         private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
@@ -59,7 +58,8 @@ namespace ProfilerGUI
         {
             using (OpenFileDialog dialog = new OpenFileDialog
             {
-                // This lets the user select lnk-files (shortcuts), which can be helpful in our context
+                // This lets the user select lnk-files (shortcuts) instead of resolving them to their target exe files
+                // this allows us the parse the contents of the link files and extract working dir, arguments, ...
                 DereferenceLinks = false,
                 Filter = "Applications or shortcuts|*.lnk;*.exe;*.dll|All files|*.*"
             })
