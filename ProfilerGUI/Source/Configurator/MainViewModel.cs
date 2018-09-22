@@ -147,7 +147,7 @@ namespace ProfilerGUI.Source.Configurator
 
             try
             {
-                return JsonConvert.DeserializeObject<UploadConfig>(File.ReadAllText(UploadConfigFilePath));
+                return UploadConfig.ReadFromFile(UploadConfigFilePath);
             }
             catch (Exception e)
             {

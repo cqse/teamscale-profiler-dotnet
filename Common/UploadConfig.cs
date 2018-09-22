@@ -1,4 +1,5 @@
 ﻿using Common;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -78,6 +79,15 @@ namespace Common
                 Directory = Directory,
                 VersionAssembly = VersionAssembly,
             };
+        }
+
+        /// <summary>
+        /// Parses the config stored in the given file.
+        /// </summary>
+        /// <exception cref="Exception">May throw any number of IO or JSON deserialization related exceptions</exception>
+        public static UploadConfig ReadFromFile(string path)
+        {
+            return JsonConvert.DeserializeObject<UploadConfig>(File.ReadAllText(path));
         }
     }
 }

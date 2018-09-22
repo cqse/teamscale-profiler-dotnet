@@ -65,7 +65,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.TargetApplicationPath = value;
-                if (Configuration.TargetApplicationPath?.EndsWith(WindowsShortcutReader.ShortcutExtension) == true)
+                if (Configuration.TargetApplicationPath?.EndsWith(Shortcut.Extension) == true)
                 {
                     FillValuesFromLnkFile(Configuration.TargetApplicationPath);
                 }
@@ -141,10 +141,10 @@ namespace ProfilerGUI.Source.Configurator
         {
             try
             {
-                WindowsShortcutReader.ShortcutInfo shortcutInfo = WindowsShortcutReader.ReadShortcutInfo(targetApplicationPath);
-                ApplicationPath = shortcutInfo.TargetPath;
-                WorkingDirectory = shortcutInfo.WorkingDirectory;
-                Arguments = shortcutInfo.Arguments;
+                Shortcut shortcut = Shortcut.ReadShortcutFile(targetApplicationPath);
+                ApplicationPath = shortcut.TargetPath;
+                WorkingDirectory = shortcut.WorkingDirectory;
+                Arguments = shortcut.Arguments;
             }
             catch
             {

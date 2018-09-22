@@ -98,17 +98,17 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Whether the configuration UI for the Teamscale server should be shown.
         /// </summary>
-        public bool IsTeamscaleConfigVisible { get => Config != null && Config.Teamscale != null; }
+        public bool IsTeamscaleConfigVisible => Config != null && Config.Teamscale != null;
 
         /// <summary>
         /// Whether the configuration UI for the directory to copy to should be shown.
         /// </summary>
-        public bool IsDirectoryConfigVisible { get => Config != null && Config.Teamscale == null; }
+        public bool IsDirectoryConfigVisible => Config != null && Config.Teamscale == null;
 
         /// <summary>
         /// Whether the configuration UI for the version assembly should be shown.
         /// </summary>
-        public bool IsVersionAssemblyVisible { get => Config != null; }
+        public bool IsVersionAssemblyVisible => Config != null;
 
         private ValidationResult internalValidationResult = null;
 

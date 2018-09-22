@@ -5,8 +5,6 @@
              xmlns:configurator="clr-namespace:ProfilerGUI.Source.Configurator"
              Startup="OnApplicationStart">
     <Application.Resources>
-
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <configurator:BoolToCollapsingConverter x:Key="BoolToCollapsingConverter" />
     </Application.Resources>
 </Application>

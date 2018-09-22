@@ -33,16 +33,16 @@
                     </ComboBox>
                 </StackPanel>
 
-                <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}" />
-                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}" />
+                <Label  Content="Version Assembly" Grid.Row="2" Grid.Column="0"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToVisibility}}" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=Config.VersionAssembly, Mode=TwoWay}" Grid.Row="2" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToVisibility}}" />
 
-                <Label Grid.Row="4" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToCollapsingConverter}}">
+                <Label Grid.Row="4" Grid.Column="1"  Visibility="{Binding Path=IsVersionAssemblyVisible, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock TextWrapping="Wrap">
                         The assembly from which to read the version number. Must be the assembly name without the file extension, e.g. My.Assembly
                     </TextBlock>
                 </Label>
             </Grid>
-            <Grid Margin="0 10 0 0" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToCollapsingConverter}}">
+            <Grid Margin="0 10 0 0" Visibility="{Binding Path=IsDirectoryConfigVisible, Converter={StaticResource BoolToVisibility}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="160" />
                     <ColumnDefinition Width="1*" />

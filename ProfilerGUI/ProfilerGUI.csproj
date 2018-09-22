@@ -75,7 +75,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Source\Configurator\BoolToCollapsingConverter.cs" />
     <Compile Include="Source\Configurator\ValidationResult.cs" />
     <Compile Include="Source\Configurator\WpfRichTextLoggingRule.cs" />
     <Compile Include="Source\Configurator\WpfUtils.cs" />
