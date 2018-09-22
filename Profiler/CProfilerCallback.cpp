@@ -1,7 +1,7 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "UploadDaemon.h"
-#include "FileSystemUtils.h"
+#include "StringUtils.h"
 #include "WindowsUtils.h"
 #include <fstream>
 #include <algorithm>
@@ -13,20 +13,11 @@ using namespace std;
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 CProfilerCallback::CProfilerCallback() {
-	// nothing to do
+	InitializeCriticalSection(&callbackSynchronization);
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	// nothing to do
-}
-
-/** Whether the given value ends with the given suffix. */
-inline bool endsWith(std::string const & value, std::string const & suffix)
-{
-	if (suffix.size() > value.size()) {
-		return false;
-	}
-	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+	DeleteCriticalSection(&callbackSynchronization);
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
@@ -35,7 +26,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
-	isProfilingEnabled = processToProfile.empty() || endsWith(process, processToProfile);
+	isProfilingEnabled = processToProfile.empty() || StringUtils::endsWith(process, processToProfile);
 	if (!isProfilingEnabled) {
 		return S_OK;
 	}
@@ -51,13 +42,16 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		log.info("Mode: force re-jitting");
 	}
 
-	if (getOption("EAGER_MODE") == "1") {
-		isEagerMode = true;
-		log.info("Mode: eager");
+	std::string eagernessValue = getOption("EAGERNESS");
+	if (!eagernessValue.empty()) {
+		try {
+			eagerness = std::stoi(eagernessValue);
+		}
+		catch (std::exception e) {
+			log.warn("Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
+		}
 	}
-	else {
-		log.info("Mode: lazy");
-	}
+	log.info("Eagerness: " + std::to_string(eagerness));
 
 	if (getOption("UPLOAD_DAEMON") == "1") {
 		startUploadDeamon();
@@ -87,7 +81,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(getProcessInfo());
+	log.logProcess(process);
 
 	return S_OK;
 }
@@ -106,8 +100,8 @@ void CProfilerCallback::dumpEnvironment() {
 }
 
 void CProfilerCallback::startUploadDeamon() {
-	std::string profilerPath = FileSystemUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
-	std::string traceDirectory = FileSystemUtils::removeLastPartOfPath(log.getLogFilePath());
+	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	std::string traceDirectory = StringUtils::removeLastPartOfPath(log.getLogFilePath());
 
 	UploadDaemon daemon(profilerPath, traceDirectory, &log);
 	daemon.launch();
@@ -166,22 +160,12 @@ HRESULT CProfilerCallback::Shutdown() {
 		return S_OK;
 	}
 
-	if (!isEagerMode) {
-		char buffer[BUFFER_SIZE];
-
-		// Write inlined methods.
-		sprintf_s(buffer, "%zu methods inlined", inlinedMethods.size());
-		log.info(buffer);
-		log.writeInlinedFunctionInfosToLog(&inlinedMethods);
-
-		// Write jitted methods.
-		sprintf_s(buffer, "%zu methods jitted", jittedMethods.size());
-		log.info(buffer);
-		log.writeJittedFunctionInfosToLog(&jittedMethods);
-	}
+	EnterCriticalSection(&callbackSynchronization);
+	writeFunctionInfosToLog();
 
 	log.shutdown();
 	profilerInfo->ForceGC();
+	LeaveCriticalSection(&callbackSynchronization);
 
 	return S_OK;
 }
@@ -213,6 +197,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return S_OK;
 	}
 
+	EnterCriticalSection(&callbackSynchronization);
+
 	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
@@ -222,6 +208,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	WCHAR assemblyPath[BUFFER_SIZE];
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
+
+	LeaveCriticalSection(&callbackSynchronization);
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
@@ -293,100 +281,82 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 		NULL, 0, NULL, metadata, NULL);
 }
 
-HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (!isProfilingEnabled) {
-		return S_OK;
+HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
+	HRESULT hrStatus, BOOL fIsSafeToBlock) {
+	if (isProfilingEnabled) {
+		EnterCriticalSection(&callbackSynchronization);
+
+		recordFunctionInfo(&jittedMethods, functionId);
+
+		LeaveCriticalSection(&callbackSynchronization);
 	}
 
-	FunctionInfo info;
-	getFunctionInfo(functionId, &info);
-
-	if (isEagerMode) {
-		std::vector<FunctionInfo> infoList = { info };
-		log.writeJittedFunctionInfosToLog(&infoList);
-	}
-	else {
-		// Notify monitor that method has been jitted.
-		jittedMethods.push_back(info);
-	}
-
-	// Always return OK
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId, BOOL* pfShouldInline) {
-	if (!isProfilingEnabled) {
-		return S_OK;
-	}
+HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
+	BOOL* pfShouldInline) {
+	// Save information about inlined method (if not already seen)
+	if (isProfilingEnabled) {
+		EnterCriticalSection(&callbackSynchronization);
 
-	FunctionInfo info;
-	getFunctionInfo(calleeId, &info);
-
-	if (isEagerMode) {
-		std::vector<FunctionInfo> infoList = { info };
-		log.writeInlinedFunctionInfosToLog(&infoList);
-	}
-	else {
-		// Save information about inlined method.
 		if (inlinedMethodIds.insert(calleeId).second == true) {
-			inlinedMethods.push_back(info);
+			recordFunctionInfo(&inlinedMethods, calleeId);
 		}
+
+		LeaveCriticalSection(&callbackSynchronization);
 	}
 
 	// Always allow inlining.
 	*pfShouldInline = true;
 
-	// Always return OK
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId,
-	FunctionInfo* info) {
-	mdToken functionToken = mdTypeDefNil;
-	IMetaDataImport* pMDImport = NULL;
-	WCHAR functionName[BUFFER_SIZE] = L"UNKNOWN";
+void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, FunctionID calleeId) {
+	// Must be called from synchronized context
 
-	HRESULT hr = profilerInfo->GetTokenAndMetaDataFromFunction(functionId,
-		IID_IMetaDataImport, (IUnknown**)&pMDImport, &functionToken);
-	if (!SUCCEEDED(hr)) {
-		return hr;
+	FunctionInfo info;
+	getFunctionInfo(calleeId, &info);
+
+	recordedFunctionInfos->push_back(info);
+
+	if (shouldWriteEagerly()) {
+		writeFunctionInfosToLog();
 	}
-
-	mdTypeDef classToken = mdTypeDefNil;
-	DWORD methodAttr = 0;
-	PCCOR_SIGNATURE sigBlob = NULL;
-	ULONG sigSize = 0;
-	ModuleID moduleId = 0;
-	hr = pMDImport->GetMethodProps(functionToken, &classToken, functionName,
-		sizeof(functionName), 0, &methodAttr, &sigBlob, &sigSize, NULL,
-		NULL);
-	if (SUCCEEDED(hr)) {
-		fillFunctionInfo(info, functionId, functionToken, moduleId);
-	}
-
-	pMDImport->Release();
-
-	return hr;
 }
 
-void CProfilerCallback::fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId) {
-	ClassID classId = 0;
-	ULONG32 values = 0;
-	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		&classId, &moduleId, &functionToken, 0, &values, NULL);
+inline bool CProfilerCallback::shouldWriteEagerly() {
+	// Must be called from synchronized context
 
-	int assemblyNumber = -1;
+	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
+}
+
+void CProfilerCallback::writeFunctionInfosToLog() {
+	// Must be called from synchronized context
+
+	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
+	inlinedMethods.clear();
+
+	log.writeJittedFunctionInfosToLog(&jittedMethods);
+	jittedMethods.clear();
+}
+
+HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
+	ModuleID moduleId = 0;
+	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
+		NULL, &moduleId, &info->functionToken, 0, NULL, NULL);
+
 	if (SUCCEEDED(hr) && moduleId != 0) {
 		AssemblyID assemblyId;
 		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
 			NULL, NULL, &assemblyId);
 		if (SUCCEEDED(hr)) {
-			assemblyNumber = assemblyMap[assemblyId];
+			info->assemblyNumber = assemblyMap[assemblyId];
 		}
 	}
 
-	info->assemblyNumber = assemblyNumber;
-	info->functionToken = functionToken;
+	return hr;
 }
 
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {

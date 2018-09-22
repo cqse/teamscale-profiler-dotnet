@@ -202,9 +202,9 @@
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClCompile Include="FileSystemUtils.cpp" />
+    <ClCompile Include="StringUtils.cpp" />
+    <ClInclude Include="StringUtils.h" />
     <ClInclude Include="Debug.h" />
-    <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
     <ClCompile Include="WindowsUtils.cpp">

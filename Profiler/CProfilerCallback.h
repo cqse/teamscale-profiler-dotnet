@@ -67,6 +67,9 @@ public:
 	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
 
 private:
+	/** Synchronizes profiling callbacks. */
+	CRITICAL_SECTION callbackSynchronization;
+
 	/** Default size for arrays. */
 	static const int BUFFER_SIZE = 2048;
 
@@ -77,10 +80,11 @@ private:
 	bool isLightMode = false;
 
 	/**
-	 * Whether to run in eager mode and write all invocations to the trace
-	 * file directly instead of waiting until shutdown.
+	 * Whether to run in eager mode and write a batch of recorded invocations to the trace
+	 * file instead of waiting until shutdown. If 0, everything is written on shutdown,
+	 * otherwise the sepcified amount of method calls is recorded and written thereafter.
 	 */
-	bool isEagerMode = false;
+	size_t eagerness = 0;
 
 	/** Whether the current process should be profiled. */
 	bool isProfilingEnabled = false;
@@ -103,9 +107,9 @@ private:
 	std::set<FunctionID> inlinedMethodIds;
 
 	/**
-	* Collecions that keep track of inlined methods.
-	* We use the vector to uniquely store the information about inlined methods.
-	*/
+	 * Collecions that keep track of inlined methods.
+	 * We use the vector to uniquely store the information about inlined methods.
+	 */
 	std::vector<FunctionInfo> inlinedMethods;
 
 	/**
@@ -145,8 +149,14 @@ private:
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
 
-	/** Fills the given function info for the function represented by the given IDs and tokens. */
-	void fillFunctionInfo(FunctionInfo* info, FunctionID functionId, mdToken functionToken, ModuleID moduleId);
+	/** Triggers eagerly writing of function infos to log. */
+	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
+
+	/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
+	bool shouldWriteEagerly();
+
+	/** Write all information about the recorded functions to the log and clears the log. */
+	void writeFunctionInfosToLog();
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);

@@ -174,11 +174,9 @@ void Log::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* fu
 }
 
 void Log::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	EnterCriticalSection(&criticalSection);
 	char signature[BUFFER_SIZE];
 	signature[0] = '\0';
 	sprintf_s(signature, "%i:%i", info.assemblyNumber,
 		info.functionToken);
 	writeTupleToFile(key, signature);
-	LeaveCriticalSection(&criticalSection);
 }
