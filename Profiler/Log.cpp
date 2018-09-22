@@ -24,6 +24,9 @@ namespace {
 	/** The key to log information about the profiled process. */
 	const char* LOG_KEY_PROCESS = "Process";
 
+	/** The key to log information about the environment variables the profiled process sees. */
+	const char* LOG_KEY_ENVIRONMENT = "Environment";
+
 	/** The key to log information about inlined methods. */
 	const char* LOG_KEY_INLINED = "Inlined";
 
@@ -59,6 +62,11 @@ void Log::warn(std::string message)
 void Log::error(std::string message)
 {
 	writeTupleToFile(LOG_KEY_ERROR, message.c_str());
+}
+
+void Log::logEnvironmentVariable(std::string variable)
+{
+	writeTupleToFile(LOG_KEY_ENVIRONMENT, variable.c_str());
 }
 
 void Log::logProcess(std::string process)
@@ -166,11 +174,9 @@ void Log::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* fu
 }
 
 void Log::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	EnterCriticalSection(&criticalSection);
 	char signature[BUFFER_SIZE];
 	signature[0] = '\0';
 	sprintf_s(signature, "%i:%i", info.assemblyNumber,
 		info.functionToken);
 	writeTupleToFile(key, signature);
-	LeaveCriticalSection(&criticalSection);
 }

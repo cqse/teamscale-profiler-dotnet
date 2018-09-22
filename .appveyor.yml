@@ -36,15 +36,9 @@ test_script:
   - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 after_test:
-  # Convert GitHub Wiki to PDF
-  - cmd: git clone --depth=5 https://github.com/cqse/teamscale-profiler-dotnet.wiki.git wiki
-  - cmd: npm install -g github-wikito-converter
-  - cmd: curl -L https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_msvc2015-win64.exe --output wkhtmltox.exe
-  - cmd: wkhtmltox.exe /S /D=C:\wkhtmltox
-  - cmd: set PATH=%PATH%;C:\wkhtmltox\bin
-  - cmd: sc start spooler # ensure the printer service is running for generating the PDF
-  - cmd: wkhtmltopdf -V
-  - cmd: gwtc -v --css wiki/export.css -t "Teamscale Ephemeral .NET Profiler" -f pdf wiki
+  # Convert documentation
+  - cmd: npm install markdown-pdf
+  - cmd: node_modules\.bin\markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
   # Create release zip with profiler & documentation
   - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon
   - cmd: mkdir teamscale_dotnet_profiler\GUI
@@ -55,7 +49,7 @@ after_test:
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll & exit 0
   - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
   - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
-  - cmd: robocopy . teamscale_dotnet_profiler/Documentation documentation.pdf & exit 0
+  - cmd: robocopy .\documentation teamscale_dotnet_profiler/Documentation userguide.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:

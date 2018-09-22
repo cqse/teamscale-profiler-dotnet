@@ -195,18 +195,20 @@
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
+    <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClCompile Include="FileSystemUtils.cpp" />
-    <ClInclude Include="FileSystemUtils.h" />
+    <ClCompile Include="StringUtils.cpp" />
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
     <ClCompile Include="WindowsUtils.cpp">
-      <FileType>CppClass</FileType>
+      <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
