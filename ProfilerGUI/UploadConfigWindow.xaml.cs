@@ -23,7 +23,7 @@ namespace ProfilerGUI
         /// <summary>
         /// The config the user edited.
         /// </summary>
-        public UploadConfig Config { get => ViewModel.Config; }
+        public UploadConfig Config => ViewModel.Config;
 
         public UploadConfigWindow(UploadConfig config)
         {
@@ -34,7 +34,7 @@ namespace ProfilerGUI
 
         private void OnValidateClicked(object sender, RoutedEventArgs e)
         {
-            Task<bool> _ = ViewModel.Validate();
+            _ = ViewModel.Validate();
         }
 
         private async void OnOk(object sender, RoutedEventArgs e)
@@ -57,7 +57,7 @@ namespace ProfilerGUI
 
         private void OnSelectDirectory(object sender, RoutedEventArgs e)
         {
-            WpfUtils.OpenFolderChooser(path => ViewModel.Directory = path);
+            UiUtils.OpenFolderChooser(path => ViewModel.Directory = path);
         }
     }
 }

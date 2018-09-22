@@ -77,7 +77,7 @@
     </ApplicationDefinition>
     <Compile Include="Source\Configurator\ValidationResult.cs" />
     <Compile Include="Source\Configurator\WpfRichTextLoggingRule.cs" />
-    <Compile Include="Source\Configurator\WpfUtils.cs" />
+    <Compile Include="Source\Configurator\UiUtils.cs" />
     <Compile Include="Source\Shared\SystemUtils.cs" />
     <Compile Include="UploadConfigWindow.xaml.cs">
       <DependentUpon>UploadConfigWindow.xaml</DependentUpon>

@@ -39,7 +39,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.TraceTargetFolder = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -52,7 +52,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.ApplicationType = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -73,7 +73,7 @@ namespace ProfilerGUI.Source.Configurator
                 {
                     UpdateExecutableMachineType();
                 }
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -86,7 +86,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.TargetApplicationArguments = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -99,7 +99,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Configuration.WorkingDirectory = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 

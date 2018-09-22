@@ -25,11 +25,11 @@ namespace ProfilerGUI.Source.Shared
         /// <summary>
         /// Constructor
         /// </summary>
-        public ProcessResult(int returnCode, string stdout = null, string stderr = null)
+        public ProcessResult(int returnCode, string stdout = "", string stderr = "")
         {
             ReturnCode = returnCode;
-            StdOut = stdout ?? string.Empty;
-            StdErr = stderr ?? string.Empty;
+            StdOut = stdout;
+            StdErr = stderr;
         }
     }
 }

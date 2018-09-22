@@ -51,7 +51,7 @@ namespace ProfilerGUI
 
         private void OnChooseTargetDirButtonClick(object sender, EventArgs args)
         {
-            WpfUtils.OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
+            UiUtils.OpenFolderChooser(selectedPath => ViewModel.TargetApp.TraceDirectory = selectedPath);
         }
 
         private void OnChooseApplicationButtonClick(object sender, EventArgs args)

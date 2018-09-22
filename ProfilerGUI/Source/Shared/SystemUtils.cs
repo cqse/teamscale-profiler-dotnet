@@ -49,8 +49,9 @@ namespace ProfilerGUI.Source.Shared
 
             startInfo.UseShellExecute = false;
 
-            foreach (var (environmentVariable, value) in environmentVariables)
+            foreach ((string environmentVariable, string value) in environmentVariables)
             {
+                // we must first remove the variable or otherwise the Add call will throw an exception
                 startInfo.EnvironmentVariables.Remove(environmentVariable);
                 startInfo.EnvironmentVariables.Add(environmentVariable, value);
             }

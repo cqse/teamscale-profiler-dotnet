@@ -10,9 +10,9 @@ using System.Windows.Forms;
 namespace ProfilerGUI.Source.Configurator
 {
     /// <summary>
-    /// Extensions to make working with WPF easier.
+    /// Utilities to make working with the UI easier.
     /// </summary>
-    public static class WpfUtils
+    public static class UiUtils
     {
         /// <summary>
         /// Opens a folder chooser and calls the given action with the selected folder if the user chose one.
@@ -24,7 +24,7 @@ namespace ProfilerGUI.Source.Configurator
                 DialogResult result = dialog.ShowDialog();
                 if (result == System.Windows.Forms.DialogResult.OK)
                 {
-                    pathSelectedAction.Invoke(dialog.SelectedPath);
+                    pathSelectedAction(dialog.SelectedPath);
                 }
             }
         }
@@ -32,7 +32,7 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Raises the OnPropertyChangedEvent of an INotifyPropertyChanged object.
         /// </summary>
-        public static void Raise(this PropertyChangedEventHandler handler, INotifyPropertyChanged sender, [CallerMemberName] string propertyName = "")
+        public static void Raise(PropertyChangedEventHandler handler, INotifyPropertyChanged sender, [CallerMemberName] string propertyName = "")
         {
             handler?.Invoke(sender, new PropertyChangedEventArgs(propertyName));
         }
@@ -40,15 +40,15 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Re-raises the OnPropertyChangedEvent of a descendant INotifyPropertyChanged object.
         /// </summary>
-        public static void ReRaise(this PropertyChangedEventHandler handler, INotifyPropertyChanged sender, string originalSenderName, PropertyChangedEventArgs originalArgs)
+        public static void ReRaise(PropertyChangedEventHandler handler, INotifyPropertyChanged sender, string originalSenderName, PropertyChangedEventArgs originalArgs)
         {
             if (originalArgs.PropertyName == null)
             {
-                handler.Raise(sender, null);
+                Raise(handler, sender, null);
             }
             else
             {
-                handler.Raise(sender, originalSenderName + "." + originalArgs.PropertyName);
+                Raise(handler, sender, originalSenderName + "." + originalArgs.PropertyName);
             }
         }
     }

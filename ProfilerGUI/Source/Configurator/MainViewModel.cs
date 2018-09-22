@@ -41,7 +41,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 TargetApp.ApplicationType = (EApplicationType)value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -88,11 +88,11 @@ namespace ProfilerGUI.Source.Configurator
             TargetApp = new TargetAppModel(configuration);
             TargetApp.PropertyChanged += (sender, args) =>
             {
-                PropertyChanged.ReRaise(this, nameof(TargetApp), args);
+                UiUtils.ReRaise(PropertyChanged, this, nameof(TargetApp), args);
 
                 if (args.PropertyName == nameof(TargetApp.ApplicationType))
                 {
-                    PropertyChanged.Raise(this, nameof(SelectedBitnessIndex));
+                    UiUtils.Raise(PropertyChanged, this, nameof(SelectedBitnessIndex));
                 }
             };
 
@@ -110,7 +110,7 @@ namespace ProfilerGUI.Source.Configurator
             {
                 uploadConfig = dialog.Config;
             }
-            PropertyChanged.Raise(this, nameof(UploadSummary));
+            UiUtils.Raise(PropertyChanged, this, nameof(UploadSummary));
         }
 
         /// <summary>

@@ -78,7 +78,7 @@ namespace ProfilerGUI.Source.Configurator
                 }
 
                 // force all UI elements to be refreshed since this affects almost all of them
-                PropertyChanged.Raise(this, null);
+                UiUtils.Raise(PropertyChanged, this, null);
             }
         }
 
@@ -91,7 +91,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 Config.Directory = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
@@ -121,7 +121,7 @@ namespace ProfilerGUI.Source.Configurator
             set
             {
                 internalValidationResult = value;
-                PropertyChanged.Raise(this);
+                UiUtils.Raise(PropertyChanged, this);
             }
         }
 
