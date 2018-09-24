@@ -133,7 +133,7 @@ ASSEMBLY_PATHS=1
 EAGERNESS=100
 ```
 
-Please note that you **cannot** register the profiler itself via the settings file, and you **cannot** set the `PROCESS` option via the settings file.
+Please note that you **cannot** register the profiler itself via the settings file.
 
 
 

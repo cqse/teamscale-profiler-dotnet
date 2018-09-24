@@ -21,8 +21,10 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
+	readConfig();
+
 	std::string process = getProcessInfo();
-	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
+	std::string processToProfile = getOption("PROCESS");
 	std::transform(process.begin(), process.end(), process.begin(), toupper);
 	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
 
@@ -32,7 +34,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 
 	log.createLogFile();
-	readConfig();
 
 	if (getOption("LIGHT_MODE") == "1") {
 		isLightMode = true;
