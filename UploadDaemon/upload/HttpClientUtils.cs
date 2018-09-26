@@ -17,12 +17,12 @@ internal static class HttpClientUtils
     /// <returns>The HTTP response. The caller must dispose of it.</returns>
     /// <exception cref="IOException">In case there are network or file system errors.</exception>
     /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-    public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameter, string filePath)
+    public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, string filePath)
     {
         using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
         {
             string fileName = Path.GetFileName(filePath);
-            content.Add(new StreamContent(new FileStream(filePath, FileMode.Open)), multipartParameter, fileName);
+            content.Add(new StreamContent(new FileStream(filePath, FileMode.Open)), multipartParameterName, fileName);
 
             return await client.PostAsync(url, content);
         }
