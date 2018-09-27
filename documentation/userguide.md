@@ -220,6 +220,11 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 }
 ```
 
+## Proxy
+
+By default, the upload daemon will use the system-wide proxy settings. However, you can override this
+behaviour in the `UploadDaemon\UploadDaemon.exe.config` file. Examples are provided there for turning
+off the proxy alltogether and for using a different proxy.
 
 # Build Process
 
