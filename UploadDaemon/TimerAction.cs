@@ -42,17 +42,17 @@ public class TimerAction
         {
             if (file.Version == null)
             {
-                logger.Info("Archiving {tracePath} because it does not contain the version assembly", file.FilePath);
+                logger.Info("Archiving {trace} because it does not contain the version assembly", file.FilePath);
                 archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
             }
             else if (file.IsEmpty)
             {
-                logger.Info("Archiving {tracePath} because it does not contain any coverage", file.FilePath);
+                logger.Info("Archiving {trace} because it does not contain any coverage", file.FilePath);
                 archiver.ArchiveEmptyFile(file.FilePath);
             }
             else
             {
-                logger.Info("Uploading {tracePath}", file.FilePath);
+                logger.Info("Uploading {trace}", file.FilePath);
                 bool success = await upload.UploadAsync(file.FilePath, file.Version);
                 if (success)
                 {
@@ -60,7 +60,7 @@ public class TimerAction
                 }
                 else
                 {
-                    logger.Error("Upload of {tracePath} failed. Will retry later", file.FilePath);
+                    logger.Error("Upload of {trace} failed. Will retry later", file.FilePath);
                 }
             }
         }

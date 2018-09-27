@@ -33,15 +33,20 @@ public class Config
     public string Directory { get; set; } = null;
 
     /// <summary>
+    /// The url to POST the traces to.
+    /// </summary>
+    public string FileUpload { get; set; } = null;
+
+    /// <summary>
     /// Validates the configuration and returns all collected error messages. An empty list
     /// means the configuration is valid.
     /// </summary>
     /// <returns></returns>
     public IEnumerable<string> Validate()
     {
-        if (Teamscale == null && Directory == null)
+        if (Teamscale == null && Directory == null && FileUpload == null)
         {
-            yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") to upload trace files to.";
+            yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") or an HTTP endpoint (property ""fileUpload"") to upload trace files to.";
         }
         if (VersionAssembly == null)
         {
@@ -58,6 +63,10 @@ public class Config
         if (Teamscale != null)
         {
             return new TeamscaleUpload(Teamscale);
+        }
+        if (FileUpload != null)
+        {
+            return new UploadServiceUpload(FileUpload);
         }
         return new FileSystemUpload(Directory, fileSystem);
     }

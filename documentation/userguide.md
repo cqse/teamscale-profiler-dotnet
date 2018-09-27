@@ -209,6 +209,16 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 }
 ```
 
+## Example: HTTP upload
+
+**UploadDaemon.json:**
+
+```json
+{
+    "versionAssembly": "YourAssembly",
+    "fileUpload": "http://localserver.localdomain:8080",
+}
+```
 
 
 # Build Process

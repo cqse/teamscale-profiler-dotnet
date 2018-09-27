@@ -11,7 +11,7 @@ using NLog;
 /// <summary>
 /// Uploads trace files to a folder on the file system (e.g. a network share).
 /// </summary>
-class FileSystemUpload : IUpload
+internal class FileSystemUpload : IUpload
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -32,7 +32,7 @@ class FileSystemUpload : IUpload
     /// <returns>Whether the upload was successful.</returns>
     public Task<bool> UploadAsync(string filePath, string version)
     {
-        logger.Debug("Uploading {tracePath} to {targetDirectory}", filePath, targetDirectory);
+        logger.Debug("Uploading {trace} to {targetDirectory}", filePath, targetDirectory);
 
         string fileName = Path.GetFileName(filePath);
         string targetPath = Path.Combine(targetDirectory, fileName);
@@ -44,9 +44,8 @@ class FileSystemUpload : IUpload
         }
         catch (Exception e)
         {
-            logger.Error(e, "Failed to upload {tracePath} to {targetDirectory}. Will retry later.", filePath, targetDirectory);
+            logger.Error(e, "Failed to upload {trace} to {targetDirectory}. Will retry later.", filePath, targetDirectory);
             return Task.FromResult(false);
         }
     }
-
 }

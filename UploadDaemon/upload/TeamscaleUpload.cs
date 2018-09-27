@@ -41,52 +41,38 @@ internal class TeamscaleUpload : IUpload
     /// <returns>Whether the upload was successful.</returns>
     public async Task<bool> UploadAsync(string filePath, string version)
     {
-        logger.Debug("Uploading {tracePath} with version {version} to {teamscale}", filePath, server.ToString(), version);
-        using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
+        logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
+
+        string message = messageFormatter.Format(version);
+        string encodedMessage = HttpUtility.UrlEncode(message);
+        string encodedProject = HttpUtility.UrlEncode(server.Project);
+        string encodedVersion = HttpUtility.UrlEncode(version);
+        string encodedPartition = HttpUtility.UrlEncode(server.Partition);
+        string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
+            $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
+
+        try
         {
-            string fileName = Path.GetFileName(filePath);
-            content.Add(new StreamContent(new FileStream(filePath, FileMode.Open)), "report", fileName);
-
-            string message = messageFormatter.Format(version);
-            string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedProject = HttpUtility.UrlEncode(server.Project);
-            string encodedVersion = HttpUtility.UrlEncode(version);
-            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
-                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
-
-            try
+            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", filePath))
             {
-                return await PerformUpload(url, content, filePath, version);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Upload of {trace} to {teamscale} failed due to an exception",
-                    filePath, server.ToString());
-                return false;
+                if (response.IsSuccessStatusCode)
+                {
+                    logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
+                    return true;
+                }
+                else
+                {
+                    string body = await response.Content.ReadAsStringAsync();
+                    logger.Error("Upload of {trace} with version {version} to {teamscale} failed with status code {statusCode}\n{responseBody}",
+                        filePath, version, server.ToString(), response.StatusCode, body);
+                    return false;
+                }
             }
         }
-    }
-
-    /// <summary>
-    /// Performs an upload of the given content to the given URL. May throw exceptions when the upload fails.
-    /// </summary>
-    private async Task<bool> PerformUpload(string url, MultipartFormDataContent content, string filePath, string version)
-    {
-        using (HttpResponseMessage response = await client.PostAsync(url, content))
+        catch (Exception e)
         {
-            if (response.IsSuccessStatusCode)
-            {
-                logger.Info("Successfully uploaded {tracePath} with version {version} to {teamscale}", filePath, server.ToString(), version);
-                return true;
-            }
-            else
-            {
-                string body = await response.Content.ReadAsStringAsync();
-                logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
-                    filePath, server.ToString(), response.StatusCode, body);
-                return false;
-            }
+            logger.Error(e, "Upload of {trace} to {teamscale} failed due to an exception", filePath, server.ToString());
+            return false;
         }
     }
 }

@@ -3,29 +3,43 @@
        This is used to determine the PDB files to use to map the
        profiler output back to the source code. */
     "versionAssembly": "YourAssembly",
+
     /* Connection details for the upload to Teamscale. Delete this if you don't
        want to upload to Teamscale. */
     "teamscale": {
+        /* URL under which Teamscale can be reached. */
         "url": "http://localhost:8080",
+
         /* This user must have the "Perform external uploads" permission on the project. */
         "username": "admin",
+
         /* You can generate access tokens either from your personal user settings or via Admin > Users. */
         "accessToken": "token",
+
         /* Teamscale project ID or alias. */
         "project": "project",
+
         /* The partition in the Teamscale project to which to upload the coverage.
+           Partition names can be anything you like, e.g. the type of test or the test environment's name.
            All coverage uploaded to the same partition will be grouped
            within Teamscale. Different partitions can be toggled on
            and off individually in the UI. */
         "partition": "Manual Tests",
+
         /* Template for the upload commit message.
            %v will be replaced with the version number read from the version assembly.
            %p will be replaced with the partition you configured above.
            %t will be replaced with the date and time of the upload. */
-        "message": "Test coverage for version %v from %p created at %t",
+        "message": "Test coverage for version %v from %p created at %t"
     },
+
+    /* HTTP endpoint to which trace files will be POSTed as a multi-part form data request.
+       Delete this if you don't want to upload to an HTTP endpoint. This property will be ignored if a
+       Teamscale server is configured above. */
+    "fileUpload": "http://localserver.localdomain:8080",
+
     /* Directory to upload finished trace files to. May be a UNC path. Please escape backslashes properly!
        Delete this if you don't want to upload to a directory. This property will be ignored if a
-       Teamscale server is configured above. */
-    "directory": "C:\\some\\directory",
+       Teamscale server or HTTP endpoint is configured above. */
+    "directory": "C:\\some\\directory"
 }
