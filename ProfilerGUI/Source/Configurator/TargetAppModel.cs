@@ -121,7 +121,7 @@ namespace ProfilerGUI.Source.Configurator
                 return;
             }
 
-            if (IsDotNETApplication(ApplicationPath))
+            if (IsDotNETCoreApplication(ApplicationPath))
             {
                 ApplicationType = EApplicationType.TypeCORE;
             }
@@ -144,13 +144,22 @@ namespace ProfilerGUI.Source.Configurator
                 }
             }
         }
-
-        private static bool IsDotNETApplication(string applicationPath)
+        
+        private static bool IsDotNETCoreApplication(string applicationPath)
         {
             try
             {
                 // If the application is .NET, we can load it as an assembly.
-                AssemblyName.GetAssemblyName(applicationPath);
+                var assembly = Assembly.LoadFile(applicationPath);
+
+                // If it is .NET Core it does not reference mscorlib.
+                foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
+                {
+                    if (reference.Name == "mscorlib")
+                    {
+                        return false;
+                    }
+                }
                 return true;
             }
             catch
