@@ -1,7 +1,7 @@
 ﻿namespace ProfilerGUI.Source.Configurator
 {
     /// <summary>
-    /// The three different modes in which the profiler can be launched: 32bit, 64bit, and .NET Core.
+    /// The different modes in which the profiler can be launched.
     /// </summary>
     public enum EApplicationType
     {

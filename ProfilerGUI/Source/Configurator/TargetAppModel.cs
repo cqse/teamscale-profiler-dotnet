@@ -149,8 +149,10 @@ namespace ProfilerGUI.Source.Configurator
         {
             try
             {
-                // If the application is .NET, we can load it as an assembly.
-                var assembly = Assembly.LoadFile(applicationPath);
+				// If the application is .NET, we can load it as an assembly.
+				// We load into the reflection context here, to avoid loading dependencies
+				// and prevent any code from executing.
+				var assembly = Assembly.ReflectionOnlyLoadFrom(applicationPath);
 
                 // If it is .NET Core it does not reference mscorlib.
                 foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
