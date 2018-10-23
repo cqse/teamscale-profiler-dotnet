@@ -11,9 +11,19 @@
         public const string EnableProfilingEnvironmentVariable = "COR_ENABLE_PROFILING";
 
         /// <summary>
+        /// The environment variable to enable profiling .NET Core applications.
+        /// </summary>
+        public const string CoreEnableProfilingEnvironmentVariable = "CORECLR_ENABLE_PROFILING";
+
+        /// <summary>
         /// The environment variable that stores the GUID of the profiler.
         /// </summary>
         public const string ProfilerIdEnvironmentVariable = "COR_PROFILER";
+
+        /// <summary>
+        /// The environment variable that stores the GUID of the profiler for profiling .NET Core applications.
+        /// </summary>
+        public const string CoreProfilerIdEnvironmentVariable = "CORECLR_PROFILER";
 
         /// <summary>
         /// The GUID of the profiler.
@@ -24,6 +34,16 @@
         /// The environment variable that stores the path to the profiler DLL.
         /// </summary>
         public const string ProfilerPathEnvironmentVariable = "COR_PROFILER_PATH";
+
+        /// <summary>
+        /// The environment variable that stores the path to the 32-bit profiler DLL for profiling .NET Core applications.
+        /// </summary>
+        public const string CoreProfilerPath32EnvironmentVariable = "CORECLR_PROFILER_PATH_32";
+
+        /// <summary>
+        /// The environment variable that stores the path to the 64-bit profiler DLL for profiling .NET Core applications.
+        /// </summary>
+        public const string CoreProfilerPath64EnvironmentVariable = "CORECLR_PROFILER_PATH_64";
 
         /// <summary>
         /// The environment variable to enable light mode.

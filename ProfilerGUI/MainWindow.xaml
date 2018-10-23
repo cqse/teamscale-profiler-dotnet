@@ -48,6 +48,7 @@
                 <ComboBox SelectedIndex="{Binding Path=SelectedBitnessIndex, Mode=TwoWay}" Grid.Row="2" Grid.Column="2">
                     <ComboBoxItem>32 bit</ComboBoxItem>
                     <ComboBoxItem>64 bit</ComboBoxItem>
+                    <ComboBoxItem>.NET Core</ComboBoxItem>
                 </ComboBox>
 
                 <Label  Content="Arguments (optional)" Grid.Row="4" Grid.Column="0" />

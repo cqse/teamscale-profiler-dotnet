@@ -31,27 +31,13 @@ namespace ProfilerGUI.Source.Runner
         /// </summary>
         public void RunAsynchronously()
         {
-            string profilerDllPath = LocateProfilerDll();
-            if (!File.Exists(profilerDllPath))
-            {
-                logger.Error("The profiler DLL was not found at {profilerPath}. Cannot profile the application", profilerDllPath);
-                return;
-            }
-
-            List<(string, string)> environmentVariables = new List<(string, string)>()
-                {
-                    (ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
-                    (ProfilerConstants.ProfilerPathEnvironmentVariable, profilerDllPath),
-                    (ProfilerConstants.EnableProfilingEnvironmentVariable, "1"),
-                    (ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder),
-                    (ProfilerConstants.LightModeEnvironmentVariable, "1"),
-                };
-
-            logger.Info("Running {bitness} application {appPath} in working dir {workingDir} with arguments [{arguments}] and environment [{env}]",
-                configuration.ApplicationType, configuration.TargetApplicationPath, configuration.WorkingDirectory, configuration.TargetApplicationArguments, environmentVariables);
-
             try
             {
+				List<(string, string)> environmentVariables = DetermineEnvironmentVariables(configuration);
+
+				logger.Info("Running {bitness} application {appPath} in working dir {workingDir} with arguments [{arguments}] and environment [{env}]",
+					configuration.ApplicationType, configuration.TargetApplicationPath, configuration.WorkingDirectory, configuration.TargetApplicationArguments, environmentVariables);
+
                 SystemUtils.RunNonBlocking(configuration.TargetApplicationPath, configuration.TargetApplicationArguments,
                     configuration.WorkingDirectory, environmentVariables);
             }
@@ -61,14 +47,60 @@ namespace ProfilerGUI.Source.Runner
             }
         }
 
-        private string LocateProfilerDll()
+		private static List<(string, string)> DetermineEnvironmentVariables(ProfilerConfiguration configuration)
+		{
+			var environmentVariables = new List<(string, string)>();
+			environmentVariables.AddRange(DetermineProfilerRegistrationEnvironmentVariables(configuration));
+			environmentVariables.AddRange(DetermineProfilerConfigurationEnvironmentVariables(configuration));
+			return environmentVariables;
+		}
+
+		private static List<(string, string)> DetermineProfilerRegistrationEnvironmentVariables(ProfilerConfiguration configuration)
+		{
+			if (configuration.ApplicationType == EApplicationType.TypeCORE)
+			{
+				return new List<(string, string)>()
+				{
+					(ProfilerConstants.CoreProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
+					(ProfilerConstants.CoreProfilerPath32EnvironmentVariable, GetProfilerDllPath(ProfilerConstants.ProfilerDll32Bit)),
+					(ProfilerConstants.CoreProfilerPath64EnvironmentVariable, GetProfilerDllPath(ProfilerConstants.ProfilerDll64Bit)),
+					(ProfilerConstants.CoreEnableProfilingEnvironmentVariable, "1"),
+				};
+			}
+			else
+			{
+				string profilerDll = ProfilerConstants.ProfilerDll64Bit;
+				if (configuration.ApplicationType == EApplicationType.Type32Bit)
+				{
+					profilerDll = ProfilerConstants.ProfilerDll32Bit;
+				}
+
+				return new List<(string, string)>()
+				{
+					(ProfilerConstants.ProfilerIdEnvironmentVariable, ProfilerConstants.ProfilerGuid),
+					(ProfilerConstants.ProfilerPathEnvironmentVariable, GetProfilerDllPath(profilerDll)),
+					(ProfilerConstants.EnableProfilingEnvironmentVariable, "1"),
+				};
+			}
+		}
+
+		private static List<(string, string)> DetermineProfilerConfigurationEnvironmentVariables(ProfilerConfiguration configuration)
+		{
+			return new List<(string, string)>()
+			{
+				(ProfilerConstants.TargetDirectoryEnvironmentVariable, configuration.TraceTargetFolder),
+				(ProfilerConstants.LightModeEnvironmentVariable, "1")
+			};
+		}
+
+        private static string GetProfilerDllPath(string profilerDll)
         {
-            string profilerDll = ProfilerConstants.ProfilerDll64Bit;
-            if (configuration.ApplicationType == EApplicationType.Type32Bit)
+            var path = Directory.GetParent(Environment.CurrentDirectory) + @"\" + profilerDll;
+            if (!File.Exists(path))
             {
-                profilerDll = ProfilerConstants.ProfilerDll32Bit;
+                throw new ArgumentException($"The profiler DLL was not found at \"{path}\". Cannot profile the application");
             }
-            return Directory.GetParent(Environment.CurrentDirectory) + @"\" + profilerDll;
+            return path;
         }
     }
 }
