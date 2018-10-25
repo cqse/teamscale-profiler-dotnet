@@ -12,19 +12,11 @@ public class AzureUpload : IUpload
 {
 	private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-	private readonly string storageConnectionString;
-	private readonly string shareName;
-	private readonly string directoryPath;
+	private readonly AzureFileStorage storage;
 
-	/// <param name="storageConnectionString">An Azure File Storage connection string. For details on how to craete
-	/// connection strings, please refer to https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string.</param>
-	/// <param name="shareName">The name of a file share on the Azure connection</param>
-	/// <param name="directoryPath">A directory path below the file share to store coverage data in</param>
-	public AzureUpload(string storageConnectionString, string shareName, string directoryPath)
+	public AzureUpload(AzureFileStorage azureFileStorage)
 	{
-		this.storageConnectionString = storageConnectionString;
-		this.shareName = shareName;
-		this.directoryPath = directoryPath;
+		storage = azureFileStorage;
 	}
 
 	public async Task<bool> UploadAsync(string filePath, string version)
@@ -33,13 +25,13 @@ public class AzureUpload : IUpload
 		{
 			CloudStorageAccount account = GetStorageAccount();
 
-			logger.Debug("Uploading {trace} to {azure}/{path}/", filePath, account.FileStorageUri, directoryPath);
+			logger.Debug("Uploading {trace} to {azure}/{directory}/", filePath, account.FileStorageUri, storage.Directory);
 
 			CloudFileShare share = await GetOrCreateShare(account);
 			CloudFileDirectory directory = await GetOrCreateTargetDirectory(share);
 			await UploadFileAsync(filePath, directory);
 
-			logger.Info("Successfully uploaded {trace} to {azure}/{path}", filePath, account.FileStorageUri, directoryPath);
+			logger.Info("Successfully uploaded {trace} to {azure}/{directory}", filePath, account.FileStorageUri, storage.Directory);
 
 			return true;
 		}
@@ -55,7 +47,7 @@ public class AzureUpload : IUpload
 		CloudStorageAccount account;
 		try
 		{
-			account = CloudStorageAccount.Parse(storageConnectionString);
+			account = CloudStorageAccount.Parse(storage.ConnectionString);
 		}
 		catch (Exception e) when (e is ArgumentNullException || e is ArgumentException || e is FormatException)
 		{
@@ -69,12 +61,12 @@ public class AzureUpload : IUpload
 	private async Task<CloudFileShare> GetOrCreateShare(CloudStorageAccount account)
 	{
 		CloudFileClient client = account.CreateCloudFileClient();
-		CloudFileShare share = client.GetShareReference(shareName);
+		CloudFileShare share = client.GetShareReference(storage.ShareName);
 
 		await share.CreateIfNotExistsAsync();
 		if (!await share.ExistsAsync())
 		{
-			throw new UploadFailedException($"Share {shareName} does not exist and could not be created.");
+			throw new UploadFailedException($"Share {storage.ShareName} does not exist and could not be created.");
 		}
 
 		return share;
@@ -84,15 +76,15 @@ public class AzureUpload : IUpload
 	{
 		CloudFileDirectory directory = share.GetRootDirectoryReference();
 
-		if (!string.IsNullOrEmpty(directoryPath))
+		if (!string.IsNullOrEmpty(storage.Directory))
 		{
-			directory = directory.GetDirectoryReference(directoryPath);
+			directory = directory.GetDirectoryReference(storage.Directory);
 		}
 
 		await directory.CreateIfNotExistsAsync();
 		if (!await directory.ExistsAsync())
 		{
-			throw new UploadFailedException($"Directory {directoryPath} does not exist and could not be created on {share}.");
+			throw new UploadFailedException($"Directory {storage.Directory} does not exist and could not be created on {storage.ShareName}.");
 		}
 
 		return directory;

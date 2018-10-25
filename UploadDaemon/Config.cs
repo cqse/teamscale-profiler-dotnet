@@ -37,6 +37,11 @@ public class Config
     /// </summary>
     public string FileUpload { get; set; } = null;
 
+	/// <summary>
+	/// The Azure File Storage to upload to.
+	/// </summary>
+	public AzureFileStorage AzureFileStorage { get; set; } = null;
+
     /// <summary>
     /// Validates the configuration and returns all collected error messages. An empty list
     /// means the configuration is valid.
@@ -68,6 +73,10 @@ public class Config
         {
             return new UploadServiceUpload(FileUpload);
         }
+		if (AzureFileStorage != null)
+		{
+			return new AzureUpload(AzureFileStorage);
+		}
         return new FileSystemUpload(Directory, fileSystem);
     }
 
