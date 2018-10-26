@@ -37,7 +37,7 @@ public class AzureUpload : IUpload
 		}
 		catch (Exception e)
 		{
-			logger.Error(e, "Upload of {trace} to Azure File Storage failed", filePath);
+			logger.Error(e, "Upload of {trace} to Azure File Storage failed: {message}", filePath, e.Message);
 			return false;
 		}
 	}
