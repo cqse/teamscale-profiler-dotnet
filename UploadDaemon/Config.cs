@@ -49,9 +49,14 @@ public class Config
     /// <returns></returns>
     public IEnumerable<string> Validate()
     {
-        if (Teamscale == null && Directory == null && FileUpload == null)
+        if (Teamscale == null && Directory == null && FileUpload == null && AzureFileStorage == null)
         {
-            yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") or an HTTP endpoint (property ""fileUpload"") to upload trace files to.";
+            yield return @"You must provide either" +
+				@" a Teamscale server (property ""teamscale"")" +
+				@" or a directory (property ""directory"")" +
+				@" or an HTTP endpoint (property ""fileUpload"")" +
+				@" or an Azure File Storage (property ""azureFileStorage"")" +
+				@" to upload trace files to.";
         }
         if (VersionAssembly == null)
         {
