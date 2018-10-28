@@ -6,8 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-
-using namespace std;
+#include "Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -54,6 +53,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	log.info("Eagerness: " + std::to_string(eagerness));
 
 	if (getOption("UPLOAD_DAEMON") == "1") {
+		log.info("Starting upload deamon");
 		startUploadDeamon();
 	}
 
@@ -283,15 +283,23 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (isProfilingEnabled) {
-		EnterCriticalSection(&callbackSynchronization);
+	try {
+		if (isProfilingEnabled) {
+			EnterCriticalSection(&callbackSynchronization);
 
-		recordFunctionInfo(&jittedMethods, functionId);
+			recordFunctionInfo(&jittedMethods, functionId);
 
-		LeaveCriticalSection(&callbackSynchronization);
+			LeaveCriticalSection(&callbackSynchronization);
+		}
+		Debug::log("npe2\r\n");
+		char* ptr = (char*)0xBADC0DE;
+		ptr[42] = 0;
+		return S_OK;
 	}
-
-	return S_OK;
+	catch (...) {
+		Debug::logStacktrace();
+		throw;
+	}
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,

@@ -12,6 +12,9 @@ public:
 	/** Logs the given message to the debug log. */
 	static void log(std::string message);
 
+	/** Logs the current stack trace. */
+	static void logStacktrace();
+
 	virtual ~Debug();
 
 private:
