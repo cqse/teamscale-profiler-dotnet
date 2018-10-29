@@ -284,22 +284,37 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	try {
-		if (isProfilingEnabled) {
-			EnterCriticalSection(&callbackSynchronization);
-
-			recordFunctionInfo(&jittedMethods, functionId);
-
-			LeaveCriticalSection(&callbackSynchronization);
-		}
-		Debug::log("npe2\r\n");
-		char* ptr = (char*)0xBADC0DE;
-		ptr[42] = 0;
-		return S_OK;
+		return JITCompilationFinishedImplementation(functionId);
 	}
 	catch (...) {
-		Debug::logStacktrace();
-		throw;
+		if (handleException("JITCompilationFinished")) {
+			throw;
+		}
 	}
+}
+
+bool CProfilerCallback::handleException(std::string context) {
+	Debug::logStacktrace(context);
+	if (getOption("IGNORE_EXCEPTIONS") == "1") {
+		// swallows the exception
+		return false;
+	}
+	// forwards the exception, i.e. crashes the program
+	return true;
+}
+
+HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId) {
+	if (isProfilingEnabled) {
+		EnterCriticalSection(&callbackSynchronization);
+
+		recordFunctionInfo(&jittedMethods, functionId);
+
+		LeaveCriticalSection(&callbackSynchronization);
+	}
+	Debug::log("npe3\r\n");
+	char* ptr = (char*)0xBADC0DE;
+	ptr[42] = 0;
+	return S_OK;
 }
 
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,

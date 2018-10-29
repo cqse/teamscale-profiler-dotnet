@@ -1,6 +1,5 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
-#include "Stacktrace.h"
 
 #define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 

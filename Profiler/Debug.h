@@ -13,7 +13,7 @@ public:
 	static void log(std::string message);
 
 	/** Logs the current stack trace. */
-	static void logStacktrace();
+	static void logStacktrace(std::string context);
 
 	virtual ~Debug();
 

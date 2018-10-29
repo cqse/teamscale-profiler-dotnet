@@ -160,4 +160,8 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
+	HRESULT JITCompilationFinishedImplementation(FunctionID functionID);
+
+	int CProfilerCallback::handleException(std::string context, struct _EXCEPTION_POINTERS *exceptionPointers);
 };

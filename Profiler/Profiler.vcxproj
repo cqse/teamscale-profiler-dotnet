@@ -199,7 +199,6 @@
     <ClCompile Include="CProfilerCallback.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="Stacktrace.cpp" />
     <ClCompile Include="StackWalker.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
@@ -207,7 +206,6 @@
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="StringUtils.cpp" />
-    <ClInclude Include="Stacktrace.h" />
     <ClInclude Include="StackWalker.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="Debug.h" />
