@@ -48,7 +48,7 @@ The profiler can be installed into any directory on the target machine, but we r
 4. Good practice for client applications: Create a job that profiles the heartbeat application daily, including copying the created trace files into the shared directory.
 5. Set the following environment variables for the user that starts the application or integrate the variables into the application's start scripts (using `set`). The latter is preferred:
 
-| Environment variable | Value                                    | Description                              |
+| Environment variable | Value<img width=1500/>                   | Description                              |
 | :------------------- | :--------------------------------------- | :--------------------------------------- |
 | COR_ENABLE_PROFILING | `1` (or `0`)                             | Required. Enables or disables the profiler |
 | COR_PROFILER         | `{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}` | Required. The GUID of the DLL file       |
@@ -58,7 +58,7 @@ The profiler can be installed into any directory on the target machine, but we r
 
 .NET core is fully supported but requires different environment variables to be set. Most importantly the profiler is registered with variables having a `CORECLR_` prefix instead of the `COR_` prefix. Second, you do not have to know beforehand if the application is running in 32 or 64 bit mode, as the different profiler versions can be registered simultaneously with two environment variables.
 
-| Environment variable    | Value                                    | Description                              |
+| Environment variable    | Value<img width=1500/>                   | Description                              |
 | :---------------------- | :--------------------------------------- | :--------------------------------------- |
 | CORECLR_ENABLE_PROFILING | `1` (or `0`)                             | Required. Enables or disables the profiler |
 | CORECLR_PROFILER         | `{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}` | Required. The GUID of the DLL file       |
