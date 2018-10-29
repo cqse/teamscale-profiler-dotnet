@@ -119,8 +119,7 @@ private:
 	* enabled in the event mask in order to force JIT-events for each first call to
 	* a function, independent of whether a pre-jitted version exists.)
 	*/
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
-		BOOL *pbHookFunction);
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL *pbHookFunction) throw(...);
 
 	/** Dumps all environment variables to the log file. */
 	void dumpEnvironment();

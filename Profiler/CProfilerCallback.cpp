@@ -221,13 +221,19 @@ DWORD CProfilerCallback::getEventMask() {
 	return dwEventMask;
 }
 
-UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
-	BOOL* pbHookFunction) {
-	// Disable hooking of functions.
-	*pbHookFunction = false;
+UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFunction) {
+	try {
+		// Disable hooking of functions.
+		*pbHookFunction = false;
 
-	// Always return original function id.
-	return functionId;
+		// Always return original function id.
+		return functionId;
+	}
+	catch (...) {
+		Debug::logStacktrace("functionMapper");
+		// since this function must be static, we have no way to call getOption() so we always terminate the program.
+		throw;
+	}
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
