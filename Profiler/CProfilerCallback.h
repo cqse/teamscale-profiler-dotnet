@@ -16,55 +16,25 @@ class CProfilerCallback : public CProfilerCallbackBase {
 public:
 
 	/** Constructor. */
-	CProfilerCallback();
+	CProfilerCallback() throw(...);
 
 	/** Destructor. */
-	virtual ~CProfilerCallback();
+	virtual ~CProfilerCallback() throw(...);
 
 	/** Initializer. Called at profiler startup. */
-	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
-
-	/** Dumps all environment variables to the log file. */
-	void dumpEnvironment();
-
-	/** Reads all options from the config file into memory. */
-	void readConfig();
-
-	/**
-	* Reads all the config option from 1) the environment variable COR_PROFILER_<optionName> and then 2) the config file if the corresponding environment variable is not set.
-	* If the option is declared in neither location, returns the empty string.
-	*/
-	std::string getOption(std::string optionName);
+	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk) throw(...);
 
 	/** Write coverage information to log file at shutdown. */
-	STDMETHOD(Shutdown)();
+	STDMETHOD(Shutdown)() throw(...);
 
 	/** Store information about jitted method. */
-	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
+	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock) throw(...);
 
 	/** Write loaded assembly to log file. */
-	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
+	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus) throw(...);
 
 	/** Record inlining of method, but generally allow it. */
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
-
-	/**
-	 * Defines whether the given function should trigger a callback everytime it is executed.
-	 *
-	 * We do not register a single function callback in order to not affect
-	 * performance. In effect, we disable this feature here. It has been tested via
-	 * a performance benchmark, that this implementation does not impact call
-	 * performance.
-	 *
-	 * For coverage profiling, we do not need this callback. However, the event is
-	 * enabled in the event mask in order to force JIT-events for each first call to
-	 * a function, independent of whether a pre-jitted version exists.)
-	 */
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
-		BOOL *pbHookFunction);
-
-	/** Create method info object for a function id. */
-	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
+	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline) throw(...);
 
 private:
 	/** Synchronizes profiling callbacks. */
@@ -107,7 +77,7 @@ private:
 	std::set<FunctionID> inlinedMethodIds;
 
 	/**
-	 * Collecions that keep track of inlined methods.
+	 * Keeps track of inlined methods.
 	 * We use the vector to uniquely store the information about inlined methods.
 	 */
 	std::vector<FunctionInfo> inlinedMethods;
@@ -137,6 +107,36 @@ private:
 	*/
 	DWORD getEventMask();
 
+	/**
+	* Defines whether the given function should trigger a callback everytime it is executed.
+	*
+	* We do not register a single function callback in order to not affect
+	* performance. In effect, we disable this feature here. It has been tested via
+	* a performance benchmark, that this implementation does not impact call
+	* performance.
+	*
+	* For coverage profiling, we do not need this callback. However, the event is
+	* enabled in the event mask in order to force JIT-events for each first call to
+	* a function, independent of whether a pre-jitted version exists.)
+	*/
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
+		BOOL *pbHookFunction);
+
+	/** Dumps all environment variables to the log file. */
+	void dumpEnvironment();
+
+	/** Reads all options from the config file into memory. */
+	void readConfig();
+
+	/**
+	* Reads all the config option from 1) the environment variable COR_PROFILER_<optionName> and then 2) the config file if the corresponding environment variable is not set.
+	* If the option is declared in neither location, returns the empty string.
+	*/
+	std::string getOption(std::string optionName);
+
+	/** Create method info object for a function id. */
+	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
+
 	/** Returns information about the profiled process. */
 	std::string getProcessInfo();
 
@@ -161,7 +161,12 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
-	HRESULT JITCompilationFinishedImplementation(FunctionID functionID);
+	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
+	HRESULT ShutdownImplementation();
+	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
+	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+	HRESULT InitializeImplementation(IUnknown *pICorProfilerInfoUnk);
 
-	bool CProfilerCallback::handleException(std::string context);
+	/** Logs a stack trace. If true is returned, the calling code should continue, otherwise it should rethrow the exception. */
+	bool handleException(std::string context);
 };
