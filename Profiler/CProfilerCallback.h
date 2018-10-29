@@ -163,5 +163,5 @@ private:
 
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID);
 
-	int CProfilerCallback::handleException(std::string context, struct _EXCEPTION_POINTERS *exceptionPointers);
+	bool CProfilerCallback::handleException(std::string context);
 };
