@@ -158,6 +158,23 @@ Things to check if no trace files are written:
 * IIS: Is the application pool set to pick up the environment of its user?
 * IIS: Did you recycle the application pool?
 
+In case the application doesn't start at all, please check the file `C:\Users\Public\profiler_debug.log`.
+It may contain stack traces in case the profiler crashed.
+
+## Debugging Profiler crashes
+
+If the debug log does not contain enough useful information, you can generate a minidump
+to debug profiler crashes with WinDbg. To enable mini dumps, run the following as a `.reg` file:
+
+    Windows Registry Editor Version 5.00
+
+    [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps]
+    "DumpFolder"="C:\\Users\\Public"
+    "DumpType"=dword:00000001
+    "DumpCount"=dword:0000000a
+
+A `.dmp` file will be generated in `C:\Users\Public`. You can set `DumpType` to `2` to get a full dump instead.
+This may, however, be a rather large file since the entire program's heap will be dumped.
 
 
 # Automatic Trace Upload
