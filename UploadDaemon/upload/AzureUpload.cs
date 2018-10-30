@@ -47,6 +47,7 @@ public class AzureUpload : IUpload
 		CloudStorageAccount account;
 		try
 		{
+			// TODO (MP) I think you can return here immediately
 			account = CloudStorageAccount.Parse(storage.ConnectionString);
 		}
 		catch (Exception e) when (e is ArgumentNullException || e is ArgumentException || e is FormatException)
@@ -81,6 +82,7 @@ public class AzureUpload : IUpload
 			directory = directory.GetDirectoryReference(storage.Directory);
 		}
 
+		// TODO (MP) does this work if we have specified a longer path, e.g. share/sub/folder?
 		await directory.CreateIfNotExistsAsync();
 		if (!await directory.ExistsAsync())
 		{
