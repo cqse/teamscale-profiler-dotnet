@@ -237,8 +237,6 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
 	try {
-		char *p = 0;
-		p[12] = 42;
 		return AssemblyLoadFinishedImplementation(assemblyId, hrStatus);
 	}
 	catch (...) {
