@@ -18,6 +18,8 @@ public:
 	virtual ~Debug();
 
 private:
+	Debug();
+
 	void logInternal(std::string message);
 
 	/**
@@ -34,4 +36,5 @@ private:
 	}
 
 	HANDLE logFile = INVALID_HANDLE_VALUE;
+	CRITICAL_SECTION loggingSynchronization;
 };
