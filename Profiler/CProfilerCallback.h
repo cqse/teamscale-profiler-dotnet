@@ -85,7 +85,7 @@ private:
 	/**
 	* Stores all declared options from the config file.
 	*/
-	std::map<std::string, std::string> configOptions;
+	std::map<std::string, std::string> configOptions = std::map<std::string, std::string>();
 
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;

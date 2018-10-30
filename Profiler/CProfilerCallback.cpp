@@ -141,7 +141,6 @@ void CProfilerCallback::readConfig() {
 	log.info("looking for configuration options in: " + configFile);
 
 	std::ifstream inputStream(configFile);
-	this->configOptions = std::map<std::string, std::string>();
 	for (std::string line; getline(inputStream, line);) {
 		size_t delimiterPosition = line.find("=");
 		if (delimiterPosition == std::string::npos) {
