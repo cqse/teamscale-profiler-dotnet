@@ -27,8 +27,8 @@ public class AzureUpload : IUpload
 
 			logger.Debug("Uploading {trace} to {azure}/{directory}/", filePath, account.FileStorageUri, storage.Directory);
 
-			CloudFileShare share = await GetOrCreateShare(account);
-			CloudFileDirectory directory = await GetOrCreateTargetDirectory(share);
+			CloudFileShare share = await GetOrCreateShareAsync(account);
+			CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
 			await UploadFileAsync(filePath, directory);
 
 			logger.Info("Successfully uploaded {trace} to {azure}/{directory}", filePath, account.FileStorageUri, storage.Directory);
@@ -55,7 +55,7 @@ public class AzureUpload : IUpload
 		}
 	}
 
-	private async Task<CloudFileShare> GetOrCreateShare(CloudStorageAccount account)
+	private async Task<CloudFileShare> GetOrCreateShareAsync(CloudStorageAccount account)
 	{
 		CloudFileClient client = account.CreateCloudFileClient();
 		CloudFileShare share = client.GetShareReference(storage.ShareName);
@@ -69,7 +69,7 @@ public class AzureUpload : IUpload
 		return share;
 	}
 
-	private async Task<CloudFileDirectory> GetOrCreateTargetDirectory(CloudFileShare share)
+	private async Task<CloudFileDirectory> GetOrCreateTargetDirectoryAsync(CloudFileShare share)
 	{
 		CloudFileDirectory directory = share.GetRootDirectoryReference();
 
