@@ -78,14 +78,18 @@ public class AzureUpload : IUpload
 			directory = directory.GetDirectoryReference(storage.Directory);
 		}
 
-		// TODO (MP) does this work if we have specified a longer path, e.g. share/sub/folder?
-		await directory.CreateIfNotExistsAsync();
-		if (!await directory.ExistsAsync())
-		{
-			throw new UploadFailedException($"Directory {storage.Directory} does not exist and could not be created on {storage.ShareName}.");
-		}
+		await CreateRecursiveIfNotExistsAsync(directory);
 
 		return directory;
+	}
+
+	private async Task CreateRecursiveIfNotExistsAsync(CloudFileDirectory directory)
+	{
+		if (!await directory.ExistsAsync())
+		{
+			await CreateRecursiveIfNotExistsAsync(directory.Parent);
+			await directory.CreateAsync();
+		}
 	}
 
 	private static async Task UploadFileAsync(string sourceFilePath, CloudFileDirectory targetDirectory)
