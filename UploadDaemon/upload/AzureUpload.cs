@@ -44,19 +44,15 @@ public class AzureUpload : IUpload
 
 	private CloudStorageAccount GetStorageAccount()
 	{
-		CloudStorageAccount account;
 		try
 		{
-			// TODO (MP) I think you can return here immediately
-			account = CloudStorageAccount.Parse(storage.ConnectionString);
+			return CloudStorageAccount.Parse(storage.ConnectionString);
 		}
 		catch (Exception e) when (e is ArgumentNullException || e is ArgumentException || e is FormatException)
 		{
 			// Do not include the connection string to the message as it contains the private connection key!
 			throw new UploadFailedException("Invalid Azure File Storage connection string provided.", e);
 		}
-
-		return account;
 	}
 
 	private async Task<CloudFileShare> GetOrCreateShare(CloudStorageAccount account)
