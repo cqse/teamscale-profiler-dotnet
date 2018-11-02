@@ -7,3 +7,5 @@ test-tmp/
 test-data/test-programs/output.pdf
 /packages/
 !packages/repositories.config
+
+StyleCop.Cache

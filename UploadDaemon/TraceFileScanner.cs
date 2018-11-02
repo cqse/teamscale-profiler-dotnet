@@ -10,6 +10,25 @@ using System.Threading.Tasks;
 
 namespace UploadDaemon
 {
+<<<<<<< HEAD
+=======
+    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+    private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
+
+    private readonly string traceDirectory;
+    private readonly string versionAssembly;
+    private readonly Regex versionAssemblyRegex;
+    private readonly IFileSystem fileSystem;
+
+    public TraceFileScanner(string traceDirectory, string versionAssembly, IFileSystem fileSystem)
+    {
+        this.traceDirectory = traceDirectory;
+        this.versionAssembly = versionAssembly;
+        this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
+        this.fileSystem = fileSystem;
+    }
+
+>>>>>>> origin/master
     /// <summary>
     /// Scans the trace directory for trace files that are ready to upload or archive.
     /// </summary>
@@ -73,11 +92,17 @@ namespace UploadDaemon
         /// </summary>
         private ScannedFile ScanFile(string filePath)
         {
+<<<<<<< HEAD
             if (IsLocked(filePath))
             {
                 logger.Debug("Ignoring locked trace {tracePath}", filePath);
                 return null;
             }
+=======
+            logger.Debug("Ignoring locked trace {trace}", filePath);
+            return null;
+        }
+>>>>>>> origin/master
 
             string[] lines;
             try
@@ -124,6 +149,7 @@ namespace UploadDaemon
 
         private string FindVersion(string[] lines, string tracePath)
         {
+<<<<<<< HEAD
             Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             if (matchingLine == null)
             {
@@ -132,11 +158,22 @@ namespace UploadDaemon
             }
 
             return matchingLine.Groups[1].Value;
+=======
+            logger.Debug(e, "Failed to open {trace}. Assuming it's locked", tracePath);
+            // this is slightly inaccurate as the error might stem from permission problems etc.
+            // but we log it
+            return true;
+>>>>>>> origin/master
         }
 
         private bool IsTraceFile(string fileName)
         {
+<<<<<<< HEAD
             return TraceFileRegex.IsMatch(fileName);
+=======
+            logger.Debug("Did not find the version assembly {versionAssembly} in {trace}", versionAssembly, tracePath);
+            return null;
+>>>>>>> origin/master
         }
 
         /// <summary>

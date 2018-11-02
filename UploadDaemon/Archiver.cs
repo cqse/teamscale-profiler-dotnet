@@ -68,9 +68,27 @@ namespace UploadDaemon
             }
             catch (Exception e)
             {
+<<<<<<< HEAD
                 logger.Error(e, "Unable to archive {tracePath} to {archivePath}. The file will remain there" +
                     " which may lead to it being uploaded multiple times", tracePath, targetDirectory);
             }
         }
+=======
+                logger.Error(e, "Unable to create archive directory {archivePath}. Trace {trace} cannot be archived and will be processed again later", targetDirectory, tracePath);
+                return;
+            }
+        }
+
+        string targetPath = Path.Combine(targetDirectory, Path.GetFileName(tracePath));
+        try
+        {
+            fileSystem.File.Move(tracePath, targetPath);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Unable to archive {trace} to {archivePath}. The file will remain there" +
+                " which may lead to it being uploaded multiple times", tracePath, targetDirectory);
+        }
+>>>>>>> origin/master
     }
 }
