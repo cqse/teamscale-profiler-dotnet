@@ -56,7 +56,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         }
 
         /// <summary>
-        /// The directory containing profiler solution.
+        /// The directory containing the profiler solution.
         /// </summary>
         public static DirectoryInfo SolutionRoot =>
             new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../.."));

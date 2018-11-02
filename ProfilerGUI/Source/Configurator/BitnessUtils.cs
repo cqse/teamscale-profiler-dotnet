@@ -7,7 +7,7 @@ namespace ProfilerGUI.Source.Configurator
     /// <summary>
     /// Utilities to determine the machine type of a PE executable.
     /// </summary>
-    internal class MachineTypeUtils
+    internal class BitnessUtils
     {
         private const int ExpectedPEHead = 0x00004550;
 

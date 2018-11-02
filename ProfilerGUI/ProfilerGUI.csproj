@@ -86,7 +86,7 @@
     <Compile Include="Source\Configurator\TargetAppModel.cs" />
     <Compile Include="Source\Configurator\UploadViewModel.cs" />
     <Compile Include="Source\Runner\ProfilerRunner.cs" />
-    <Compile Include="Source\Configurator\MachineTypeExtractor.cs" />
+    <Compile Include="Source\Configurator\BitnessUtils.cs" />
     <Compile Include="Source\Configurator\MainViewModel.cs" />
     <Compile Include="Source\Configurator\WindowsShortcutReader.cs" />
     <Compile Include="Source\Shared\ProcessOutput.cs" />

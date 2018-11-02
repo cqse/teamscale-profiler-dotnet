@@ -127,13 +127,13 @@ namespace ProfilerGUI.Source.Configurator
             }
             else
             {
-                switch (MachineTypeUtils.DetermineBitness(ApplicationPath))
+                switch (BitnessUtils.DetermineBitness(ApplicationPath))
                 {
-                    case MachineTypeUtils.Bitness.Bitness32:
+                    case BitnessUtils.Bitness.Bitness32:
                         ApplicationType = EApplicationType.DotNetFramework32Bit;
                         break;
 
-                    case MachineTypeUtils.Bitness.Bitness64:
+                    case BitnessUtils.Bitness.Bitness64:
                         ApplicationType = EApplicationType.DotNetFramework64Bit;
                         break;
 
