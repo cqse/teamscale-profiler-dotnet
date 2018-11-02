@@ -46,7 +46,7 @@ namespace ProfilerGUI.Source.Shared
         /// The bitness (32bit vs 64bit) of the target application.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public EApplicationType ApplicationType { get; set; } = EApplicationType.Type64Bit;
+        public EApplicationType ApplicationType { get; set; } = EApplicationType.DotNetFramework64Bit;
 
         /// <summary>
         /// Tries to read the config from the ConfigFilePath.

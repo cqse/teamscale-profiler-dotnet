@@ -57,7 +57,7 @@ namespace ProfilerGUI.Source.Runner
 
 		private static List<(string, string)> DetermineProfilerRegistrationEnvironmentVariables(ProfilerConfiguration configuration)
 		{
-			if (configuration.ApplicationType == EApplicationType.TypeCORE)
+			if (configuration.ApplicationType == EApplicationType.DotNetCore)
 			{
 				return new List<(string, string)>()
 				{
@@ -70,7 +70,7 @@ namespace ProfilerGUI.Source.Runner
 			else
 			{
 				string profilerDll = ProfilerConstants.ProfilerDll64Bit;
-				if (configuration.ApplicationType == EApplicationType.Type32Bit)
+				if (configuration.ApplicationType == EApplicationType.DotNetFramework32Bit)
 				{
 					profilerDll = ProfilerConstants.ProfilerDll32Bit;
 				}

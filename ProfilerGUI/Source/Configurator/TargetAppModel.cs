@@ -123,36 +123,35 @@ namespace ProfilerGUI.Source.Configurator
 
             if (IsDotNETCoreApplication(ApplicationPath))
             {
-                ApplicationType = EApplicationType.TypeCORE;
+                ApplicationType = EApplicationType.DotNetCore;
             }
             else
             {
-                MachineTypeUtils.MachineType typeOfExecutable = MachineTypeUtils.GetExecutableType(ApplicationPath);
-                if (typeOfExecutable == MachineTypeUtils.MachineType.Unknown)
+                switch (MachineTypeUtils.DetermineBitness(ApplicationPath))
                 {
-                    logger.Warn("Could not determine if target app is 32 or 64 bit, please set manually");
-                    return;
-                }
+                    case MachineTypeUtils.Bitness.Bitness32:
+                        ApplicationType = EApplicationType.DotNetFramework32Bit;
+                        break;
 
-                if (typeOfExecutable == MachineTypeUtils.MachineType.I386)
-                {
-                    ApplicationType = EApplicationType.Type32Bit;
-                }
-                else
-                {
-                    ApplicationType = EApplicationType.Type64Bit;
+                    case MachineTypeUtils.Bitness.Bitness64:
+                        ApplicationType = EApplicationType.DotNetFramework64Bit;
+                        break;
+
+                    default:
+                        logger.Warn("Could not determine if target app is 32 or 64 bit, please set manually");
+                        break;
                 }
             }
         }
-        
+
         private static bool IsDotNETCoreApplication(string applicationPath)
         {
             try
             {
-				// If the application is .NET, we can load it as an assembly.
-				// We load into the reflection context here, to avoid loading dependencies
-				// and prevent any code from executing.
-				var assembly = Assembly.ReflectionOnlyLoadFrom(applicationPath);
+                // If the application is .NET, we can load it as an assembly.
+                // We load into the reflection context here, to avoid loading dependencies
+                // and prevent any code from executing.
+                var assembly = Assembly.ReflectionOnlyLoadFrom(applicationPath);
 
                 // If it is .NET Core it does not reference mscorlib.
                 foreach (AssemblyName reference in assembly.GetReferencedAssemblies())

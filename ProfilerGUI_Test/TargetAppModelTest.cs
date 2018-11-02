@@ -13,7 +13,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             TargetAppModel targetAppModel = CreateModelForTestApplication("DotNetCoreApp.dll");
 
-            Assert.AreEqual(EApplicationType.TypeCORE, targetAppModel.ApplicationType);
+            Assert.AreEqual(EApplicationType.DotNetCore, targetAppModel.ApplicationType);
         }
 
         [Test]
@@ -21,7 +21,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             TargetAppModel targetAppModel = CreateModelForTestApplication("DotNetFW32BitApp.exe");
 
-            Assert.AreEqual(EApplicationType.Type32Bit, targetAppModel.ApplicationType);
+            Assert.AreEqual(EApplicationType.DotNetFramework32Bit, targetAppModel.ApplicationType);
         }
 
         [Test]
@@ -29,7 +29,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             TargetAppModel targetAppModel = CreateModelForTestApplication("DotNetFW64BitApp.exe");
 
-            Assert.AreEqual(EApplicationType.Type64Bit, targetAppModel.ApplicationType);
+            Assert.AreEqual(EApplicationType.DotNetFramework64Bit, targetAppModel.ApplicationType);
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             TargetAppModel targetAppModel = CreateModelForTestApplication("NonDotNet32BitApp.exe");
 
-            Assert.AreEqual(EApplicationType.Type32Bit, targetAppModel.ApplicationType);
+            Assert.AreEqual(EApplicationType.DotNetFramework32Bit, targetAppModel.ApplicationType);
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             TargetAppModel targetAppModel = CreateModelForTestApplication("NonDotNet64BitApp.exe");
 
-            Assert.AreEqual(EApplicationType.Type64Bit, targetAppModel.ApplicationType);
+            Assert.AreEqual(EApplicationType.DotNetFramework64Bit, targetAppModel.ApplicationType);
         }
 
         private static TargetAppModel CreateModelForTestApplication(string application)

@@ -5,6 +5,6 @@
     /// </summary>
     public enum EApplicationType
     {
-        Type32Bit, Type64Bit, TypeCORE
+        DotNetFramework32Bit, DotNetFramework64Bit, DotNetCore
     }
 }
