@@ -14,15 +14,12 @@ namespace UploadDaemon
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly UploadConfig config;
         private readonly TraceFileScanner scanner;
         private readonly IUpload upload;
         private readonly Archiver archiver;
 
         public TimerAction(string traceDirectory, UploadConfig config, IUpload upload, IFileSystem fileSystem)
         {
-<<<<<<< HEAD
-            this.config = config;
             this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
             this.upload = upload;
             this.archiver = new Archiver(traceDirectory, fileSystem);
@@ -47,35 +44,17 @@ namespace UploadDaemon
             {
                 if (file.Version == null)
                 {
-                    logger.Info("Archiving {tracePath} because it does not contain the version assembly", file.FilePath);
+                    logger.Info("Archiving {trace} because it does not contain the version assembly", file.FilePath);
                     archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
                 }
                 else if (file.IsEmpty)
-=======
-            if (file.Version == null)
-            {
-                logger.Info("Archiving {trace} because it does not contain the version assembly", file.FilePath);
-                archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
-            }
-            else if (file.IsEmpty)
-            {
-                logger.Info("Archiving {trace} because it does not contain any coverage", file.FilePath);
-                archiver.ArchiveEmptyFile(file.FilePath);
-            }
-            else
-            {
-                logger.Info("Uploading {trace}", file.FilePath);
-                bool success = await upload.UploadAsync(file.FilePath, file.Version);
-                if (success)
->>>>>>> origin/master
                 {
-                    logger.Info("Archiving {tracePath} because it does not contain any coverage", file.FilePath);
+                    logger.Info("Archiving {trace} because it does not contain any coverage", file.FilePath);
                     archiver.ArchiveEmptyFile(file.FilePath);
                 }
                 else
                 {
-<<<<<<< HEAD
-                    logger.Info("Uploading {tracePath}", file.FilePath);
+                    logger.Info("Uploading {trace}", file.FilePath);
                     bool success = await upload.UploadAsync(file.FilePath, file.Version);
                     if (success)
                     {
@@ -83,11 +62,8 @@ namespace UploadDaemon
                     }
                     else
                     {
-                        logger.Error("Upload of {tracePath} failed. Will retry later", file.FilePath);
+                        logger.Error("Upload of {trace} failed. Will retry later", file.FilePath);
                     }
-=======
-                    logger.Error("Upload of {trace} failed. Will retry later", file.FilePath);
->>>>>>> origin/master
                 }
             }
 
