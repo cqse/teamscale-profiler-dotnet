@@ -37,6 +37,11 @@ public class Config
     /// </summary>
     public string FileUpload { get; set; } = null;
 
+	/// <summary>
+	/// The Azure File Storage to upload to.
+	/// </summary>
+	public AzureFileStorage AzureFileStorage { get; set; } = null;
+
     /// <summary>
     /// Validates the configuration and returns all collected error messages. An empty list
     /// means the configuration is valid.
@@ -44,9 +49,14 @@ public class Config
     /// <returns></returns>
     public IEnumerable<string> Validate()
     {
-        if (Teamscale == null && Directory == null && FileUpload == null)
+        if (Teamscale == null && Directory == null && FileUpload == null && AzureFileStorage == null)
         {
-            yield return @"You must provide either a Teamscale server (property ""teamscale"") or a directory (property ""directory"") or an HTTP endpoint (property ""fileUpload"") to upload trace files to.";
+            yield return @"You must provide either" +
+				@" a Teamscale server (property ""teamscale"")" +
+				@" or a directory (property ""directory"")" +
+				@" or an HTTP endpoint (property ""fileUpload"")" +
+				@" or an Azure File Storage (property ""azureFileStorage"")" +
+				@" to upload trace files to.";
         }
         if (VersionAssembly == null)
         {
@@ -68,6 +78,10 @@ public class Config
         {
             return new UploadServiceUpload(FileUpload);
         }
+		if (AzureFileStorage != null)
+		{
+			return new AzureUpload(AzureFileStorage);
+		}
         return new FileSystemUpload(Directory, fileSystem);
     }
 
