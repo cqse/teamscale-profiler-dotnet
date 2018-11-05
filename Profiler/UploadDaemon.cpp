@@ -17,6 +17,10 @@ UploadDaemon::~UploadDaemon()
 
 void UploadDaemon::launch()
 {
+	// We need to unset COR_ENABLE_PROFILING so the upload daemon process is not
+	// profiled as well. See https://docs.microsoft.com/en-us/windows/desktop/procthread/changing-environment-variables
+	SetEnvironmentVariable("COR_ENABLE_PROFILING", "0");
+
 	std::string arguments = "\"" + traceDirectory + "\"";
 
 	SHELLEXECUTEINFO shExecInfo;
@@ -36,4 +40,7 @@ void UploadDaemon::launch()
 	if (!successful) {
 		log->error("Failed to launch upload daemon " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
 	}
+
+	// We reset the environment of this process. This does not affect the launched child process
+	SetEnvironmentVariable("COR_ENABLE_PROFILING", "1");
 }
