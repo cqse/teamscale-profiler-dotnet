@@ -1,5 +1,6 @@
 REM Example batch-file to profile a 64-bit-application.
-REM See https://github.com/cqse/teamscale-profiler-dotnet/wiki for full documentation.
+REM For full documentation check out
+REM https://github.com/cqse/teamscale-profiler-dotnet/blob/master/documentation/userguide.md
 
 REM Register the profiler (do not change this).
 set COR_PROFILER={DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}
