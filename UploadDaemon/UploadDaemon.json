@@ -56,5 +56,9 @@
 
         /* A directory within the share to upload to. Omit this to upload to the share's root directory. */
         "directory": "path\\on\\share"
-    }
+    },
+
+    /* Disables validation of SSL certificates. Useful if you need to connect to endpoints
+       with self-signed certificates. This is insecure and not recommended! */
+    "disableSslValidation": false
 }
