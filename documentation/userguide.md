@@ -226,6 +226,14 @@ By default, the upload daemon will use the system-wide proxy settings. However, 
 behavior in the `UploadDaemon\UploadDaemon.exe.config` file. Examples are provided there for turning
 off the proxy altogether and for using a different proxy.
 
+## SSL certificates
+
+By default, the upload daemon will validate SSL certificates and refuse to upload to endpoints with invalid
+certificates. In case you must upload to an endpoint with a self-signed, certificate, you can use the
+config option `disableSslValidation` to ignore invalid certificates.
+
+This is insecure and not recommended.
+
 # Build Process
 
 In order to be able to interpret the generated coverage data, Teamscale needs access to the corresponding PDB files. These contain the mapping from the compiled assemblies back to the source code.
