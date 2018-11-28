@@ -16,9 +16,7 @@ CProfilerCallback::CProfilerCallback() {
 		InitializeCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
-		if (!handleException("Constructor")) {
-			throw;
-		}
+		handleException("Constructor");
 	}
 }
 
@@ -27,9 +25,7 @@ CProfilerCallback::~CProfilerCallback() {
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
-		if (!handleException("Destructor")) {
-			throw;
-		}
+		handleException("Destructor");
 	}
 }
 
@@ -38,10 +34,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 		return InitializeImplementation(pICorProfilerInfoUnkown);
 	}
 	catch (...) {
-		if (handleException("Initialize")) {
-			return S_OK;
-		}
-		throw;
+		handleException("Initialize");
 	}
 }
 
@@ -200,10 +193,8 @@ HRESULT CProfilerCallback::Shutdown() {
 		return ShutdownImplementation();
 	}
 	catch (...) {
-		if (handleException("Shutdown")) {
-			return S_OK;
-		}
-		throw;
+		handleException("Shutdown");
+		return S_OK;
 	}
 }
 
@@ -240,10 +231,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 		return AssemblyLoadFinishedImplementation(assemblyId, hrStatus);
 	}
 	catch (...) {
-		if (handleException("AssemblyLoadFinished")) {
-			return S_OK;
-		}
-		throw;
+		handleException("AssemblyLoadFinished");
+		return S_OK;
 	}
 }
 
@@ -342,21 +331,16 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 		return JITCompilationFinishedImplementation(functionId, hrStatus, fIsSafeToBlock);
 	}
 	catch (...) {
-		if (handleException("JITCompilationFinished")) {
-			return S_OK;
-		}
-		throw;
+		handleException("JITCompilationFinished");
+		return S_OK;
 	}
 }
 
-bool CProfilerCallback::handleException(std::string context) {
+void CProfilerCallback::handleException(std::string context) {
 	Debug::logStacktrace(context);
-	if (getOption("IGNORE_EXCEPTIONS") == "1") {
-		// swallows the exception
-		return true;
+	if (getOption("IGNORE_EXCEPTIONS") != "1") {
+		throw;
 	}
-	// forwards the exception, i.e. crashes the program
-	return false;
 }
 
 HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
@@ -377,10 +361,8 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
 		return JITInliningImplementation(callerId, calleeId, pfShouldInline);
 	}
 	catch (...) {
-		if (handleException("JITInlining")) {
-			return S_OK;
-		}
-		throw;
+		handleException("JITInlining");
+		return S_OK;
 	}
 }
 

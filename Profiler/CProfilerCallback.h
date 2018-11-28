@@ -166,6 +166,6 @@ private:
 	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 	HRESULT InitializeImplementation(IUnknown *pICorProfilerInfoUnk);
 
-	/** Logs a stack trace. If true is returned, the calling code should continue, otherwise it should rethrow the exception. */
-	bool handleException(std::string context);
+	/** Logs a stack trace. May rethrow the caught exception. */
+	void handleException(std::string context);
 };
