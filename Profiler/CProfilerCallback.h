@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <mutex>
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
@@ -14,6 +15,9 @@
  */
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
+
+	/** Returns the profiler, unless it was already destroyed or not yet constructed. */
+	static CProfilerCallback* getInstance();
 
 	/** Constructor. */
 	CProfilerCallback();
@@ -67,6 +71,10 @@ public:
 	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
 
 private:
+	static CProfilerCallback* instance;
+
+	std::once_flag shutdownCompletedFlag;
+
 	/** Synchronizes profiling callbacks. */
 	CRITICAL_SECTION callbackSynchronization;
 
@@ -160,4 +168,7 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
+	/** Implements the actual shutdown procedure. Must only be called once. */
+	void CProfilerCallback::ShutdownOnce();
 };

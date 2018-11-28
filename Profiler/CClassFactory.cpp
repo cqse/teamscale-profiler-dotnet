@@ -1,5 +1,6 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
+#include "CProfilerCallback.h"
 
 #define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 
@@ -8,6 +9,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 	if (dwReason == DLL_PROCESS_ATTACH) {
 		DisableThreadLibraryCalls(hInstance);
 		profilerInstance = hInstance;
+	}
+	else if (dwReason == DLL_PROCESS_DETACH) {
+		// sometimes the CLR does not cleanly shut down the profiler but simply unloads
+		// our DLL. In these cases, we need to manually trigger the shutdown
+		CProfilerCallback* profiler = CProfilerCallback::getInstance();
+		if (profiler != NULL) {
+			profiler->Shutdown();
+		}
 	}
 
 	return TRUE;
@@ -27,11 +36,11 @@ STDAPI DllUnregisterServer() {
 
 	memset(szCLSID, 0, sizeof(szCLSID));
 	UnregisterClassBase(CLSID_PROFILER, rcProgID, rcIndProgID, szCLSID,
-	ARRAY_LENGTH(szCLSID));
+		ARRAY_LENGTH(szCLSID));
 
 	DeleteKey(szCLSID, inProcessServerDeclaration);
 
-	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_LENGTH( szWID ));
+	StringFromGUID2(CLSID_PROFILER, szWID, ARRAY_LENGTH(szWID));
 	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
 
 	DeleteKey("CLSID", szCLSID);
@@ -58,7 +67,7 @@ STDAPI DllRegisterServer() {
 
 	// Do the initial portion.
 	hr = RegisterClassBase(CLSID_PROFILER, "Profiler", rcProgID, rcIndProgID,
-			rcCLSID, ARRAY_LENGTH (rcCLSID));
+		rcCLSID, ARRAY_LENGTH(rcCLSID));
 
 	if (SUCCEEDED(hr)) {
 		// Set the server path.
@@ -66,9 +75,10 @@ STDAPI DllRegisterServer() {
 
 		// Add the threading model information.
 		sprintf_s(rcInproc, maxLength + 2, "%s\\%s", rcCLSID,
-				inProcessServerDeclaration);
+			inProcessServerDeclaration);
 		CreateRegistryKeyAndSetValue(rcInproc, "ThreadingModel", "Both");
-	} else {
+	}
+	else {
 		DllUnregisterServer();
 	}
 	return hr;
@@ -86,15 +96,17 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR *ppv) {
 
 /** Implementation of the COM QueryInterface. */
 HRESULT CClassFactory::QueryInterface(REFIID riid, void **ppInterface) {
-	if (!ppInterface){
+	if (!ppInterface) {
 		return E_INVALIDARG;
 	}
 
 	if (riid == IID_IUnknown) {
 		*ppInterface = this;
-	} else if (riid == IID_IClassFactory) {
+	}
+	else if (riid == IID_IClassFactory) {
 		*ppInterface = this;
-	} else {
+	}
+	else {
 		*ppInterface = NULL;
 		return E_NOINTERFACE;
 	}
@@ -110,21 +122,21 @@ STDAPI DllCanUnloadNow(void) {
 
 /** Instantiates the Profiler (CProfilerCallback) */
 HRESULT CClassFactory::CreateInstance(IUnknown *pUnkOuter, REFIID riid,
-		void **ppInstance) {
+	void **ppInstance) {
 	// Aggregation is not supported by these objects.
 	if (pUnkOuter != NULL) {
 		return CLASS_E_NOAGGREGATION;
 	}
 
 	CProfilerCallback *pProfilerCallback = new CProfilerCallback();
-	*ppInstance = (void *) pProfilerCallback;
+	*ppInstance = (void *)pProfilerCallback;
 
 	return S_OK;
 }
 
 HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
-		const char *szProgID, const char *szIndepProgID, char *szOutCLSID,
-		size_t nOutCLSIDLen) {
+	const char *szProgID, const char *szIndepProgID, char *szOutCLSID,
+	size_t nOutCLSIDLen) {
 	char szID[64];     // The class ID to register.
 
 	CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
@@ -144,18 +156,19 @@ HRESULT RegisterClassBase(REFCLSID rclsid, const char *szDesc,
 	success &= CreateFullKeyAndRegister(szOutCLSID, NULL, szDesc);
 	success &= CreateFullKeyAndRegister(szOutCLSID, "ProgID", szProgID);
 	success &= CreateFullKeyAndRegister(szOutCLSID, "VersionIndependentProgID",
-			szIndepProgID);
+		szIndepProgID);
 	success &= CreateFullKeyAndRegister(szOutCLSID, "NotInsertable", NULL);
 
 	if (success) {
 		return S_OK;
-	} else {
+	}
+	else {
 		return S_FALSE;
 	}
 }
 
 HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
-		const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
+	const char *szIndepProgID, char *szOutCLSID, size_t nOutCLSIDLen) {
 	char szID[64];     // The class ID to register.
 	CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
 
@@ -178,15 +191,16 @@ HRESULT UnregisterClassBase(REFCLSID rclsid, const char *szProgID,
 
 	if (success) {
 		return S_OK;
-	} else {
+	}
+	else {
 		return S_FALSE;
 	}
 }
 
-void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID){
+void CreateIDs(REFCLSID rclsid, char *szOutCLSID, size_t nOutCLSIDLen, char* szID) {
 	OLECHAR szWID[64]; // Helper for the class ID to register.
 
-	StringFromGUID2(rclsid, szWID, ARRAY_LENGTH( szWID ));
+	StringFromGUID2(rclsid, szWID, ARRAY_LENGTH(szWID));
 	WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), NULL, NULL);
 
 	strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
@@ -207,7 +221,7 @@ BOOL DeleteKey(const char *szKey, const char *szSubkey) {
 }
 
 BOOL CreateFullKeyAndRegister(const char *szKey, const char *szSubkey,
-		const char *szValue) {
+	const char *szValue) {
 	char rcKey[maxLength]; // Buffer for the full key name.
 
 	// Initialize the key with the base key name.
@@ -227,12 +241,12 @@ BOOL CreateRegistryKeyAndSetValue(const char *szKeyName, const char *szKeyword, 
 
 	// create the registration key.
 	if (RegCreateKeyExA(HKEY_CLASSES_ROOT, szKeyName, 0, NULL,
-			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL)
-			== ERROR_SUCCESS) {
+		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL)
+		== ERROR_SUCCESS) {
 		// set the value (if there is one).
 		if (szValue != NULL) {
-			RegSetValueExA(hKey, szKeyword, 0, REG_SZ, (BYTE *) szValue,
-					(DWORD)((strlen(szValue) + 1) * sizeof(char)));
+			RegSetValueExA(hKey, szKeyword, 0, REG_SZ, (BYTE *)szValue,
+				(DWORD)((strlen(szValue) + 1) * sizeof(char)));
 		}
 
 		RegCloseKey(hKey);

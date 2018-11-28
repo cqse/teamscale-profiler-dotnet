@@ -12,11 +12,19 @@ using namespace std;
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
+CProfilerCallback* CProfilerCallback::instance = NULL;
+
+CProfilerCallback* CProfilerCallback::getInstance() {
+	return instance;
+}
+
 CProfilerCallback::CProfilerCallback() {
 	InitializeCriticalSection(&callbackSynchronization);
+	instance = this;
 }
 
 CProfilerCallback::~CProfilerCallback() {
+	instance = NULL;
 	DeleteCriticalSection(&callbackSynchronization);
 }
 
@@ -156,8 +164,13 @@ std::string CProfilerCallback::getProcessInfo() {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
+	std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
+	return S_OK;
+}
+
+void CProfilerCallback::ShutdownOnce() {
 	if (!isProfilingEnabled) {
-		return S_OK;
+		return;
 	}
 
 	EnterCriticalSection(&callbackSynchronization);
@@ -166,8 +179,6 @@ HRESULT CProfilerCallback::Shutdown() {
 	log.shutdown();
 	profilerInfo->ForceGC();
 	LeaveCriticalSection(&callbackSynchronization);
-
-	return S_OK;
 }
 
 DWORD CProfilerCallback::getEventMask() {
