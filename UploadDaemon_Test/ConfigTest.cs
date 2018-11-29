@@ -2,6 +2,8 @@
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.IO.Abstractions;
+using System.IO.Abstractions.TestingHelpers;
 
 [TestFixture]
 public class ConfigTest
@@ -25,12 +27,12 @@ public class ConfigTest
     }
 
     [Test]
-	public void AzureFileStorageUploadConfigurationIsValid()
-	{
-		IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-		{
-			{
-				Config.ConfigFilePath, new MockFileData(@"{
+    public void AzureFileStorageUploadConfigurationIsValid()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            {
+                Config.ConfigFilePath, new MockFileData(@"{
                     /* line comment */
                     versionAssembly: ""Assembly"",
                     azureFileStorage: {
@@ -39,14 +41,14 @@ public class ConfigTest
                         directory: ""<dir>""
                     },
                 }")
-			}
-		});
+            }
+        });
 
-		IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
-		Assert.That(errors, Is.Empty, "a configuration with an Azure File Storage for upload should be valid");
-	}
+        IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
+        Assert.That(errors, Is.Empty, "a configuration with an Azure File Storage for upload should be valid");
+    }
 
-	[Test]
+    [Test]
     public void ValidDirectoryJson()
     {
         IEnumerable<string> errors = ParseConfig(@"{

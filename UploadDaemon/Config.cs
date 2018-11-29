@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common;
+using Newtonsoft.Json;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.IO;
 using System.IO.Abstractions;
 
 using System.Net;
+using UploadDaemon.Upload;
 
 /// <summary>
 /// Data class that is deserialized from the JSON configuration file.
