@@ -119,6 +119,7 @@ The profiler has several configuration options that can either be set as environ
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This should only be used in conjunction with light mode. |
 | COR_PROFILER_PROCESS              | String (optional)                        | The (case-insensitive) name of the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. |
 | COR_PROFILER_DUMP_ENVIRONMENT     | `1` or `0`, default `0`                  | Print all environment variables of the profiled process in the trace file. |
+| COR_PROFILER_IGNOR_EXCEPTIONS     | `1` or `0`, default `0`                  | Causes all exceptions in the profiler code to be swallowed. For debugging only. |
 
 Please note that the profiler is **also** configured with variables starting with the `COR_PROFILER_` prefix in case of .NET Core applications.
 
