@@ -197,6 +197,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CClassFactory.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
     <ClCompile Include="Debug.cpp" />
@@ -233,6 +234,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="StringUtils.cpp" />
     <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\collectionstack.h" />

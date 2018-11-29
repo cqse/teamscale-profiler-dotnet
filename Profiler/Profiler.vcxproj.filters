@@ -16,6 +16,12 @@
     <Filter Include="yaml-cpp">
       <UniqueIdentifier>{e1eb984c-3223-472a-81e8-ec1aab937fe8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{6cc6ba12-cf0c-4167-92f2-74a8423a1c54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="config">
+      <UniqueIdentifier>{5ab6d503-923d-4257-813f-272ef3e73ae8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CProfilerCallbackBase.cpp">
@@ -30,16 +36,7 @@
     <ClCompile Include="Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WindowsUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UploadDaemon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StringUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\binary.cpp">
@@ -126,6 +123,18 @@
     <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\tag.cpp">
       <Filter>yaml-cpp</Filter>
     </ClCompile>
+    <ClCompile Include="WindowsUtils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="StringUtils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -149,16 +158,7 @@
     <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WindowsUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UploadDaemon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StringUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\collectionstack.h">
@@ -223,6 +223,18 @@
     </ClInclude>
     <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\token.h">
       <Filter>yaml-cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsUtils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Debug.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
