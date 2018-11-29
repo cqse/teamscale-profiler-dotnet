@@ -116,13 +116,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 profilerDll = SolutionRoot + "/Profiler/bin/Release/Profiler64.dll";
             }
 
-            Console.Error.WriteLine("------> Bitness " + bitness);
-            Console.Error.WriteLine("------> Looking for profiler in " + profilerDll);
-            Console.Error.WriteLine("------> Found: " + File.Exists(profilerDll));
-            Console.Error.WriteLine("------> Release: " + Directory.Exists(SolutionRoot + "/Profiler/bin/Release"));
-            Console.Error.WriteLine("------> bin: " + Directory.Exists(SolutionRoot + "/Profiler/bin"));
-            Console.Error.WriteLine("------> Profiler: " + Directory.Exists(SolutionRoot + "/Profiler"));
-            Console.Error.WriteLine("------> Root: " + Directory.Exists(SolutionRoot.ToString()));
+            Assert.IsTrue(File.Exists(profilerDll), "Could not find profiler DLL at " + profilerDll);
 
             // set environment variables for the profiler
             processInfo.Environment[PROFILER_PATH_KEY] = Path.GetFullPath(profilerDll);
