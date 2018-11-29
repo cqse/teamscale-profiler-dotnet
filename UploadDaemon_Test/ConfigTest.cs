@@ -25,6 +25,28 @@ public class ConfigTest
     }
 
     [Test]
+	public void AzureFileStorageUploadConfigurationIsValid()
+	{
+		IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+		{
+			{
+				Config.ConfigFilePath, new MockFileData(@"{
+                    /* line comment */
+                    versionAssembly: ""Assembly"",
+                    azureFileStorage: {
+                        connectionString: ""<connection-string>"",
+                        shareName: ""<share>"",
+                        directory: ""<dir>""
+                    },
+                }")
+			}
+		});
+
+		IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
+		Assert.That(errors, Is.Empty, "a configuration with an Azure File Storage for upload should be valid");
+	}
+
+	[Test]
     public void ValidDirectoryJson()
     {
         IEnumerable<string> errors = ParseConfig(@"{

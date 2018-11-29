@@ -11,23 +11,21 @@
  * The callbacks the profiler needs are implemented (overridden) in the subclass.
 */
 class CProfilerCallbackBase : public ICorProfilerCallback3 {
-
 public:
 	/** Constructor */
 	CProfilerCallbackBase();
 
 	/** Destructor */
-	virtual ~CProfilerCallbackBase(){ /* nothing to do. */};
+	virtual ~CProfilerCallbackBase() throw(...) { /* nothing to do. */ };
 
-// IUnknown interface implementation
+	// IUnknown interface implementation
 	STDMETHOD_(ULONG, AddRef)();
 	STDMETHOD_(ULONG, Release)();
-	STDMETHOD(QueryInterface)( REFIID riid, void **ppInterface );           
-// End of IUnknown interface implementation
+	STDMETHOD(QueryInterface)(REFIID riid, void **ppInterface);
+	// End of IUnknown interface implementation
 
-
-// ICorProfilerCallback interface implementation
-	// STARTUP/SHUTDOWN EVENTS
+	// ICorProfilerCallback interface implementation
+		// STARTUP/SHUTDOWN EVENTS
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 	STDMETHOD(Shutdown)();
 	// APPLICATION DOMAIN EVENTS
@@ -114,9 +112,9 @@ public:
 	// COM CLASSIC VTable
 	STDMETHOD(COMClassicVTableCreated)(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable, ULONG cSlots);
 	STDMETHOD(COMClassicVTableDestroyed)(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable);
-// End of ICorProfilerCallback interface implementation
+	// End of ICorProfilerCallback interface implementation
 
-// ICorProfilerCallback2 interface implementation
+	// ICorProfilerCallback2 interface implementation
 	STDMETHOD(ThreadNameChanged)(ThreadID threadId, ULONG cchName, WCHAR name[]);
 	STDMETHOD(GarbageCollectionStarted)(int cGenerations, BOOL generationCollected[], COR_PRF_GC_REASON reason);
 	STDMETHOD(SurvivingReferences)(ULONG cSurvivingObjectIDRanges, ObjectID objectIDRangeStart[], ULONG cObjectIDRangeLength[]);
@@ -125,16 +123,15 @@ public:
 	STDMETHOD(RootReferences2)(ULONG cRootRefs, ObjectID rootRefIds[], COR_PRF_GC_ROOT_KIND rootKinds[], COR_PRF_GC_ROOT_FLAGS rootFlags[], UINT_PTR rootIds[]);
 	STDMETHOD(HandleCreated)(GCHandleID handleId, ObjectID initialObjectId);
 	STDMETHOD(HandleDestroyed)(GCHandleID handleId);
-// End of ICorProfilerCallback2 interface implementation
+	// End of ICorProfilerCallback2 interface implementation
 
-// ICorProfilerCallback3 interface implementation
-	STDMETHOD(InitializeForAttach)(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData);
+	// ICorProfilerCallback3 interface implementation
+	STDMETHOD(InitializeForAttach)(IUnknown * pCorProfilerInfoUnk, void * pvClientData, UINT cbClientData);
 	STDMETHOD(ProfilerAttachComplete)();
 	STDMETHOD(ProfilerDetachSucceeded)();
-// End of ICorProfilerCallback3 interface implementation
+	// End of ICorProfilerCallback3 interface implementation
 
 private:
 	// COM reference counter (for AddRef() and Release()) of the IUnknown implementation of the profiler
-	long referenceCount; 
-
+	long referenceCount;
 };
