@@ -62,9 +62,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../.."));
 
         /// <summary>
-		/// Returns the absolute path to a test data file.
-		/// </summary>
-		protected static string GetTestDataPath(params string[] path)
+        /// Returns the absolute path to a test data file.
+        /// </summary>
+        protected static string GetTestDataPath(params string[] path)
             => Path.Combine(SolutionRoot.FullName, "test-data", Path.Combine(path));
     }
 }

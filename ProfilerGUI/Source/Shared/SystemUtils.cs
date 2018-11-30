@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 
 namespace ProfilerGUI.Source.Shared
 {
@@ -11,9 +10,9 @@ namespace ProfilerGUI.Source.Shared
     public static class SystemUtils
     {
         /// <summary>
-        ///  Sets the given environment variable on the 'Process' level, unless it is already configured. I.e. this process and any of its children
-        ///  will see the environment variable. Returns <code>true</code>
-        ///  if changes were made, i.e. the variable was not already set to the target value.
+        ///  Sets the given environment variable on the 'Process' level, unless it is already configured. I.e. this
+        ///  process and any of its children  will see the environment variable. Returns <code>true</code> if changes
+        ///  were made, i.e. the variable was not already set to the target value.
         /// </summary>
         public static bool SetEnvironmentVariable(string variableName, string value)
         {
@@ -26,8 +25,8 @@ namespace ProfilerGUI.Source.Shared
         }
 
         /// <summary>
-        /// Asynchronously runs the given executable with the given command line arguments, working dir and environment.
-        /// Does not enable process events.
+        /// Asynchronously runs the given executable with the given command line arguments, working dir and
+        /// environment. Does not enable process events.
         /// </summary>
         public static Process RunNonBlocking(string processPath, string args, string workingDir, List<(string, string)> environmentVariables)
         {
