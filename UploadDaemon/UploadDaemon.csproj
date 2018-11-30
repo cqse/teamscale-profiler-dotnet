@@ -77,7 +77,7 @@
     <Compile Include="Upload\FileSystemUpload.cs" />
     <Compile Include="Upload\TeamscaleUpload.cs" />
     <Compile Include="Upload\UploadServiceUpload.cs" />
-    <Compile Include="upload\AzureUpload.cs" />
+    <Compile Include="Upload\AzureUpload.cs" />
     <Compile Include="Uploader.cs" />
   </ItemGroup>
   <ItemGroup>
