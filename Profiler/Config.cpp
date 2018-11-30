@@ -28,3 +28,9 @@ std::string Config::getOption(std::string optionName) {
 	}
 	return options[optionName];
 }
+
+bool Config::getBooleanOption(std::string optionName) {
+	std::string value = getOption(optionName);
+	// true comes from the YAML files and 1 is used for the env options so we support both
+	return value == "true" || value == "1";
+}

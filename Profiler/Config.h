@@ -64,4 +64,5 @@ private:
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
+	bool getBooleanOption(std::string key);
 };
