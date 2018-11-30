@@ -113,7 +113,7 @@ namespace ProfilerGUI.Source.Configurator
         private ValidationResult internalValidationResult = null;
 
         /// <summary>
-        /// The general error message.
+        /// The result of validating the config.
         /// </summary>
         public ValidationResult ValidationResult
         {

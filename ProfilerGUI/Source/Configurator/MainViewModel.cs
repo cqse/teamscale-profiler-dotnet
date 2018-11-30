@@ -130,12 +130,14 @@ namespace ProfilerGUI.Source.Configurator
             {
                 TargetApp.Configuration.WriteToFile();
                 logger.Info("Wrote config to {configPath}", ProfilerConfiguration.ConfigFilePath);
-                SaveUploadConfig();
             }
             catch (Exception e)
             {
                 logger.Error(e, "Could not save configuration to {configPath}", ProfilerConfiguration.ConfigFilePath);
+                return;
             }
+
+            SaveUploadConfiguration();
         }
 
         private UploadConfig ReadUploadConfigFromDisk()
@@ -159,7 +161,7 @@ namespace ProfilerGUI.Source.Configurator
         /// <summary>
         /// Saves the config for the upload daemon.
         /// </summary>
-        private void SaveUploadConfig()
+        private void SaveUploadConfiguration()
         {
             try
             {
@@ -179,7 +181,7 @@ namespace ProfilerGUI.Source.Configurator
         {
             if (string.IsNullOrEmpty(TargetApp.ApplicationPath))
             {
-                logger.Error("You did not configure an application to profile");
+                logger.Error("Please configure an application to profile");
                 return;
             }
 

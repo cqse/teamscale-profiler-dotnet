@@ -43,7 +43,7 @@
 
                 <Label Content="Target application" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" />
 
-                <Button  Content="Select app"  Click="OnChooseApplicationButtonClick" Grid.Row="2" Grid.Column="0" />
+                <Button  Content="Select application"  Click="OnChooseApplicationButtonClick" Grid.Row="2" Grid.Column="0" />
                 <TextBox  Margin="5 0 0 0" Text="{Binding Path=TargetApp.ApplicationPath, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" />
                 <ComboBox SelectedIndex="{Binding Path=SelectedBitnessIndex, Mode=TwoWay}" Grid.Row="2" Grid.Column="2">
                     <ComboBoxItem>32 bit</ComboBoxItem>
