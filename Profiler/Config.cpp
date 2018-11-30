@@ -3,40 +3,14 @@
 #include "WindowsUtils.h"
 
 Config::Config(std::string configFilePath, std::string processName)
-	: configFilePath(configFilePath), processName(processName)
+	: processName(processName)
 {
 	try {
-		ConfigFile configFile = parse();
+		ConfigFile configFile = ConfigParser::parseFile(configFilePath);
 	}
-	catch (YAML::Exception e) {
+	catch (ConfigParsingException e) {
 		// TODO how to handle?
 	}
-}
-
-ConfigFile Config::parse() {
-	ConfigFile configFile;
-
-	YAML::Node rootNode = YAML::LoadFile(configFilePath);
-
-	YAML::Node matchSections = rootNode["match"];
-	if (!matchSections.IsMap()) {
-		return configFile;
-	}
-
-	for (auto entry : matchSections) {
-		std::string key(entry.first.as<std::string>());
-
-		ProcessSection section;
-		section.processRegex = std::regex(key, std::regex_constants::ECMAScript | std::regex_constants::icase);
-
-		for (auto optionEntry : entry.second) {
-			section.options[entry.first.as<std::string>()] = entry.second.as<std::string>();
-		}
-
-		configFile.sections.push_back(section);
-	}
-
-	return configFile;
 }
 
 void Config::apply(ConfigFile configFile) {

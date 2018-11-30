@@ -2,6 +2,7 @@
 
 #include <string>
 #include <algorithm>
+#include <map>
 
 /** Utility functions for strings. */
 class StringUtils {
@@ -24,3 +25,6 @@ public:
 		}
 	};
 };
+
+/** A map string -> string that ignores the casing of its keys. */
+typedef std::map<std::string, std::string, StringUtils::CaseInsensitiveComparator> CaseInsensitiveStringMap;

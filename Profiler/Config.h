@@ -1,32 +1,7 @@
 #pragma once
 #include <string>
-#include <map>
-#include <regex>
-#include "StringUtils.h"
+#include "ConfigParser.h"
 
-/** A map string -> string that ignores the casing of its keys. */
-typedef std::map<std::string, std::string, StringUtils::CaseInsensitiveComparator> CaseInsensitiveStringMap;
-
-/** A process-specific config section. */
-struct ProcessSection {
-	std::regex processRegex;
-	CaseInsensitiveStringMap options;
-};
-
-/** The parsed YAML config. */
-struct ConfigFile {
-	std::vector<ProcessSection> sections;
-};
-
-/*
-example:
----
-match:
-  ".*prog1":
-    opt1: 1
-    opt2: uiae
-
-*/
 /**
   * Manages config settings from both the environment and a config file.
   * Settings from the environment always win.
@@ -85,10 +60,8 @@ public:
 private:
 
 	std::string processName;
-	std::string configFilePath;
 	CaseInsensitiveStringMap options;
 
-	ConfigFile parse();
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
 };

@@ -22,6 +22,9 @@
     <Filter Include="config">
       <UniqueIdentifier>{5ab6d503-923d-4257-813f-272ef3e73ae8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{f2489227-d07e-4c22-ae01-738e337c5c20}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CProfilerCallbackBase.cpp">
@@ -135,6 +138,12 @@
     <ClCompile Include="Config.cpp">
       <Filter>config</Filter>
     </ClCompile>
+    <ClCompile Include="ConfigParser.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigFileParserTest.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -234,6 +243,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="Config.h">
+      <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigParser.h">
       <Filter>config</Filter>
     </ClInclude>
   </ItemGroup>
