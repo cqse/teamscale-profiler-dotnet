@@ -16,7 +16,7 @@ Config::Config(std::string configFilePath, std::string processName)
 void Config::apply(ConfigFile configFile) {
 	for (ProcessSection section : configFile.sections) {
 		if (std::regex_match(processName, section.processRegex)) {
-			options.insert(section.options.begin(), section.options.end());
+			options.insert(section.profilerOptions.begin(), section.profilerOptions.end());
 		}
 	}
 }

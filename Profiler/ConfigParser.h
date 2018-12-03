@@ -3,11 +3,12 @@
 #include <regex>
 #include <fstream>
 #include "StringUtils.h"
+#include "yaml-cpp/yaml.h"
 
 /** A process-specific config section. */
 struct ProcessSection {
 	std::regex processRegex;
-	CaseInsensitiveStringMap options;
+	CaseInsensitiveStringMap profilerOptions;
 };
 
 /** The parsed YAML config. */
@@ -27,9 +28,10 @@ public:
   * Example:
   *
   *   match:
-  *     ".*prog1":
-  *       opt1: 1
-  *       opt2: uiae
+  *     - process: ".*prog1.exe"
+  *       profiler:
+  *         opt1: 1
+  *         opt2: "uiae"
   */
 class __declspec(dllexport) ConfigParser
 {
@@ -42,4 +44,5 @@ public:
 
 private:
 	static ConfigFile parseUnsafe(std::istream& stream);
+	static void parseMatchSection(YAML::Node &node, ConfigFile &configFile);
 };
