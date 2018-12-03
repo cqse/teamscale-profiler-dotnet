@@ -3,6 +3,7 @@
 #include <fstream>
 #include "ConfigParser.h"
 
+/** Abstracts reading a config value from the environment so the Config class is unit-testable. */
 typedef std::string EnvironmentVariableReader(std::string suffix);
 
 /**
@@ -20,6 +21,11 @@ public:
 
 	/** Loads the config from the given YAML stream and applies all sections that apply to the given profiled process path. */
 	void load(std::istream& configFileContents, std::string processPath);
+
+	/** Returns any problems encountered while loading the config, e.g. to log them. */
+	std::vector<std::string> getProblems() {
+		return problems;
+	}
 
 	/** The directory to which to write the trace file. */
 	std::string getTargetDir() {
@@ -71,6 +77,7 @@ private:
 	std::string processPath;
 	CaseInsensitiveStringMap options;
 	EnvironmentVariableReader* environmentVariableReader;
+	std::vector<std::string> problems;
 
 	bool enabled;
 	std::string targetDir;
@@ -85,6 +92,7 @@ private:
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
 	bool getBooleanOption(std::string key, bool defaultValue);
+	void loadValues();
 
 	/** Backwards compatibility: disables the profiler if the suffix in the COR_PROFILER_PROCESS environment variable doesn't match the profiled process.  */
 	void disableProfilerIfProcessSuffixDoesntMatch();

@@ -17,7 +17,7 @@ struct ConfigFile {
 };
 
 /** Thrown if config parsing fails. */
-class ConfigParsingException : std::runtime_error {
+class ConfigParsingException : public std::runtime_error {
 public:
 	ConfigParsingException(std::string message) : std::runtime_error(message) {};
 };

@@ -12,6 +12,7 @@ public:
 	{
 		Config config = parse(R"()", [](std::string suffix) -> std::string { return "";});
 
+		Assert::AreEqual(size_t(0), config.getProblems().size(), L"number of problems");
 		Assert::AreEqual(true, config.isEnabled(), L"default value should be enabled");
 		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"default value should be to not ignore exceptions");
 		Assert::AreEqual(size_t(0), config.getEagerness(), L"default value should be no eagerness");
@@ -83,6 +84,13 @@ match:
 )", [](std::string suffix) -> std::string { return ""; });
 
 		Assert::AreEqual(std::string("last"), config.getTargetDir(), L"Should use value from last matching section");
+	}
+
+	TEST_METHOD(ConfigProblemsMustBeLoggable)
+	{
+		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string { return ""; });
+
+		Assert::AreEqual(size_t(1), config.getProblems().size(), L"number of problems");
 	}
 
 private:

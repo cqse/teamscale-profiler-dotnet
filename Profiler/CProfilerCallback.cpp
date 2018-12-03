@@ -35,6 +35,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 	catch (...) {
 		handleException("Initialize");
+		return S_OK;
 	}
 }
 
@@ -45,6 +46,10 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	}
 
 	log.createLogFile(config);
+
+	for (std::string problem : config.getProblems()) {
+		log.error(problem);
+	}
 
 	if (config.shouldUseLightMode()) {
 		log.info("Mode: light");

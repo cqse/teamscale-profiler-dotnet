@@ -1,13 +1,17 @@
 #include "Config.h"
 #include "yaml-cpp/yaml.h"
 #include "WindowsUtils.h"
+#include <exception>
 
 void Config::load(std::string configFilePath, std::string processPath) {
 	std::ifstream stream(configFilePath);
 	if (stream.fail()) {
-		// TODO how to handle? default values??
+		problems.push_back("Failed to open the config file " + configFilePath + " for reading");
+		// we must still load the values from the environment in this case
+		loadValues();
 		return;
 	}
+
 	load(stream, processPath);
 }
 
@@ -17,10 +21,20 @@ void Config::load(std::istream& configFileContents, std::string processPath) {
 		ConfigFile configFile = ConfigParser::parse(configFileContents);
 		apply(configFile);
 	}
-	catch (ConfigParsingException e) {
-		// TODO how to handle?
+	catch (const std::exception& e) {
+		problems.push_back(std::string("Failed to parse the config file: ") + e.what());
+		// continue loading the values from the environment in this case
+	}
+	catch (...) {
+		problems.push_back(std::string("Failed to parse the config file. The reason is unknown"));
+		// continue loading the values from the environment in this case
 	}
 
+	loadValues();
+}
+
+void Config::loadValues()
+{
 	targetDir = getOption("targetdir");
 	enabled = getBooleanOption("enabled", true);
 	useLightMode = getBooleanOption("light_mode", false);
@@ -30,13 +44,17 @@ void Config::load(std::istream& configFileContents, std::string processPath) {
 	ignoreExceptions = getBooleanOption("ignore_exceptions", false);
 	startUploadDaemon = getBooleanOption("upload_daemon", false);
 
-	try {
-		eagerness = static_cast<size_t>(std::stoi(getOption("eagerness")));
-	}
-	catch (...) {
-		// fall back to no eagerness for invalid values
+	std::string eagernessValue = getOption("eagerness");
+	if (eagernessValue.empty()) {
 		eagerness = 0;
-		// TODO warn/log??
+	}
+	else {
+		try {
+			eagerness = static_cast<size_t>(std::stoi(eagernessValue));
+		}
+		catch (...) {
+			problems.push_back("Invalid eagerness value configured: " + eagernessValue + ". Using the default of no eagerness instead");
+		}
 	}
 
 	disableProfilerIfProcessSuffixDoesntMatch();
