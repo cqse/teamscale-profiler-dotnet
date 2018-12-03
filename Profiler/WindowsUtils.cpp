@@ -1,9 +1,13 @@
 #include "WindowsUtils.h"
 #include <Windows.h>
 #include <vector>
+#include  <algorithm>
 #include "Debug.h"
 
 extern char** _environ;
+
+/** Maximum size of an enironment variable value according to http://msdn.microsoft.com/en-us/library/ms683188.aspx */
+static const size_t MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE = 32767 * sizeof(char);
 
 std::string WindowsUtils::getLastErrorAsString()
 {
@@ -23,9 +27,11 @@ std::string WindowsUtils::getLastErrorAsString()
 }
 
 std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
-	char value[32767 * sizeof(char)]; // maximum size according to http://msdn.microsoft.com/en-us/library/ms683188.aspx
+	std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::toupper);
+
+	char value[MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE];
 	std::string name = "COR_PROFILER_" + suffix;
-	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
+	if (!GetEnvironmentVariable(name.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
 		return "";
 	}
 	return value;
