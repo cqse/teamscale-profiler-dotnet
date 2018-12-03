@@ -3,6 +3,7 @@
 #include "FunctionInfo.h"
 #include "Log.h"
 #include "Config.h"
+#include "WindowsUtils.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -47,7 +48,7 @@ private:
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
-	Config config;
+	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).

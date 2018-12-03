@@ -33,14 +33,11 @@ public:
   *         opt1: 1
   *         opt2: "uiae"
   */
-class __declspec(dllexport) ConfigParser
+class ConfigParser
 {
 public:
 	/** Parses the given stream as a YAML config file. Throws ConfigParsingException if parsing fails. */
 	static ConfigFile parse(std::istream& stream);
-
-	/** Parses the given file as a YAML config file. Throws ConfigParsingException if parsing fails. */
-	static ConfigFile parseFile(std::string filePath);
 
 private:
 	static ConfigFile parseUnsafe(std::istream& stream);

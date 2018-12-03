@@ -43,11 +43,3 @@ void ConfigParser::parseMatchSection(YAML::Node &node, ConfigFile &configFile)
 
 	configFile.sections.push_back(section);
 }
-
-ConfigFile ConfigParser::parseFile(std::string filePath) {
-	std::ifstream stream(filePath);
-	if (stream.fail()) {
-		throw ConfigParsingException("Unable to open YAML config file " + filePath + " for reading");
-	}
-	return parse(stream);
-}

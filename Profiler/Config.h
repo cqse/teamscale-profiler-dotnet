@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
+#include <fstream>
 #include "ConfigParser.h"
+
+typedef std::string EnvironmentVariableReader(std::string suffix);
 
 /**
   * Manages config settings from both the environment and a config file.
@@ -10,8 +13,13 @@ class Config
 {
 public:
 
+	Config(EnvironmentVariableReader* _environmentVariableReader) : environmentVariableReader(_environmentVariableReader) {}
+
 	/** Loads the config from the given YAML file and applies all sections that apply to the given profiled process path. */
 	void load(std::string configFilePath, std::string processPath);
+
+	/** Loads the config from the given YAML stream and applies all sections that apply to the given profiled process path. */
+	void load(std::istream& configFileContents, std::string processPath);
 
 	/** The directory to which to write the trace file. */
 	std::string getTargetDir() {
@@ -62,6 +70,7 @@ private:
 
 	std::string processPath;
 	CaseInsensitiveStringMap options;
+	EnvironmentVariableReader* environmentVariableReader;
 
 	bool enabled;
 	std::string targetDir;
@@ -75,7 +84,7 @@ private:
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
-	bool getBooleanOption(std::string key);
+	bool getBooleanOption(std::string key, bool defaultValue);
 
 	/** Backwards compatibility: disables the profiler if the suffix in the COR_PROFILER_PROCESS environment variable doesn't match the profiled process.  */
 	void disableProfilerIfProcessSuffixDoesntMatch();

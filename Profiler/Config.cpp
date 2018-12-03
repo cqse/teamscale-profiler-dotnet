@@ -3,23 +3,32 @@
 #include "WindowsUtils.h"
 
 void Config::load(std::string configFilePath, std::string processPath) {
+	std::ifstream stream(configFilePath);
+	if (stream.fail()) {
+		// TODO how to handle? default values??
+		return;
+	}
+	load(stream, processPath);
+}
+
+void Config::load(std::istream& configFileContents, std::string processPath) {
 	this->processPath = processPath;
 	try {
-		ConfigFile configFile = ConfigParser::parseFile(configFilePath);
+		ConfigFile configFile = ConfigParser::parse(configFileContents);
+		apply(configFile);
 	}
 	catch (ConfigParsingException e) {
 		// TODO how to handle?
 	}
 
-	// todo: still support old PROCESS handling?? i.e. disable if not suffix-matched and set?
 	targetDir = getOption("targetdir");
-	enabled = getBooleanOption("enabled");
-	useLightMode = getBooleanOption("light_mode");
-	logAssemblyFileVersion = getBooleanOption("assembly_file_version");
-	logAssemblyPaths = getBooleanOption("assembly_paths");
-	dumpEnvironment = getBooleanOption("dump_environment");
-	ignoreExceptions = getBooleanOption("ignore_exceptions");
-	startUploadDaemon = getBooleanOption("upload_daemon");
+	enabled = getBooleanOption("enabled", true);
+	useLightMode = getBooleanOption("light_mode", false);
+	logAssemblyFileVersion = getBooleanOption("assembly_file_version", false);
+	logAssemblyPaths = getBooleanOption("assembly_paths", false);
+	dumpEnvironment = getBooleanOption("dump_environment", false);
+	ignoreExceptions = getBooleanOption("ignore_exceptions", false);
+	startUploadDaemon = getBooleanOption("upload_daemon", false);
 
 	try {
 		eagerness = static_cast<size_t>(std::stoi(getOption("eagerness")));
@@ -43,21 +52,27 @@ void Config::disableProfilerIfProcessSuffixDoesntMatch() {
 void Config::apply(ConfigFile configFile) {
 	for (ProcessSection section : configFile.sections) {
 		if (std::regex_match(processPath, section.processRegex)) {
-			options.insert(section.profilerOptions.begin(), section.profilerOptions.end());
+			for (auto entry : section.profilerOptions) {
+				options[entry.first] = entry.second;
+			}
 		}
 	}
 }
 
 std::string Config::getOption(std::string optionName) {
-	std::string value = WindowsUtils::getConfigValueFromEnvironment(optionName);
+	std::string value = environmentVariableReader(optionName);
 	if (!value.empty()) {
 		return value;
 	}
 	return options[optionName];
 }
 
-bool Config::getBooleanOption(std::string optionName) {
+bool Config::getBooleanOption(std::string optionName, bool defaultValue) {
 	std::string value = getOption(optionName);
+	if (value.empty()) {
+		return defaultValue;
+	}
+
 	// true comes from the YAML files and 1 is used for the env options so we support both
 	return value == "true" || value == "1";
 }
