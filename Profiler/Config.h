@@ -10,8 +10,8 @@ class Config
 {
 public:
 
-	/** Loads the config from the given YAML file and applies all sections that apply to the given process name. */
-	void load(std::string configFilePath, std::string processName);
+	/** Loads the config from the given YAML file and applies all sections that apply to the given profiled process path. */
+	void load(std::string configFilePath, std::string processPath);
 
 	/** The directory to which to write the trace file. */
 	std::string getTargetDir() {
@@ -60,7 +60,7 @@ public:
 
 private:
 
-	std::string processName;
+	std::string processPath;
 	CaseInsensitiveStringMap options;
 
 	bool enabled;
@@ -76,4 +76,7 @@ private:
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
 	bool getBooleanOption(std::string key);
+
+	/** Backwards compatibility: disables the profiler if the suffix in the COR_PROFILER_PROCESS environment variable doesn't match the profiled process.  */
+	void disableProfilerIfProcessSuffixDoesntMatch();
 };

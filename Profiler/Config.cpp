@@ -2,8 +2,8 @@
 #include "yaml-cpp/yaml.h"
 #include "WindowsUtils.h"
 
-void Config::load(std::string configFilePath, std::string processName) {
-	this->processName = processName;
+void Config::load(std::string configFilePath, std::string processPath) {
+	this->processPath = processPath;
 	try {
 		ConfigFile configFile = ConfigParser::parseFile(configFilePath);
 	}
@@ -29,11 +29,20 @@ void Config::load(std::string configFilePath, std::string processName) {
 		eagerness = 0;
 		// TODO warn/log??
 	}
+
+	disableProfilerIfProcessSuffixDoesntMatch();
+}
+
+void Config::disableProfilerIfProcessSuffixDoesntMatch() {
+	std::string processSuffix = WindowsUtils::getConfigValueFromEnvironment("process");
+	if (!processSuffix.empty() && !StringUtils::endsWithCaseInsensitive(processPath, processSuffix)) {
+		enabled = false;
+	}
 }
 
 void Config::apply(ConfigFile configFile) {
 	for (ProcessSection section : configFile.sections) {
-		if (std::regex_match(processName, section.processRegex)) {
+		if (std::regex_match(processPath, section.processRegex)) {
 			options.insert(section.profilerOptions.begin(), section.profilerOptions.end());
 		}
 	}

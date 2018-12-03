@@ -11,8 +11,11 @@ public:
 	/** Removes the last part of the given file system path. */
 	static std::string removeLastPartOfPath(std::string path);
 
-	/** Whether the given value ends with the given suffix. */
-	static bool endsWith(std::string const & value, std::string const & suffix);
+	/** Whether the given value ends with the given suffix regardless of casing. */
+	static bool endsWithCaseInsensitive(std::string const & value, std::string const & suffix);
+
+	/** Returns a new string that is the uppercase variant of the given string. */
+	static std::string StringUtils::uppercase(std::string const & value);
 
 	/** Compares strings regardless of their casing. */
 	struct CaseInsensitiveComparator {
