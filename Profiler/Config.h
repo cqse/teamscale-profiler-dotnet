@@ -15,59 +15,63 @@ public:
 
 	/** The directory to which to write the trace file. */
 	std::string targetDir() {
-		return getOption("targetdir");
+		return targetDir;
 	}
 
 	/** Whether to profile at all. */
 	bool isEnabled() {
-		return getBooleanOption("enabled");
+		return enabled;
 	}
 
 	/** Whether to use light mode or force rejitting of prejitted assemblies. */
 	bool shouldUseLightMode() {
-		return getBooleanOption("light_mode");
+		return useLightMode;
 	}
 
 	/** Whether to log the assembly file versions of all loaded assemblies. */
 	bool shouldLogAssemblyFileVersion() {
-		return getBooleanOption("assembly_file_version");
+		return logAssemblyFileVersion;
 	}
 
 	/** Whether to log the assembly file paths of all loaded assemblies. */
 	bool shouldLogAssemblyPaths() {
-		return getBooleanOption("assembly_paths");
+		return logAssemblyPaths;
 	}
 
 	/** Whether to log all environment variables in the trace file. */
 	bool shouldDumpEnvironment() {
-		return getBooleanOption("dump_environment");
+		return dumpEnvironment;
 	}
 
 	/** Whether exceptions in the profiler code should be swallowed. */
 	bool shouldIgnoreExceptions() {
-		return getBooleanOption("ignore_exceptions");
+		return ignoreExceptions;
 	}
 
 	/** Whether the profiler should start the upload daemon on startup. */
 	bool shouldStartUploadDaemon() {
-		return getBooleanOption("UPLOAD_DAEMON");
+		return startUploadDaemon;
 	}
 
 	/** Whether to eagerly log trace data. */
-	int eagerness() {
-		try {
-			return std::stoi(getOption("eagerness"));
-		}
-		catch (...) {
-			// fall back to no eagerness for invalid values
-			return 0;
-		}
+	size_t eagerness() {
+		return eagerness;
 	}
 
 private:
 
 	std::string processName;
 	CaseInsensitiveStringMap options;
+
+	bool enabled;
+	std::string targetDir;
+	bool useLightMode;
+	bool logAssemblyFileVersion;
+	bool logAssemblyPaths;
+	bool dumpEnvironment;
+	bool ignoreExceptions;
+	bool startUploadDaemon;
+	size_t eagerness;
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);

@@ -10,6 +10,24 @@ void Config::load(std::string configFilePath, std::string processName) {
 	catch (ConfigParsingException e) {
 		// TODO how to handle?
 	}
+
+	targetDir = getOption("targetdir");
+	enabled = getBooleanOption("enabled");
+	useLightMode = getBooleanOption("light_mode");
+	logAssemblyFileVersion = getBooleanOption("assembly_file_version");
+	logAssemblyPaths = getBooleanOption("assembly_paths");
+	dumpEnvironment = getBooleanOption("dump_environment");
+	ignoreExceptions = getBooleanOption("ignore_exceptions");
+	startUploadDaemon = getBooleanOption("upload_daemon");
+
+	try {
+		eagerness = static_cast<size_t>(std::stoi(getOption("eagerness")));
+	}
+	catch (...) {
+		// fall back to no eagerness for invalid values
+		eagerness = 0;
+		// TODO warn/log??
+	}
 }
 
 void Config::apply(ConfigFile configFile) {
