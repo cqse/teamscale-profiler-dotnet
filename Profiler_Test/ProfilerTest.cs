@@ -69,7 +69,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// Runs the profiler without the environment variable APP_POOL_ID set and asserts the trace does not contain a line for the app pool.
         /// </summary>
         [Test]
-        public void TestWihoutAppPool()
+        public void TestWithoutAppPool()
         {
             FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86));
             string[] lines = File.ReadAllLines(actualTrace.FullName);

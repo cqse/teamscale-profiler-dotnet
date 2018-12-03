@@ -12,15 +12,10 @@
 
         /* This user must have the "Perform external uploads" permission on the project. */
         "username": "admin",
-<<<<<<< HEAD
+
         /* You can generate access keys either from your personal user settings or via Admin > Users. */
         "accessKey": "accesskey",
-=======
 
-        /* You can generate access tokens either from your personal user settings or via Admin > Users. */
-        "accessToken": "token",
-
->>>>>>> origin/master
         /* Teamscale project ID or alias. */
         "project": "project",
 

@@ -209,7 +209,7 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
     "teamscale": {
         "url": "http://localhost:8080",
         "username": "build",
-        "accessToken": "u7a9abc32r45r2uiig3vvv",
+        "accessKey": "u7a9abc32r45r2uiig3vvv",
         "project": "your_project",
         "partition": "Manual Tests",
     }
