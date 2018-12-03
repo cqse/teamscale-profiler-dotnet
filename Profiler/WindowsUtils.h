@@ -17,4 +17,7 @@ public:
 
 	/** Returns a list of all environment variables (in the format VAR=VALUE). Returns an empty list in case of errors. */
 	static std::vector<std::string> listEnvironmentVariables();
+
+	/** Returns the path to the profiled process. */
+	static std::string getPathOfThisProcess();
 };

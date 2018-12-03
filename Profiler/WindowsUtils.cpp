@@ -5,10 +5,6 @@
 
 extern char** _environ;
 
-/**
-* Returns the message for the last WinAPI error (retrieved via GetLastError).
-* Adapted from https://stackoverflow.com/a/17387176/1396068
-*/
 std::string WindowsUtils::getLastErrorAsString()
 {
 	DWORD errorMessageID = ::GetLastError();
@@ -26,7 +22,6 @@ std::string WindowsUtils::getLastErrorAsString()
 	return message;
 }
 
-/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
 std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
 	char value[32767 * sizeof(char)]; // maximum size according to http://msdn.microsoft.com/en-us/library/ms683188.aspx
 	std::string name = "COR_PROFILER_" + suffix;
@@ -50,4 +45,14 @@ std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
 	}
 
 	return variables;
+}
+
+std::string WindowsUtils::getPathOfThisProcess() {
+	char appPath[_MAX_PATH];
+	appPath[0] = 0;
+
+	if (GetModuleFileName(NULL, appPath, MAX_PATH)) {
+		return std::string(appPath);
+	}
+	return "Failed to read application path";
 }

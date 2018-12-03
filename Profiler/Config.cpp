@@ -11,6 +11,7 @@ void Config::load(std::string configFilePath, std::string processName) {
 		// TODO how to handle?
 	}
 
+	// todo: still support old PROCESS handling?? i.e. disable if not suffix-matched and set?
 	targetDir = getOption("targetdir");
 	enabled = getBooleanOption("enabled");
 	useLightMode = getBooleanOption("light_mode");

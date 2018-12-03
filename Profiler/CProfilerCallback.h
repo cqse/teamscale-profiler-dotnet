@@ -75,12 +75,6 @@ private:
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
 
-	/** Path of the process we are in. */
-	wchar_t appPath[_MAX_PATH];
-
-	/** Name of the profiled application. */
-	wchar_t appName[_MAX_FNAME];
-
 	/** The log to write all results and messages to. */
 	Log log;
 
@@ -109,20 +103,10 @@ private:
 	/** Dumps all environment variables to the log file. */
 	void dumpEnvironment();
 
-	/** Reads all options from the config file into memory. */
-	void readConfig();
-
-	/**
-	* Reads all the config option from 1) the environment variable COR_PROFILER_<optionName> and then 2) the config file if the corresponding environment variable is not set.
-	* If the option is declared in neither location, returns the empty string.
-	*/
-	std::string getOption(std::string optionName);
+	void initializeConfig();
 
 	/** Create method info object for a function id. */
 	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
-
-	/** Returns information about the profiled process. */
-	std::string getProcessInfo();
 
 	/** Starts the upload daemon. */
 	void startUploadDeamon();

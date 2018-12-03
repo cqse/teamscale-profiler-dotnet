@@ -39,7 +39,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
-	readConfig();
+	initializeConfig();
 	if (!config.isEnabled()) {
 		return S_OK;
 	}
@@ -84,7 +84,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(getProcessInfo());
+	log.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
 }
@@ -110,32 +110,14 @@ void CProfilerCallback::startUploadDeamon() {
 	daemon.launch();
 }
 
-void CProfilerCallback::readConfig() {
+void CProfilerCallback::initializeConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
 		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".yml";
 	}
 	log.info("looking for configuration options in: " + configFile);
 
-	config.load(configFile, getProcessInfo());
-}
-
-std::string CProfilerCallback::getProcessInfo() {
-	// TODO do we still need to cache this? this is highly implicit and should be in the initialize method instead
-	appPath[0] = 0;
-	appName[0] = 0;
-	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
-		_wsplitpath_s(appPath, NULL, 0, NULL, 0, appName, _MAX_FNAME, NULL, 0);
-	}
-	if (appPath[0] == 0) {
-		wcscpy_s(appPath, MAX_PATH, L"No Application Path Found");
-		wcscpy_s(appName, _MAX_FNAME, L"No Application Name Found");
-	}
-
-	char process[BUFFER_SIZE];
-	// turn application path from wide to normal character string
-	sprintf_s(process, "%S", appPath);
-	return process;
+	config.load(configFile, WindowsUtils::getPathOfThisProcess());
 }
 
 HRESULT CProfilerCallback::ShutdownImplementation() {
