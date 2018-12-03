@@ -44,7 +44,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		return S_OK;
 	}
 
-	log.createLogFile();
+	log.createLogFile(config);
 
 	if (config.shouldUseLightMode()) {
 		log.info("Mode: light");
@@ -53,7 +53,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		log.info("Mode: force re-jitting");
 	}
 
-	log.info("Eagerness: " + std::to_string(config.eagerness()));
+	log.info("Eagerness: " + std::to_string(config.getEagerness()));
 
 	if (config.shouldStartUploadDaemon()) {
 		log.info("Starting upload deamon");
@@ -138,7 +138,7 @@ std::string CProfilerCallback::getProcessInfo() {
 	return process;
 }
 
-HRESULT CProfilerCallback::Shutdown() {
+HRESULT CProfilerCallback::ShutdownImplementation() {
 	if (!config.isEnabled()) {
 		return S_OK;
 	}
@@ -186,7 +186,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 	}
 	catch (...) {
 		Debug::logStacktrace("functionMapper");
-		// since this function must be static, we have no way to call getOption() so we always terminate the program.
+		// since this function must be static, we have no way to access the config so we always terminate the program.
 		throw;
 	}
 }
@@ -303,7 +303,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 
 void CProfilerCallback::handleException(std::string context) {
 	Debug::logStacktrace(context);
-	if (getOption("IGNORE_EXCEPTIONS") != "1") {
+	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
 }
@@ -365,7 +365,7 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
 	// Must be called from synchronized context
-	return config.eagerness() > 0 && static_cast<int>(inlinedMethods.size() + jittedMethods.size()) >= config.eagerness();
+	return config.getEagerness() > 0 && static_cast<int>(inlinedMethods.size() + jittedMethods.size()) >= config.getEagerness();
 }
 
 void CProfilerCallback::writeFunctionInfosToLog() {

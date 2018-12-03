@@ -109,8 +109,8 @@ void Log::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
-void Log::createLogFile() {
-	std::string targetDir = WindowsUtils::getConfigValueFromEnvironment("TARGETDIR");
+void Log::createLogFile(Config& config) {
+	std::string targetDir = config.getTargetDir();
 	if (targetDir.empty()) {
 		// c:\users\public is usually writable for everyone
 		// we must use backslashes here or the WinAPI path manipulation functions will fail

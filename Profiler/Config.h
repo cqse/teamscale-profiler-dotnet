@@ -14,7 +14,7 @@ public:
 	void load(std::string configFilePath, std::string processName);
 
 	/** The directory to which to write the trace file. */
-	std::string targetDir() {
+	std::string getTargetDir() {
 		return targetDir;
 	}
 
@@ -54,7 +54,7 @@ public:
 	}
 
 	/** Whether to eagerly log trace data. */
-	size_t eagerness() {
+	size_t getEagerness() {
 		return eagerness;
 	}
 
