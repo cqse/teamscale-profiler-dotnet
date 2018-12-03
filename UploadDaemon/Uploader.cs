@@ -81,7 +81,10 @@ namespace UploadDaemon
             timerAction = new TimerAction(traceDirectory, config, upload, fileSystem);
         }
 
-        private static UploadConfig ReadConfig(FileSystem fileSystem)
+        /// <summary>
+        /// Reads and parses the config file. Public for testing. */
+        /// </summary>
+        public static UploadConfig ReadConfig(IFileSystem fileSystem)
         {
             logger.Debug("Reading config from {configFile}", UploadConfig.ConfigFilePath);
 

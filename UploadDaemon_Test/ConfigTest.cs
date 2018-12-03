@@ -32,7 +32,7 @@ public class ConfigTest
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             {
-                Config.ConfigFilePath, new MockFileData(@"{
+                UploadConfig.ConfigFilePath, new MockFileData(@"{
                     /* line comment */
                     versionAssembly: ""Assembly"",
                     azureFileStorage: {
@@ -44,7 +44,7 @@ public class ConfigTest
             }
         });
 
-        IEnumerable<string> errors = Config.ReadConfig(fileSystem).Validate();
+        IEnumerable<string> errors = UploadDaemon.Uploader.ReadConfig(fileSystem).Validate();
         Assert.That(errors, Is.Empty, "a configuration with an Azure File Storage for upload should be valid");
     }
 
