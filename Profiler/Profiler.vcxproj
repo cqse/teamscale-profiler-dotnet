@@ -98,7 +98,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;Profiler_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
@@ -122,7 +122,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;Profiler_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
@@ -157,6 +157,7 @@
       <LanguageStandard>
       </LanguageStandard>
       <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\lib\yaml-cpp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -188,6 +189,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\lib\yaml-cpp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -210,36 +212,37 @@
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
     <ClCompile Include="Debug.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\binary.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\convert.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\directives.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emit.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitfromevents.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitter.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitterstate.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitterutils.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\exceptions.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\exp.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\memory.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\node.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\nodebuilder.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\nodeevents.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\node_data.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\null.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\ostream_wrapper.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\parse.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\parser.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\regex_yaml.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scanner.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scanscalar.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scantag.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scantoken.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\simplekey.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\singledocparser.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\stream.cpp" />
-    <ClCompile Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\tag.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\binary.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\convert.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\directives.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emit.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitfromevents.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitter.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitterstate.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitterutils.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\exceptions.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\exp.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\memory.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\node.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\nodebuilder.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\nodeevents.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\node_data.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\null.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\ostream_wrapper.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\parse.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\parser.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\regex_yaml.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scanner.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scanscalar.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scantag.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scantoken.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\simplekey.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\singledocparser.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\stream.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\tag.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="ConfigFileParserTest.cpp" />
+    <ClCompile Include="StackWalker.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -248,27 +251,28 @@
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="StringUtils.cpp" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\collectionstack.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\directives.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitterstate.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\emitterutils.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\exp.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\indentation.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\nodebuilder.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\nodeevents.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\ptr_vector.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\regeximpl.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\regex_yaml.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scanner.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scanscalar.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\scantag.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\setting.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\singledocparser.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\stream.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\streamcharsource.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\stringsource.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\tag.h" />
-    <ClInclude Include="G:\teamscale-profiler-dotnet\Profiler\lib\yaml-cpp\src\token.h" />
+    <ClInclude Include="lib\yaml-cpp\src\collectionstack.h" />
+    <ClInclude Include="lib\yaml-cpp\src\directives.h" />
+    <ClInclude Include="lib\yaml-cpp\src\emitterstate.h" />
+    <ClInclude Include="lib\yaml-cpp\src\emitterutils.h" />
+    <ClInclude Include="lib\yaml-cpp\src\exp.h" />
+    <ClInclude Include="lib\yaml-cpp\src\indentation.h" />
+    <ClInclude Include="lib\yaml-cpp\src\nodebuilder.h" />
+    <ClInclude Include="lib\yaml-cpp\src\nodeevents.h" />
+    <ClInclude Include="lib\yaml-cpp\src\ptr_vector.h" />
+    <ClInclude Include="lib\yaml-cpp\src\regeximpl.h" />
+    <ClInclude Include="lib\yaml-cpp\src\regex_yaml.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scanner.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scanscalar.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scantag.h" />
+    <ClInclude Include="lib\yaml-cpp\src\setting.h" />
+    <ClInclude Include="lib\yaml-cpp\src\singledocparser.h" />
+    <ClInclude Include="lib\yaml-cpp\src\stream.h" />
+    <ClInclude Include="lib\yaml-cpp\src\streamcharsource.h" />
+    <ClInclude Include="lib\yaml-cpp\src\stringsource.h" />
+    <ClInclude Include="lib\yaml-cpp\src\tag.h" />
+    <ClInclude Include="lib\yaml-cpp\src\token.h" />
+    <ClInclude Include="StackWalker.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="FunctionInfo.h" />

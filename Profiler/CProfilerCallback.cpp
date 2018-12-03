@@ -6,21 +6,39 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-
-using namespace std;
+#include "Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
 CProfilerCallback::CProfilerCallback() {
-	InitializeCriticalSection(&callbackSynchronization);
+	try {
+		InitializeCriticalSection(&callbackSynchronization);
+	}
+	catch (...) {
+		handleException("Constructor");
+	}
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	DeleteCriticalSection(&callbackSynchronization);
+	try {
+		DeleteCriticalSection(&callbackSynchronization);
+	}
+	catch (...) {
+		handleException("Destructor");
+	}
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
+	try {
+		return InitializeImplementation(pICorProfilerInfoUnkown);
+	}
+	catch (...) {
+		handleException("Initialize");
+	}
+}
+
+HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	readConfig();
 	if (!config.isEnabled()) {
 		return S_OK;
@@ -38,6 +56,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	log.info("Eagerness: " + std::to_string(config.eagerness()));
 
 	if (config.shouldStartUploadDaemon()) {
+		log.info("Starting upload deamon");
 		startUploadDeamon();
 	}
 
@@ -134,6 +153,16 @@ HRESULT CProfilerCallback::Shutdown() {
 	return S_OK;
 }
 
+HRESULT CProfilerCallback::Shutdown() {
+	try {
+		return ShutdownImplementation();
+	}
+	catch (...) {
+		handleException("Shutdown");
+		return S_OK;
+	}
+}
+
 DWORD CProfilerCallback::getEventMask() {
 	DWORD dwEventMask = 0;
 	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
@@ -147,16 +176,32 @@ DWORD CProfilerCallback::getEventMask() {
 	return dwEventMask;
 }
 
-UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
-	BOOL* pbHookFunction) {
-	// Disable hooking of functions.
-	*pbHookFunction = false;
+UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFunction) {
+	try {
+		// Disable hooking of functions.
+		*pbHookFunction = false;
 
-	// Always return original function id.
-	return functionId;
+		// Always return original function id.
+		return functionId;
+	}
+	catch (...) {
+		Debug::logStacktrace("functionMapper");
+		// since this function must be static, we have no way to call getOption() so we always terminate the program.
+		throw;
+	}
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
+	try {
+		return AssemblyLoadFinishedImplementation(assemblyId, hrStatus);
+	}
+	catch (...) {
+		handleException("AssemblyLoadFinished");
+		return S_OK;
+	}
+}
+
+HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assemblyId, HRESULT hrStatus) {
 	if (!config.isEnabled()) {
 		return S_OK;
 	}
@@ -247,6 +292,24 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
+	try {
+		return JITCompilationFinishedImplementation(functionId, hrStatus, fIsSafeToBlock);
+	}
+	catch (...) {
+		handleException("JITCompilationFinished");
+		return S_OK;
+	}
+}
+
+void CProfilerCallback::handleException(std::string context) {
+	Debug::logStacktrace(context);
+	if (getOption("IGNORE_EXCEPTIONS") != "1") {
+		throw;
+	}
+}
+
+HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
+	HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	if (config.isEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
@@ -254,14 +317,24 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 
 		LeaveCriticalSection(&callbackSynchronization);
 	}
-
 	return S_OK;
 }
 
-HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
+HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
 	BOOL* pfShouldInline) {
-	// Save information about inlined method (if not already seen)
+	try {
+		return JITInliningImplementation(callerId, calleeId, pfShouldInline);
+	}
+	catch (...) {
+		handleException("JITInlining");
+		return S_OK;
+	}
+}
+
+HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, FunctionID calleeId,
+	BOOL* pfShouldInline) {
 	if (config.isEnabled()) {
+		// Save information about inlined method (if not already seen)
 		EnterCriticalSection(&callbackSynchronization);
 
 		if (inlinedMethodIds.insert(calleeId).second == true) {

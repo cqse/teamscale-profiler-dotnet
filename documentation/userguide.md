@@ -119,6 +119,7 @@ The profiler has several configuration options that can either be set as environ
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This should only be used in conjunction with light mode. |
 | COR_PROFILER_PROCESS              | String (optional)                        | The (case-insensitive) name of the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. |
 | COR_PROFILER_DUMP_ENVIRONMENT     | `1` or `0`, default `0`                  | Print all environment variables of the profiled process in the trace file. |
+| COR_PROFILER_IGNORE_EXCEPTIONS    | `1` or `0`, default `0`                  | Causes all exceptions in the profiler code to be swallowed. For debugging only. |
 
 Please note that the profiler is **also** configured with variables starting with the `COR_PROFILER_` prefix in case of .NET Core applications.
 
@@ -158,6 +159,23 @@ Things to check if no trace files are written:
 * IIS: Is the application pool set to pick up the environment of its user?
 * IIS: Did you recycle the application pool?
 
+In case the application doesn't start at all, please check the file `C:\Users\Public\profiler_debug.log`.
+It may contain stack traces in case the profiler crashed.
+
+## Debugging Profiler crashes
+
+If the debug log does not contain enough useful information, you can generate a minidump
+to debug profiler crashes with WinDbg. To enable mini dumps, run the following as a `.reg` file:
+
+    Windows Registry Editor Version 5.00
+
+    [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps]
+    "DumpFolder"="C:\\Users\\Public"
+    "DumpType"=dword:00000001
+    "DumpCount"=dword:0000000a
+
+A `.dmp` file will be generated in `C:\Users\Public`. You can set `DumpType` to `2` to get a full dump instead.
+This may, however, be a rather large file since the entire program's heap will be dumped.
 
 
 # Automatic Trace Upload

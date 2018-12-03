@@ -144,6 +144,9 @@
     <ClCompile Include="ConfigFileParserTest.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="StackWalker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -247,6 +250,9 @@
     </ClInclude>
     <ClInclude Include="ConfigParser.h">
       <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
