@@ -9,7 +9,9 @@
 class Config
 {
 public:
-	Config(std::string configFilePath, std::string processName);
+
+	/** Loads the config from the given YAML file and applies all sections that apply to the given process name. */
+	void load(std::string configFilePath, std::string processName);
 
 	/** The directory to which to write the trace file. */
 	std::string targetDir() {
@@ -18,32 +20,37 @@ public:
 
 	/** Whether to profile at all. */
 	bool isEnabled() {
-		return getOption("enabled") == "1";
+		return getBooleanOption("enabled");
 	}
 
 	/** Whether to use light mode or force rejitting of prejitted assemblies. */
 	bool shouldUseLightMode() {
-		return getOption("light_mode") == "1";
+		return getBooleanOption("light_mode");
 	}
 
 	/** Whether to log the assembly file versions of all loaded assemblies. */
 	bool shouldLogAssemblyFileVersion() {
-		return getOption("assembly_file_version") == "1";
+		return getBooleanOption("assembly_file_version");
 	}
 
 	/** Whether to log the assembly file paths of all loaded assemblies. */
 	bool shouldLogAssemblyPaths() {
-		return getOption("assembly_paths") == "1";
+		return getBooleanOption("assembly_paths");
 	}
 
 	/** Whether to log all environment variables in the trace file. */
 	bool shouldDumpEnvironment() {
-		return getOption("dump_environment") == "1";
+		return getBooleanOption("dump_environment");
 	}
 
 	/** Whether exceptions in the profiler code should be swallowed. */
 	bool shouldIgnoreExceptions() {
-		return getOption("ignore_exceptions") == "1";
+		return getBooleanOption("ignore_exceptions");
+	}
+
+	/** Whether the profiler should start the upload daemon on startup. */
+	bool shouldStartUploadDaemon() {
+		return getBooleanOption("UPLOAD_DAEMON");
 	}
 
 	/** Whether to eagerly log trace data. */

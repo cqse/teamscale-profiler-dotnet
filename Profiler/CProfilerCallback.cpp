@@ -21,39 +21,23 @@ CProfilerCallback::~CProfilerCallback() {
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
-	std::string process = getProcessInfo();
-	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
-	std::transform(process.begin(), process.end(), process.begin(), toupper);
-	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
-
-	isProfilingEnabled = processToProfile.empty() || StringUtils::endsWith(process, processToProfile);
-	if (!isProfilingEnabled) {
+	readConfig();
+	if (!config.isEnabled()) {
 		return S_OK;
 	}
 
 	log.createLogFile();
-	readConfig();
 
-	if (getOption("LIGHT_MODE") == "1") {
-		isLightMode = true;
+	if (config.shouldUseLightMode()) {
 		log.info("Mode: light");
 	}
 	else {
 		log.info("Mode: force re-jitting");
 	}
 
-	std::string eagernessValue = getOption("EAGERNESS");
-	if (!eagernessValue.empty()) {
-		try {
-			eagerness = std::stoi(eagernessValue);
-		}
-		catch (std::exception e) {
-			log.warn("Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
-		}
-	}
-	log.info("Eagerness: " + std::to_string(eagerness));
+	log.info("Eagerness: " + std::to_string(config.eagerness()));
 
-	if (getOption("UPLOAD_DAEMON") == "1") {
+	if (config.shouldStartUploadDaemon()) {
 		startUploadDeamon();
 	}
 
@@ -68,7 +52,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	message += GetCommandLine();
 	log.info(message);
 
-	if (getOption("DUMP_ENVIRONMENT") == "1") {
+	if (config.shouldDumpEnvironment()) {
 		dumpEnvironment();
 	}
 
@@ -81,7 +65,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(process);
+	log.logProcess(getProcessInfo());
 
 	return S_OK;
 }
@@ -110,35 +94,15 @@ void CProfilerCallback::startUploadDeamon() {
 void CProfilerCallback::readConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 	if (configFile.empty()) {
-		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".config";
+		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".yml";
 	}
 	log.info("looking for configuration options in: " + configFile);
 
-	std::ifstream inputStream(configFile);
-	this->configOptions = std::map<std::string, std::string>();
-	for (std::string line; getline(inputStream, line);) {
-		size_t delimiterPosition = line.find("=");
-		if (delimiterPosition == std::string::npos) {
-			log.warn("invalid line in config file: " + line);
-			continue;
-		}
-
-		std::string optionName = line.substr(0, delimiterPosition);
-		std::string optionValue = line.substr(delimiterPosition + 1);
-		std::transform(optionName.begin(), optionName.end(), optionName.begin(), toupper);
-		this->configOptions[optionName] = optionValue;
-	}
-}
-
-std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = WindowsUtils::getConfigValueFromEnvironment(optionName);
-	if (!value.empty()) {
-		return value;
-	}
-	return this->configOptions[optionName];
+	config.load(configFile, getProcessInfo());
 }
 
 std::string CProfilerCallback::getProcessInfo() {
+	// TODO do we still need to cache this? this is highly implicit and should be in the initialize method instead
 	appPath[0] = 0;
 	appName[0] = 0;
 	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
@@ -156,7 +120,7 @@ std::string CProfilerCallback::getProcessInfo() {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-	if (!isProfilingEnabled) {
+	if (!config.isEnabled()) {
 		return S_OK;
 	}
 
@@ -176,7 +140,7 @@ DWORD CProfilerCallback::getEventMask() {
 	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	// disable force re-jitting for the light variant
-	if (!isLightMode) {
+	if (!config.shouldUseLightMode()) {
 		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
 
@@ -193,7 +157,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId,
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
-	if (!isProfilingEnabled) {
+	if (!config.isEnabled()) {
 		return S_OK;
 	}
 
@@ -218,11 +182,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
 		metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
 
-	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
+	if (config.shouldLogAssemblyFileVersion()) {
 		writtenChars += writeFileVersionInfo(assemblyPath, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
 	}
 
-	if (getOption("ASSEMBLY_PATHS") == "1") {
+	if (config.shouldLogAssemblyPaths()) {
 		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
 	log.logAssembly(assemblyInfo);
@@ -283,7 +247,7 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyNa
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (isProfilingEnabled) {
+	if (config.isEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
 		recordFunctionInfo(&jittedMethods, functionId);
@@ -297,7 +261,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 HRESULT CProfilerCallback::JITInlining(FunctionID callerID, FunctionID calleeId,
 	BOOL* pfShouldInline) {
 	// Save information about inlined method (if not already seen)
-	if (isProfilingEnabled) {
+	if (config.isEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
 		if (inlinedMethodIds.insert(calleeId).second == true) {
@@ -328,13 +292,11 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
 	// Must be called from synchronized context
-
-	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
+	return config.eagerness() > 0 && static_cast<int>(inlinedMethods.size() + jittedMethods.size()) >= config.eagerness();
 }
 
 void CProfilerCallback::writeFunctionInfosToLog() {
 	// Must be called from synchronized context
-
 	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
 	inlinedMethods.clear();
 

@@ -2,9 +2,8 @@
 #include "yaml-cpp/yaml.h"
 #include "WindowsUtils.h"
 
-Config::Config(std::string configFilePath, std::string processName)
-	: processName(processName)
-{
+void Config::load(std::string configFilePath, std::string processName) {
+	this->processName = processName;
 	try {
 		ConfigFile configFile = ConfigParser::parseFile(configFilePath);
 	}

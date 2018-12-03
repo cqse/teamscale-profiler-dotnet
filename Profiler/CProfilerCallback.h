@@ -2,6 +2,7 @@
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
 #include "Log.h"
+#include "Config.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -76,18 +77,7 @@ private:
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
-	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
-	bool isLightMode = false;
-
-	/**
-	 * Whether to run in eager mode and write a batch of recorded invocations to the trace
-	 * file instead of waiting until shutdown. If 0, everything is written on shutdown,
-	 * otherwise the sepcified amount of method calls is recorded and written thereafter.
-	 */
-	size_t eagerness = 0;
-
-	/** Whether the current process should be profiled. */
-	bool isProfilingEnabled = false;
+	Config config;
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
@@ -111,11 +101,6 @@ private:
 	 * We use the vector to uniquely store the information about inlined methods.
 	 */
 	std::vector<FunctionInfo> inlinedMethods;
-
-	/**
-	* Stores all declared options from the config file.
-	*/
-	std::map<std::string, std::string> configOptions;
 
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
