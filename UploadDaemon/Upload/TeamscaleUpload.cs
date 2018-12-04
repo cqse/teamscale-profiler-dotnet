@@ -38,7 +38,7 @@ namespace UploadDaemon.Upload
         /// <returns>Whether the upload was successful.</returns>
         public async Task<bool> UploadAsync(string filePath, string version)
         {
-            logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, server.ToString(), version);
+            logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
 
             string message = messageFormatter.Format(version);
             string encodedMessage = HttpUtility.UrlEncode(message);
@@ -54,7 +54,7 @@ namespace UploadDaemon.Upload
                 {
                     if (response.IsSuccessStatusCode)
                     {
-                        logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, server.ToString(), version);
+                        logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
                         return true;
                     }
                     else

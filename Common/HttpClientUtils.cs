@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,16 @@ namespace Common
     /// </summary>
     public class HttpClientUtils
     {
+        /// <summary>
+        /// Disables all SSL validation.
+        /// </summary>
+        public static void DisableSslValidation()
+        {
+            // c.f. https://stackoverflow.com/a/18232008/1396068
+            ServicePointManager.ServerCertificateValidationCallback +=
+                (sender, cert, chain, sslPolicyErrors) => true;
+        }
+
         /// <summary>
         /// Changes the given client's authorization to Basic with the credentials configured for the given server.
         /// </summary>

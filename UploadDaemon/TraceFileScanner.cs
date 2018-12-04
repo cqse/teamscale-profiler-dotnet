@@ -129,7 +129,7 @@ namespace UploadDaemon
             Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             if (matchingLine == null)
             {
-                logger.Debug("Did not find the version assembly in {trace}", tracePath);
+                logger.Debug("Did not find the version assembly {versionAssembly} in {trace}", versionAssembly, tracePath);
                 return null;
             }
 

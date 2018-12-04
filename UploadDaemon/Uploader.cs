@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UploadDaemon.Upload;
 using Common;
+using System.Net;
 
 namespace UploadDaemon
 {
@@ -61,6 +62,14 @@ namespace UploadDaemon
             {
                 return new TeamscaleUpload(config.Teamscale);
             }
+            if (config.FileUpload != null)
+            {
+                return new UploadServiceUpload(config.FileUpload);
+            }
+            if (config.AzureFileStorage != null)
+            {
+                return new AzureUpload(config.AzureFileStorage);
+            }
             return new FileSystemUpload(config.Directory, fileSystem);
         }
 
@@ -82,6 +91,12 @@ namespace UploadDaemon
             traceDirectory = ParseArguments(args);
             fileSystem = new FileSystem();
             config = ReadConfig(fileSystem);
+
+            if (config.DisableSslValidation)
+            {
+                HttpClientUtils.DisableSslValidation();
+            }
+
             IUpload upload = CreateUpload(config);
             timerAction = new TimerAction(traceDirectory, config, upload, fileSystem);
         }
