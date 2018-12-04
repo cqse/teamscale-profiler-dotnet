@@ -58,8 +58,8 @@ namespace ProfilerGUI
         {
             using (OpenFileDialog dialog = new OpenFileDialog
             {
-                // This lets the user select lnk-files (shortcuts) instead of resolving them to their target exe files
-                // this allows us the parse the contents of the link files and extract working dir, arguments, ...
+                // This lets the user select lnk-files (shortcuts) and instead of resolving them to their target exe
+                // files allows us the parse the contents of the lnk files and extract working dir, arguments, ...
                 DereferenceLinks = false,
                 Filter = "Applications or shortcuts|*.lnk;*.exe;*.dll|All files|*.*"
             })
