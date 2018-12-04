@@ -9,6 +9,7 @@
     <Import_RootNamespace>Common</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AzureFileStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UploadConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)HttpClientUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TeamscaleServer.cs" />

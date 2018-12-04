@@ -69,13 +69,5 @@ namespace Common
                 yield return @"You must provide a partition into which the coverage will be uploaded";
             }
         }
-
-        /// <summary>
-        /// Returns a deep copy of this object.
-        /// </summary>
-        public TeamscaleServer Clone()
-        {
-            return (TeamscaleServer)MemberwiseClone();
-        }
     }
 }

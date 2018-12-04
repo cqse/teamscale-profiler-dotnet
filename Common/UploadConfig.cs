@@ -1,9 +1,11 @@
-﻿using Common;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.IO.Abstractions;
+
+using System.Net;
 
 namespace Common
 {
@@ -12,15 +14,7 @@ namespace Common
     /// </summary>
     public class UploadConfig
     {
-        /// <summary>
-        /// Name of the JSON config file.
-        /// </summary>
         public const string ConfigFileName = "UploadDaemon.json";
-
-        /// <summary>
-        /// Path to the config file.
-        /// </summary>
-        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
 
         /// <summary>
         /// The Teamscale server to upload to.
@@ -38,33 +32,39 @@ namespace Common
         public string Directory { get; set; } = null;
 
         /// <summary>
+        /// The url to POST the traces to.
+        /// </summary>
+        public string FileUpload { get; set; } = null;
+
+        /// <summary>
+        /// The Azure File Storage to upload to.
+        /// </summary>
+        public AzureFileStorage AzureFileStorage { get; set; } = null;
+
+        /// <summary>
+        /// Whether to skip SSL certificate validation.
+        /// </summary>
+        public bool DisableSslValidation { get; set; } = false;
+
+        /// <summary>
         /// Validates the configuration and returns all collected error messages. An empty list
         /// means the configuration is valid.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<string> Validate()
         {
-            if (Teamscale == null && Directory == null)
+            if (Teamscale == null && Directory == null && FileUpload == null && AzureFileStorage == null)
             {
-                yield return @"You must provide either a Teamscale server or a directory to upload trace files to.";
+                yield return @"You must provide either" +
+                    @" a Teamscale server (property ""teamscale"")" +
+                    @" or a directory (property ""directory"")" +
+                    @" or an HTTP endpoint (property ""fileUpload"")" +
+                    @" or an Azure File Storage (property ""azureFileStorage"")" +
+                    @" to upload trace files to.";
             }
             if (VersionAssembly == null)
             {
-                yield return @"You must provide an assembly name (without the file extension) to read the program version from";
-            }
-            if (VersionAssembly != null && (VersionAssembly.EndsWith(".dll") || VersionAssembly.EndsWith(".exe")))
-            {
-                yield return @"The version assembly must be given without the file extension";
-            }
-            if (Directory != null && !System.IO.Directory.Exists(Directory))
-            {
-                yield return $"The directory {Directory} does not exist";
-            }
-
-            IEnumerable<string> errors = Teamscale?.Validate() ?? Enumerable.Empty<string>();
-            foreach (string error in errors)
-            {
-                yield return error;
+                yield return @"You must provide an assembly name (property ""versionAssembly"", without the file extension) to read the program version from";
             }
         }
 
@@ -73,21 +73,17 @@ namespace Common
         /// </summary>
         public UploadConfig Clone()
         {
-            return new UploadConfig()
-            {
-                Teamscale = Teamscale?.Clone(),
-                Directory = Directory,
-                VersionAssembly = VersionAssembly,
-            };
+            return JsonConvert.DeserializeObject<UploadConfig>(JsonConvert.SerializeObject(this));
         }
 
         /// <summary>
-        /// Parses the config stored in the given file.
+        /// Tries to read the config JSON file.
         /// </summary>
-        /// <exception cref="Exception">May throw any number of IO or JSON deserialization related exceptions</exception>
-        public static UploadConfig ReadFromFile(string path)
+        /// <exception cref="Exception">Throws an exception in case reading or deserializing goes wrong.</exception>
+        public static UploadConfig ReadConfig(IFileSystem fileSystem, string configFilePath)
         {
-            return JsonConvert.DeserializeObject<UploadConfig>(File.ReadAllText(path));
+            string json = fileSystem.File.ReadAllText(configFilePath);
+            return JsonConvert.DeserializeObject<UploadConfig>(json);
         }
     }
 }

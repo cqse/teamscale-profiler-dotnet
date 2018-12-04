@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
+using UploadDaemon;
 
 [TestFixture]
 public class ConfigTest
@@ -32,7 +33,7 @@ public class ConfigTest
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             {
-                UploadConfig.ConfigFilePath, new MockFileData(@"{
+                Uploader.ConfigFilePath, new MockFileData(@"{
                     /* line comment */
                     versionAssembly: ""Assembly"",
                     azureFileStorage: {

@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Common;
+using System.IO.Abstractions;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -149,7 +150,7 @@ namespace ProfilerGUI.Source.Configurator
 
             try
             {
-                return UploadConfig.ReadFromFile(UploadConfigFilePath);
+                return UploadConfig.ReadConfig(new FileSystem(), UploadConfigFilePath);
             }
             catch (Exception e)
             {

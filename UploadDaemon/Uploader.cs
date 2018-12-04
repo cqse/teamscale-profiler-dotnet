@@ -28,6 +28,11 @@ namespace UploadDaemon
             "--help", "/h", "/?", "-h", "/help"
         };
 
+        /// <summary>
+        /// Path to the config file.
+        /// </summary>
+        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UploadConfig.ConfigFileName);
+
         private readonly string traceDirectory;
         private readonly UploadConfig config;
         private readonly TimerAction timerAction;
@@ -86,17 +91,16 @@ namespace UploadDaemon
         /// </summary>
         public static UploadConfig ReadConfig(IFileSystem fileSystem)
         {
-            logger.Debug("Reading config from {configFile}", UploadConfig.ConfigFilePath);
+            logger.Debug("Reading config from {configFile}", ConfigFilePath);
 
             UploadConfig config;
             try
             {
-                string json = fileSystem.File.ReadAllText(UploadConfig.ConfigFilePath);
-                config = JsonConvert.DeserializeObject<UploadConfig>(json);
+                config = UploadConfig.ReadConfig(fileSystem, ConfigFilePath);
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to read config file {configPath}", UploadConfig.ConfigFilePath);
+                logger.Error(e, "Failed to read config file {configPath}", ConfigFilePath);
                 Environment.Exit(1);
                 return null;
             }
@@ -107,7 +111,7 @@ namespace UploadDaemon
                 return config;
             }
 
-            logger.Error("Invalid config file {configPath}: {errorMessages}", UploadConfig.ConfigFilePath, String.Join("; ", errorMessages));
+            logger.Error("Invalid config file {configPath}: {errorMessages}", ConfigFilePath, String.Join("; ", errorMessages));
             Environment.Exit(1);
             return null;
         }
@@ -145,7 +149,7 @@ namespace UploadDaemon
         {
             Console.Error.WriteLine("Usage: UploadDaemon.exe [DIR]");
             Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The upload daemon reads its configuration from {UploadConfig.ConfigFilePath}");
+            Console.Error.WriteLine($"The upload daemon reads its configuration from {ConfigFilePath}");
         }
 
         private void Run()
