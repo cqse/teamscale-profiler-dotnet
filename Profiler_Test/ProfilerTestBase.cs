@@ -110,10 +110,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 bitness = GetBitness();
             }
 
-            string profilerDll = SolutionRoot + "/Profiler/bin/Release/Profiler32.dll";
+            string configuration;
+#if DEBUG
+            configuration = "Debug";
+#else
+            configuration = "Release";
+#endif
+
+            string profilerDll = $"{SolutionRoot}/Profiler/bin/{configuration}/Profiler32.dll";
             if (bitness == Bitness.x64)
             {
-                profilerDll = SolutionRoot + "/Profiler/bin/Release/Profiler64.dll";
+                profilerDll = $"{SolutionRoot}/Profiler/bin/{configuration}/Profiler64.dll";
             }
 
             Assert.IsTrue(File.Exists(profilerDll), "Could not find profiler DLL at " + profilerDll);
