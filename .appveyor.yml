@@ -38,6 +38,7 @@ after_test:
   - cmd: node_modules\.bin\markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
   # Create release zip with profiler & documentation
   - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon
+  - cmd: mkdir teamscale_dotnet_profiler\GUI
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
@@ -45,6 +46,7 @@ after_test:
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler LICENSE third-party.license & exit 0
   - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
   - cmd: robocopy .\documentation teamscale_dotnet_profiler/Documentation userguide.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 

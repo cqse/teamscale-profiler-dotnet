@@ -15,6 +15,22 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     public class ProfilerTest : ProfilerTestBase
     {
         /// <summary>
+        /// Clears the profiler environment variables to guarantee a stable test even if
+        /// the developer has variables set on their development machine.
+        /// </summary>
+        [SetUp]
+        public void SetUp()
+        {
+            foreach (string variable in Environment.GetEnvironmentVariables().Keys)
+            {
+                if (variable.StartsWith("COR"))
+                {
+                    Environment.SetEnvironmentVariable(variable, null);
+                }
+            }
+        }
+
+        /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
         /// </summary>
         [Test]

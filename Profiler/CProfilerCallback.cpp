@@ -3,6 +3,7 @@
 #include "UploadDaemon.h"
 #include "StringUtils.h"
 #include "WindowsUtils.h"
+#include "Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
