@@ -1,1 +1,6 @@
 yaml-cpp 0.6.2 https://github.com/jbeder/yaml-cpp
+
+Changes made by us:
+
+- change YAML_CPP_NOEXCEPT macro in exceptions.h and exceptions.cpp to fix Appveyor build
+
