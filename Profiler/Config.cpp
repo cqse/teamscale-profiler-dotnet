@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "yaml-cpp/yaml.h"
 #include "WindowsUtils.h"
 #include <exception>
 
