@@ -1,0 +1,87 @@
+﻿<Window x:Class="ProfilerGUI.MainWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:ProfilerGUI"
+		mc:Ignorable="d"
+		Title="CQSE Profiler"
+        Loaded="OnMainWindowLoaded"
+		Height="600" Width="800">
+    <Border Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="26" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Label Content="Target application" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" />
+
+                <Button  Content="Select application"  Click="OnChooseApplicationButtonClick" Grid.Row="2" Grid.Column="0" />
+                <TextBox  Margin="5 0 0 0" Text="{Binding Path=TargetApp.ApplicationPath, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" />
+                <ComboBox SelectedIndex="{Binding Path=SelectedBitnessIndex, Mode=TwoWay}" Grid.Row="2" Grid.Column="2">
+                    <ComboBoxItem>32 bit</ComboBoxItem>
+                    <ComboBoxItem>64 bit</ComboBoxItem>
+                    <ComboBoxItem>.NET Core</ComboBoxItem>
+                </ComboBox>
+
+                <Label  Content="Arguments (optional)" Grid.Row="4" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=TargetApp.Arguments, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" />
+
+                <Label  Content="Working directory (optional)" Grid.Row="6" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=TargetApp.WorkingDirectory, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" />
+
+                <Label Content="Target folder for trace files" FontWeight="Bold" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" />
+
+                <Button   Content="Select folder"  Click="OnChooseTargetDirButtonClick" Grid.Row="10" Grid.Column="0" />
+                <TextBox Margin="5 0 0 0" Text="{Binding Path=TargetApp.TraceDirectory, Mode=TwoWay}" Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="2" />
+
+                <Label Content="Upload trace files" FontWeight="Bold" Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3" />
+
+                <Label  Grid.Row="14" Grid.Column="1" VerticalAlignment="Top">
+                    <TextBlock Text="{Binding Path=UploadSummary}" TextWrapping="Wrap" />
+                </Label>
+                <Button Height="26" VerticalAlignment="Top"  Content="Change Upload Settings"  Click="OnChangeUpload" Grid.Row="14" Grid.Column="0" />
+            </Grid>
+
+            <RichTextBox Name="LogBox" MinHeight="200" Height="Auto" Background="White" IsReadOnly="True" Margin="0,10" VerticalScrollBarVisibility="Auto" Grid.Row="1">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="26" Grid.Row="2">
+                <Button Click="OnSaveConfigurationButtonClick" Margin="0 0 10 0"  Width="150" Content="Save configuration" />
+                <Button Click="OnRunProfiledAppButtonClick" Margin="10 0 0 0" Width="150" Content="Run app (profiled)" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
