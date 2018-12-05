@@ -11,8 +11,18 @@ The trace file is created immediately after the first call of a .NET method. How
 
 In the case of long running processes it must be taken into account that the report file is written only after the process has ended. In such a case, it must be ensured that the application is stopped and restarted in regular intervals or eager writing of the trace file is enabled.
 
+# Using the GUI
 
-# Installation
+To configure and launch the profiler, you can use the `GUI\ProfilerGUI.exe`. It lets you select the profiled application and the target directory to which traces should be written. From there you can launch the application with the profiler.
+
+The GUI supports parsing `.lnk` shortcut files as well, i.e. it will read the executable, command line arguments and working directory from the `.lnk` files.
+
+The configured values can be saved to disk. If you start the GUI with the command line argument `launchTargetApp`, the saved values will be used to directly launch the target application with the profiler attached. This is useful, e.g. to provide a one-click shortcut on the Desktop for testers to start their application with the profiler.
+
+The GUI writes a log file to `GUI\ProfilerGUI.log`. Logging can be configured with `GUI\nlog.config`.
+
+
+# Headless Usage
 
 The .NET profiler supports both the .NET Framework and .NET Core runtime. For both variants the profiler has to be registered by environment variables before the application start. This can be achieved by either setting these variables in a startup script or by setting the variables globally. The former is preferred as otherwise all .NET aplications will be profiled.
 
