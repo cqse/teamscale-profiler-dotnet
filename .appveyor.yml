@@ -28,9 +28,8 @@ build_script:
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
-  - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
-  - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="Appveyor;LogFileName=$results"
-  - ps: dotnet test UploadDaemon_Test/UploadDaemon_Test.csproj -c $env:Configuration --no-build --no-restore --logger="Appveyor;LogFileName=$results"
+  - ps: vstest.console /logger:Appveyor Profiler_Test/bin/Release/Profiler_Test.dll
+  - ps: vstest.console /logger:Appveyor UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
   - ps: vstest.console /logger:Appveyor Profiler/bin/Release/Profiler32.dll
 
 after_test:
