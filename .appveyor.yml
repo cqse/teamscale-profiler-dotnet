@@ -27,11 +27,6 @@ build_script:
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
-test_script:
-  - ps: vstest.console /logger:Appveyor Profiler_Test/bin/Release/Profiler_Test.dll
-  - ps: vstest.console /logger:Appveyor UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
-  - ps: vstest.console /logger:Appveyor Profiler/bin/Release/Profiler32.dll
-
 after_test:
   # Convert documentation
   - cmd: npm install markdown-pdf
