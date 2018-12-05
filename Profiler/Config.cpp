@@ -1,35 +1,41 @@
 #include "Config.h"
 #include "WindowsUtils.h"
 #include <exception>
+#include "Debug.h"
 
 void Config::load(std::string configFilePath, std::string processPath) {
+	Debug::log("path=" + processPath);
+	this->processPath = processPath;
+
 	std::ifstream stream(configFilePath);
 	if (stream.fail()) {
 		problems.push_back("Failed to open the config file " + configFilePath + " for reading");
-		// we must still load the values from the environment in this case
-		loadValues();
-		return;
+		// we must still load the values from the environment in this case so we don't return here
+	}
+	else {
+		loadYamlConfig(stream);
 	}
 
-	load(stream, processPath);
+	loadValues();
 }
 
 void Config::load(std::istream& configFileContents, std::string processPath) {
 	this->processPath = processPath;
+	loadYamlConfig(configFileContents);
+	loadValues();
+}
+
+void Config::loadYamlConfig(std::istream& configFileContents) {
 	try {
 		ConfigFile configFile = ConfigParser::parse(configFileContents);
 		apply(configFile);
 	}
 	catch (const std::exception& e) {
 		problems.push_back(std::string("Failed to parse the config file: ") + e.what());
-		// continue loading the values from the environment in this case
 	}
 	catch (...) {
 		problems.push_back(std::string("Failed to parse the config file. The reason is unknown"));
-		// continue loading the values from the environment in this case
 	}
-
-	loadValues();
 }
 
 void Config::loadValues()
@@ -61,7 +67,10 @@ void Config::loadValues()
 
 void Config::disableProfilerIfProcessSuffixDoesntMatch() {
 	std::string processSuffix = WindowsUtils::getConfigValueFromEnvironment("process");
+	Debug::log("path=" + processPath);
+	Debug::log("suffix=" + processSuffix);
 	if (!processSuffix.empty() && !StringUtils::endsWithCaseInsensitive(processPath, processSuffix)) {
+		Debug::log("disabled");
 		enabled = false;
 	}
 }

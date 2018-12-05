@@ -4,6 +4,7 @@
 #include <fstream>
 #include "StringUtils.h"
 #include "yaml-cpp/yaml.h"
+#include "Testing.h"
 
 /** A process-specific config section. */
 struct ProcessSection {
@@ -37,7 +38,7 @@ class ConfigParser
 {
 public:
 	/** Parses the given stream as a YAML config file. Throws ConfigParsingException if parsing fails. */
-	static ConfigFile parse(std::istream& stream);
+	static EXPOSE_TO_CPP_TESTS ConfigFile parse(std::istream& stream);
 
 private:
 	static ConfigFile parseUnsafe(std::istream& stream);

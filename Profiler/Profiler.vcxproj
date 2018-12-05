@@ -241,9 +241,7 @@
     <ClCompile Include="lib\yaml-cpp\src\stream.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\tag.cpp" />
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="tests\ConfigFileParserTest.cpp" />
     <ClCompile Include="StackWalker.cpp" />
-    <ClCompile Include="tests\ConfigTest.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>

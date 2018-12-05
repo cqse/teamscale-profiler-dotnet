@@ -23,6 +23,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profiler_Test", "Profiler_T
 		{CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6} = {CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Profiler_Cpp_Test", "Profiler_Cpp_Test\Profiler_Cpp_Test.vcxproj", "{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6} = {CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{0bb237cf-2c22-48dc-95e3-e9f58ab6a398}*SharedItemsImports = 4
@@ -108,6 +113,16 @@ Global
 		{71C15502-DC08-4E50-81AB-B31F70F098F5}.Release|Win32.Build.0 = Release|Any CPU
 		{71C15502-DC08-4E50-81AB-B31F70F098F5}.Release|x64.ActiveCfg = Release|Any CPU
 		{71C15502-DC08-4E50-81AB-B31F70F098F5}.Release|x64.Build.0 = Release|Any CPU
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Debug|Win32.Build.0 = Debug|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Debug|x64.ActiveCfg = Debug|x64
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Debug|x64.Build.0 = Debug|x64
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Release|Any CPU.ActiveCfg = Release|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Release|Win32.ActiveCfg = Release|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Release|Win32.Build.0 = Release|Win32
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Release|x64.ActiveCfg = Release|x64
+		{A71C4191-5B96-42A6-BD89-32FF4ECC4C0B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

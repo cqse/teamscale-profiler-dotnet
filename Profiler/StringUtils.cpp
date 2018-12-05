@@ -18,9 +18,17 @@ std::string StringUtils::uppercase(std::string const & value)
 
 bool StringUtils::endsWithCaseInsensitive(std::string const & value, std::string const & suffix)
 {
-	if (suffix.size() > value.size()) {
+	if (suffix.length() > value.length()) {
 		return false;
 	}
 
-	return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin(), [](char first, char second) { return toupper(first) < toupper(second); });
+	std::string suffixUppercased = uppercase(suffix);
+	std::string valueUppercased = uppercase(value);
+
+	for (size_t i = 0; i < suffix.length(); i++) {
+		if (suffixUppercased[suffix.length() - i - 1] != valueUppercased[valueUppercased.length() - i - 1]) {
+			return false;
+		}
+	}
+	return true;
 }

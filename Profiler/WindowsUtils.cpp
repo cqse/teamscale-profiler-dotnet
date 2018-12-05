@@ -2,7 +2,6 @@
 #include <Windows.h>
 #include <vector>
 #include  <algorithm>
-#include "Debug.h"
 
 extern char** _environ;
 
@@ -57,8 +56,9 @@ std::string WindowsUtils::getPathOfThisProcess() {
 	char appPath[_MAX_PATH];
 	appPath[0] = 0;
 
-	if (GetModuleFileName(NULL, appPath, MAX_PATH)) {
-		return std::string(appPath);
+	size_t length = GetModuleFileName(NULL, appPath, MAX_PATH);
+	if (length == 0) {
+		return "Failed to read application path";
 	}
-	return "Failed to read application path";
+	return std::string(appPath, length);
 }

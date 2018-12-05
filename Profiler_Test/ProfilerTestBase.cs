@@ -67,6 +67,16 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// </summary>
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
+#if DEBUG
+        private static readonly string Configuration ="Debug";
+#else
+        private static readonly string Configuration = "Release";
+#endif
+
+        public static readonly string Profiler32Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler32.dll";
+
+        public static readonly string Profiler64Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler64.dll";
+
         /// <summary>
         /// Executes the test application with the profiler attached and returns the written traces.
         /// </summary>
@@ -110,20 +120,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 bitness = GetBitness();
             }
 
-            string configuration;
-#if DEBUG
-            configuration = "Debug";
-#else
-            configuration = "Release";
-#endif
-
-            string profilerDll = $"{SolutionRoot}/Profiler/bin/{configuration}/Profiler32.dll";
+            string profilerDll = Profiler32Dll;
             if (bitness == Bitness.x64)
             {
-                profilerDll = $"{SolutionRoot}/Profiler/bin/{configuration}/Profiler64.dll";
+                profilerDll = Profiler64Dll;
             }
 
-            Assert.IsTrue(File.Exists(profilerDll), "Could not find profiler DLL at " + profilerDll);
+            Assume.That(File.Exists(profilerDll), "Could not find profiler DLL at " + profilerDll);
 
             // set environment variables for the profiler
             processInfo.Environment[PROFILER_PATH_KEY] = Path.GetFullPath(profilerDll);

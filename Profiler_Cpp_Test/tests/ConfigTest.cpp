@@ -1,6 +1,6 @@
 #include <sstream>
 #include "CppUnitTest.h"
-#include "../Config.h"
+#include "Config.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -91,6 +91,30 @@ match:
 		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string { return ""; });
 
 		Assert::AreEqual(size_t(1), config.getProblems().size(), L"number of problems");
+	}
+
+	TEST_METHOD(OldProcessSelectionMustMatchSuffixCaseInsensitively)
+	{
+		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string {
+			if (StringUtils::uppercase(suffix) == "PROCESS") {
+				return "proGRam.Exe";
+			}
+			return "";
+		});
+
+		Assert::IsTrue(config.isEnabled(), L"must be enabled for program.exe");
+	}
+
+	TEST_METHOD(OldProcessSelectionMustIgnoreProcessesThatDontMatch)
+	{
+		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string {
+			if (StringUtils::uppercase(suffix) == "PROCESS") {
+				return "doesnt-match";
+			}
+			return "";
+		});
+
+		Assert::IsTrue(config.isEnabled(), L"must not be enabled for program.exe");
 	}
 
 private:

@@ -14,6 +14,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
+        [OneTimeSetUp]
+        public static void SetUpFixture()
+        {
+            Assume.That(File.Exists(Profiler32Dll), "Could not find profiler 32bit DLL at " + Profiler32Dll);
+            Assume.That(File.Exists(Profiler64Dll), "Could not find profiler 64bit DLL at " + Profiler64Dll);
+        }
+
         /// <summary>
         /// Clears the profiler environment variables to guarantee a stable test even if
         /// the developer has variables set on their development machine.
