@@ -2,16 +2,21 @@
 #include "utils/WindowsUtils.h"
 #include <exception>
 
-void Config::load(std::string configFilePath, std::string processPath) {
+void Config::load(std::string configFilePath, std::string processPath, bool logProblemIfConfigFileDoesNotExist) {
 	this->processPath = processPath;
 
-	std::ifstream stream(configFilePath);
-	if (stream.fail()) {
-		problems.push_back("Failed to open the config file " + configFilePath + " for reading");
-		// we must still load the values from the environment in this case so we don't return here
+	if (WindowsUtils::isFile(configFilePath)) {
+		std::ifstream stream(configFilePath);
+		if (stream.fail()) {
+			problems.push_back("Failed to open the config file " + configFilePath + " for reading");
+			// we must still load the values from the environment in this case so we don't return here
+		}
+		else {
+			loadYamlConfig(stream);
+		}
 	}
-	else {
-		loadYamlConfig(stream);
+	else if (logProblemIfConfigFileDoesNotExist) {
+		problems.push_back("The config file " + configFilePath + " does not exist");
 	}
 
 	loadValues();

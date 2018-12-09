@@ -117,12 +117,14 @@ void CProfilerCallback::startUploadDeamon() {
 
 void CProfilerCallback::initializeConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
-	if (configFile.empty()) {
+
+	bool configFileWasManuallySpecified = !configFile.empty();
+	if (!configFileWasManuallySpecified) {
 		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".yml";
 	}
 	log.info("looking for configuration options in: " + configFile);
 
-	config.load(configFile, WindowsUtils::getPathOfThisProcess());
+	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
 
 HRESULT CProfilerCallback::ShutdownImplementation() {

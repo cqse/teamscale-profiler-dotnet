@@ -152,7 +152,7 @@ match:
 			return "";
 		});
 
-		config.load("z:\\file\\that\\doesnt\\exist123.yml", "process.exe");
+		config.load("z:\\file\\that\\doesnt\\exist123.yml", "process.exe", true);
 
 		Assert::AreEqual(std::string("env"), config.getTargetDir(), L"must still load environment");
 		Assert::AreEqual(size_t(1), config.getProblems().size(), L"must log a problem for the nonexisting file");

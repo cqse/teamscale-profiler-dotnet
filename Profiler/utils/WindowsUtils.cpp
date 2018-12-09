@@ -62,3 +62,10 @@ std::string WindowsUtils::getPathOfThisProcess() {
 	}
 	return std::string(appPath, length);
 }
+
+bool WindowsUtils::isFile(std::string path)
+{
+	DWORD dwAttrib = GetFileAttributes(path.c_str());
+	// check if it's a valid path and not a directory
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}

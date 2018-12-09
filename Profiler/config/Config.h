@@ -18,7 +18,7 @@ public:
 	Config(EnvironmentVariableReader* _environmentVariableReader) : environmentVariableReader(_environmentVariableReader) {}
 
 	/** Loads the config from the given YAML file and applies all sections that apply to the given profiled process path. */
-	void EXPOSE_TO_CPP_TESTS load(std::string configFilePath, std::string processPath);
+	void EXPOSE_TO_CPP_TESTS load(std::string configFilePath, std::string processPath, bool logProblemIfConfigFileDoesNotExist);
 
 	/** Loads the config from the given YAML stream and applies all sections that apply to the given profiled process path. */
 	void EXPOSE_TO_CPP_TESTS load(std::istream& configFileContents, std::string processPath);

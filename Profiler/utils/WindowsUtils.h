@@ -20,4 +20,7 @@ public:
 
 	/** Returns the path to the profiled process. */
 	static std::string getPathOfThisProcess();
+
+	/** Returns true only if the given pathe exists and is a file. */
+	static bool isFile(std::string path);
 };
