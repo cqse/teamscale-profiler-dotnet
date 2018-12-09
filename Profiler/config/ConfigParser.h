@@ -2,9 +2,9 @@
 #include <string>
 #include <regex>
 #include <fstream>
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 #include "yaml-cpp/yaml.h"
-#include "Testing.h"
+#include "utils/Testing.h"
 
 /** A process-specific config section. */
 struct ProcessSection {

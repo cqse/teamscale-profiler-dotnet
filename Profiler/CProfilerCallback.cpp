@@ -1,13 +1,12 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "UploadDaemon.h"
-#include "StringUtils.h"
-#include "WindowsUtils.h"
-#include "Debug.h"
+#include "utils/StringUtils.h"
+#include "utils/WindowsUtils.h"
+#include "utils/Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-#include "Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)

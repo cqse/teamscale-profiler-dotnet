@@ -3,7 +3,7 @@
 #include "FunctionInfo.h"
 #include "Log.h"
 #include "config/Config.h"
-#include "WindowsUtils.h"
+#include "utils/WindowsUtils.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>

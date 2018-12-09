@@ -2,7 +2,7 @@
 #include <string>
 #include <fstream>
 #include "ConfigParser.h"
-#include "Testing.h"
+#include "utils/Testing.h"
 
 /** Abstracts reading a config value from the environment so the Config class is unit-testable. */
 typedef std::string EnvironmentVariableReader(std::string suffix);

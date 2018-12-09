@@ -42,15 +42,6 @@
     <ClCompile Include="UploadDaemon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WindowsUtils.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="StringUtils.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="lib\yaml-cpp\src\binary.cpp">
       <Filter>yaml-cpp</Filter>
     </ClCompile>
@@ -144,6 +135,15 @@
     <ClCompile Include="config\ConfigParser.cpp">
       <Filter>config</Filter>
     </ClCompile>
+    <ClCompile Include="utils\StringUtils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\WindowsUtils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Debug.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -169,15 +169,6 @@
     </ClInclude>
     <ClInclude Include="UploadDaemon.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StringUtils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowsUtils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Debug.h">
-      <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="lib\yaml-cpp\src\collectionstack.h">
       <Filter>yaml-cpp</Filter>
@@ -250,6 +241,18 @@
     </ClInclude>
     <ClInclude Include="config\ConfigParser.h">
       <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\StringUtils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\WindowsUtils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Testing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Debug.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

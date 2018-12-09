@@ -1,10 +1,8 @@
 #include "Config.h"
-#include "WindowsUtils.h"
+#include "utils/WindowsUtils.h"
 #include <exception>
-#include "Debug.h"
 
 void Config::load(std::string configFilePath, std::string processPath) {
-	Debug::log("path=" + processPath);
 	this->processPath = processPath;
 
 	std::ifstream stream(configFilePath);
@@ -67,10 +65,7 @@ void Config::loadValues()
 
 void Config::disableProfilerIfProcessSuffixDoesntMatch() {
 	std::string processSuffix = WindowsUtils::getConfigValueFromEnvironment("process");
-	Debug::log("path=" + processPath);
-	Debug::log("suffix=" + processSuffix);
 	if (!processSuffix.empty() && !StringUtils::endsWithCaseInsensitive(processPath, processSuffix)) {
-		Debug::log("disabled");
 		enabled = false;
 	}
 }

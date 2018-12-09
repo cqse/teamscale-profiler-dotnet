@@ -211,7 +211,7 @@
     <ClCompile Include="config\ConfigParser.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
-    <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="utils\Debug.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\binary.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\convert.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\directives.cpp" />
@@ -249,7 +249,7 @@
     <ClInclude Include="config\Config.h" />
     <ClInclude Include="config\ConfigParser.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClCompile Include="StringUtils.cpp" />
+    <ClCompile Include="utils\StringUtils.cpp" />
     <ClInclude Include="lib\yaml-cpp\src\collectionstack.h" />
     <ClInclude Include="lib\yaml-cpp\src\directives.h" />
     <ClInclude Include="lib\yaml-cpp\src\emitterstate.h" />
@@ -272,18 +272,19 @@
     <ClInclude Include="lib\yaml-cpp\src\tag.h" />
     <ClInclude Include="lib\yaml-cpp\src\token.h" />
     <ClInclude Include="StackWalker.h" />
-    <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="Debug.h" />
+    <ClInclude Include="utils\Testing.h" />
+    <ClInclude Include="utils\StringUtils.h" />
+    <ClInclude Include="utils\Debug.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
-    <ClCompile Include="WindowsUtils.cpp">
+    <ClCompile Include="utils\WindowsUtils.cpp">
       <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="UploadDaemon.h" />
     <ClInclude Include="version.h" />
-    <ClInclude Include="WindowsUtils.h" />
+    <ClInclude Include="utils\WindowsUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def" />

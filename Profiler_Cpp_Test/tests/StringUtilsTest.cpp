@@ -1,6 +1,6 @@
 #include <sstream>
 #include "CppUnitTest.h"
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
