@@ -6,11 +6,12 @@ std::string Config::getDefaultConfigPath()
 {
 	std::string profilerDllPath = WindowsUtils::getConfigValueFromEnvironment("PATH");
 	std::string profilerDllDirectory = StringUtils::removeLastPartOfPath(profilerDllPath);
-	return profilerDllDirectory + "/Profiler.yml";
+	return profilerDllDirectory + "\\Profiler.yml";
 }
 
 void Config::load(std::string configFilePath, std::string processPath, bool logProblemIfConfigFileDoesNotExist) {
 	this->processPath = processPath;
+	this->configPath = configFilePath;
 
 	if (WindowsUtils::isFile(configFilePath)) {
 		std::ifstream stream(configFilePath);

@@ -46,6 +46,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	}
 
 	log.createLogFile(config);
+	log.info("looking for configuration options in: " + config.getConfigPath());
 
 	for (std::string problem : config.getProblems()) {
 		log.error(problem);
@@ -122,7 +123,6 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	log.info("looking for configuration options in: " + configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }

@@ -31,6 +31,11 @@ public:
 		return problems;
 	}
 
+	/** The path to the config file. */
+	std::string getConfigPath() {
+		return configPath;
+	}
+
 	/** The directory to which to write the trace file. */
 	std::string getTargetDir() {
 		return targetDir;
@@ -79,6 +84,7 @@ public:
 private:
 
 	std::string processPath;
+	std::string configPath = "<not specified>";
 	CaseInsensitiveStringMap options;
 	EnvironmentVariableReader* environmentVariableReader;
 	std::vector<std::string> problems;
