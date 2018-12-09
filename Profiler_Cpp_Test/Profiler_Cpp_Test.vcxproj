@@ -123,7 +123,7 @@
     </Link>
     <PreBuildEvent>
       <Command>copy "$(SolutionDir)Profiler\bin\$(Configuration)\Profiler64.dll" "$(TargetDir)"</Command>
-      <Message>Copy Profiler DLL</Message>
+      <Message>Copy Profiler DLL to CPP Unit Test Project</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -142,7 +142,7 @@
     </Link>
     <PreBuildEvent>
       <Command>copy "$(SolutionDir)Profiler\bin\$(Configuration)\Profiler32.dll" "$(TargetDir)"</Command>
-      <Message>Copy Profiler DLL</Message>
+      <Message>Copy Profiler DLL to CPP Unit Test Project</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,7 +161,7 @@
     </Link>
     <PreBuildEvent>
       <Command>copy "$(SolutionDir)Profiler\bin\$(Configuration)\Profiler64.dll" "$(TargetDir)"</Command>
-      <Message>Copy Profiler DLL</Message>
+      <Message>Copy Profiler DLL to CPP Unit Test Project</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -184,7 +184,7 @@
     </Link>
     <PreBuildEvent>
       <Command>copy "$(SolutionDir)Profiler\bin\$(Configuration)\Profiler32.dll" "$(TargetDir)"</Command>
-      <Message>Copy Profiler DLL</Message>
+      <Message>Copy Profiler DLL to CPP Unit Test Project</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
