@@ -141,10 +141,21 @@ Example:
 
 ```yaml
 match:
+  # no process: key means match all processes
   - profiler:
       targetdir: "C:/users/public/traces"
       enabled: false
-  - process: ".*program.exe"
+  # without quotes, the backlash need not be escaped
+  - process: .*\\program\.exe
+    profiler:
+      enabled: true
+  # with quotes, you must escape backlashes
+  - process: ".*\\\\other_program\\.exe"
+    profiler:
+      enabled: true
+  # with a folded block scalar, the backslash need not be escaped
+  - process: >
+      .*\\third_program\.exe
     profiler:
       enabled: true
 ```
@@ -155,7 +166,9 @@ override previous ones if they match the profiled process.
 
 Currently, only matching against the profiled process path is supported via the `process` key. Its value is
 a C++ ECMAScript-compatible regular expression that must match the entire path of the profiled process. If no `process`
-property is given for a section, the section applies to all processes.
+property is given for a section, the section applies to all processes. Please note that these regular expressions
+require special care when trying to use backlashes since these are used as an escape character by YAML under certain
+circumstances.
 
 The options under the `profiler` key are the same ones from the environment, except the `COR_PROFILER_` prefix must be omitted.
 Casing is irrelevant for these options. Additionally, you can use the `enabled` option to turn the profiler on or off.

@@ -97,6 +97,21 @@ match:
 		Assert::AreEqual(std::string("last"), config.getTargetDir(), L"Should use value from last matching section");
 	}
 
+	TEST_METHOD(MatchingPathSeparators)
+	{
+		Config config = parse(R"(
+match:
+  - process: .*/program.exe
+    profiler:
+      targetdir: forward
+  - process: .*\\program.exe
+    profiler:
+      targetdir: backward
+)", [](std::string suffix) -> std::string { return ""; });
+
+		Assert::AreEqual(std::string("backward"), config.getTargetDir(), L"Should match paths using backward slashes");
+	}
+
 	TEST_METHOD(ConfigProblemsMustBeLoggable)
 	{
 		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string { return ""; });
@@ -118,7 +133,7 @@ match:
 
 	TEST_METHOD(OldProcessSelectionMustIgnoreProcessesThatDontMatch)
 	{
-		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string {
+		Config config = parse(R"()", [](std::string suffix) -> std::string {
 			if (StringUtils::uppercase(suffix) == "PROCESS") {
 				return "doesnt-match";
 			}
