@@ -32,7 +32,7 @@ void ConfigParser::parseMatchSection(YAML::Node &node, ConfigFile &configFile)
 {
 	ProcessSection section;
 
-	std::string processRegex = node["process"].as<std::string>();
+	std::string processRegex = node["process"].as<std::string>(".*");
 	section.processRegex = std::regex(processRegex, std::regex_constants::ECMAScript | std::regex_constants::icase);
 
 	for (auto optionEntry : node["profiler"]) {

@@ -54,6 +54,17 @@ match:
 		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"should be the default value");
 	}
 
+	TEST_METHOD(NoProcessFieldMeansMatchAnyProcess)
+	{
+		Config config = parse(R"(
+match:
+  - profiler:
+      ignore_exceptions: true
+)", [](std::string suffix) -> std::string { return ""; });
+
+		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should be the config value");
+	}
+
 	TEST_METHOD(EnvironmentTrumpsConfig)
 	{
 		Config config = parse(R"(
