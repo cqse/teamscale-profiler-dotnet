@@ -121,7 +121,7 @@ The profiler has several configuration options that can either be set as environ
 
 | Environment variable              | Value                                    | Description                              |
 | :-------------------------------- | :--------------------------------------- | :--------------------------------------- |
-| COR_PROFILER_CONFIG               | Path, default `%COR_PROFILER_PATH%.yml`  | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
+| COR_PROFILER_CONFIG               | Path                                     | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
 | COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `0`                  | Enable ultra-light mode by disabling re-jitting of assemblies. |
 | COR_PROFILER_ASSEMBLY_FILEVERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
@@ -135,7 +135,7 @@ Please note that the profiler is **also** configured with variables starting wit
 
 ## Configuration file
 
-By default, the profiler will look for a YAML configuration file in `%COR_PROFILER_PATH%.yml`.
+By default, the profiler will look for a YAML configuration file called `Profiler.yml` in the same directory as the profiler DLLs.
 
 Example:
 

@@ -15,6 +15,9 @@ class Config
 {
 public:
 
+	/** Returns the path to the default config file. */
+	static std::string getDefaultConfigPath();
+
 	Config(EnvironmentVariableReader* _environmentVariableReader) : environmentVariableReader(_environmentVariableReader) {}
 
 	/** Loads the config from the given YAML file and applies all sections that apply to the given profiled process path. */

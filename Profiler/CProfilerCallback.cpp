@@ -120,7 +120,7 @@ void CProfilerCallback::initializeConfig() {
 
 	bool configFileWasManuallySpecified = !configFile.empty();
 	if (!configFileWasManuallySpecified) {
-		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".yml";
+		configFile = Config::getDefaultConfigPath();
 	}
 	log.info("looking for configuration options in: " + configFile);
 
