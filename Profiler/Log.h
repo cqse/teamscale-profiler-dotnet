@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "Config.h"
+#include "config/Config.h"
 
 /**
  * Manages a log file on the file system to which both diagnostic messages and trace information is written.

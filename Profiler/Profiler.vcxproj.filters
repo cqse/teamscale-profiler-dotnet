@@ -51,12 +51,6 @@
     <ClCompile Include="Debug.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
-      <Filter>config</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigParser.cpp">
-      <Filter>config</Filter>
-    </ClCompile>
     <ClCompile Include="lib\yaml-cpp\src\binary.cpp">
       <Filter>yaml-cpp</Filter>
     </ClCompile>
@@ -144,6 +138,12 @@
     <ClCompile Include="StackWalker.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="config\Config.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
+    <ClCompile Include="config\ConfigParser.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -178,12 +178,6 @@
     </ClInclude>
     <ClInclude Include="Debug.h">
       <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>config</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigParser.h">
-      <Filter>config</Filter>
     </ClInclude>
     <ClInclude Include="lib\yaml-cpp\src\collectionstack.h">
       <Filter>yaml-cpp</Filter>
@@ -250,6 +244,12 @@
     </ClInclude>
     <ClInclude Include="StackWalker.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="config\Config.h">
+      <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="config\ConfigParser.h">
+      <Filter>config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

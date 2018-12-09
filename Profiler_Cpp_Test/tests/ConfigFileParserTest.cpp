@@ -1,6 +1,6 @@
 #include <sstream>
 #include "CppUnitTest.h"
-#include "ConfigParser.h"
+#include "config/ConfigParser.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

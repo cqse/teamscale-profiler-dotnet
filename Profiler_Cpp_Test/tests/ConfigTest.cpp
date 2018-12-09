@@ -1,6 +1,6 @@
 #include <sstream>
 #include "CppUnitTest.h"
-#include "Config.h"
+#include "config/Config.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

@@ -2,7 +2,7 @@
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
 #include "Log.h"
-#include "Config.h"
+#include "config/Config.h"
 #include "WindowsUtils.h"
 #include <atlbase.h>
 #include <string>

@@ -69,28 +69,28 @@
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
-    <IncludePath>$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
-    <IncludePath>$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
-    <IncludePath>$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
-    <IncludePath>$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -207,8 +207,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CClassFactory.cpp" />
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="ConfigParser.cpp" />
+    <ClCompile Include="config\Config.cpp" />
+    <ClCompile Include="config\ConfigParser.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
     <ClCompile Include="Debug.cpp" />
@@ -246,8 +246,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="config\Config.h" />
+    <ClInclude Include="config\ConfigParser.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="StringUtils.cpp" />
     <ClInclude Include="lib\yaml-cpp\src\collectionstack.h" />
