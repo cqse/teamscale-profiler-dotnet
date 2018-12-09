@@ -126,9 +126,6 @@
     <ClCompile Include="lib\yaml-cpp\src\tag.cpp">
       <Filter>yaml-cpp</Filter>
     </ClCompile>
-    <ClCompile Include="StackWalker.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="config\Config.cpp">
       <Filter>config</Filter>
     </ClCompile>
@@ -143,6 +140,9 @@
     </ClCompile>
     <ClCompile Include="utils\Debug.cpp">
       <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\StackWalker\StackWalker.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -233,9 +233,6 @@
     <ClInclude Include="lib\yaml-cpp\src\token.h">
       <Filter>yaml-cpp</Filter>
     </ClInclude>
-    <ClInclude Include="StackWalker.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="config\Config.h">
       <Filter>config</Filter>
     </ClInclude>
@@ -253,6 +250,9 @@
     </ClInclude>
     <ClInclude Include="utils\Debug.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\StackWalker\StackWalker.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
