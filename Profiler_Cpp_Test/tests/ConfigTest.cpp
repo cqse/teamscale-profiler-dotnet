@@ -128,6 +128,21 @@ match:
 		Assert::IsTrue(config.isEnabled(), L"must not be enabled for program.exe");
 	}
 
+	TEST_METHOD(MustNotThrowExceptionIfConfigFileDoesNotExist)
+	{
+		Config config = Config([](std::string suffix) -> std::string {
+			if (StringUtils::uppercase(suffix) == "TARGETDIR") {
+				return "env";
+			}
+			return "";
+		});
+
+		config.load("z:\\file\\that\\doesnt\\exist123.yml", "process.exe");
+
+		Assert::AreEqual(std::string("env"), config.getTargetDir(), L"must still load environment");
+		Assert::AreEqual(size_t(1), config.getProblems().size(), L"must log a problem for the nonexisting file");
+	}
+
 private:
 
 	Config parse(std::string yaml, EnvironmentVariableReader* reader) {
