@@ -61,6 +61,27 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         }
 
         /// <summary>
+        /// Makes sure that processes not matching the given process name are not profiled.
+        /// </summary>
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
+        public int TestConfigFile(string regex)
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: false
+  - process: {regex}
+    profiler:
+      enabled: true
+");
+
+            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
+            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+        }
+
+        /// <summary>
         /// Runs the profiler with the environment variable APP_POOL_ID set and asserts its content is logged into the trace.
         /// </summary>
         [Test]

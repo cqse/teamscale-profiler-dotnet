@@ -123,6 +123,7 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
+	Debug::log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }

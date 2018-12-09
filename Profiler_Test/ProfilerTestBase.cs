@@ -68,7 +68,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
 #if DEBUG
-        private static readonly string Configuration ="Debug";
+        private static readonly string Configuration = "Debug";
 #else
         private static readonly string Configuration = "Release";
 #endif
@@ -82,7 +82,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// </summary>
         protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
         {
-            DirectoryInfo targetDir = CreateTemporaryTestDir().CreateSubdirectory("traces");
+            DirectoryInfo targetDir = new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
             ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
             {
                 WorkingDirectory = GetTestDataPath("test-programs"),
@@ -177,20 +177,24 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             => Path.Combine(SolutionRoot.FullName, "test-data", Path.Combine(path));
 
         /// <summary>
+        /// Returns a test-specific directory for temp files
+        /// </summary>
+        protected static string TestTempDirectory =>
+            Path.Combine(SolutionRoot.FullName, "test-tmp", GetSanitizedTestName());
+
+        /// <summary>
         /// Creates a unique (and empty) temporary test directory for storing output.
         /// </summary>
-        /// <returns></returns>
-        protected static DirectoryInfo CreateTemporaryTestDir()
+        [SetUp]
+        protected void CreateTemporaryTestDir()
         {
-            var testDir = new DirectoryInfo(Path.Combine(SolutionRoot.FullName, "test-tmp", GetSanitizedTestName()));
+            var testDir = new DirectoryInfo(TestTempDirectory);
             if (testDir.Exists)
             {
                 testDir.Delete(true);
             }
 
             testDir.Create();
-
-            return testDir;
         }
 
         /// <summary>
