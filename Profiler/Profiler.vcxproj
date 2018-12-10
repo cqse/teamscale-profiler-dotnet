@@ -297,4 +297,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+
+  <Target Name="Build64" AfterTargets="Build">
+      <MSBuild Condition="'$(Platform)'=='Win32'" Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
+  </Target>
+  <Target Name="AfterClean">
+      <CreateItem Include="$(OutputPath)\Profiler*.*">
+          <Output TaskParameter="Include" ItemName="ProfilerOutputFiles"/>
+      </CreateItem>
+      <Delete Files="@(ProfilerOutputFiles)"/>
+  </Target>
 </Project>
