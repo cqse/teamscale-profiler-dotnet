@@ -47,12 +47,12 @@ after_test:
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
-  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
+  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler Profiler*.dll Profiler*.pdb & exit 0
+  - cmd: robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: robocopy .\Profiler\bin\Release\GUI teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler LICENSE & exit 0
   - cmd: robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
-  - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
-  - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
-  - cmd: robocopy .\documentation teamscale_dotnet_profiler/Documentation userguide.pdf & exit 0
+  - cmd: robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:
