@@ -42,5 +42,5 @@ public:
 
 private:
 	static ConfigFile parseUnsafe(std::istream& stream);
-	static void parseMatchSection(YAML::Node &node, ConfigFile &configFile);
+	static ProcessSection parseMatchSection(YAML::Node &node);
 };

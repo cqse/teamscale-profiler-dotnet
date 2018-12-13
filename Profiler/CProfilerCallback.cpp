@@ -41,7 +41,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	initializeConfig();
-	if (!config.isEnabled()) {
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
@@ -129,7 +129,7 @@ void CProfilerCallback::initializeConfig() {
 }
 
 HRESULT CProfilerCallback::ShutdownImplementation() {
-	if (!config.isEnabled()) {
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
@@ -192,7 +192,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assemblyId, HRESULT hrStatus) {
-	if (!config.isEnabled()) {
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
@@ -300,7 +300,7 @@ void CProfilerCallback::handleException(std::string context) {
 
 HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (config.isEnabled()) {
+	if (config.isProfilingEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
 		recordFunctionInfo(&jittedMethods, functionId);
@@ -323,7 +323,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
 
 HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, FunctionID calleeId,
 	BOOL* pfShouldInline) {
-	if (config.isEnabled()) {
+	if (config.isProfilingEnabled()) {
 		// Save information about inlined method (if not already seen)
 		EnterCriticalSection(&callbackSynchronization);
 

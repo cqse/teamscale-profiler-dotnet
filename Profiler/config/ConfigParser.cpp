@@ -22,13 +22,14 @@ ConfigFile ConfigParser::parseUnsafe(std::istream& stream) {
 	}
 
 	for (auto entry : matchSections) {
-		parseMatchSection(entry, configFile);
+		ProcessSection section = parseMatchSection(entry);
+		configFile.sections.push_back(section);
 	}
 
 	return configFile;
 }
 
-void ConfigParser::parseMatchSection(YAML::Node &node, ConfigFile &configFile)
+ProcessSection ConfigParser::parseMatchSection(YAML::Node &node)
 {
 	ProcessSection section;
 
@@ -41,5 +42,5 @@ void ConfigParser::parseMatchSection(YAML::Node &node, ConfigFile &configFile)
 		section.profilerOptions[optionName] = value;
 	}
 
-	configFile.sections.push_back(section);
+	return section;
 }

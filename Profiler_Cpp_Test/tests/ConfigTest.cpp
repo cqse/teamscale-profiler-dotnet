@@ -10,10 +10,10 @@ public:
 
 	TEST_METHOD(EmptyConfigAndNoEnvironment)
 	{
-		Config config = parse(R"()", [](std::string suffix) -> std::string { return "";});
+		Config config = parse(R"()", emptyEnvironment);
 
 		Assert::AreEqual(size_t(0), config.getProblems().size(), L"number of problems");
-		Assert::AreEqual(true, config.isEnabled(), L"default value should be enabled");
+		Assert::AreEqual(true, config.isProfilingEnabled(), L"default value should be enabled");
 		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"default value should be to not ignore exceptions");
 		Assert::AreEqual(size_t(0), config.getEagerness(), L"default value should be no eagerness");
 	}
@@ -37,7 +37,7 @@ match:
   - process: ".*"
     profiler:
       ignore_exceptions: true
-)", [](std::string suffix) -> std::string { return ""; });
+)", emptyEnvironment);
 
 		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should use value from config");
 	}
@@ -49,7 +49,7 @@ match:
   - process: ".*doesnt-match"
     profiler:
       ignore_exceptions: true
-)", [](std::string suffix) -> std::string { return ""; });
+)", emptyEnvironment);
 
 		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"should be the default value");
 	}
@@ -60,7 +60,7 @@ match:
 match:
   - profiler:
       ignore_exceptions: true
-)", [](std::string suffix) -> std::string { return ""; });
+)", emptyEnvironment);
 
 		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should be the config value");
 	}
@@ -92,7 +92,7 @@ match:
   - process: ".*"
     profiler:
       targetdir: last
-)", [](std::string suffix) -> std::string { return ""; });
+)", emptyEnvironment);
 
 		Assert::AreEqual(std::string("last"), config.getTargetDir(), L"Should use value from last matching section");
 	}
@@ -101,20 +101,20 @@ match:
 	{
 		Config config = parse(R"(
 match:
-  - process: .*/program.exe
-    profiler:
-      targetdir: forward
   - process: .*\\program.exe
     profiler:
       targetdir: backward
-)", [](std::string suffix) -> std::string { return ""; });
+  - process: .*/program.exe
+    profiler:
+      targetdir: forward
+)", emptyEnvironment);
 
 		Assert::AreEqual(std::string("backward"), config.getTargetDir(), L"Should match paths using backward slashes");
 	}
 
 	TEST_METHOD(ConfigProblemsMustBeLoggable)
 	{
-		Config config = parse(R"(/$&)", [](std::string suffix) -> std::string { return ""; });
+		Config config = parse(R"(/$&)", emptyEnvironment);
 
 		Assert::AreEqual(size_t(1), config.getProblems().size(), L"number of problems");
 	}
@@ -128,7 +128,7 @@ match:
 			return "";
 		});
 
-		Assert::IsTrue(config.isEnabled(), L"must be enabled for program.exe");
+		Assert::IsTrue(config.isProfilingEnabled(), L"must be enabled for program.exe");
 	}
 
 	TEST_METHOD(OldProcessSelectionMustIgnoreProcessesThatDontMatch)
@@ -140,7 +140,7 @@ match:
 			return "";
 		});
 
-		Assert::IsTrue(config.isEnabled(), L"must not be enabled for program.exe");
+		Assert::IsFalse(config.isProfilingEnabled(), L"must not be enabled for program.exe");
 	}
 
 	TEST_METHOD(MustNotThrowExceptionIfConfigFileDoesNotExist)
@@ -166,4 +166,8 @@ private:
 		config.load(stream, "c:\\company\\program.exe");
 		return config;
 	}
+
+	static std::string emptyEnvironment(std::string suffix) {
+		return "";
+	};
 };

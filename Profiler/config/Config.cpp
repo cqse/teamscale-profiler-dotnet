@@ -27,29 +27,37 @@ void Config::load(std::string configFilePath, std::string processPath, bool logP
 		problems.push_back("The config file " + configFilePath + " does not exist");
 	}
 
-	loadValues();
+	setOptions();
 }
 
 void Config::load(std::istream& configFileContents, std::string processPath) {
 	this->processPath = processPath;
 	loadYamlConfig(configFileContents);
-	loadValues();
+	setOptions();
 }
 
 void Config::loadYamlConfig(std::istream& configFileContents) {
+	ConfigFile configFile;
 	try {
-		ConfigFile configFile = ConfigParser::parse(configFileContents);
-		apply(configFile);
+		configFile = ConfigParser::parse(configFileContents);
 	}
 	catch (const std::exception& e) {
 		problems.push_back(std::string("Failed to parse the config file: ") + e.what());
+		return;
 	}
 	catch (...) {
 		problems.push_back(std::string("Failed to parse the config file. The reason is unknown"));
+		return;
+	}
+
+	for (ProcessSection& section : configFile.sections) {
+		if (std::regex_match(processPath, section.processRegex)) {
+			relevantConfigFileSections.insert(relevantConfigFileSections.begin(), section);
+		}
 	}
 }
 
-void Config::loadValues()
+void Config::setOptions()
 {
 	targetDir = getOption("targetdir");
 	enabled = getBooleanOption("enabled", true);
@@ -77,19 +85,9 @@ void Config::loadValues()
 }
 
 void Config::disableProfilerIfProcessSuffixDoesntMatch() {
-	std::string processSuffix = WindowsUtils::getConfigValueFromEnvironment("process");
+	std::string processSuffix = environmentVariableReader("process");
 	if (!processSuffix.empty() && !StringUtils::endsWithCaseInsensitive(processPath, processSuffix)) {
 		enabled = false;
-	}
-}
-
-void Config::apply(ConfigFile configFile) {
-	for (ProcessSection section : configFile.sections) {
-		if (std::regex_match(processPath, section.processRegex)) {
-			for (auto entry : section.profilerOptions) {
-				options[entry.first] = entry.second;
-			}
-		}
 	}
 }
 
@@ -98,7 +96,13 @@ std::string Config::getOption(std::string optionName) {
 	if (!value.empty()) {
 		return value;
 	}
-	return options[optionName];
+
+	for (ProcessSection section : relevantConfigFileSections) {
+		if (section.profilerOptions.find(optionName) != section.profilerOptions.end()) {
+			return section.profilerOptions[optionName];
+		}
+	}
+	return "";
 }
 
 bool Config::getBooleanOption(std::string optionName, bool defaultValue) {

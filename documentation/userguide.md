@@ -115,7 +115,7 @@ To set the environment variables in Azure, go to the application settings and ad
 
 # Profiler Configuration
 
-The profiler has several configuration options that can either be set as environment variables or configured with an settings file. Environment variables will overwrite configured values from the settings file.
+The profiler has several configuration options that can either be set as environment variables or configured with an settings file. Environment variables will overwrite configured values from the configuration file.
 
 ## Environment Variables
 
@@ -161,10 +161,10 @@ match:
 ```
 
 You can have any number of sections under `match`. For each, the profiler will check if it matches the
-currently profiled process. If it does, all options under `profiler` are applied. I.e. later sections
-override previous ones if they match the profiled process.
+currently profiled process. If it does, all options under `profiler` are applied in order. I.e. later sections
+override previous ones if they both match the profiled process.
 
-Currently, only matching against the profiled process path is supported via the `process` key. Its value is
+Matching against the profiled process path is supported via the `process` key. Its value is
 a C++ ECMAScript-compatible regular expression that must match the entire path of the profiled process. If no `process`
 property is given for a section, the section applies to all processes. Please note that these regular expressions
 require special care when trying to use backlashes since these are used as an escape character by YAML under certain
@@ -173,7 +173,7 @@ circumstances.
 The options under the `profiler` key are the same ones from the environment, except the `COR_PROFILER_` prefix must be omitted.
 Casing is irrelevant for these options. Additionally, you can use the `enabled` option to turn the profiler on or off.
 
-Configuration options from environment variables always override configuration options from the settings file.
+Configuration options from environment variables always override configuration options from the configuration file.
 
 Please note that you **cannot** register the profiler itself via the config file (`COR_PROFILER`, `COR_ENABLE_PROFILING`).
 

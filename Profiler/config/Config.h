@@ -42,7 +42,7 @@ public:
 	}
 
 	/** Whether to profile at all. */
-	bool isEnabled() {
+	bool isProfilingEnabled() {
 		return enabled;
 	}
 
@@ -85,7 +85,7 @@ private:
 
 	std::string processPath;
 	std::string configPath = "<not specified>";
-	CaseInsensitiveStringMap options;
+	std::vector<ProcessSection> relevantConfigFileSections;
 	EnvironmentVariableReader* environmentVariableReader;
 	std::vector<std::string> problems;
 
@@ -102,7 +102,7 @@ private:
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
 	bool getBooleanOption(std::string key, bool defaultValue);
-	void loadValues();
+	void setOptions();
 	void loadYamlConfig(std::istream& configFileContents);
 
 	/** Backwards compatibility: disables the profiler if the suffix in the COR_PROFILER_PROCESS environment variable doesn't match the profiled process.  */

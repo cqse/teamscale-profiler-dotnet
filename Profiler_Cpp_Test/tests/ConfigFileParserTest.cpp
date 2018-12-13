@@ -28,8 +28,8 @@ public:
 match:
   - process: "foo.*"
     profiler:
-      - bla
-      - blu
+      - invalidEntry1
+      - invalidEntry2
 )");
 		});
 	}
