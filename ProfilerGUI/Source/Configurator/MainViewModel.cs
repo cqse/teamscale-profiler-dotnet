@@ -79,11 +79,6 @@ namespace ProfilerGUI.Source.Configurator
             {
                 logger.Info("Loaded config from {configPath}", ProfilerConfiguration.ConfigFilePath);
                 configuration = ProfilerConfiguration.ReadFromFile();
-
-                if (launchTargetAppDirectly)
-                {
-                    RunProfiledApplication();
-                }
             }
 
             TargetApp = new TargetAppModel(configuration);
@@ -98,6 +93,12 @@ namespace ProfilerGUI.Source.Configurator
             };
 
             uploadConfig = ReadUploadConfigFromDisk();
+            
+            // TODO (MP) check for config?
+            if (launchTargetAppDirectly)
+            {
+                RunProfiledApplication();
+            }
         }
 
         /// <summary>
