@@ -31,9 +31,9 @@ test_script:
   - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
   - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
   - ps: $wc = New-Object System.Net.WebClient
-  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
+  #- ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
   - ps: dotnet test UploadDaemon_Test/UploadDaemon_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
-  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
+  #- ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
 
 after_test:
   # Convert documentation
