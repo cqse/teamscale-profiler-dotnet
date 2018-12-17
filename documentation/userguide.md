@@ -99,20 +99,15 @@ If the application is running in an Azure App Service, the following steps need 
 
 #### Install the Profiler
 
-To deploy the profiler, [enable the FTP account][AzureFTP] and upload the profiler DLLs to a location that will not be overwritten by a new app deployment, e.g., `D:\home\site\repository\profiler\`.
-To [configure the profiler](#profiler_configuration) in Azure, go to the [application settings][AzureAppSettings] and add the environment variables as new application settings entries.
-For the profiler target directory, you may use `D:\home\LogFiles` or a dedicated location, such as `D:\home\site\repository\profiler\traces` (remember to manually create this directory first).
+To deploy the profiler, [enable the Azure FTP account][AzureFTP] and upload the profiler DLLs to a location that will not be overwritten by a new app deployment, e.g., `D:\home\site\repository\profiler\`. To configure the profiler in Azure, go to the [application settings][AzureAppSettings] and add the environment variables as new application settings entries. You may use any configuration variable that the profiler supports. For the profiler target directory, you may use `D:\home\LogFiles` or a dedicated location, such as `D:\home\site\repository\profiler\traces` (remember to manually create this directory first).
 
 #### Install the UploadDaemon
 
-Deploy the upload daemon in the directory `.\UploadDaemon`, relative to the path where you deployed the profiler, e.g., in `D:\home\site\repository\profiler\UploadDaemon\`.
-[Configure the trace upload](#automatic_trace_upload) as usual.
+Deploy the upload daemon in the directory `.\UploadDaemon`, relative to the path where you deployed the profiler, e.g., in `D:\home\site\repository\profiler\UploadDaemon\`. Configure the trace upload as usual.
 
 #### Schedule Trace Upload
 
-By default, the profiler publishes traces when the app gets shut down (unless you [configure "Eagerness"](#profiler_configuration)).
-Azure Apps are shut down automatically [in cases of user inactivity or at least every 29 hours][AzurePoolReset].
-To use a different intervall, you can configure a different schedule in `D:\home\site\applicationHost.xdt`:
+By default, the profiler publishes traces when the app gets shut down (unless you configure "Eagerness"). Azure Apps are shut down automatically [in cases of user inactivity or at least every 29 hours][AzurePoolReset]. To use a different intervall, you can configure a different schedule in `D:\home\site\applicationHost.xdt`:
 
 ```xml
 <?xml version="1.0"?>
