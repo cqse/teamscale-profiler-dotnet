@@ -72,7 +72,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 match:
   - profiler:
       enabled: false
-  - process: {regex}
+  - executablePathRegex: {regex}
     profiler:
       enabled: true
 ");
