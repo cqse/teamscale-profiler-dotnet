@@ -18,25 +18,25 @@ class CProfilerCallback : public CProfilerCallbackBase {
 public:
 
 	/** Constructor. */
-	CProfilerCallback() throw(...);
+	CProfilerCallback();
 
 	/** Destructor. */
-	virtual ~CProfilerCallback() throw(...);
+	virtual ~CProfilerCallback();
 
 	/** Initializer. Called at profiler startup. */
-	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk) throw(...);
+	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
 	/** Write coverage information to log file at shutdown. */
-	STDMETHOD(Shutdown)() throw(...);
+	STDMETHOD(Shutdown)();
 
 	/** Store information about jitted method. */
-	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock) throw(...);
+	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 
 	/** Write loaded assembly to log file. */
-	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus) throw(...);
+	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
 
 	/** Record inlining of method, but generally allow it. */
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline) throw(...);
+	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
 private:
 	/** Synchronizes profiling callbacks. */

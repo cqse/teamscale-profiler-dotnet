@@ -34,7 +34,7 @@ public:
 	{
 		Config config = parse(R"(
 match:
-  - process: ".*"
+  - executablePathRegex: ".*"
     profiler:
       ignore_exceptions: true
 )", emptyEnvironment);
@@ -46,7 +46,7 @@ match:
 	{
 		Config config = parse(R"(
 match:
-  - process: ".*doesnt-match"
+  - executablePathRegex: ".*doesnt-match"
     profiler:
       ignore_exceptions: true
 )", emptyEnvironment);
@@ -69,7 +69,7 @@ match:
 	{
 		Config config = parse(R"(
 match:
-  - process: ".*"
+  - executablePathRegex: ".*"
     profiler:
       targetdir: config
 )", [](std::string suffix) -> std::string {
@@ -86,10 +86,10 @@ match:
 	{
 		Config config = parse(R"(
 match:
-  - process: ".*"
+  - executablePathRegex: ".*"
     profiler:
       targetdir: first
-  - process: ".*"
+  - executablePathRegex: ".*"
     profiler:
       targetdir: last
 )", emptyEnvironment);
@@ -101,10 +101,10 @@ match:
 	{
 		Config config = parse(R"(
 match:
-  - process: .*\\program.exe
+  - executablePathRegex: .*\\program.exe
     profiler:
       targetdir: backward
-  - process: .*/program.exe
+  - executablePathRegex: .*/program.exe
     profiler:
       targetdir: forward
 )", emptyEnvironment);

@@ -26,7 +26,7 @@ public:
 		Assert::ExpectException<ConfigParsingException>([this] {
 			parse(R"(
 match:
-  - process: "foo.*"
+  - executablePathRegex: "foo.*"
     profiler:
       - invalidEntry1
       - invalidEntry2
@@ -38,12 +38,12 @@ match:
 	{
 		ConfigFile file = parse(R"(
 match:
-  - process: "foo.*"
+  - executablePathRegex: "foo.*"
     profiler:
       enabled: "0"
 )");
 		Assert::AreEqual(1, (int)file.sections.size(), L"number of sections");
-		Assert::IsTrue(std::regex_match("foobar", file.sections[0].processRegex), L"expecting regex to match");
+		Assert::IsTrue(std::regex_match("foobar", file.sections[0].executablePathRegex), L"expecting regex to match");
 		Assert::AreEqual("0", file.sections[0].profilerOptions["enabled"].c_str(), L"enabled option");
 	}
 
@@ -51,7 +51,7 @@ match:
 	{
 		ConfigFile file = parse(R"(
 match:
-  - process: "foo.*"
+  - executablePathRegex: "foo.*"
     profiler:
       ENablED: "1"
 )");
@@ -63,7 +63,7 @@ match:
 	{
 		ConfigFile file = parse(R"(
 match:
-  - process: "foo.*"
+  - executablePathRegex: "foo.*"
     profiler:
       enabled: true
       enabled2: 1

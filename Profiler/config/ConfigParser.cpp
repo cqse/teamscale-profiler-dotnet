@@ -33,8 +33,10 @@ ProcessSection ConfigParser::parseMatchSection(YAML::Node &node)
 {
 	ProcessSection section;
 
-	std::string processRegex = node["process"].as<std::string>(".*");
-	section.processRegex = std::regex(processRegex, std::regex_constants::ECMAScript | std::regex_constants::icase);
+	std::string processRegex = node["executablePathRegex"].as<std::string>(".*");
+	section.executablePathRegex = std::regex(processRegex, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+	section.caseInsensitiveExecutableName = { node["executableName"].as<std::string>("") };
 
 	for (auto optionEntry : node["profiler"]) {
 		std::string optionName = optionEntry.first.as<std::string>();

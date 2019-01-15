@@ -51,10 +51,19 @@ void Config::loadYamlConfig(std::istream& configFileContents) {
 	}
 
 	for (ProcessSection& section : configFile.sections) {
-		if (std::regex_match(processPath, section.processRegex)) {
+		if (sectionMatches(section)) {
 			relevantConfigFileSections.insert(relevantConfigFileSections.begin(), section);
 		}
 	}
+}
+
+bool Config::sectionMatches(ProcessSection& section) {
+	if (!std::regex_match(processPath, section.executablePathRegex)) {
+		return false;
+	}
+
+	std::string executableName = StringUtils::getLastPartOfPath(processPath);
+	return section.caseInsensitiveExecutableName.empty() || StringUtils::equalsIgnoreCase(section.caseInsensitiveExecutableName, executableName);
 }
 
 void Config::setOptions()

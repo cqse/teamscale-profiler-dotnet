@@ -5,10 +5,13 @@
 #include "utils/StringUtils.h"
 #include "yaml-cpp/yaml.h"
 #include "utils/Testing.h"
-
 /** A process-specific config section. */
 struct ProcessSection {
-	std::regex processRegex;
+	/** Regular expression that must match the full process path for the section to be applied. This field is always set. */
+	std::regex executablePathRegex;
+	/** Name of the executable to which this section applies or the empty string if this field should be ignored. Must be compared case-insensitively. */
+	std::string caseInsensitiveExecutableName;
+	/** The profiler options to apply if this section matches the profiled process. */
 	CaseInsensitiveStringMap profilerOptions;
 };
 

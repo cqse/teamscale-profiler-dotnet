@@ -27,4 +27,9 @@ public:
 	{
 		Assert::AreEqual(std::string("BLA\\BLU_"), StringUtils::uppercase("bla\\Blu_"));
 	}
+
+	TEST_METHOD(LastPartOfPath)
+	{
+		Assert::AreEqual(std::string("test.exe"), StringUtils::getLastPartOfPath("C:\\foo\\bar\\test.exe"));
+	}
 };

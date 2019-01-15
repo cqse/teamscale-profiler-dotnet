@@ -141,20 +141,25 @@ Example:
 
 ```yaml
 match:
-  # no process: key means match all processes
+  # no executablePathRegex: or executableName: keys means match all processes
   - profiler:
       targetdir: "C:/users/public/traces"
       enabled: false
+  # matches any foo.exe (case-insensitively)
+  - profiler:
+      executableName: foo.exe
+      targetdir: "C:/users/public/traces"
+      enabled: false
   # without quotes, the backlash need not be escaped
-  - process: .*\\program\.exe
+  - executablePathRegex: .*\\program\.exe
     profiler:
       enabled: true
   # with quotes, you must escape backlashes
-  - process: ".*\\\\other_program\\.exe"
+  - executablePathRegex: ".*\\\\other_program\\.exe"
     profiler:
       enabled: true
   # with a folded block scalar, the backslash need not be escaped
-  - process: >
+  - executablePathRegex: >
       .*\\third_program\.exe
     profiler:
       enabled: true
@@ -164,7 +169,10 @@ You can have any number of sections under `match`. For each, the profiler will c
 currently profiled process. If it does, all options under `profiler` are applied in order. I.e. later sections
 override previous ones if they both match the profiled process.
 
-Matching against the profiled process path is supported via the `process` key. Its value is
+Matching against the profiled process' file name is supported via the `executableName` key. The comparison will
+be done case-insensitively, i.e. `foo.exe` in the config will match `Foo.exe` on the file system.
+
+Matching against the profiled process' path is supported via the `executablePathRegex` key. Its value is
 a C++ ECMAScript-compatible regular expression that must match the entire path of the profiled process. If no `process`
 property is given for a section, the section applies to all processes. Please note that these regular expressions
 require special care when trying to use backlashes since these are used as an escape character by YAML under certain

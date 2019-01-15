@@ -104,6 +104,7 @@ private:
 	bool getBooleanOption(std::string key, bool defaultValue);
 	void setOptions();
 	void loadYamlConfig(std::istream& configFileContents);
+	bool sectionMatches(ProcessSection& section);
 
 	/** Backwards compatibility: disables the profiler if the suffix in the COR_PROFILER_PROCESS environment variable doesn't match the profiled process.  */
 	void disableProfilerIfProcessSuffixDoesntMatch();

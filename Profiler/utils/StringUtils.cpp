@@ -9,11 +9,23 @@ std::string StringUtils::removeLastPartOfPath(std::string path) {
 	return result;
 }
 
+std::string StringUtils::getLastPartOfPath(std::string path) {
+	char* chars = _strdup(path.c_str());
+	char* fileName = PathFindFileName(chars);
+	std::string result(fileName);
+	free(chars);
+	return result;
+}
+
 std::string StringUtils::uppercase(std::string const & value)
 {
 	std::string result(value);
 	std::transform(result.begin(), result.end(), result.begin(), ::toupper);
 	return result;
+}
+
+bool StringUtils::equalsIgnoreCase(std::string const & value1, std::string const & value2) {
+	return uppercase(value1) == uppercase(value2);
 }
 
 bool StringUtils::endsWithCaseInsensitive(std::string const & value, std::string const & suffix)
