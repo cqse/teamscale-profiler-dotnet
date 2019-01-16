@@ -70,6 +70,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archiver.cs" />
+    <Compile Include="Config\Config.cs" />
+    <Compile Include="Config\ConfigParser.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="TimerAction.cs" />
     <Compile Include="TraceFileScanner.cs" />
