@@ -178,6 +178,9 @@ property is given for a section, the section applies to all processes. Please no
 require special care when trying to use backlashes since these are used as an escape character by YAML under certain
 circumstances.
 
+If both `executableName` and `executablePathRegex` are specified in a section, both must match for the section to be
+applied.
+
 The options under the `profiler` key are the same ones from the environment, except the `COR_PROFILER_` prefix must be omitted.
 Casing is irrelevant for these options. Additionally, you can use the `enabled` option to turn the profiler on or off.
 

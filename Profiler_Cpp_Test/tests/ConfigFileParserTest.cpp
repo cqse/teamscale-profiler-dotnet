@@ -73,6 +73,16 @@ match:
 		Assert::AreEqual("1", file.sections[0].profilerOptions["enabled2"].c_str(), L"enabled option");
 	}
 
+	TEST_METHOD(FileNameAttributeAccepted)
+	{
+		ConfigFile file = parse(R"(
+match:
+  - executableName: foo.exe
+)");
+		Assert::AreEqual(1, (int)file.sections.size(), L"number of sections");
+		Assert::AreEqual("foo.exe", file.sections[0].caseInsensitiveExecutableName.c_str(), L"executable name");
+	}
+
 private:
 
 	ConfigFile parse(std::string content) {

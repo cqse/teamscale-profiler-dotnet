@@ -54,11 +54,56 @@ match:
 		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"should be the default value");
 	}
 
-	TEST_METHOD(NoProcessFieldMeansMatchAnyProcess)
+	TEST_METHOD(NoProcessMatchingFieldMeansMatchAnyProcess)
 	{
 		Config config = parse(R"(
 match:
   - profiler:
+      ignore_exceptions: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should be the config value");
+	}
+
+	TEST_METHOD(MatchingExecutableNameMustBeCaseInsensitive)
+	{
+		Config config = parse(R"(
+match:
+  - executableName: ProGRAM.exE
+    profiler:
+      ignore_exceptions: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should be the config value");
+	}
+
+	TEST_METHOD(IfBothExecutableNameAndRegexAreGivenBothMustMatch)
+	{
+		Config config = parse(R"(
+match:
+  - executableName: program.exe
+    executablePathRegex: .*doesnt-match
+    profiler:
+      ignore_exceptions: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"case 1: should be the default value");
+
+		config = parse(R"(
+match:
+  - executableName: doesnt-match.exe
+    executablePathRegex: .*program.exe
+    profiler:
+      ignore_exceptions: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(false, config.shouldIgnoreExceptions(), L"case 2: should be the default value");
+
+		config = parse(R"(
+match:
+  - executableName: program.exe
+    executablePathRegex: .*program.exe
+    profiler:
       ignore_exceptions: true
 )", emptyEnvironment);
 
