@@ -7,7 +7,7 @@
 #include "utils/Testing.h"
 /** A process-specific config section. */
 struct ProcessSection {
-	/** Regular expression that must match the full process path for the section to be applied. This field is always set. */
+	/** Regular expression that must match the full process path for the section to be applied. Defaults to ".*" in case the user didn't set this field explicitly. */
 	std::regex executablePathRegex;
 	/** Name of the executable to which this section applies or the empty string if this field should be ignored. Must be compared case-insensitively. */
 	std::string caseInsensitiveExecutableName;
