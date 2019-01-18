@@ -16,18 +16,13 @@ namespace UploadDaemon
     public class TraceFileScanner
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-        private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
 
         private readonly string traceDirectory;
-        private readonly string versionAssembly;
-        private readonly Regex versionAssemblyRegex;
         private readonly IFileSystem fileSystem;
 
-        public TraceFileScanner(string traceDirectory, string versionAssembly, IFileSystem fileSystem)
+        public TraceFileScanner(string traceDirectory, IFileSystem fileSystem)
         {
             this.traceDirectory = traceDirectory;
-            this.versionAssembly = versionAssembly;
-            this.versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
             this.fileSystem = fileSystem;
         }
 
@@ -51,7 +46,7 @@ namespace UploadDaemon
             foreach (string filePath in files)
             {
                 string fileName = Path.GetFileName(filePath);
-                if (!IsTraceFile(fileName))
+                if (!TraceFileUtils.IsTraceFile(fileName))
                 {
                     logger.Debug("Skipping file that does not look like a trace file: {unknownFilePath}", filePath);
                     continue;
@@ -92,18 +87,12 @@ namespace UploadDaemon
                 return null;
             }
 
-            string version = FindVersion(lines, filePath);
             return new ScannedFile
             {
                 FilePath = filePath,
-                Version = version,
-                IsEmpty = IsEmpty(lines),
+                IsEmpty = TraceFileUtils.IsEmpty(lines),
+                Lines = lines
             };
-        }
-
-        private bool IsEmpty(string[] lines)
-        {
-            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
         }
 
         private bool IsLocked(string tracePath)
@@ -124,23 +113,6 @@ namespace UploadDaemon
             }
         }
 
-        private string FindVersion(string[] lines, string tracePath)
-        {
-            Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
-            if (matchingLine == null)
-            {
-                logger.Debug("Did not find the version assembly {versionAssembly} in {trace}", versionAssembly, tracePath);
-                return null;
-            }
-
-            return matchingLine.Groups[1].Value;
-        }
-
-        private bool IsTraceFile(string fileName)
-        {
-            return TraceFileRegex.IsMatch(fileName);
-        }
-
         /// <summary>
         /// A single file that can either be uploaded or archived.
         /// </summary>
@@ -152,21 +124,20 @@ namespace UploadDaemon
             public string FilePath { get; set; }
 
             /// <summary>
-            /// The parsed version of the version assembly or null in case the version assembly was not in the file.
-            /// </summary>
-            public string Version { get; set; }
-
-            /// <summary>
             /// If this is true then the trace file contains no coverage information (may happen when the profiler
             /// is killed before it can write the information to disk).
             /// </summary>
             public bool IsEmpty { get; set; }
 
+            /// <summary>
+            /// The lines of text contained in the trace.
+            /// </summary>
+            public string[] Lines { get; set; }
+
             public override bool Equals(object obj)
             {
                 return obj is ScannedFile file &&
                        FilePath == file.FilePath &&
-                       Version == file.Version &&
                        IsEmpty == file.IsEmpty;
             }
 
@@ -174,14 +145,13 @@ namespace UploadDaemon
             {
                 int hashCode = -1491167301;
                 hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FilePath);
-                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Version);
                 hashCode = hashCode * -1521134295 + EqualityComparer<bool>.Default.GetHashCode(IsEmpty);
                 return hashCode;
             }
 
             public override string ToString()
             {
-                return $"ScannedFile[{FilePath} Version={Version} IsEmpty={IsEmpty}]";
+                return $"ScannedFile[{FilePath} IsEmpty={IsEmpty}]";
             }
         }
     }

@@ -29,13 +29,7 @@ namespace UploadDaemon
             "--help", "/h", "/?", "-h", "/help"
         };
 
-        /// <summary>
-        /// Path to the config file.
-        /// </summary>
-        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UploadConfig.ConfigFileName);
-
-        private readonly string traceDirectory;
-        private readonly UploadConfig config;
+        private readonly Config config;
         private readonly TimerAction timerAction;
         private readonly FileSystem fileSystem;
 
@@ -53,26 +47,6 @@ namespace UploadDaemon
             new Uploader(args).Run();
         }
 
-        /// <summary>
-        /// Creates an IUpload based on the given configuration.
-        /// </summary>
-        public IUpload CreateUpload(UploadConfig config)
-        {
-            if (config.Teamscale != null)
-            {
-                return new TeamscaleUpload(config.Teamscale);
-            }
-            if (config.FileUpload != null)
-            {
-                return new UploadServiceUpload(config.FileUpload);
-            }
-            if (config.AzureFileStorage != null)
-            {
-                return new AzureUpload(config.AzureFileStorage);
-            }
-            return new FileSystemUpload(config.Directory, fileSystem);
-        }
-
         private static bool IsAlreadyRunning()
         {
             Process current = Process.GetCurrentProcess();
@@ -88,90 +62,51 @@ namespace UploadDaemon
 
         private Uploader(string[] args)
         {
-            traceDirectory = ParseArguments(args);
+            ParseArguments(args);
             fileSystem = new FileSystem();
-            config = ReadConfig(fileSystem);
+
+            try
+            {
+                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+                config = Config.ReadFromCentralConfigFile();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+                Environment.Exit(1);
+            }
 
             if (config.DisableSslValidation)
             {
                 HttpClientUtils.DisableSslValidation();
             }
 
-            IUpload upload = CreateUpload(config);
-            timerAction = new TimerAction(traceDirectory, config, upload, fileSystem);
+            timerAction = new TimerAction(config, fileSystem, new UploadFactory());
         }
 
         /// <summary>
-        /// Reads and parses the config file. Public for testing. */
+        /// Parses the command line arguments.
         /// </summary>
-        public static UploadConfig ReadConfig(IFileSystem fileSystem)
-        {
-            logger.Debug("Reading config from {configFile}", ConfigFilePath);
-
-            UploadConfig config;
-            try
-            {
-                config = UploadConfig.ReadConfig(fileSystem, ConfigFilePath);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read config file {configPath}", ConfigFilePath);
-                Environment.Exit(1);
-                return null;
-            }
-
-            IEnumerable<string> errorMessages = config.Validate();
-            if (!errorMessages.Any())
-            {
-                return config;
-            }
-
-            logger.Error("Invalid config file {configPath}: {errorMessages}", ConfigFilePath, String.Join("; ", errorMessages));
-            Environment.Exit(1);
-            return null;
-        }
-
-        /// <summary>
-        /// Parses the command line arguments and returns the trace directory.
-        /// </summary>
-        private string ParseArguments(string[] args)
+        private void ParseArguments(string[] args)
         {
             logger.Debug("Parsing arguments {arguments}", args);
-
-            if (args.Length != 1)
-            {
-                PrintUsage();
-                Environment.Exit(1);
-            }
 
             if (HELP_COMMAND_LINE_ARGUMENTS.Contains(args[0]))
             {
                 PrintUsage();
                 Environment.Exit(0);
             }
-
-            string traceDirectory = Path.GetFullPath(args[0]);
-            if (!Directory.Exists(traceDirectory))
-            {
-                logger.Error("Directory {traceDirectory} does not exist", traceDirectory);
-                Environment.Exit(1);
-            }
-
-            return traceDirectory;
         }
 
         private static void PrintUsage()
         {
-            Console.Error.WriteLine("Usage: UploadDaemon.exe [DIR]");
-            Console.Error.WriteLine("DIR: the directory that contains the trace files to upload.");
-            Console.Error.WriteLine($"The upload daemon reads its configuration from {ConfigFilePath}");
+            Console.Error.WriteLine("Usage: UploadDaemon.exe");
+            Console.Error.WriteLine($"The upload daemon reads its configuration from {Config.ConfigFilePath}");
         }
 
         private void Run()
         {
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-            logger.Info("Reading traces with version assembly {versionAssembly} from {traceDirectory} and uploading them to {teamscale}",
-                config.VersionAssembly, traceDirectory, config.Teamscale);
 
             timerAction.Run();
 

@@ -16,6 +16,7 @@ namespace UploadDaemon
         private readonly string uploadedDirectory;
         private readonly string missingVersionDirectory;
         private readonly string emptyFileDirectory;
+        private readonly string missingProcessDirectory;
 
         public Archiver(string traceDirectory, IFileSystem fileSystem)
         {
@@ -23,6 +24,7 @@ namespace UploadDaemon
             this.uploadedDirectory = Path.Combine(traceDirectory, "uploaded");
             this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
+            this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
         }
 
         /// <summary>
@@ -41,6 +43,17 @@ namespace UploadDaemon
             Archive(tracePath, missingVersionDirectory);
         }
 
+        /// <summary>
+        /// Archives a file that has no profiled process path.
+        /// </summary>
+        public void ArchiveFileWithoutProcess(string tracePath)
+        {
+            Archive(tracePath, missingProcessDirectory);
+        }
+
+        /// <summary>
+        /// Archives a file that has no coverage data (Jitted=, Inlined= lines).
+        /// </summary>
         public void ArchiveEmptyFile(string tracePath)
         {
             Archive(tracePath, emptyFileDirectory);

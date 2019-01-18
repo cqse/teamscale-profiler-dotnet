@@ -1,0 +1,16 @@
+﻿using Common;
+using System.IO.Abstractions;
+
+namespace UploadDaemon.Upload
+{
+    /// <summary>
+    /// Interface used to allow the tests to use a mock upload implementation.
+    /// </summary>
+    public interface IUploadFactory
+    {
+        /// <summary>
+        /// Creates the upload for the given configuration. Never returns null.
+        /// </summary>
+        IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem);
+    }
+}

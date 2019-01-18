@@ -11,45 +11,38 @@ using UploadDaemon;
 public class TraceFileScannerTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
-    private const string VersionAssembly = "VersionAssembly";
 
     [Test]
     public void TestAllFileContents()
     {
+        string traceContent1 = @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050";
+        string traceContent2 = @"Assembly=VersionAssembly:1 Version:4.0.0.0";
+
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             // finished trace
-            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050" },
+            { FileInTraceDirectory("coverage_1_1.txt"), traceContent1 },
             // empty trace
-            { FileInTraceDirectory("coverage_1_2.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
-            // no version assembly
-            { FileInTraceDirectory("coverage_1_3.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050" },
+            { FileInTraceDirectory("coverage_1_2.txt"), traceContent2 },
             // unrelated file
             { FileInTraceDirectory("unrelated.txt"), @"whatever" },
         });
 
-        List<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystem).ListTraceFilesReadyForUpload().ToList();
+        List<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TraceDirectory, fileSystem).ListTraceFilesReadyForUpload().ToList();
 
         Assert.That(files, Is.EquivalentTo(new TraceFileScanner.ScannedFile[] {
             new TraceFileScanner.ScannedFile()
             {
                 FilePath = FileInTraceDirectory("coverage_1_1.txt"),
-                Version = "4.0.0.0",
+                Lines = traceContent1.SplitLines(),
                 IsEmpty = false,
             },
             new TraceFileScanner.ScannedFile()
             {
                 FilePath = FileInTraceDirectory("coverage_1_2.txt"),
-                Version = "4.0.0.0",
+                Lines = traceContent2.SplitLines(),
                 IsEmpty = true,
-            },
-            new TraceFileScanner.ScannedFile()
-            {
-                FilePath = FileInTraceDirectory("coverage_1_3.txt"),
-                Version = null,
-                IsEmpty = false,
             },
         }));
     }
@@ -67,7 +60,7 @@ Inlined=1:33555646:100678050" },
         }).Object;
 
         List<TraceFileScanner.ScannedFile> files =
-            new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
+            new TraceFileScanner(TraceDirectory, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
 
         Assert.That(files, Is.Empty);
     }
@@ -75,13 +68,12 @@ Inlined=1:33555646:100678050" },
     [Test]
     public void ExceptionsShouldLeadToFileBeingIgnored()
     {
+        string[] traceContent = new string[] { "Inlined=1:33555646:100678050" };
+
         IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
         {
             fileMock.Setup(file => file.ReadAllLines("coverage_1_1.txt")).Throws<IOException>();
-            fileMock.Setup(file => file.ReadAllLines("coverage_1_2.txt")).Returns(new string[] {
-                "Assembly=VersionAssembly:1 Version:4.0.0.0",
-                "Inlined=1:33555646:100678050",
-            });
+            fileMock.Setup(file => file.ReadAllLines("coverage_1_2.txt")).Returns(traceContent);
         }, directoryMock =>
         {
             directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
@@ -89,13 +81,13 @@ Inlined=1:33555646:100678050" },
         }).Object;
 
         List<TraceFileScanner.ScannedFile> files =
-            new TraceFileScanner(TraceDirectory, VersionAssembly, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
+            new TraceFileScanner(TraceDirectory, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
 
         Assert.That(files, Is.EquivalentTo(new TraceFileScanner.ScannedFile[] {
             new TraceFileScanner.ScannedFile()
             {
                 FilePath = "coverage_1_2.txt",
-                Version = "4.0.0.0",
+                Lines = traceContent,
                 IsEmpty = false,
             },
         }));
