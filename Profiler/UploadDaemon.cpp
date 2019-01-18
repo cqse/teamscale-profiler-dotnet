@@ -1,7 +1,7 @@
 #include "UploadDaemon.h"
 #include <windows.h>
 #include <shellapi.h>
-#include "WindowsUtils.h"
+#include "utils/WindowsUtils.h"
 
 UploadDaemon::UploadDaemon(std::string profilerPath, std::string traceDirectory, Log* log)
 {

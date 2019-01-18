@@ -115,37 +115,78 @@ To set the environment variables in Azure, go to the application settings and ad
 
 # Profiler Configuration
 
-The profiler has several configuration options that can either be set as environment variables or configured with an settings file. Environment variables will overwrite configured values from the settings file.
+The profiler has several configuration options that can either be set as environment variables or configured with an settings file. Environment variables will overwrite configured values from the configuration file.
 
 ## Environment Variables
 
 | Environment variable              | Value                                    | Description                              |
 | :-------------------------------- | :--------------------------------------- | :--------------------------------------- |
-| COR_PROFILER_CONFIG               | Path, default `%COR_PROFILER_PATH%.config` | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.config` |
+| COR_PROFILER_CONFIG               | Path                                     | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
 | COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `0`                  | Enable ultra-light mode by disabling re-jitting of assemblies. |
 | COR_PROFILER_ASSEMBLY_FILEVERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
 | COR_PROFILER_ASSEMBLY_PATHS       | `1` or `0`, default `0`                  | Print the path to loaded assemblies in the trace file. |
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This should only be used in conjunction with light mode. |
-| COR_PROFILER_PROCESS              | String (optional)                        | The (case-insensitive) name of the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. |
+| COR_PROFILER_PROCESS              | String (optional)                        | A (case-insensitive) suffix of the path to the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. This option is deprecated. It is recommended that you use the mechanisms of the configuration file instead. |
 | COR_PROFILER_DUMP_ENVIRONMENT     | `1` or `0`, default `0`                  | Print all environment variables of the profiled process in the trace file. |
 | COR_PROFILER_IGNORE_EXCEPTIONS    | `1` or `0`, default `0`                  | Causes all exceptions in the profiler code to be swallowed. For debugging only. |
 
 Please note that the profiler is **also** configured with variables starting with the `COR_PROFILER_` prefix in case of .NET Core applications.
 
-## Settings File
+## Configuration file
 
-In the settings file you can specify the same configuration options as with environment variables using key-value pairs. The `COR_PROFILER_` prefix, however, is omitted, e.g.:
+By default, the profiler will look for a YAML configuration file called `Profiler.yml` in the same directory as the profiler DLLs.
 
+Example:
+
+```yaml
+match:
+  # no executablePathRegex: or executableName: keys means match all processes
+  - profiler:
+      targetdir: "C:/users/public/traces"
+      enabled: false
+  # matches any foo.exe (case-insensitively)
+  - profiler:
+      executableName: foo.exe
+      targetdir: "C:/users/public/traces"
+      enabled: false
+  # without quotes, the backlash need not be escaped
+  - executablePathRegex: .*\\program\.exe
+    profiler:
+      enabled: true
+  # with quotes, you must escape backlashes
+  - executablePathRegex: ".*\\\\other_program\\.exe"
+    profiler:
+      enabled: true
+  # with a folded block scalar, the backslash need not be escaped
+  - executablePathRegex: >
+      .*\\third_program\.exe
+    profiler:
+      enabled: true
 ```
-TARGETDIR=C:\Users\Public\Traces
-LIGHT_MODE=1
-ASSEMBLY_PATHS=1
-EAGERNESS=100
-```
 
-Please note that you **cannot** register the profiler itself via the settings file, and you **cannot** set the `PROCESS` option via the settings file.
+You can have any number of sections under `match`. For each, the profiler will check if it matches the
+currently profiled process. If it does, all options under `profiler` are applied in order. I.e. later sections
+override previous ones if they both match the profiled process.
 
+Matching against the profiled process' file name is supported via the `executableName` key. The comparison will
+be done case-insensitively, i.e. `foo.exe` in the config will match `Foo.exe` on the file system.
+
+Matching against the profiled process' path is supported via the `executablePathRegex` key. Its value is
+a C++ ECMAScript-compatible regular expression that must match the entire path of the profiled process. If no `process`
+property is given for a section, the section applies to all processes. Please note that these regular expressions
+require special care when trying to use backlashes since these are used as an escape character by YAML under certain
+circumstances.
+
+If both `executableName` and `executablePathRegex` are specified in a section, both must match for the section to be
+applied.
+
+The options under the `profiler` key are the same ones from the environment, except the `COR_PROFILER_` prefix must be omitted.
+Casing is irrelevant for these options. Additionally, you can use the `enabled` option to turn the profiler on or off.
+
+Configuration options from environment variables always override configuration options from the configuration file.
+
+Please note that you **cannot** register the profiler itself via the config file (`COR_PROFILER`, `COR_ENABLE_PROFILING`).
 
 
 # Troubleshooting

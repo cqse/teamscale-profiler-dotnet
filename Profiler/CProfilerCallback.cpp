@@ -1,13 +1,12 @@
 #include "CProfilerCallback.h"
 #include "version.h"
 #include "UploadDaemon.h"
-#include "StringUtils.h"
-#include "WindowsUtils.h"
-#include "Debug.h"
+#include "utils/StringUtils.h"
+#include "utils/WindowsUtils.h"
+#include "utils/Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-#include "Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -36,43 +35,33 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 	catch (...) {
 		handleException("Initialize");
+		return S_OK;
 	}
 }
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
-	std::string process = getProcessInfo();
-	std::string processToProfile = WindowsUtils::getConfigValueFromEnvironment("PROCESS");
-	std::transform(process.begin(), process.end(), process.begin(), toupper);
-	std::transform(processToProfile.begin(), processToProfile.end(), processToProfile.begin(), toupper);
-
-	isProfilingEnabled = processToProfile.empty() || StringUtils::endsWith(process, processToProfile);
-	if (!isProfilingEnabled) {
+	initializeConfig();
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
-	log.createLogFile();
-	readConfig();
+	log.createLogFile(config);
+	log.info("looking for configuration options in: " + config.getConfigPath());
 
-	if (getOption("LIGHT_MODE") == "1") {
-		isLightMode = true;
+	for (std::string problem : config.getProblems()) {
+		log.error(problem);
+	}
+
+	if (config.shouldUseLightMode()) {
 		log.info("Mode: light");
 	}
 	else {
 		log.info("Mode: force re-jitting");
 	}
 
-	std::string eagernessValue = getOption("EAGERNESS");
-	if (!eagernessValue.empty()) {
-		try {
-			eagerness = std::stoi(eagernessValue);
-		}
-		catch (std::exception e) {
-			log.warn("Eagerness must be number that indicates the amount of method calls until traces are written. Found instead: " + eagernessValue);
-		}
-	}
-	log.info("Eagerness: " + std::to_string(eagerness));
+	log.info("Eagerness: " + std::to_string(config.getEagerness()));
 
-	if (getOption("UPLOAD_DAEMON") == "1") {
+	if (config.shouldStartUploadDaemon()) {
 		log.info("Starting upload deamon");
 		startUploadDeamon();
 	}
@@ -88,7 +77,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	message += GetCommandLine();
 	log.info(message);
 
-	if (getOption("DUMP_ENVIRONMENT") == "1") {
+	if (config.shouldDumpEnvironment()) {
 		dumpEnvironment();
 	}
 
@@ -101,7 +90,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(process);
+	log.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
 }
@@ -127,55 +116,20 @@ void CProfilerCallback::startUploadDeamon() {
 	daemon.launch();
 }
 
-void CProfilerCallback::readConfig() {
+void CProfilerCallback::initializeConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
-	if (configFile.empty()) {
-		configFile = WindowsUtils::getConfigValueFromEnvironment("PATH") + ".config";
-	}
-	log.info("looking for configuration options in: " + configFile);
 
-	std::ifstream inputStream(configFile);
-	for (std::string line; getline(inputStream, line);) {
-		size_t delimiterPosition = line.find("=");
-		if (delimiterPosition == std::string::npos) {
-			log.warn("invalid line in config file: " + line);
-			continue;
-		}
-
-		std::string optionName = line.substr(0, delimiterPosition);
-		std::string optionValue = line.substr(delimiterPosition + 1);
-		std::transform(optionName.begin(), optionName.end(), optionName.begin(), toupper);
-		this->configOptions[optionName] = optionValue;
+	bool configFileWasManuallySpecified = !configFile.empty();
+	if (!configFileWasManuallySpecified) {
+		configFile = Config::getDefaultConfigPath();
 	}
-}
+	Debug::log(configFile);
 
-std::string CProfilerCallback::getOption(std::string optionName) {
-	std::string value = WindowsUtils::getConfigValueFromEnvironment(optionName);
-	if (!value.empty()) {
-		return value;
-	}
-	return this->configOptions[optionName];
-}
-
-std::string CProfilerCallback::getProcessInfo() {
-	appPath[0] = 0;
-	appName[0] = 0;
-	if (0 == GetModuleFileNameW(NULL, appPath, MAX_PATH)) {
-		_wsplitpath_s(appPath, NULL, 0, NULL, 0, appName, _MAX_FNAME, NULL, 0);
-	}
-	if (appPath[0] == 0) {
-		wcscpy_s(appPath, MAX_PATH, L"No Application Path Found");
-		wcscpy_s(appName, _MAX_FNAME, L"No Application Name Found");
-	}
-
-	char process[BUFFER_SIZE];
-	// turn application path from wide to normal character string
-	sprintf_s(process, "%S", appPath);
-	return process;
+	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
 
 HRESULT CProfilerCallback::ShutdownImplementation() {
-	if (!isProfilingEnabled) {
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
@@ -205,7 +159,7 @@ DWORD CProfilerCallback::getEventMask() {
 	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	// disable force re-jitting for the light variant
-	if (!isLightMode) {
+	if (!config.shouldUseLightMode()) {
 		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
 
@@ -222,7 +176,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 	}
 	catch (...) {
 		Debug::logStacktrace("functionMapper");
-		// since this function must be static, we have no way to call getOption() so we always terminate the program.
+		// since this function must be static, we have no way to access the config so we always terminate the program.
 		throw;
 	}
 }
@@ -238,7 +192,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT h
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assemblyId, HRESULT hrStatus) {
-	if (!isProfilingEnabled) {
+	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
 
@@ -263,11 +217,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Version:%i.%i.%i.%i",
 		metadata.usMajorVersion, metadata.usMinorVersion, metadata.usBuildNumber, metadata.usRevisionNumber);
 
-	if (getOption("ASSEMBLY_FILEVERSION") == "1") {
+	if (config.shouldLogAssemblyFileVersion()) {
 		writtenChars += writeFileVersionInfo(assemblyPath, assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars);
 	}
 
-	if (getOption("ASSEMBLY_PATHS") == "1") {
+	if (config.shouldLogAssemblyPaths()) {
 		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
 	log.logAssembly(assemblyInfo);
@@ -339,14 +293,14 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 
 void CProfilerCallback::handleException(std::string context) {
 	Debug::logStacktrace(context);
-	if (getOption("IGNORE_EXCEPTIONS") != "1") {
+	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
 }
 
 HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (isProfilingEnabled) {
+	if (config.isProfilingEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
 		recordFunctionInfo(&jittedMethods, functionId);
@@ -369,7 +323,7 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
 
 HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, FunctionID calleeId,
 	BOOL* pfShouldInline) {
-	if (isProfilingEnabled) {
+	if (config.isProfilingEnabled()) {
 		// Save information about inlined method (if not already seen)
 		EnterCriticalSection(&callbackSynchronization);
 
@@ -401,13 +355,11 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
 	// Must be called from synchronized context
-
-	return eagerness > 0 && inlinedMethods.size() + jittedMethods.size() >= eagerness;
+	return config.getEagerness() > 0 && static_cast<int>(inlinedMethods.size() + jittedMethods.size()) >= config.getEagerness();
 }
 
 void CProfilerCallback::writeFunctionInfosToLog() {
 	// Must be called from synchronized context
-
 	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
 	inlinedMethods.clear();
 

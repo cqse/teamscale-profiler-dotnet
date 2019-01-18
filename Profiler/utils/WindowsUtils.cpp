@@ -1,14 +1,13 @@
 #include "WindowsUtils.h"
 #include <Windows.h>
 #include <vector>
-#include "Debug.h"
+#include  <algorithm>
 
 extern char** _environ;
 
-/**
-* Returns the message for the last WinAPI error (retrieved via GetLastError).
-* Adapted from https://stackoverflow.com/a/17387176/1396068
-*/
+/** Maximum size of an enironment variable value according to http://msdn.microsoft.com/en-us/library/ms683188.aspx */
+static const size_t MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE = 32767 * sizeof(char);
+
 std::string WindowsUtils::getLastErrorAsString()
 {
 	DWORD errorMessageID = ::GetLastError();
@@ -26,11 +25,12 @@ std::string WindowsUtils::getLastErrorAsString()
 	return message;
 }
 
-/** Return the value for the environment variable COR_PROFILER_<suffix> or the empty string if it is not set. */
 std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
-	char value[32767 * sizeof(char)]; // maximum size according to http://msdn.microsoft.com/en-us/library/ms683188.aspx
+	std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::toupper);
+
+	char value[MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE];
 	std::string name = "COR_PROFILER_" + suffix;
-	if (GetEnvironmentVariable(name.c_str(), value, sizeof(value)) == 0) {
+	if (!GetEnvironmentVariable(name.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
 		return "";
 	}
 	return value;
@@ -50,4 +50,22 @@ std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
 	}
 
 	return variables;
+}
+
+std::string WindowsUtils::getPathOfThisProcess() {
+	char appPath[_MAX_PATH];
+	appPath[0] = 0;
+
+	size_t length = GetModuleFileName(NULL, appPath, MAX_PATH);
+	if (length == 0) {
+		return "Failed to read application path";
+	}
+	return std::string(appPath, length);
+}
+
+bool WindowsUtils::isFile(std::string path)
+{
+	DWORD dwAttrib = GetFileAttributes(path.c_str());
+	// check if it's a valid path and not a directory
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }

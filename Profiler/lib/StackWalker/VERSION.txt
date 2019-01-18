@@ -1,0 +1,1 @@
+StackWalker 1.20 https://github.com/JochenKalmbach/StackWalker
