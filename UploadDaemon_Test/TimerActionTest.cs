@@ -178,6 +178,11 @@ Stopped=1234556" },
         {
             return Task.FromResult(returnValue);
         }
+
+        public string Describe()
+        {
+            return "MockUpload";
+        }
     }
 
     /// <summary>

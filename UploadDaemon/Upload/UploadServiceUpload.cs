@@ -82,5 +82,10 @@ namespace UploadDaemon.Upload
                 }
             }
         }
+
+        public string Describe()
+        {
+            return $"HTTP endpoint {url}";
+        }
     }
 }

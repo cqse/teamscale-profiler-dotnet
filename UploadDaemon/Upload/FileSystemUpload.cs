@@ -50,5 +50,10 @@ namespace UploadDaemon.Upload
                 return Task.FromResult(false);
             }
         }
+
+        public string Describe()
+        {
+            return $"file system directory {targetDirectory}";
+        }
     }
 }

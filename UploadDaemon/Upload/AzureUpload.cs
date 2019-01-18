@@ -102,6 +102,11 @@ namespace UploadDaemon.Upload
             await file.UploadFromFileAsync(sourceFilePath);
         }
 
+        public string Describe()
+        {
+            return $"Azure share {storage.ShareName}, directory {storage.Directory}";
+        }
+
         private class UploadFailedException : Exception
         {
             public UploadFailedException(string message) : base(message)
