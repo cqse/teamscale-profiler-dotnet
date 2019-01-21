@@ -44,7 +44,22 @@ namespace UploadDaemon
                 return;
             }
 
-            new Uploader(args).Run();
+            ParseArguments(args);
+
+            Config config;
+            try
+            {
+                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+                config = Config.ReadFromCentralConfigFile();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+                Environment.Exit(1);
+                return;
+            }
+
+            new Uploader(config).Run();
         }
 
         private static bool IsAlreadyRunning()
@@ -60,22 +75,11 @@ namespace UploadDaemon
             return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
         }
 
-        private Uploader(string[] args)
+        public Uploader(Config config)
         {
-            ParseArguments(args);
             fileSystem = new FileSystem();
 
-            try
-            {
-                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
-                config = Config.ReadFromCentralConfigFile();
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
-                Environment.Exit(1);
-            }
-
+            this.config = config;
             if (config.DisableSslValidation)
             {
                 HttpClientUtils.DisableSslValidation();
@@ -87,7 +91,7 @@ namespace UploadDaemon
         /// <summary>
         /// Parses the command line arguments.
         /// </summary>
-        private void ParseArguments(string[] args)
+        private static void ParseArguments(string[] args)
         {
             logger.Debug("Parsing arguments {arguments}", args);
 
@@ -116,6 +120,14 @@ namespace UploadDaemon
             timer.Enabled = true;
 
             SuspendThread();
+        }
+
+        /// <summary>
+        /// For testing. Runs the timer action once synchronously.
+        /// </summary>
+        public void RunOnce()
+        {
+            timerAction.Run();
         }
 
         /// <summary>
