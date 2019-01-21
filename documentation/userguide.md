@@ -231,62 +231,75 @@ This may, however, be a rather large file since the entire program's heap will b
 
 # Automatic Trace Upload
 
-The profiler can automatically upload all produced trace files to Teamscale or
-move them to a file system directory (e.g. a network share).
+The profiler can automatically upload all produced trace files to Teamscale,
+move them to a file system directory (e.g. a network share), ...
 
-To configure this, set `COR_PROFILER_UPLOAD_DAEMON=1` and configure the uploader process
-with the `UploadDaemon.json` file.
+To configure this
 
-In all cases, you must specify an assembly from which to read the program version.
+1. set the environment variable `COR_PROFILER_UPLOAD_DAEMON=1`
+   or the corresponding YAML config file option
+2.  configure the uploader process via the YAML config file.
+3. __You must also specify the `targetdir` option of the profiler in the YAML config file.
+   Otherwise, the upload daemon will
+   not know where to find your trace files and nothing will be uploaded.__
+
+In all cases, you must specify an assembly from which to read the program version via
+the `versionAssembly` YAML config option.
 This will be used to select the correct PDB files to map the trace file contents
 back to source lines in the original code.
-
-- To upload to Teamscale, please configure the `teamscale` property of the JSON file
-- To upload to a file system directory, please configure the `directory` property of
-  the JSON file and delete the `teamscale` property
 
 When properly configured, the uploader process will run in the background after the
 profiler is launched for the first time. It writes a log file (`UploadDaemon.log`) to the
 directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
 `nlog.config` file in the same directory.
 
+The following sections list several example config files.
+
 ## Example: Teamscale upload
 
-**UploadDaemon.json:**
+**UploadDaemon.yaml:**
 
-```json
-{
-    "versionAssembly": "YourAssembly",
-    "teamscale": {
-        "url": "http://localhost:8080",
-        "username": "build",
-        "accessKey": "u7a9abc32r45r2uiig3vvv",
-        "project": "your_project",
-        "partition": "Manual Tests",
-    }
-}
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      teamscale:
+        url: http://localhost:8080
+        username: build
+        accessKey: u7a9abc32r45r2uiig3vvv
+        project: your_project
+        partition: Manual Tests
 ```
 
 ## Example: Move to network share
 
-**UploadDaemon.json:**
+**UploadDaemon.yaml:**
 
-```json
-{
-    "versionAssembly": "YourAssembly",
-    "directory": "\\\\yourserver.localdomain\\some\\directory",
-}
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      directory: \\yourserver.localdomain\some\directory
 ```
 
 ## Example: HTTP upload
 
-**UploadDaemon.json:**
+**UploadDaemon.yaml:**
 
-```json
-{
-    "versionAssembly": "YourAssembly",
-    "fileUpload": "http://localserver.localdomain:8080",
-}
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      fileUpload: http://localserver.localdomain:8080
 ```
 
 ## Proxy
