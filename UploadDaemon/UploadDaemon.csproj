@@ -71,7 +71,7 @@
   <ItemGroup>
     <Compile Include="Archiver.cs" />
     <Compile Include="MessageFormatter.cs" />
-    <Compile Include="TimerAction.cs" />
+    <Compile Include="UploadTask.cs" />
     <Compile Include="TraceFile.cs" />
     <Compile Include="TraceFileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

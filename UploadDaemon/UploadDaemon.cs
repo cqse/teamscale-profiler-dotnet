@@ -32,7 +32,7 @@ namespace UploadDaemon
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly Config config;
-        private readonly TimerAction timerAction;
+        private readonly UploadTask uploadTask;
         private readonly FileSystem fileSystem;
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace UploadDaemon
                 HttpClientUtils.DisableSslValidation();
             }
 
-            timerAction = new TimerAction(config, fileSystem, new UploadFactory());
+            uploadTask = new UploadTask(config, fileSystem, new UploadFactory());
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace UploadDaemon
         {
             lock(SequentialUploadsLock)
             {
-                timerAction.Run();
+                uploadTask.Run();
             }
         }
 

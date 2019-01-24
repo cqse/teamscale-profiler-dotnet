@@ -11,7 +11,7 @@ namespace UploadDaemon
     /// <summary>
     /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
     /// </summary>
-    public class TimerAction
+    public class UploadTask
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -19,7 +19,7 @@ namespace UploadDaemon
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
 
-        public TimerAction(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
+        public UploadTask(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
         {
             this.config = config;
             this.fileSystem = fileSystem;
