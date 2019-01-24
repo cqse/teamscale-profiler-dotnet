@@ -60,7 +60,11 @@ namespace UploadDaemon
                 return;
             }
 
-            new Uploader(config).Run();
+            logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            var uploader = new Uploader(config);
+            uploader.RunOnce();
+            uploader.ScheduleRegularUploads();
+            uploader.WaitForNotifications();
         }
 
         private static bool IsAlreadyRunning()
@@ -89,20 +93,6 @@ namespace UploadDaemon
             timerAction = new TimerAction(config, fileSystem, new UploadFactory());
         }
 
-        private void Run()
-        {
-            logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-
-            RunOnce();
-
-            System.Timers.Timer timer = new System.Timers.Timer();
-            timer.Elapsed += new ElapsedEventHandler(timerAction.HandleTimerEvent);
-            timer.Interval = TimerIntervalInMilliseconds;
-            timer.Enabled = true;
-
-            WaitForNotifications();
-        }
-
         /// <summary>
         /// Runs the timer action once synchronously.
         /// </summary>
@@ -112,6 +102,17 @@ namespace UploadDaemon
             {
                 timerAction.Run();
             }
+        }
+
+        /// <summary>
+        /// Schedule uploads on a regular intervall.
+        /// </summary>
+        private void ScheduleRegularUploads()
+        {
+            Timer timer = new Timer();
+            timer.Elapsed += (sender, args) => RunOnce();
+            timer.Interval = TimerIntervalInMilliseconds;
+            timer.Enabled = true;
         }
 
         /// <summary>

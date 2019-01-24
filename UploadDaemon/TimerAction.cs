@@ -2,11 +2,8 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.IO.Abstractions;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Timers;
 using UploadDaemon.Upload;
 
 namespace UploadDaemon
@@ -27,14 +24,6 @@ namespace UploadDaemon
             this.config = config;
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
-        }
-
-        /// <summary>
-        /// Event handler for the timer event. Runs the action.
-        /// </summary>
-        public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
-        {
-            Run();
         }
 
         /// <summary>
