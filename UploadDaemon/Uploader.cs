@@ -8,7 +8,6 @@ using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Timers;
 using UploadDaemon.Upload;
 
@@ -96,7 +95,7 @@ namespace UploadDaemon
             timer.Interval = TimerIntervalInMilliseconds;
             timer.Enabled = true;
 
-            WaitForNotificationsUntilCancellation();
+            WaitForNotifications();
         }
 
         /// <summary>
@@ -111,29 +110,17 @@ namespace UploadDaemon
         /// Waits for notifications from subsequent executions of the Daemon. Terminates on
         /// interrupt from the console's cancel key.
         /// </summary>
-        private void WaitForNotificationsUntilCancellation()
+        private void WaitForNotifications()
         {
-            // TODO (SA) I took this over from the original suspendThread() method, however, I'm
-            // not sure about its purpose, since the console (CMD) seems to disconnect immediately
-            // anyways and I cannot ever issue Ctrl+C...
-            AutoResetEvent cancelEvent = new AutoResetEvent(false);
-            Console.CancelKeyPress += (sender, eArgs) =>
-            {
-                cancelEvent.Set();
-                eArgs.Cancel = true;
-            };
-
             while (true) // wait for indefinitely many commands
             {
                 using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
-                    if (pipeServerStream.WaitForConnection(cancelEvent))
+                    pipeServerStream.WaitForConnection();
+                    using (var streamReader = new StreamReader(pipeServerStream))
                     {
-                        using (var streamReader = new StreamReader(pipeServerStream))
-                        {
-                            var command = streamReader.ReadLine();
-                            ExecuteCommand(command);
-                        }
+                        var command = streamReader.ReadLine();
+                        ExecuteCommand(command);
                     }
                 }
             }
@@ -169,46 +156,6 @@ namespace UploadDaemon
                     w.WriteLine(DaemonControlCommandUpload);
                 }
             }
-        }
-    }
-}
-
-static class NamedPipeServerStreamEx
-{
-    /// <summary>
-    /// Waits for a connection to this pipe server stream or a cancellation event.
-    /// Based on https://stackoverflow.com/a/10485210
-    /// </summary>
-    public static bool WaitForConnection(this NamedPipeServerStream pipeStream, WaitHandle cancelEvent)
-    {
-        // capture interrupt from a connection to the pipe stream
-        Exception e = null;
-        AutoResetEvent connectEvent = new AutoResetEvent(false);
-        pipeStream.BeginWaitForConnection(ar =>
-        {
-            try
-            {
-                pipeStream.EndWaitForConnection(ar);
-            }
-            catch (Exception er)
-            {
-                e = er;
-            }
-            connectEvent.Set();
-        }, null);
-
-        // Wait for connection or cancellation
-        if (WaitHandle.WaitAny(new[] { connectEvent, cancelEvent }) == 1)
-        {
-            return false; // cancellation occurred
-        }
-        else if (e != null)
-        {
-            throw e; // rethrow exception
-        }
-        else
-        {
-            return true; // connection established
         }
     }
 }
