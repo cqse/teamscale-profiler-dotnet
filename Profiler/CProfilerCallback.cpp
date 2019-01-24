@@ -63,7 +63,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	if (config.shouldStartUploadDaemon()) {
 		log.info("Starting upload deamon");
-		startUploadDeamon();
+		createDaemon().launch(&log);
 	}
 
 	char appPool[BUFFER_SIZE];
@@ -108,13 +108,6 @@ void CProfilerCallback::dumpEnvironment() {
 	}
 }
 
-void CProfilerCallback::startUploadDeamon() {
-	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
-
-	UploadDaemon daemon(profilerPath, &log);
-	daemon.launch();
-}
-
 void CProfilerCallback::initializeConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 
@@ -127,6 +120,11 @@ void CProfilerCallback::initializeConfig() {
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
 
+UploadDaemon CProfilerCallback::createDaemon() {
+	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	return UploadDaemon(profilerPath);
+}
+
 HRESULT CProfilerCallback::ShutdownImplementation() {
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
@@ -136,6 +134,9 @@ HRESULT CProfilerCallback::ShutdownImplementation() {
 	writeFunctionInfosToLog();
 
 	log.shutdown();
+	if (config.shouldStartUploadDaemon()) {
+		createDaemon().notifyShutdown();
+	}
 	profilerInfo->ForceGC();
 	LeaveCriticalSection(&callbackSynchronization);
 

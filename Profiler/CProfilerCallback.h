@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "UploadDaemon.h"
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
@@ -106,11 +107,11 @@ private:
 
 	void initializeConfig();
 
+	/** Returns a proxy for the upload daemon process */
+	UploadDaemon createDaemon();
+
 	/** Create method info object for a function id. */
 	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
-
-	/** Starts the upload daemon. */
-	void startUploadDeamon();
 
 	/**  Store assembly counter for id. */
 	int registerAssembly(AssemblyID assemblyId);

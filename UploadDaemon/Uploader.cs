@@ -1,18 +1,16 @@
-﻿using System;
+using Common;
 using NLog;
-using System.IO;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Abstractions;
+using System.IO.Pipes;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Timers;
-using Newtonsoft.Json;
-using System.IO.Abstractions;
-using System.Collections.Generic;
-
-using System.Linq;
 using UploadDaemon.Upload;
-using Common;
-using System.Net;
 
 namespace UploadDaemon
 {
@@ -22,6 +20,11 @@ namespace UploadDaemon
     public class Uploader
     {
         private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
+
+        private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
+
+        private const string DaemonControlCommandUpload = "upload";
+
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly Config config;
@@ -36,6 +39,7 @@ namespace UploadDaemon
             if (IsAlreadyRunning())
             {
                 Console.WriteLine("Another instance is already running.");
+                NotifyRunningDaemon();
                 return;
             }
 
@@ -85,18 +89,18 @@ namespace UploadDaemon
         {
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
-            timerAction.Run();
+            RunOnce();
 
             System.Timers.Timer timer = new System.Timers.Timer();
             timer.Elapsed += new ElapsedEventHandler(timerAction.HandleTimerEvent);
             timer.Interval = TimerIntervalInMilliseconds;
             timer.Enabled = true;
 
-            SuspendThread();
+            WaitForNotificationsUntilCancellation();
         }
 
         /// <summary>
-        /// For testing. Runs the timer action once synchronously.
+        /// Runs the timer action once synchronously.
         /// </summary>
         public void RunOnce()
         {
@@ -104,17 +108,107 @@ namespace UploadDaemon
         }
 
         /// <summary>
-        /// Suspends this thread indefinitely but still reacts to interruptions from the console's cancel key.
+        /// Waits for notifications from subsequent executions of the Daemon. Terminates on
+        /// interrupt from the console's cancel key.
         /// </summary>
-        private static void SuspendThread()
+        private void WaitForNotificationsUntilCancellation()
         {
+            // TODO (SA) I took this over from the original suspendThread() method, however, I'm
+            // not sure about its purpose, since the console (CMD) seems to disconnect immediately
+            // anyways and I cannot ever issue Ctrl+C...
             AutoResetEvent cancelEvent = new AutoResetEvent(false);
             Console.CancelKeyPress += (sender, eArgs) =>
             {
                 cancelEvent.Set();
                 eArgs.Cancel = true;
             };
-            cancelEvent.WaitOne(Timeout.Infinite);
+
+            while (true) // wait for indefinitely many commands
+            {
+                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                {
+                    if (pipeServerStream.WaitForConnection(cancelEvent))
+                    {
+                        using (var streamReader = new StreamReader(pipeServerStream))
+                        {
+                            var command = streamReader.ReadLine();
+                            ExecuteCommand(command);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a command forwarded to this UploadDaemon process.
+        /// </summary>
+        /// <param name="command"></param>
+        private void ExecuteCommand(string command)
+        {
+            switch (command)
+            {
+                case DaemonControlCommandUpload:
+                    // TODO (SA) we probably need a lock here, to avoid triggering a second upload
+                    // in parallel. Should we just skip in this case or enqueue a subsequent upload?
+                    RunOnce();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Forwards a command to the existing UploadDaemon process.
+        /// </summary>
+        private static void NotifyRunningDaemon()
+        {
+            using (var pipeClientStream = new NamedPipeClientStream(".", DaemonControlPipeName, PipeDirection.Out, PipeOptions.Asynchronous))
+            {
+                pipeClientStream.Connect();
+
+                using (var w = new StreamWriter(pipeClientStream))
+                {
+                    w.WriteLine(DaemonControlCommandUpload);
+                }
+            }
+        }
+    }
+}
+
+static class NamedPipeServerStreamEx
+{
+    /// <summary>
+    /// Waits for a connection to this pipe server stream or a cancellation event.
+    /// Based on https://stackoverflow.com/a/10485210
+    /// </summary>
+    public static bool WaitForConnection(this NamedPipeServerStream pipeStream, WaitHandle cancelEvent)
+    {
+        // capture interrupt from a connection to the pipe stream
+        Exception e = null;
+        AutoResetEvent connectEvent = new AutoResetEvent(false);
+        pipeStream.BeginWaitForConnection(ar =>
+        {
+            try
+            {
+                pipeStream.EndWaitForConnection(ar);
+            }
+            catch (Exception er)
+            {
+                e = er;
+            }
+            connectEvent.Set();
+        }, null);
+
+        // Wait for connection or cancellation
+        if (WaitHandle.WaitAny(new[] { connectEvent, cancelEvent }) == 1)
+        {
+            return false; // cancellation occurred
+        }
+        else if (e != null)
+        {
+            throw e; // rethrow exception
+        }
+        else
+        {
+            return true; // connection established
         }
     }
 }
