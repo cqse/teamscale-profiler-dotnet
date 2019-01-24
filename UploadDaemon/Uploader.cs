@@ -24,6 +24,11 @@ namespace UploadDaemon
 
         private const string DaemonControlCommandUpload = "upload";
 
+        /// <summary>
+        /// Lock used to ensure that no two uploads happen in parallel.
+        /// </summary>
+        private static readonly object SequentialUploadsLock = new object();
+
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly Config config;
@@ -103,7 +108,10 @@ namespace UploadDaemon
         /// </summary>
         public void RunOnce()
         {
-            timerAction.Run();
+            lock(SequentialUploadsLock)
+            {
+                timerAction.Run();
+            }
         }
 
         /// <summary>
@@ -135,8 +143,6 @@ namespace UploadDaemon
             switch (command)
             {
                 case DaemonControlCommandUpload:
-                    // TODO (SA) we probably need a lock here, to avoid triggering a second upload
-                    // in parallel. Should we just skip in this case or enqueue a subsequent upload?
                     RunOnce();
                     break;
             }
