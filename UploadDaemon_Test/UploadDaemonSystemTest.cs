@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
-using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
-using Common;
-using Moq;
+﻿using Common;
 using NUnit.Framework;
-using UploadDaemon;
+using System;
+using System.IO;
+using System.Linq;
 
 [TestFixture]
-public class UploaderSystemTest
+public class UploadDaemonSystemTest
 {
     private static DirectoryInfo SolutionRoot =>
         new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
@@ -43,7 +38,7 @@ public class UploaderSystemTest
 Process=foo.exe
 Inlined=1:33555646:100678050");
 
-        new Uploader(Config.Read($@"
+        new UploadDaemon.UploadDaemon(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}

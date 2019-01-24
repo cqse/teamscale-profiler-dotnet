@@ -16,7 +16,7 @@ namespace UploadDaemon
     /// <summary>
     /// Main entry point of the program.
     /// </summary>
-    public class Uploader
+    public class UploadDaemon
     {
         private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
 
@@ -61,7 +61,7 @@ namespace UploadDaemon
             }
 
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-            var uploader = new Uploader(config);
+            var uploader = new UploadDaemon(config);
             uploader.RunOnce();
             uploader.ScheduleRegularUploads();
             uploader.WaitForNotifications();
@@ -80,7 +80,7 @@ namespace UploadDaemon
             return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
         }
 
-        public Uploader(Config config)
+        public UploadDaemon(Config config)
         {
             fileSystem = new FileSystem();
 
