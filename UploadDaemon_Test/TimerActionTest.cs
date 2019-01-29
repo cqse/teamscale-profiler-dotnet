@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
@@ -26,17 +26,8 @@ public class TimerActionTest
               targetdir: {TraceDirectory}
     ");
 
-    private static readonly Config configWithSpace = Config.Read($@"
-        match:
-          - uploader:
-              versionAssembly: {VersionAssembly}
-              directory: C:\store
-            profiler:
-              targetdir: {TraceDirectoryWithSpace}
-    ");
-
     [Test]
-    public void TestSuccessfulUpload()
+    public void TracesShouldBeArchivedAfterASuccessfulUpload()
 
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -48,15 +39,11 @@ Inlined=1:33555646:100678050" },
 
         new TimerAction(config, fileSystem, new MockUploadFactory(true)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
     }
 
     [Test]
-    public void TestFailedUpload()
+    public void TracesShouldNotBeArchivedAfterAFailedUpload()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
@@ -67,11 +54,7 @@ Inlined=1:33555646:100678050" },
 
         new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
     }
 
     [Test]
@@ -86,11 +69,7 @@ Inlined=1:33555646:100678050" },
 
         new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"missing-version\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-version\coverage_1_1.txt");
     }
 
     [Test]
@@ -104,15 +83,11 @@ Inlined=1:33555646:100678050" },
 
         new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"missing-process\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
     }
 
     [Test]
-    public void TestEmptyTrace()
+    public void TestArchivingEmptyTrace()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
@@ -122,47 +97,7 @@ Process=foo.exe" },
 
         new TimerAction(config, fileSystem, new MockUploadFactory(true)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"empty-traces\coverage_1_1.txt"),
-        }));
-    }
-
-    [Test]
-    public void TestUnfinishedTrace()
-    {
-        FileSystemMockingUtils.FileSystemMock fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
-        {
-            fileMock.Setup(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>())).Throws<IOException>();
-        }, directoryMock =>
-        {
-            directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
-                .Returns(new string[] { "coverage_1_1.txt" });
-        });
-        IFileSystem fileSystem = fileSystemMock.Object;
-
-        new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
-
-        fileSystemMock.FileMock.Verify(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>()));
-        fileSystemMock.FileMock.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public void TestUnrelatedFile()
-    {
-        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectory("unrelated.txt"), @"foobar" },
-        });
-
-        new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"unrelated.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
     }
 
     [Test]
@@ -175,13 +110,18 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new TimerAction(configWithSpace, fileSystem, new MockUploadFactory(true)).Run();
+        Config configWithSpaceInTraceDirectory = Config.Read($@"
+            match:
+              - uploader:
+                  versionAssembly: {VersionAssembly}
+                  directory: C:\store
+                profiler:
+                  targetdir: {TraceDirectoryWithSpace}
+        ");
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectoryWithSpace, "*.txt", SearchOption.AllDirectories);
+        new TimerAction(configWithSpaceInTraceDirectory, fileSystem, new MockUploadFactory(true)).Run();
 
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectoryWithSpace(@"uploaded\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt");
     }
 
     private class MockUploadFactory : IUploadFactory
@@ -236,5 +176,12 @@ Inlined=1:33555646:100678050" },
     private string FileInTraceDirectoryWithSpace(string fileName)
     {
         return Path.Combine(TraceDirectoryWithSpace, fileName);
+    }
+
+    private void AssertFilesInDirectory(IFileSystem fileSystem, string directory, params string[] expectedFileNames)
+    {
+        string[] files = fileSystem.Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
+        IEnumerable<string> relativePaths = files.Select(path => path.Substring(directory.Length + 1));
+        Assert.That(relativePaths, Is.EquivalentTo(expectedFileNames));
     }
 }
