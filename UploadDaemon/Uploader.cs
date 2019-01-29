@@ -24,11 +24,6 @@ namespace UploadDaemon
         private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly List<string> HELP_COMMAND_LINE_ARGUMENTS = new List<string>()
-        {
-            "--help", "/h", "/?", "-h", "/help"
-        };
-
         private readonly Config config;
         private readonly TimerAction timerAction;
         private readonly FileSystem fileSystem;
@@ -43,8 +38,6 @@ namespace UploadDaemon
                 Console.WriteLine("Another instance is already running.");
                 return;
             }
-
-            ParseArguments(args);
 
             Config config;
             try
@@ -86,26 +79,6 @@ namespace UploadDaemon
             }
 
             timerAction = new TimerAction(config, fileSystem, new UploadFactory());
-        }
-
-        /// <summary>
-        /// Parses the command line arguments.
-        /// </summary>
-        private static void ParseArguments(string[] args)
-        {
-            logger.Debug("Parsing arguments {arguments}", args);
-
-            if (HELP_COMMAND_LINE_ARGUMENTS.Contains(args[0]))
-            {
-                PrintUsage();
-                Environment.Exit(0);
-            }
-        }
-
-        private static void PrintUsage()
-        {
-            Console.Error.WriteLine("Usage: UploadDaemon.exe");
-            Console.Error.WriteLine($"The upload daemon reads its configuration from {Config.ConfigFilePath}");
         }
 
         private void Run()
