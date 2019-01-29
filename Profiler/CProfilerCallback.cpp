@@ -112,7 +112,7 @@ void CProfilerCallback::startUploadDeamon() {
 	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
 	std::string traceDirectory = StringUtils::removeLastPartOfPath(log.getLogFilePath());
 
-	UploadDaemon daemon(profilerPath, traceDirectory, &log);
+	UploadDaemon daemon(profilerPath, &log);
 	daemon.launch();
 }
 

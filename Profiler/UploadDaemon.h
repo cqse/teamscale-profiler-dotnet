@@ -9,7 +9,7 @@ class UploadDaemon {
 public:
 
 	/** Constructor. */
-	UploadDaemon(std::string profilerPath, std::string traceDirectory, Log* log);
+	UploadDaemon(std::string profilerPath, Log* log);
 
 	/** Destructor. */
 	virtual ~UploadDaemon() noexcept;
@@ -24,7 +24,4 @@ private:
 
 	/** Path to the executable of the upload daemon. */
 	std::string pathToExe;
-
-	/** Path to the directory that contains the trace files. */
-	std::string traceDirectory;
 };
