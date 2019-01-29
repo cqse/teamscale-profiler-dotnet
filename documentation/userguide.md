@@ -232,7 +232,8 @@ This may, however, be a rather large file since the entire program's heap will b
 # Automatic Trace Upload
 
 The profiler can automatically upload all produced trace files to Teamscale,
-move them to a file system directory (e.g. a network share), ...
+move them to a file system directory (e.g. a network share), send them via
+HTTP or upload them to an Azure cloud storage.
 
 To configure this
 
