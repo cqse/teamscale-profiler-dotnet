@@ -46,32 +46,32 @@ namespace Common
             /// <summary>
             /// The assembly from which to read the version number.
             /// </summary>
-            public string VersionAssembly { get; set; } = null;
+            public string VersionAssembly { get; private set; } = null;
 
             /// <summary>
             /// The Teamscale server to upload to.
             /// </summary>
-            public TeamscaleServer Teamscale { get; set; } = null;
+            public TeamscaleServer Teamscale { get; private set; } = null;
 
             /// <summary>
             /// The url to POST the traces to.
             /// </summary>
-            public string FileUpload { get; set; } = null;
+            public string FileUpload { get; private set; } = null;
 
             /// <summary>
             /// The directory to upload the traces to.
             /// </summary>
-            public string Directory { get; set; } = null;
+            public string Directory { get; private set; } = null;
 
             /// <summary>
             /// The Azure File Storage to upload to.
             /// </summary>
-            public AzureFileStorage AzureFileStorage { get; set; } = null;
+            public AzureFileStorage AzureFileStorage { get; private set; } = null;
 
             /// <summary>
             /// Whether the uploader should be enabled for this process.
             /// </summary>
-            public bool Enabled { get; set; } = true;
+            public bool Enabled { get; private set; } = true;
 
             public ConfigForProcess(string processPath)
             {
