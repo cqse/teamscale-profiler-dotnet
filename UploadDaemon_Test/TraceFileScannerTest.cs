@@ -29,21 +29,11 @@ Inlined=1:33555646:100678050";
             { FileInTraceDirectory("unrelated.txt"), @"whatever" },
         });
 
-        List<TraceFileScanner.ScannedFile> files = new TraceFileScanner(TraceDirectory, fileSystem).ListTraceFilesReadyForUpload().ToList();
+        List<TraceFile> files = new TraceFileScanner(TraceDirectory, fileSystem).ListTraceFilesReadyForUpload().ToList();
 
-        Assert.That(files, Is.EquivalentTo(new TraceFileScanner.ScannedFile[] {
-            new TraceFileScanner.ScannedFile()
-            {
-                FilePath = FileInTraceDirectory("coverage_1_1.txt"),
-                Lines = traceContent1.SplitLines(),
-                IsEmpty = false,
-            },
-            new TraceFileScanner.ScannedFile()
-            {
-                FilePath = FileInTraceDirectory("coverage_1_2.txt"),
-                Lines = traceContent2.SplitLines(),
-                IsEmpty = true,
-            },
+        Assert.That(files.Select(file => (file.FilePath, file.IsEmpty())), Is.EquivalentTo(new(string, bool)[] {
+            (FileInTraceDirectory("coverage_1_1.txt"), false),
+            (FileInTraceDirectory("coverage_1_2.txt"), true)
         }));
     }
 
@@ -59,7 +49,7 @@ Inlined=1:33555646:100678050";
                 .Returns(new string[] { "coverage_1_1.txt" });
         }).Object;
 
-        List<TraceFileScanner.ScannedFile> files =
+        List<TraceFile> files =
             new TraceFileScanner(TraceDirectory, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
 
         Assert.That(files, Is.Empty);
@@ -80,16 +70,11 @@ Inlined=1:33555646:100678050";
                 .Returns(new string[] { "coverage_1_1.txt", "coverage_1_2.txt" });
         }).Object;
 
-        List<TraceFileScanner.ScannedFile> files =
+        List<TraceFile> files =
             new TraceFileScanner(TraceDirectory, fileSystemMock).ListTraceFilesReadyForUpload().ToList();
 
-        Assert.That(files, Is.EquivalentTo(new TraceFileScanner.ScannedFile[] {
-            new TraceFileScanner.ScannedFile()
-            {
-                FilePath = "coverage_1_2.txt",
-                Lines = traceContent,
-                IsEmpty = false,
-            },
+        Assert.That(files.Select(file => (file.FilePath, file.IsEmpty())), Is.EquivalentTo(new(string, bool)[] {
+           ("coverage_1_2.txt", false)
         }));
     }
 

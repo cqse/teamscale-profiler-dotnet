@@ -29,7 +29,7 @@ namespace UploadDaemon
         /// <summary>
         /// Returns all trace files that can be uploaded or archived.
         /// </summary>
-        public IEnumerable<ScannedFile> ListTraceFilesReadyForUpload()
+        public IEnumerable<TraceFile> ListTraceFilesReadyForUpload()
         {
             List<string> files;
             try
@@ -46,13 +46,13 @@ namespace UploadDaemon
             foreach (string filePath in files)
             {
                 string fileName = Path.GetFileName(filePath);
-                if (!TraceFileUtils.IsTraceFile(fileName))
+                if (!TraceFile.IsTraceFile(fileName))
                 {
                     logger.Debug("Skipping file that does not look like a trace file: {unknownFilePath}", filePath);
                     continue;
                 }
 
-                ScannedFile scannedFile = ScanFile(filePath);
+                TraceFile scannedFile = ScanFile(filePath);
                 if (scannedFile != null)
                 {
                     yield return scannedFile;
@@ -68,7 +68,7 @@ namespace UploadDaemon
         /// files when the profiler was hard-killed while writing the coverage info (e.g. in eager mode with certain unit
         /// test frameworks).
         /// </summary>
-        private ScannedFile ScanFile(string filePath)
+        private TraceFile ScanFile(string filePath)
         {
             if (IsLocked(filePath))
             {
@@ -87,12 +87,7 @@ namespace UploadDaemon
                 return null;
             }
 
-            return new ScannedFile
-            {
-                FilePath = filePath,
-                IsEmpty = TraceFileUtils.IsEmpty(lines),
-                Lines = lines
-            };
+            return new TraceFile(filePath, lines);
         }
 
         private bool IsLocked(string tracePath)
@@ -110,48 +105,6 @@ namespace UploadDaemon
                 // this is slightly inaccurate as the error might stem from permission problems etc.
                 // but we log it
                 return true;
-            }
-        }
-
-        /// <summary>
-        /// A single file that can either be uploaded or archived.
-        /// </summary>
-        public class ScannedFile
-        {
-            /// <summary>
-            /// The path to the file.
-            /// </summary>
-            public string FilePath { get; set; }
-
-            /// <summary>
-            /// If this is true then the trace file contains no coverage information (may happen when the profiler
-            /// is killed before it can write the information to disk).
-            /// </summary>
-            public bool IsEmpty { get; set; }
-
-            /// <summary>
-            /// The lines of text contained in the trace.
-            /// </summary>
-            public string[] Lines { get; set; }
-
-            public override bool Equals(object obj)
-            {
-                return obj is ScannedFile file &&
-                       FilePath == file.FilePath &&
-                       IsEmpty == file.IsEmpty;
-            }
-
-            public override int GetHashCode()
-            {
-                int hashCode = -1491167301;
-                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FilePath);
-                hashCode = hashCode * -1521134295 + EqualityComparer<bool>.Default.GetHashCode(IsEmpty);
-                return hashCode;
-            }
-
-            public override string ToString()
-            {
-                return $"ScannedFile[{FilePath} IsEmpty={IsEmpty}]";
             }
         }
     }

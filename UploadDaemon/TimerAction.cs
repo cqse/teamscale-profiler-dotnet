@@ -55,8 +55,8 @@ namespace UploadDaemon
             TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
             Archiver archiver = new Archiver(traceDirectory, fileSystem);
 
-            IEnumerable<TraceFileScanner.ScannedFile> traces = scanner.ListTraceFilesReadyForUpload();
-            foreach (TraceFileScanner.ScannedFile trace in traces)
+            IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
+            foreach (TraceFile trace in traces)
             {
                 try
                 {
@@ -71,16 +71,16 @@ namespace UploadDaemon
             logger.Debug("Finished scan");
         }
 
-        private async Task ProcessTraceFile(TraceFileScanner.ScannedFile trace, Archiver archiver)
+        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver)
         {
-            if (trace.IsEmpty)
+            if (trace.IsEmpty())
             {
                 logger.Info("Archiving {trace} because it does not contain any coverage", trace.FilePath);
                 archiver.ArchiveEmptyFile(trace.FilePath);
                 return;
             }
 
-            string processPath = TraceFileUtils.FindProcessPath(trace.Lines);
+            string processPath = trace.FindProcessPath();
             if (processPath == null)
             {
                 logger.Info("Archiving {trace} because it does not contain a Process= line", trace.FilePath);
@@ -89,7 +89,7 @@ namespace UploadDaemon
             }
 
             Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath);
-            string version = TraceFileUtils.FindVersion(trace.Lines, processConfig.VersionAssembly);
+            string version = trace.FindVersion(processConfig.VersionAssembly);
             if (version == null)
             {
                 logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}", trace.FilePath, processConfig.VersionAssembly);
