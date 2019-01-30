@@ -1,7 +1,11 @@
 ﻿using Common;
 using NLog;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Timers;
 using UploadDaemon.Upload;
 
@@ -14,15 +18,15 @@ namespace UploadDaemon
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly TraceFileScanner scanner;
-        private readonly IUpload upload;
-        private readonly Archiver archiver;
+        private readonly Config config;
+        private readonly IFileSystem fileSystem;
+        private readonly IUploadFactory uploadFactory;
 
-        public TimerAction(string traceDirectory, UploadConfig config, IUpload upload, IFileSystem fileSystem)
+        public TimerAction(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
         {
-            this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
-            this.upload = upload;
-            this.archiver = new Archiver(traceDirectory, fileSystem);
+            this.config = config;
+            this.fileSystem = fileSystem;
+            this.uploadFactory = uploadFactory;
         }
 
         /// <summary>
@@ -34,40 +38,77 @@ namespace UploadDaemon
         }
 
         /// <summary>
-        /// Scans the trace directory for traces to process and either tries to upload or archive them.
+        /// Scans the trace directories for traces to process and either tries to upload or archive them.
         /// </summary>
         public async void Run()
         {
-            logger.Info("Scanning for coverage files");
-
-            foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
+            foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
-                if (file.Version == null)
+                await ScanDirectory(traceDirectory);
+            }
+        }
+
+        private async Task ScanDirectory(string traceDirectory)
+        {
+            logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
+
+            TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
+            Archiver archiver = new Archiver(traceDirectory, fileSystem);
+
+            IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
+            foreach (TraceFile trace in traces)
+            {
+                try
                 {
-                    logger.Info("Archiving {trace} because it does not contain the version assembly", file.FilePath);
-                    archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
+                    await ProcessTraceFile(trace, archiver);
                 }
-                else if (file.IsEmpty)
+                catch (Exception e)
                 {
-                    logger.Info("Archiving {trace} because it does not contain any coverage", file.FilePath);
-                    archiver.ArchiveEmptyFile(file.FilePath);
-                }
-                else
-                {
-                    logger.Info("Uploading {trace}", file.FilePath);
-                    bool success = await upload.UploadAsync(file.FilePath, file.Version);
-                    if (success)
-                    {
-                        archiver.ArchiveUploadedFile(file.FilePath);
-                    }
-                    else
-                    {
-                        logger.Error("Upload of {trace} failed. Will retry later", file.FilePath);
-                    }
+                    logger.Error(e, "Failed to process trace file {trace}. Will retry later", trace.FilePath);
                 }
             }
 
-            logger.Info("Finished scan");
+            logger.Debug("Finished scan");
+        }
+
+        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver)
+        {
+            if (trace.IsEmpty())
+            {
+                logger.Info("Archiving {trace} because it does not contain any coverage", trace.FilePath);
+                archiver.ArchiveEmptyFile(trace.FilePath);
+                return;
+            }
+
+            string processPath = trace.FindProcessPath();
+            if (processPath == null)
+            {
+                logger.Info("Archiving {trace} because it does not contain a Process= line", trace.FilePath);
+                archiver.ArchiveFileWithoutProcess(trace.FilePath);
+                return;
+            }
+
+            Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath);
+            string version = trace.FindVersion(processConfig.VersionAssembly);
+            if (version == null)
+            {
+                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}", trace.FilePath, processConfig.VersionAssembly);
+                archiver.ArchiveFileWithoutVersionAssembly(trace.FilePath);
+                return;
+            }
+
+            IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
+            logger.Info("Uploading {trace} to {upload}", trace.FilePath, upload.Describe());
+
+            bool success = await upload.UploadAsync(trace.FilePath, version);
+            if (success)
+            {
+                archiver.ArchiveUploadedFile(trace.FilePath);
+            }
+            else
+            {
+                logger.Error("Upload of {trace} to {upload} failed. Will retry later", trace.FilePath, upload.Describe());
+            }
         }
     }
 }

@@ -19,5 +19,11 @@ namespace UploadDaemon.Upload
         /// <param name="version">The parsed version number.</param>
         /// <returns>Whether the upload succeeded</returns>
         Task<bool> UploadAsync(string filePath, string version);
+
+        /// <summary>
+        /// Returns a human-readable description of the upload that can be incorporated in log messages.
+        /// Must not contain passwords/access keys/...
+        /// </summary>
+        string Describe();
     }
 }

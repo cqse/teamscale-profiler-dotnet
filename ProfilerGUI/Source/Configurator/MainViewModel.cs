@@ -20,8 +20,6 @@ namespace ProfilerGUI.Source.Configurator
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly string UploadConfigFilePath = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName, "UploadDaemon", UploadConfig.ConfigFileName);
-
         /// <summary> <inheritDoc /> </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -43,27 +41,6 @@ namespace ProfilerGUI.Source.Configurator
             {
                 TargetApp.ApplicationType = (EApplicationType)value;
                 UiUtils.Raise(PropertyChanged, this);
-            }
-        }
-
-        private UploadConfig uploadConfig = null;
-
-        /// <summary>
-        /// Summary of the configured upload.
-        /// </summary>
-        public string UploadSummary
-        {
-            get
-            {
-                if (uploadConfig == null)
-                {
-                    return "No upload";
-                }
-                if (uploadConfig.Teamscale != null)
-                {
-                    return $"Upload to {uploadConfig.Teamscale}";
-                }
-                return $"Upload to directory {uploadConfig.Directory}";
             }
         }
 
@@ -96,22 +73,6 @@ namespace ProfilerGUI.Source.Configurator
                     UiUtils.Raise(PropertyChanged, this, nameof(SelectedBitnessIndex));
                 }
             };
-
-            uploadConfig = ReadUploadConfigFromDisk();
-        }
-
-        /// <summary>
-        /// Shows the dialog to configure the trace upload.
-        /// </summary>
-        internal void OpenUploadConfigDialog()
-        {
-            UploadConfigWindow dialog = new UploadConfigWindow(uploadConfig);
-            bool? result = dialog.ShowDialog();
-            if (result == true)
-            {
-                uploadConfig = dialog.Config;
-            }
-            UiUtils.Raise(PropertyChanged, this, nameof(UploadSummary));
         }
 
         /// <summary>
@@ -136,42 +97,6 @@ namespace ProfilerGUI.Source.Configurator
             {
                 logger.Error(e, "Could not save configuration to {configPath}", ProfilerConfiguration.ConfigFilePath);
                 return;
-            }
-
-            SaveUploadConfiguration();
-        }
-
-        private UploadConfig ReadUploadConfigFromDisk()
-        {
-            if (!File.Exists(UploadConfigFilePath))
-            {
-                return null;
-            }
-
-            try
-            {
-                return UploadConfig.ReadConfig(new FileSystem(), UploadConfigFilePath);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to load upload deamon configuration from {uploadConfigPath}", UploadConfigFilePath);
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Saves the config for the upload daemon.
-        /// </summary>
-        private void SaveUploadConfiguration()
-        {
-            try
-            {
-                File.WriteAllText(UploadConfigFilePath, JsonConvert.SerializeObject(uploadConfig));
-                logger.Info("Wrote upload deamon config to {configPath}", UploadConfigFilePath);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to save upload deamon configuration to {uploadConfigPath}", UploadConfigFilePath);
             }
         }
 

@@ -73,5 +73,10 @@ namespace UploadDaemon.Upload
                 return false;
             }
         }
+
+        public string Describe()
+        {
+            return server.ToString();
+        }
     }
 }

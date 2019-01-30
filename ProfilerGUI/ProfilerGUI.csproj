@@ -72,6 +72,9 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="YamlDotNet, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\YamlDotNet.5.3.0\lib\net45\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -82,12 +85,8 @@
     <Compile Include="Source\Configurator\WpfRichTextLoggingRule.cs" />
     <Compile Include="Source\Configurator\UiUtils.cs" />
     <Compile Include="Source\Shared\SystemUtils.cs" />
-    <Compile Include="UploadConfigWindow.xaml.cs">
-      <DependentUpon>UploadConfigWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Source\Configurator\EApplicationType.cs" />
     <Compile Include="Source\Configurator\TargetAppModel.cs" />
-    <Compile Include="Source\Configurator\UploadViewModel.cs" />
     <Compile Include="Source\Runner\ProfilerRunner.cs" />
     <Compile Include="Source\Configurator\BitnessUtils.cs" />
     <Compile Include="Source\Configurator\MainViewModel.cs" />
@@ -95,10 +94,6 @@
     <Compile Include="Source\Shared\ProcessOutput.cs" />
     <Compile Include="Source\Shared\ProfilerConfiguration.cs" />
     <Compile Include="Source\Shared\ProfilerConstants.cs" />
-    <Page Include="UploadConfigWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
