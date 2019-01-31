@@ -309,19 +309,21 @@ match:
 
 ## Example: Azure File Storage
 
-**UploadDaemon.json:**
+**UploadDaemon.yaml:**
 
   To upload traces to an Azure File Storage first obtain the [connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) for your storage account.
 
-```json
-{
-    "versionAssembly": "YourAssembly",
-    "azureFileStorage": {
-        "connectionString": "DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;",
-        "shareName": "my-share",
-        "directory": "log/file/path"
-    }
-}
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      azureFileStorage:
+        connectionString: DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;
+        shareName: my-share
+        directory: log/file/path
 ```
 
 ## Proxy
