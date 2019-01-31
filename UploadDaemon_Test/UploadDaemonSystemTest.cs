@@ -7,19 +7,13 @@ using System.Linq;
 [TestFixture]
 public class UploadDaemonSystemTest
 {
-    private static DirectoryInfo SolutionRoot =>
-        new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
-
-    private static string TestTempDirectory =>
-        Path.Combine(SolutionRoot.FullName, "test-tmp", GetSanitizedTestName());
-
-    private static string TargetDir => Path.Combine(TestTempDirectory, "targetdir");
-    private static string UploadDir => Path.Combine(TestTempDirectory, "upload");
+    private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
+    private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");
 
     [SetUp]
     public void CreateTemporaryTestDir()
     {
-        var testDir = new DirectoryInfo(TestTempDirectory);
+        var testDir = new DirectoryInfo(TestUtils.TestTempDirectory);
         if (testDir.Exists)
         {
             testDir.Delete(true);
@@ -53,12 +47,5 @@ Inlined=1:33555646:100678050");
             Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
             Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.False, "file was archived");
         });
-    }
-
-    private static string GetSanitizedTestName()
-    {
-        var testDirName = TestContext.CurrentContext.Test.FullName;
-        char[] invalidChars = Path.GetInvalidFileNameChars().Union(Path.GetInvalidPathChars()).Distinct().ToArray();
-        return string.Join("", testDirName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
     }
 }
