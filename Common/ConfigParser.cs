@@ -89,6 +89,11 @@ namespace Common
             /// Whether the profiler should be enabled.
             /// </summary>
             public bool? Enabled { get; set; }
+
+            /// <summary>
+            /// An optional prefix to prepend to the version before the upload.
+            /// </summary>
+            public string VersionPrefix { get; set; }
         }
 
         /// <summary>

@@ -34,6 +34,7 @@ namespace Common
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.FileUpload, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
+                Assert.That(fooConfig.VersionPrefix, Is.Empty);
                 Assert.That(barConfig.Directory, Is.Null);
             });
         }

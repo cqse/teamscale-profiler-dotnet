@@ -254,6 +254,10 @@ profiler is launched for the first time. It writes a log file (`UploadDaemon.log
 directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
 `nlog.config` file in the same directory.
 
+Futher config options for the uploader:
+
+- `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
+
 The following sections list several example config files.
 
 ## Example: Teamscale upload

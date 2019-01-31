@@ -97,10 +97,11 @@ namespace UploadDaemon
                 return;
             }
 
+            string prefixedVersion = processConfig.VersionPrefix + version;
             IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
-            logger.Info("Uploading {trace} to {upload}", trace.FilePath, upload.Describe());
+            logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
 
-            bool success = await upload.UploadAsync(trace.FilePath, version);
+            bool success = await upload.UploadAsync(trace.FilePath, prefixedVersion);
             if (success)
             {
                 archiver.ArchiveUploadedFile(trace.FilePath);
