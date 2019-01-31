@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "config/Config.h"
 
 /**
  * Manages a log file on the file system to which both diagnostic messages and trace information is written.
@@ -20,7 +21,7 @@ public:
 	 * Create the log file and add general information. Must be the first method called on this object.
 	 * This method is not thread-safe or reentrant.
 	 */
-	void createLogFile();
+	void createLogFile(Config& config);
 
 	/** Closes the log. Further calls to logging methods will be ignored. */
 	void shutdown();

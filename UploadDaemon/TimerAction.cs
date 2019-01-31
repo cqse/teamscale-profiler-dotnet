@@ -1,70 +1,115 @@
-﻿using NLog;
+﻿using Common;
+using NLog;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Timers;
+using UploadDaemon.Upload;
 
-/// <summary>
-/// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
-/// </summary>
-public class TimerAction
+namespace UploadDaemon
 {
-    private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-    private readonly Config config;
-    private readonly TraceFileScanner scanner;
-    private readonly IUpload upload;
-    private readonly Archiver archiver;
-
-    public TimerAction(string traceDirectory, Config config, IUpload upload, IFileSystem fileSystem)
-    {
-        this.config = config;
-        this.scanner = new TraceFileScanner(traceDirectory, config.VersionAssembly, fileSystem);
-        this.upload = upload;
-        this.archiver = new Archiver(traceDirectory, fileSystem);
-    }
-
     /// <summary>
-    /// Event handler for the timer event. Runs the action.
+    /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
     /// </summary>
-    public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
+    public class TimerAction
     {
-        Run();
-    }
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    /// <summary>
-    /// Scans the trace directory for traces to process and either tries to upload or archive them.
-    /// </summary>
-    public async void Run()
-    {
-        logger.Info("Scanning for coverage files");
+        private readonly Config config;
+        private readonly IFileSystem fileSystem;
+        private readonly IUploadFactory uploadFactory;
 
-        foreach (TraceFileScanner.ScannedFile file in scanner.ListTraceFilesReadyForUpload())
+        public TimerAction(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
         {
-            if (file.Version == null)
+            this.config = config;
+            this.fileSystem = fileSystem;
+            this.uploadFactory = uploadFactory;
+        }
+
+        /// <summary>
+        /// Event handler for the timer event. Runs the action.
+        /// </summary>
+        public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
+        {
+            Run();
+        }
+
+        /// <summary>
+        /// Scans the trace directories for traces to process and either tries to upload or archive them.
+        /// </summary>
+        public async void Run()
+        {
+            foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
-                logger.Info("Archiving {trace} because it does not contain the version assembly", file.FilePath);
-                archiver.ArchiveFileWithoutVersionAssembly(file.FilePath);
-            }
-            else if (file.IsEmpty)
-            {
-                logger.Info("Archiving {trace} because it does not contain any coverage", file.FilePath);
-                archiver.ArchiveEmptyFile(file.FilePath);
-            }
-            else
-            {
-                logger.Info("Uploading {trace}", file.FilePath);
-                bool success = await upload.UploadAsync(file.FilePath, file.Version);
-                if (success)
-                {
-                    archiver.ArchiveUploadedFile(file.FilePath);
-                }
-                else
-                {
-                    logger.Error("Upload of {trace} failed. Will retry later", file.FilePath);
-                }
+                await ScanDirectory(traceDirectory);
             }
         }
 
-        logger.Info("Finished scan");
+        private async Task ScanDirectory(string traceDirectory)
+        {
+            logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
+
+            TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
+            Archiver archiver = new Archiver(traceDirectory, fileSystem);
+
+            IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
+            foreach (TraceFile trace in traces)
+            {
+                try
+                {
+                    await ProcessTraceFile(trace, archiver);
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, "Failed to process trace file {trace}. Will retry later", trace.FilePath);
+                }
+            }
+
+            logger.Debug("Finished scan");
+        }
+
+        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver)
+        {
+            if (trace.IsEmpty())
+            {
+                logger.Info("Archiving {trace} because it does not contain any coverage", trace.FilePath);
+                archiver.ArchiveEmptyFile(trace.FilePath);
+                return;
+            }
+
+            string processPath = trace.FindProcessPath();
+            if (processPath == null)
+            {
+                logger.Info("Archiving {trace} because it does not contain a Process= line", trace.FilePath);
+                archiver.ArchiveFileWithoutProcess(trace.FilePath);
+                return;
+            }
+
+            Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath);
+            string version = trace.FindVersion(processConfig.VersionAssembly);
+            if (version == null)
+            {
+                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}", trace.FilePath, processConfig.VersionAssembly);
+                archiver.ArchiveFileWithoutVersionAssembly(trace.FilePath);
+                return;
+            }
+
+            string prefixedVersion = processConfig.VersionPrefix + version;
+            IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
+            logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
+
+            bool success = await upload.UploadAsync(trace.FilePath, prefixedVersion);
+            if (success)
+            {
+                archiver.ArchiveUploadedFile(trace.FilePath);
+            }
+            else
+            {
+                logger.Error("Upload of {trace} to {upload} failed. Will retry later", trace.FilePath, upload.Describe());
+            }
+        }
     }
 }

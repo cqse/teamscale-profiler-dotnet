@@ -1,11 +1,14 @@
-﻿using System;
+﻿using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Threading.Tasks;
+using Common;
 using Moq;
 using NUnit.Framework;
+using UploadDaemon;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class TimerActionTest
@@ -14,49 +17,44 @@ public class TimerActionTest
     private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
     private const string VersionAssembly = "VersionAssembly";
 
-    private static readonly Config config = new Config()
-    {
-        VersionAssembly = VersionAssembly
-    };
+    private static readonly Config config = Config.Read($@"
+        match:
+          - uploader:
+              versionAssembly: {VersionAssembly}
+              directory: C:\store
+            profiler:
+              targetdir: {TraceDirectory}
+    ");
 
     [Test]
-    public void TestSuccessfulUpload()
+    public void TracesShouldBeArchivedAfterASuccessfulUpload()
+
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        new TimerAction(config, fileSystem, new MockUploadFactory(true)).Run();
 
-        new TimerAction(TraceDirectory, config, new MockUpload(true), fileSystem).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
     }
 
     [Test]
-    public void TestFailedUpload()
+    public void TracesShouldNotBeArchivedAfterAFailedUpload()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
     }
 
     [Test]
@@ -65,77 +63,41 @@ Inlined=1:33555646:100678050" },
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
+Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"missing-version\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-version\coverage_1_1.txt");
     }
 
     [Test]
-    public void TestEmptyTrace()
+    public void TestArchivingTraceWithMissingProcess()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0" },
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
+Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        new TimerAction(config, fileSystem, new MockUploadFactory(false)).Run();
 
-        new TimerAction(TraceDirectory, config, new MockUpload(true), fileSystem).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"empty-traces\coverage_1_1.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
     }
 
     [Test]
-    public void TestUnfinishedTrace()
-    {
-        FileSystemMockingUtils.FileSystemMock fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
-        {
-            fileMock.Setup(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>())).Throws<IOException>();
-        }, directoryMock =>
-        {
-            directoryMock.Setup(directory => directory.EnumerateFiles(It.IsAny<string>()))
-                .Returns(new string[] { "coverage_1_1.txt" });
-        });
-        IFileSystem fileSystem = fileSystemMock.Object;
-
-        config.VersionAssembly = VersionAssembly;
-
-        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
-
-        fileSystemMock.FileMock.Verify(file => file.Open("coverage_1_1.txt", It.IsAny<FileMode>()));
-        fileSystemMock.FileMock.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public void TestUnrelatedFile()
+    public void TestArchivingEmptyTrace()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
-            { FileInTraceDirectory("unrelated.txt"), @"foobar" },
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        new TimerAction(config, fileSystem, new MockUploadFactory(true)).Run();
 
-        new TimerAction(TraceDirectory, config, new MockUpload(false), fileSystem).Run();
-
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
-
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"unrelated.txt"),
-        }));
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
     }
 
     [Test]
@@ -144,24 +106,73 @@ Inlined=1:33555646:100678050" },
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050
-Stopped=1234556" },
+Process=foo.exe
+Inlined=1:33555646:100678050" },
         });
 
-        config.VersionAssembly = VersionAssembly;
+        Config configWithSpaceInTraceDirectory = Config.Read($@"
+            match:
+              - uploader:
+                  versionAssembly: {VersionAssembly}
+                  directory: C:\store
+                profiler:
+                  targetdir: {TraceDirectoryWithSpace}
+        ");
 
-        new TimerAction(TraceDirectoryWithSpace, config, new MockUpload(true), fileSystem).Run();
+        new TimerAction(configWithSpaceInTraceDirectory, fileSystem, new MockUploadFactory(true)).Run();
 
-        string[] files = fileSystem.Directory.GetFiles(TraceDirectoryWithSpace, "*.txt", SearchOption.AllDirectories);
+        AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt");
+    }
 
-        Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectoryWithSpace(@"uploaded\coverage_1_1.txt"),
-        }));
+    [Test]
+    public void TestVersionPrefix()
+    {
+        Config config = Config.Read($@"
+            match:
+              - uploader:
+                  versionAssembly: {VersionAssembly}
+                  versionPrefix: prefix_
+                  directory: C:\store
+                profiler:
+                  targetdir: {TraceDirectoryWithSpace}
+        ");
+
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+        });
+
+        MockUploadFactory uploadFactory = new MockUploadFactory(true);
+        new TimerAction(config, fileSystem, uploadFactory).Run();
+
+        Assert.That(uploadFactory.mockUpload.LastUsedVersion, Is.EqualTo("prefix_4.0.0.0"));
+    }
+
+    private class MockUploadFactory : IUploadFactory
+    {
+        public readonly MockUpload mockUpload;
+
+        public MockUploadFactory(bool returnValue)
+        {
+            this.mockUpload = new MockUpload(returnValue);
+        }
+
+        public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
+        {
+            return mockUpload;
+        }
     }
 
     private class MockUpload : IUpload
     {
         private readonly bool returnValue;
+
+        /// <summary>
+        /// The last version that was passed to the UploadAsnyc method or null if that method was never called.
+        /// </summary>
+        public string LastUsedVersion { get; private set; } = null;
 
         public MockUpload(bool returnValue)
         {
@@ -173,7 +184,13 @@ Stopped=1234556" },
         /// </summary>
         public Task<bool> UploadAsync(string filePath, string version)
         {
+            LastUsedVersion = version;
             return Task.FromResult(returnValue);
+        }
+
+        public string Describe()
+        {
+            return "MockUpload";
         }
     }
 
@@ -191,5 +208,12 @@ Stopped=1234556" },
     private string FileInTraceDirectoryWithSpace(string fileName)
     {
         return Path.Combine(TraceDirectoryWithSpace, fileName);
+    }
+
+    private void AssertFilesInDirectory(IFileSystem fileSystem, string directory, params string[] expectedFileNames)
+    {
+        string[] files = fileSystem.Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
+        IEnumerable<string> relativePaths = files.Select(path => path.Substring(directory.Length + 1));
+        Assert.That(relativePaths, Is.EquivalentTo(expectedFileNames));
     }
 }

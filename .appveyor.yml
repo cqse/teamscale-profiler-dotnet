@@ -1,6 +1,6 @@
 image: Visual Studio 2017
 
-version: 18.9.1.{build}
+version: 18.11.1.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -28,12 +28,12 @@ build_script:
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
-  - ps: $results = (Resolve-Path . ).Path + "test_results.xml"
-  - ps: dotnet test Profiler_Test/Profiler_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
-  - ps: $wc = New-Object System.Net.WebClient
-  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
-  - ps: dotnet test UploadDaemon_Test/UploadDaemon_Test.csproj -c $env:Configuration --no-build --no-restore --logger="trx;LogFileName=$results"
-  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$($env:APPVEYOR_JOB_ID)", $results)
+  - ps: >
+      vstest.console /parallel /logger:Appveyor
+      Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
+      Profiler_Test/bin/Release/Profiler_Test.dll
+      ProfilerGUI_Test/bin/Release/ProfilerGUI_Test.dll
+      UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
 
 after_test:
   # Convert documentation
@@ -41,12 +41,17 @@ after_test:
   - cmd: node_modules\.bin\markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
   # Create release zip with profiler & documentation
   - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon
+  - cmd: mkdir teamscale_dotnet_profiler\GUI
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
+  - cmd: mkdir teamscale_dotnet_profiler\Licenses
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
-  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll & exit 0
+  - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
+  - cmd: robocopy . teamscale_dotnet_profiler LICENSE & exit 0
+  - cmd: robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
   - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
   - cmd: robocopy .\documentation teamscale_dotnet_profiler/Documentation userguide.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 

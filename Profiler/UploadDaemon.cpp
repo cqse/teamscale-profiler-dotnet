@@ -1,12 +1,11 @@
 #include "UploadDaemon.h"
 #include <windows.h>
 #include <shellapi.h>
-#include "WindowsUtils.h"
+#include "utils/WindowsUtils.h"
 
-UploadDaemon::UploadDaemon(std::string profilerPath, std::string traceDirectory, Log* log)
+UploadDaemon::UploadDaemon(std::string profilerPath, Log* log)
 {
 	this->pathToExe = profilerPath + "\\UploadDaemon\\UploadDaemon.exe";
-	this->traceDirectory = traceDirectory;
 	this->log = log;
 }
 
@@ -21,8 +20,6 @@ void UploadDaemon::launch()
 	// profiled as well. See https://docs.microsoft.com/en-us/windows/desktop/procthread/changing-environment-variables
 	SetEnvironmentVariable("COR_ENABLE_PROFILING", "0");
 
-	std::string arguments = "\"" + traceDirectory + "\"";
-
 	SHELLEXECUTEINFO shExecInfo;
 
 	shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -31,7 +28,7 @@ void UploadDaemon::launch()
 	shExecInfo.hwnd = NULL;
 	shExecInfo.lpVerb = NULL;
 	shExecInfo.lpFile = pathToExe.c_str();
-	shExecInfo.lpParameters = arguments.c_str();
+	shExecInfo.lpParameters = NULL;
 	shExecInfo.lpDirectory = NULL;
 	shExecInfo.nShow = SW_NORMAL;
 	shExecInfo.hInstApp = NULL;

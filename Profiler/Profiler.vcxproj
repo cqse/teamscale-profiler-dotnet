@@ -69,34 +69,44 @@
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
+    <IncludePath>$(ProjectDir);$(ProjectDir)\lib\yaml-cpp\include;$(ProjectDir)\lib\StackWalker;$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
+    <IncludePath>$(ProjectDir);$(ProjectDir)\lib\yaml-cpp\include;$(ProjectDir)\lib\StackWalker;$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
+    <IncludePath>$(ProjectDir);$(ProjectDir)\lib\yaml-cpp\include;$(ProjectDir)\lib\StackWalker;$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\$(PlatformShortName)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
+    <IncludePath>$(ProjectDir);$(ProjectDir)\lib\yaml-cpp\include;$(ProjectDir)\lib\StackWalker;$(VCInstallDir)UnitTest\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)UnitTest\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;Profiler_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -113,13 +123,15 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;Profiler_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -144,8 +156,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -176,6 +189,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -193,28 +209,84 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CClassFactory.cpp" />
+    <ClCompile Include="config\Config.cpp" />
+    <ClCompile Include="config\ConfigParser.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
-    <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="utils\Debug.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\binary.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\convert.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\directives.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emit.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitfromevents.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitter.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitterstate.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\emitterutils.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\exceptions.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\exp.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\memory.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\node.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\nodebuilder.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\nodeevents.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\node_data.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\null.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\ostream_wrapper.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\parse.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\parser.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\regex_yaml.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scanner.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scanscalar.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scantag.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\scantoken.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\simplekey.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\singledocparser.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\stream.cpp" />
+    <ClCompile Include="lib\yaml-cpp\src\tag.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="lib\StackWalker\StackWalker.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CClassFactory.h" />
+    <ClInclude Include="config\Config.h" />
+    <ClInclude Include="config\ConfigParser.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
-    <ClCompile Include="StringUtils.cpp" />
-    <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="Debug.h" />
+    <ClCompile Include="utils\StringUtils.cpp" />
+    <ClInclude Include="lib\yaml-cpp\src\collectionstack.h" />
+    <ClInclude Include="lib\yaml-cpp\src\directives.h" />
+    <ClInclude Include="lib\yaml-cpp\src\emitterstate.h" />
+    <ClInclude Include="lib\yaml-cpp\src\emitterutils.h" />
+    <ClInclude Include="lib\yaml-cpp\src\exp.h" />
+    <ClInclude Include="lib\yaml-cpp\src\indentation.h" />
+    <ClInclude Include="lib\yaml-cpp\src\nodebuilder.h" />
+    <ClInclude Include="lib\yaml-cpp\src\nodeevents.h" />
+    <ClInclude Include="lib\yaml-cpp\src\ptr_vector.h" />
+    <ClInclude Include="lib\yaml-cpp\src\regeximpl.h" />
+    <ClInclude Include="lib\yaml-cpp\src\regex_yaml.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scanner.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scanscalar.h" />
+    <ClInclude Include="lib\yaml-cpp\src\scantag.h" />
+    <ClInclude Include="lib\yaml-cpp\src\setting.h" />
+    <ClInclude Include="lib\yaml-cpp\src\singledocparser.h" />
+    <ClInclude Include="lib\yaml-cpp\src\stream.h" />
+    <ClInclude Include="lib\yaml-cpp\src\streamcharsource.h" />
+    <ClInclude Include="lib\yaml-cpp\src\stringsource.h" />
+    <ClInclude Include="lib\yaml-cpp\src\tag.h" />
+    <ClInclude Include="lib\yaml-cpp\src\token.h" />
+    <ClInclude Include="lib\StackWalker\StackWalker.h" />
+    <ClInclude Include="utils\Testing.h" />
+    <ClInclude Include="utils\StringUtils.h" />
+    <ClInclude Include="utils\Debug.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="CProfilerCallback.h" />
-    <ClCompile Include="WindowsUtils.cpp">
+    <ClCompile Include="utils\WindowsUtils.cpp">
       <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="UploadDaemon.h" />
     <ClInclude Include="version.h" />
-    <ClInclude Include="WindowsUtils.h" />
+    <ClInclude Include="utils\WindowsUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def" />

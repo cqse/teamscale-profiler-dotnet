@@ -2,6 +2,8 @@
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
 #include "Log.h"
+#include "config/Config.h"
+#include "utils/WindowsUtils.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -24,18 +26,6 @@ public:
 	/** Initializer. Called at profiler startup. */
 	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
 
-	/** Dumps all environment variables to the log file. */
-	void dumpEnvironment();
-
-	/** Reads all options from the config file into memory. */
-	void readConfig();
-
-	/**
-	* Reads all the config option from 1) the environment variable COR_PROFILER_<optionName> and then 2) the config file if the corresponding environment variable is not set.
-	* If the option is declared in neither location, returns the empty string.
-	*/
-	std::string getOption(std::string optionName);
-
 	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
 
@@ -48,24 +38,6 @@ public:
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
-	/**
-	 * Defines whether the given function should trigger a callback everytime it is executed.
-	 *
-	 * We do not register a single function callback in order to not affect
-	 * performance. In effect, we disable this feature here. It has been tested via
-	 * a performance benchmark, that this implementation does not impact call
-	 * performance.
-	 *
-	 * For coverage profiling, we do not need this callback. However, the event is
-	 * enabled in the event mask in order to force JIT-events for each first call to
-	 * a function, independent of whether a pre-jitted version exists.)
-	 */
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId,
-		BOOL *pbHookFunction);
-
-	/** Create method info object for a function id. */
-	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
-
 private:
 	/** Synchronizes profiling callbacks. */
 	CRITICAL_SECTION callbackSynchronization;
@@ -76,18 +48,7 @@ private:
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
-	/** Whether to run in light mode or force re-jitting of pre-jitted methods. */
-	bool isLightMode = false;
-
-	/**
-	 * Whether to run in eager mode and write a batch of recorded invocations to the trace
-	 * file instead of waiting until shutdown. If 0, everything is written on shutdown,
-	 * otherwise the sepcified amount of method calls is recorded and written thereafter.
-	 */
-	size_t eagerness = 0;
-
-	/** Whether the current process should be profiled. */
-	bool isProfilingEnabled = false;
+	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
 	/**
 	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
@@ -107,24 +68,13 @@ private:
 	std::set<FunctionID> inlinedMethodIds;
 
 	/**
-	 * Collecions that keep track of inlined methods.
+	 * Keeps track of inlined methods.
 	 * We use the vector to uniquely store the information about inlined methods.
 	 */
 	std::vector<FunctionInfo> inlinedMethods;
 
-	/**
-	* Stores all declared options from the config file.
-	*/
-	std::map<std::string, std::string> configOptions;
-
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
-
-	/** Path of the process we are in. */
-	wchar_t appPath[_MAX_PATH];
-
-	/** Name of the profiled application. */
-	wchar_t appName[_MAX_FNAME];
 
 	/** The log to write all results and messages to. */
 	Log log;
@@ -137,8 +87,27 @@ private:
 	*/
 	DWORD getEventMask();
 
-	/** Returns information about the profiled process. */
-	std::string getProcessInfo();
+	/**
+	* Defines whether the given function should trigger a callback everytime it is executed.
+	*
+	* We do not register a single function callback in order to not affect
+	* performance. In effect, we disable this feature here. It has been tested via
+	* a performance benchmark, that this implementation does not impact call
+	* performance.
+	*
+	* For coverage profiling, we do not need this callback. However, the event is
+	* enabled in the event mask in order to force JIT-events for each first call to
+	* a function, independent of whether a pre-jitted version exists.)
+	*/
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL *pbHookFunction) throw(...);
+
+	/** Dumps all environment variables to the log file. */
+	void dumpEnvironment();
+
+	void initializeConfig();
+
+	/** Create method info object for a function id. */
+	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
 
 	/** Starts the upload daemon. */
 	void startUploadDeamon();
@@ -160,4 +129,13 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
+	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
+	HRESULT ShutdownImplementation();
+	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
+	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+	HRESULT InitializeImplementation(IUnknown *pICorProfilerInfoUnk);
+
+	/** Logs a stack trace. May rethrow the caught exception. */
+	void handleException(std::string context);
 };
