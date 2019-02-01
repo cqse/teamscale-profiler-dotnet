@@ -127,24 +127,12 @@ namespace UploadDaemon
                     pipeServerStream.WaitForConnection();
                     using (var streamReader = new StreamReader(pipeServerStream))
                     {
-                        var command = streamReader.ReadLine();
-                        ExecuteCommand(command);
+                        // There is currently only one command (DaemonControlCommandUpload), hence,
+                        // we immediately trigger an upload without checking what we received.
+                        streamReader.ReadLine();
+                        RunOnce();
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Executes a command forwarded to this UploadDaemon process.
-        /// </summary>
-        /// <param name="command"></param>
-        private void ExecuteCommand(string command)
-        {
-            switch (command)
-            {
-                case DaemonControlCommandUpload:
-                    RunOnce();
-                    break;
             }
         }
 
