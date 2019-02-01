@@ -1,6 +1,5 @@
 #include "CProfilerCallback.h"
 #include "version.h"
-#include "UploadDaemon.h"
 #include "utils/StringUtils.h"
 #include "utils/WindowsUtils.h"
 #include "utils/Debug.h"
