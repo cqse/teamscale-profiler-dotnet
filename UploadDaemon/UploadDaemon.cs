@@ -125,11 +125,11 @@ namespace UploadDaemon
                 using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
                     pipeServerStream.WaitForConnection();
-                    using (var streamReader = new StreamReader(pipeServerStream))
+                    using (var pipeStream = new StreamReader(pipeServerStream))
                     {
                         // There is currently only one command (DaemonControlCommandUpload), hence,
                         // we immediately trigger an upload without checking what we received.
-                        streamReader.ReadLine();
+                        pipeStream.ReadLine();
                         UploadOnce();
                     }
                 }
@@ -145,9 +145,9 @@ namespace UploadDaemon
             {
                 pipeClientStream.Connect();
 
-                using (var w = new StreamWriter(pipeClientStream))
+                using (var pipeStream = new StreamWriter(pipeClientStream))
                 {
-                    w.WriteLine(DaemonControlCommandUpload);
+                    pipeStream.WriteLine(DaemonControlCommandUpload);
                 }
             }
         }
