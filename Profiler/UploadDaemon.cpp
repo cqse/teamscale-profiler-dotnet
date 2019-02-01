@@ -24,11 +24,9 @@ void UploadDaemon::launch(Log &log)
 
 void UploadDaemon::notifyShutdown()
 {
-	bool successful = execute();
-	if (!successful)
-	{
-		// Cannot log unsuccessful shutdown, because log is already closed at this point.
-	}
+	// Cannot log unsuccessful execution, because log is already closed at this
+	// point (otherwise it could not be uploaded).
+	execute();
 }
 
 bool UploadDaemon::execute()
