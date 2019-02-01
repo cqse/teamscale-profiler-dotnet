@@ -311,7 +311,7 @@ match:
 
 **UploadDaemon.yaml:**
 
-  To upload traces to an Azure File Storage first obtain the [connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) for your storage account.
+  To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
 
 ```yaml
 match:
@@ -325,6 +325,8 @@ match:
         shareName: my-share
         directory: log/file/path
 ```
+
+  [azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
 
 ## Proxy
 
