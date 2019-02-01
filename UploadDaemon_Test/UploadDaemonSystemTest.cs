@@ -45,7 +45,7 @@ Inlined=1:33555646:100678050");
                 uploader:
                   versionAssembly: VersionAssembly
                   directory: {UploadDir}
-        ")).RunOnce();
+        ")).UploadOnce();
 
         Assert.Multiple(() =>
         {

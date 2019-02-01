@@ -62,7 +62,7 @@ namespace UploadDaemon
 
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             var uploader = new UploadDaemon(config);
-            uploader.RunOnce();
+            uploader.UploadOnce();
             uploader.ScheduleRegularUploads();
             uploader.WaitForNotifications();
         }
@@ -94,9 +94,9 @@ namespace UploadDaemon
         }
 
         /// <summary>
-        /// Runs the timer action once synchronously.
+        /// Uploads once, synchronously.
         /// </summary>
-        public void RunOnce()
+        public void UploadOnce()
         {
             lock(SequentialUploadsLock)
             {
@@ -110,7 +110,7 @@ namespace UploadDaemon
         private void ScheduleRegularUploads()
         {
             Timer timer = new Timer();
-            timer.Elapsed += (sender, args) => RunOnce();
+            timer.Elapsed += (sender, args) => UploadOnce();
             timer.Interval = TimerIntervalInMilliseconds;
             timer.Enabled = true;
         }
@@ -130,7 +130,7 @@ namespace UploadDaemon
                         // There is currently only one command (DaemonControlCommandUpload), hence,
                         // we immediately trigger an upload without checking what we received.
                         streamReader.ReadLine();
-                        RunOnce();
+                        UploadOnce();
                     }
                 }
             }
