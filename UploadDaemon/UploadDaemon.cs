@@ -116,8 +116,7 @@ namespace UploadDaemon
         }
 
         /// <summary>
-        /// Waits for notifications from subsequent executions of the Daemon. Terminates on
-        /// interrupt from the console's cancel key.
+        /// Waits for notifications from subsequent executions of the Daemon.
         /// </summary>
         private void WaitForNotifications()
         {
