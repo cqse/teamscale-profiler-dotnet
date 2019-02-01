@@ -62,7 +62,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	if (config.shouldStartUploadDaemon()) {
 		log.info("Starting upload deamon");
-		createDaemon().launch(&log);
+		createDaemon().launch(log);
 	}
 
 	char appPool[BUFFER_SIZE];

@@ -15,7 +15,7 @@ public:
 	virtual ~UploadDaemon() noexcept;
 
 	/** Starts the upload daemon in a new background process. */
-	void launch(Log* log);
+	void launch(Log &log);
 
 	/** Notifies the upload daemon that a profiler is shut down. */
 	void notifyShutdown();

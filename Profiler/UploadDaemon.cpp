@@ -13,12 +13,12 @@ UploadDaemon::~UploadDaemon()
 	// nothing to do
 }
 
-void UploadDaemon::launch(Log* log)
+void UploadDaemon::launch(Log &log)
 {
 	bool successful = execute();
 	if (!successful)
 	{
-		log->error("Failed to launch upload daemon " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
+		log.error("Failed to launch upload daemon " + pathToExe + ": " + WindowsUtils::getLastErrorAsString());
 	}
 }
 
