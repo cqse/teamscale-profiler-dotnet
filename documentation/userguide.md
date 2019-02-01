@@ -254,6 +254,10 @@ profiler is launched for the first time. It writes a log file (`UploadDaemon.log
 directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
 `nlog.config` file in the same directory.
 
+Futher config options for the uploader:
+
+- `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
+
 The following sections list several example config files.
 
 ## Example: Teamscale upload
@@ -302,6 +306,27 @@ match:
       versionAssembly: YourAssembly
       fileUpload: http://localserver.localdomain:8080
 ```
+
+## Example: Azure File Storage
+
+**UploadDaemon.yaml:**
+
+  To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      azureFileStorage:
+        connectionString: DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;
+        shareName: my-share
+        directory: log/file/path
+```
+
+  [azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
 
 ## Proxy
 
