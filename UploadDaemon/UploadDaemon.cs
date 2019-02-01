@@ -42,7 +42,7 @@ namespace UploadDaemon
         {
             if (IsAlreadyRunning())
             {
-                Console.WriteLine("Another instance is already running.");
+                logger.Debug("Another instance is already running. Sending notification to trigger upload.");
                 NotifyRunningDaemon();
                 return;
             }
