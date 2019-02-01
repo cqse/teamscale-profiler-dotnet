@@ -307,6 +307,27 @@ match:
       fileUpload: http://localserver.localdomain:8080
 ```
 
+## Example: Azure File Storage
+
+**UploadDaemon.yaml:**
+
+  To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      azureFileStorage:
+        connectionString: DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;
+        shareName: my-share
+        directory: log/file/path
+```
+
+  [azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
+
 ## Proxy
 
 By default, the upload daemon will use the system-wide proxy settings. However, you can override this
