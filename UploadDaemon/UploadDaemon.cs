@@ -41,7 +41,8 @@ namespace UploadDaemon
         {
             if (IsAlreadyRunning())
             {
-                logger.Debug("Another instance is already running. Sending notification to trigger upload.");
+                // Writing to console on purpose, to explain to users why the exe terminates immediately.
+                Console.WriteLine("Another instance is already running. Sending notification to trigger upload.");
                 NotifyRunningDaemon();
                 return;
             }
