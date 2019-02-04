@@ -2,11 +2,8 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.IO.Abstractions;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Timers;
 using UploadDaemon.Upload;
 
 namespace UploadDaemon
@@ -14,7 +11,7 @@ namespace UploadDaemon
     /// <summary>
     /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
     /// </summary>
-    public class TimerAction
+    public class UploadTask
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -22,19 +19,11 @@ namespace UploadDaemon
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
 
-        public TimerAction(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
+        public UploadTask(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
         {
             this.config = config;
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
-        }
-
-        /// <summary>
-        /// Event handler for the timer event. Runs the action.
-        /// </summary>
-        public void HandleTimerEvent(object sender, ElapsedEventArgs arguments)
-        {
-            Run();
         }
 
         /// <summary>

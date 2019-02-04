@@ -71,10 +71,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UploaderSystemTest.cs" />
+    <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Config\ConfigTest.cs" />
     <Compile Include="Config\ConfigParserTest.cs" />
-    <Compile Include="TimerActionTest.cs" />
+    <Compile Include="UploadTaskTest.cs" />
     <Compile Include="ArchiverTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />
     <Compile Include="TraceFileScannerTest.cs" />
