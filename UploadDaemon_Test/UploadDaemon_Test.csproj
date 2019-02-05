@@ -71,6 +71,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SymbolAnalysis\GlobPatternListTest.cs" />
+    <Compile Include="SymbolAnalysis\RevisionFileUtilsTest.cs" />
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Config\ConfigTest.cs" />
     <Compile Include="Config\ConfigParserTest.cs" />
