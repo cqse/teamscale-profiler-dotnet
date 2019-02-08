@@ -214,6 +214,10 @@ body a {
   text-decoration: none;
 }
 
+body a[href]:after {
+  content: "";
+}
+
 body a:hover {
   text-decoration: underline;
 }

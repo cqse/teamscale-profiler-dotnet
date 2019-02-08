@@ -14,6 +14,29 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
+        [OneTimeSetUp]
+        public static void SetUpFixture()
+        {
+            Assume.That(File.Exists(Profiler32Dll), "Could not find profiler 32bit DLL at " + Profiler32Dll);
+            Assume.That(File.Exists(Profiler64Dll), "Could not find profiler 64bit DLL at " + Profiler64Dll);
+        }
+
+        /// <summary>
+        /// Clears the profiler environment variables to guarantee a stable test even if
+        /// the developer has variables set on their development machine.
+        /// </summary>
+        [SetUp]
+        public void SetUp()
+        {
+            foreach (string variable in Environment.GetEnvironmentVariables().Keys)
+            {
+                if (variable.StartsWith("COR"))
+                {
+                    Environment.SetEnvironmentVariable(variable, null);
+                }
+            }
+        }
+
         /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
         /// </summary>
@@ -34,6 +57,27 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public int TestProcessSelection(string process)
         {
             var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
+            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+        }
+
+        /// <summary>
+        /// Makes sure that processes not matching the given process name are not profiled.
+        /// </summary>
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
+        public int TestConfigFile(string regex)
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: false
+  - executablePathRegex: {regex}
+    profiler:
+      enabled: true
+");
+
+            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
             return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
         }
 

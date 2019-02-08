@@ -5,8 +5,8 @@
 #define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
-	// Save off the instance handle for later use.
 	if (dwReason == DLL_PROCESS_ATTACH) {
+		// Save off the instance handle for later use.
 		DisableThreadLibraryCalls(hInstance);
 		profilerInstance = hInstance;
 	}
