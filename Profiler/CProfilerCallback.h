@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <mutex>
 #include "UploadDaemon.h"
 
 /**
@@ -17,6 +18,9 @@
  */
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
+
+	/** Returns the profiler, unless it was already destroyed or not yet constructed. */
+	static CProfilerCallback* getInstance();
 
 	/** Constructor. */
 	CProfilerCallback();
@@ -40,6 +44,10 @@ public:
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
 private:
+	static CProfilerCallback* instance;
+
+	std::once_flag shutdownCompletedFlag;
+
 	/** Synchronizes profiling callbacks. */
 	CRITICAL_SECTION callbackSynchronization;
 
@@ -131,8 +139,10 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
+	/** Implements the actual shutdown procedure. Must only be called once. */
+	void CProfilerCallback::ShutdownOnce();
+
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
-	HRESULT ShutdownImplementation();
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
 	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 	HRESULT InitializeImplementation(IUnknown *pICorProfilerInfoUnk);

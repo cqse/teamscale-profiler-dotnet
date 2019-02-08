@@ -1,5 +1,6 @@
 #include "CProfilerCallback.h"
 #include "version.h"
+#include "UploadDaemon.h"
 #include "utils/StringUtils.h"
 #include "utils/WindowsUtils.h"
 #include "utils/Debug.h"
@@ -10,9 +11,16 @@
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
+CProfilerCallback* CProfilerCallback::instance = NULL;
+
+CProfilerCallback* CProfilerCallback::getInstance() {
+	return instance;
+}
+
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
+		instance = this;
 	}
 	catch (...) {
 		handleException("Constructor");
@@ -21,6 +29,7 @@ CProfilerCallback::CProfilerCallback() {
 
 CProfilerCallback::~CProfilerCallback() {
 	try {
+		instance = NULL;
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
@@ -124,9 +133,9 @@ UploadDaemon CProfilerCallback::createDaemon() {
 	return UploadDaemon(profilerPath);
 }
 
-HRESULT CProfilerCallback::ShutdownImplementation() {
+void CProfilerCallback::ShutdownOnce() {
 	if (!config.isProfilingEnabled()) {
-		return S_OK;
+		return;
 	}
 
 	EnterCriticalSection(&callbackSynchronization);
@@ -138,18 +147,16 @@ HRESULT CProfilerCallback::ShutdownImplementation() {
 	}
 	profilerInfo->ForceGC();
 	LeaveCriticalSection(&callbackSynchronization);
-
-	return S_OK;
 }
 
 HRESULT CProfilerCallback::Shutdown() {
 	try {
-		return ShutdownImplementation();
+		std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
 	}
 	catch (...) {
 		handleException("Shutdown");
-		return S_OK;
 	}
+	return S_OK;
 }
 
 DWORD CProfilerCallback::getEventMask() {
