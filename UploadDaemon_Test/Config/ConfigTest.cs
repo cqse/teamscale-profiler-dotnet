@@ -35,7 +35,17 @@ namespace Common
                 Assert.That(fooConfig.FileUpload, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
                 Assert.That(fooConfig.VersionPrefix, Is.Empty);
+                Assert.That(fooConfig.PdbDirectory, Is.Null);
+                Assert.That(fooConfig.AssemblyPatterns, Is.Not.Null);
+                Assert.That(fooConfig.RevisionFile, Is.Null);
                 Assert.That(barConfig.Directory, Is.Null);
+            });
+            Assert.Multiple(() =>
+            {
+                Assert.That(fooConfig.AssemblyPatterns.Matches("ProfilerGUI"), Is.True);
+                Assert.That(fooConfig.AssemblyPatterns.Matches("System"), Is.False);
+                Assert.That(fooConfig.AssemblyPatterns.Matches("Microsoft.Something"), Is.False);
+                Assert.That(fooConfig.AssemblyPatterns.Matches("mscorlib"), Is.False);
             });
         }
 
@@ -170,7 +180,7 @@ namespace Common
         }
 
         [Test]
-        public void TraceDirectoryOptionIsCaseInsensitive()
+        public void TargetDirOptionIsCaseInsensitive()
         {
             Config config = Config.Read(@"
                 match:
@@ -184,7 +194,7 @@ namespace Common
         }
 
         [Test]
-        public void MustSpecifyAtLeastOneTraceDirectory()
+        public void MustSpecifyAtLeastOneTargetDir()
         {
             Assert.Throws<Config.InvalidConfigException>(() =>
             {
@@ -253,27 +263,125 @@ namespace Common
         [Test]
         public void MissingUploadMethod()
         {
-            Assert.Throws<Config.InvalidConfigException>(() =>
+            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
             {
                 Config.Read(@"
                     match:
+                      - profiler:
+                          targetdir: C:\test1
                       - uploader:
                           versionAssembly: Assembly
                 ").CreateConfigForProcess("foo.exe");
             });
+
+            Assert.That(exception.Message, Contains.Substring("teamscale"));
         }
 
         [Test]
         public void MissingVersionAssembly()
         {
-            Assert.Throws<Config.InvalidConfigException>(() =>
+            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
             {
                 Config.Read(@"
                     match:
+                      - profiler:
+                          targetdir: C:\test1
                       - uploader:
                           directory: .
                 ").CreateConfigForProcess("foo.exe");
             });
+
+            Assert.That(exception.Message, Contains.Substring("versionAssembly"));
+        }
+
+        [Test]
+        public void ValidLineCoverageUpload()
+        {
+            IEnumerable<string> errors = Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        directory: C:\target
+                        pdbDirectory: C:\pdbs
+                        revisionFile: C:\revision
+            ").CreateConfigForProcess("foo.exe").Validate();
+
+            Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
+        }
+
+        [Test]
+        public void MissingRevisionFile()
+        {
+            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
+            {
+                Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        directory: C:\target
+                        pdbDirectory: C:\pdbs
+                ").CreateConfigForProcess("foo.exe");
+            });
+
+            Assert.That(exception.Message, Contains.Substring("revisionFile"));
+        }
+
+        [Test]
+        public void BothVersionAssemblyAndPdbDirectoryConfigured()
+        {
+            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
+            {
+                Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        directory: C:\target
+                        pdbDirectory: C:\pdbs
+                        versionAssembly: Assembly
+                        revisionFile: C:\revision.txt
+                ").CreateConfigForProcess("foo.exe");
+            });
+
+            Assert.That(exception.Message, Contains.Substring("pdbDirectory").And.Contains("versionAssembly"));
+        }
+
+        [Test]
+        public void NotSpecifyingIncludePatternMeansEverythingIsIncluded()
+        {
+            Config.ConfigForProcess config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - uploader:
+                      directory: C:\dir
+                      revisionFile: C:\rev.txt
+                      pdbDirectory: C:\pdbs
+                      assemblyPatterns:
+                        exclude: [ 'Bar' ]
+            ").CreateConfigForProcess("foo.exe");
+
+            Assert.That(config.AssemblyPatterns.Describe(), Is.EqualTo("include=* exclude=Bar"));
+        }
+
+        [Test]
+        public void NotSpecifyingExcludePatternMeansDefaultExcludesAreUsed()
+        {
+            Config.ConfigForProcess config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - uploader:
+                      directory: C:\dir
+                      revisionFile: C:\rev.txt
+                      pdbDirectory: C:\pdbs
+                      assemblyPatterns:
+                        include: [ 'Bar' ]
+            ").CreateConfigForProcess("foo.exe");
+
+            Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("include=Bar exclude=").And.Contains("mscorlib"));
         }
     }
 }

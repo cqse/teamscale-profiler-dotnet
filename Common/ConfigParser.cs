@@ -55,6 +55,23 @@ namespace Common
         }
 
         /// <summary>
+        /// Include and exclude patterns.
+        /// </summary>
+        public class IncludeExcludePatterns
+        {
+            /// <summary>
+            /// Glob patterns that select what should be included.
+            /// </summary>
+            public List<string> Include { get; set; } = null;
+
+            /// <summary>
+            /// Glob patterns that select what should be excluded.
+            /// Excludes override includes.
+            /// </summary>
+            public List<string> Exclude { get; set; } = null;
+        }
+
+        /// <summary>
         /// Contains uploader-specific options. All fields may be null in which case the user
         /// didn't specify this option.
         /// </summary>
@@ -86,7 +103,7 @@ namespace Common
             public AzureFileStorage AzureFileStorage { get; set; }
 
             /// <summary>
-            /// Whether the profiler should be enabled.
+            /// Whether the uploader should be enabled.
             /// </summary>
             public bool? Enabled { get; set; }
 
@@ -94,6 +111,21 @@ namespace Common
             /// An optional prefix to prepend to the version before the upload.
             /// </summary>
             public string VersionPrefix { get; set; }
+
+            /// <summary>
+            /// Directory from which to read PDB files to resolve method IDs in the trace files.
+            /// </summary>
+            public string PdbDirectory { get; set; }
+
+            /// <summary>
+            /// File that contains the code revision to which to upload line coverage if PDBs are used to resolve the traces locally.
+            /// </summary>
+            public string RevisionFile { get; set; }
+
+            /// <summary>
+            /// Patterns to select which assemblies to analyze.
+            /// </summary>
+            public IncludeExcludePatterns AssemblyPatterns { get; set; };
         }
 
         /// <summary>

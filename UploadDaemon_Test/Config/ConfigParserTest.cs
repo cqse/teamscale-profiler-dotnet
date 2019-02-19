@@ -87,6 +87,9 @@ namespace Common
                 Assert.That(config.Match[0].Uploader.FileUpload, Is.Null, "section 0 file upload");
                 Assert.That(config.Match[0].Uploader.VersionPrefix, Is.Null, "section 0 version prefix");
                 Assert.That(config.Match[0].Uploader.Directory, Is.Null, "section 0 directory");
+                Assert.That(config.Match[0].Uploader.PdbDirectory, Is.Null, "section 0 pdb directory");
+                Assert.That(config.Match[0].Uploader.RevisionFile, Is.Null, "section 0 revision file");
+                Assert.That(config.Match[0].Uploader.AssemblyPatterns, Is.Null, "section 0 assembly patterns");
                 Assert.That(config.Match[1].Uploader.VersionAssembly, Is.Null, "section 1 version assembly");
                 Assert.That(config.Match[1].Uploader.Enabled, Is.False, "section 1 enabled");
             });

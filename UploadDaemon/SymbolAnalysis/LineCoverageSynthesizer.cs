@@ -15,14 +15,6 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <summary>
-        /// Sane default include/exclude patterns for selecting which assemblies to analyze.
-        /// </summary>
-        // TODO scan trace from ASP .NET app for common patterns
-        public static readonly GlobPatternList DefaultAssemblyPatterns = new GlobPatternList(new List<string> { "*" },
-            new List<string> { "Microsoft.*", "Newtonsoft.*", "System.*", "System", "mscorlib", "log4net*", "EntityFramework*", "Antlr*",
-                "Anonymously Hosted *"});
-
         /// The line coverage collected for one file.
         /// </summary>
         private class FileCoverage
