@@ -114,7 +114,6 @@
     <Compile Include="Upload\IUpload.cs" />
     <Compile Include="Upload\FileSystemUpload.cs" />
     <Compile Include="Upload\TeamscaleUpload.cs" />
-    <Compile Include="Upload\UploadServiceUpload.cs" />
     <Compile Include="Upload\AzureUpload.cs" />
     <Compile Include="UploadDaemon.cs" />
   </ItemGroup>

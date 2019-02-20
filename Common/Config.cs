@@ -54,11 +54,6 @@ namespace Common
             public TeamscaleServer Teamscale { get; private set; } = null;
 
             /// <summary>
-            /// The url to POST the traces to.
-            /// </summary>
-            public string FileUpload { get; private set; } = null;
-
-            /// <summary>
             /// The directory to upload the traces to.
             /// </summary>
             public string Directory { get; private set; } = null;
@@ -116,7 +111,6 @@ namespace Common
             {
                 VersionAssembly = section.VersionAssembly ?? VersionAssembly;
                 Teamscale = section.Teamscale ?? Teamscale;
-                FileUpload = section.FileUpload ?? FileUpload;
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
                 Enabled = section.Enabled ?? Enabled;
@@ -142,14 +136,13 @@ namespace Common
             /// </summary>
             public IEnumerable<string> Validate()
             {
-                if (Teamscale == null && Directory == null && FileUpload == null && AzureFileStorage == null)
+                if (Teamscale == null && Directory == null && AzureFileStorage == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}. You must provide either" +
                         @" a Teamscale server (property ""teamscale"")" +
                         @" or a directory (property ""directory"")" +
-                        @" or an HTTP endpoint (property ""fileUpload"")" +
                         @" or an Azure File Storage (property ""azureFileStorage"")" +
-                        @" to upload trace files to.";
+                        @" to upload coverage files to.";
                 }
                 if (VersionAssembly != null && PdbDirectory != null)
                 {

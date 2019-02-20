@@ -14,10 +14,6 @@ namespace UploadDaemon.Upload
             {
                 return new TeamscaleUpload(config.Teamscale);
             }
-            if (config.FileUpload != null)
-            {
-                return new UploadServiceUpload(config.FileUpload);
-            }
             if (config.AzureFileStorage != null)
             {
                 return new AzureUpload(config.AzureFileStorage);

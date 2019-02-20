@@ -263,8 +263,7 @@ This may, however, be a rather large file since the entire program's heap will b
 # Automatic Trace Upload
 
 The profiler can automatically upload all produced trace files to Teamscale,
-move them to a file system directory (e.g. a network share), send them via
-HTTP or upload them to an Azure cloud storage.
+move them to a file system directory (e.g. a network share) or upload them to an Azure cloud storage.
 
 To configure this
 
@@ -322,20 +321,6 @@ match:
     uploader:
       versionAssembly: YourAssembly
       directory: \\yourserver.localdomain\some\directory
-```
-
-## Example: HTTP upload
-
-**UploadDaemon.yaml:**
-
-```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      fileUpload: http://localserver.localdomain:8080
 ```
 
 ## Example: Azure File Storage

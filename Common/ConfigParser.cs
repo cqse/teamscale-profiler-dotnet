@@ -88,11 +88,6 @@ namespace Common
             public TeamscaleServer Teamscale { get; set; }
 
             /// <summary>
-            /// The url to POST the traces to.
-            /// </summary>
-            public string FileUpload { get; set; }
-
-            /// <summary>
             /// The directory to upload the traces to.
             /// </summary>
             public string Directory { get; set; }
@@ -125,7 +120,7 @@ namespace Common
             /// <summary>
             /// Patterns to select which assemblies to analyze.
             /// </summary>
-            public IncludeExcludePatterns AssemblyPatterns { get; set; };
+            public IncludeExcludePatterns AssemblyPatterns { get; set; }
         }
 
         /// <summary>
