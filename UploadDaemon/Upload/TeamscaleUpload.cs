@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web;
 using NLog;
 using Common;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
 {
@@ -77,6 +78,66 @@ namespace UploadDaemon.Upload
         public string Describe()
         {
             return server.ToString();
+        }
+
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            string timestampParameter;
+            if (revisionOrTimestamp.IsRevision)
+            {
+                timestampParameter = "revision";
+            }
+            else
+            {
+                timestampParameter = "t";
+            }
+            logger.Debug("Uploading line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
+                originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, server.ToString());
+
+            string message = messageFormatter.Format(timestampParameter);
+            string encodedMessage = HttpUtility.UrlEncode(message);
+            string encodedProject = HttpUtility.UrlEncode(server.Project);
+            string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
+            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
+            string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
+                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
+                $"&{timestampParameter}={encodedTimestamp}";
+
+            byte[] reportBytes = Encoding.ASCII.GetBytes(lineCoverageReport);
+
+            try
+            {
+                using (MemoryStream stream = new MemoryStream(reportBytes))
+                {
+                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Upload of line coverage from {trace} to {teamscale} failed due to an exception." +
+                    " Will retry later", originalTraceFilePath, server.ToString());
+                return false;
+            }
+        }
+
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
+        {
+            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    logger.Info("Successfully uploaded line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
+                        originalTraceFilePath, timestampParameter, timestampValue, server.ToString());
+                    return true;
+                }
+                else
+                {
+                    string body = await response.Content.ReadAsStringAsync();
+                    logger.Error("Upload of line coverage to {teamscale} failed with status code {statusCode}. This coverage is lost." +
+                        "\n{responseBody}", server.ToString(), response.StatusCode, body);
+                    return false;
+                }
+            }
         }
     }
 }

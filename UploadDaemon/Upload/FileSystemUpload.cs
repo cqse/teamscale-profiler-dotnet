@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using NLog;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
 {
@@ -46,7 +47,7 @@ namespace UploadDaemon.Upload
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to upload {tracePath} to {targetDirectory}. Will retry later.", filePath, targetDirectory);
+                logger.Error(e, "Failed to upload {tracePath} to {targetDirectory}. Will retry later", filePath, targetDirectory);
                 return Task.FromResult(false);
             }
         }
@@ -54,6 +55,26 @@ namespace UploadDaemon.Upload
         public string Describe()
         {
             return $"file system directory {targetDirectory}";
+        }
+
+        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.simple");
+            string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}.metadata");
+
+            try
+            {
+                fileSystem.File.WriteAllText(filePath, lineCoverageReport);
+                fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
+                return Task.FromResult(true);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to upload line coverage from {trace} to {targetDirectory}. Will retry later",
+                    originalTraceFilePath, targetDirectory);
+                return Task.FromResult(false);
+            }
         }
     }
 }

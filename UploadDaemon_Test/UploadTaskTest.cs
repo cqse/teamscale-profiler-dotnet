@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon;
 using UploadDaemon.Upload;
+using UploadDaemon.SymbolAnalysis;
 
 [TestFixture]
 public class UploadTaskTest
@@ -190,6 +191,11 @@ Inlined=1:33555646:100678050" },
         public string Describe()
         {
             return "MockUpload";
+        }
+
+        public Task<bool> UploadLineCoverageAsync(string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            throw new System.NotImplementedException();
         }
     }
 
