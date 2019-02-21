@@ -42,7 +42,7 @@ namespace UploadDaemon.Upload
 
             try
             {
-                fileSystem.File.Move(filePath, targetPath);
+                fileSystem.File.Copy(filePath, targetPath);
                 return Task.FromResult(true);
             }
             catch (Exception e)

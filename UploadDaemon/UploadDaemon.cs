@@ -3,12 +3,13 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Timers;
 using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
-using System.Timers;
 using UploadDaemon.Upload;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon
 {
@@ -90,7 +91,7 @@ namespace UploadDaemon
                 HttpClientUtils.DisableSslValidation();
             }
 
-            uploadTask = new UploadTask(config, fileSystem, new UploadFactory());
+            uploadTask = new UploadTask(config, fileSystem, new UploadFactory(), new LineCoverageSynthesizer());
         }
 
         /// <summary>
@@ -98,7 +99,7 @@ namespace UploadDaemon
         /// </summary>
         public void UploadOnce()
         {
-            lock(SequentialUploadsLock)
+            lock (SequentialUploadsLock)
             {
                 uploadTask.Run();
             }
