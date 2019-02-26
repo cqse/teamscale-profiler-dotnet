@@ -274,23 +274,81 @@ To configure this
    Otherwise, the upload daemon will
    not know where to find your trace files and nothing will be uploaded.__
 
-In all cases, you must specify an assembly from which to read the program version via
+You have two options for configuring the upload
+
+1. convert the trace to line coverage locally with your application's PDB files and then upload to Teamscale
+2. upload the trace to Teamscale as-is and let Teamscale do the resolution to line coverage
+
+The first option is highly recommended.
+
+When properly configured, the uploader process will run in the background after the
+profiler is launched for the first time and regularly upload all produced traces.
+It writes a log file (`UploadDaemon.log`) to the
+directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
+`nlog.config` file in the same directory.
+
+Please check the log files for errors and warnings after configuring the uploader and
+producing your first traces.
+
+## Locally converting to line coverage and then uploading
+
+You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
+The uploader will read these files and use them to convert the trace files to line coverage.
+
+Since the generated coverage must be matched to the correct code revision (otherwise you get
+incorrect coverage results),
+you must furthermore configure a `revisionFile`, which contains
+
+    revision: REVISION
+
+where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
+
+Finally, please configure sensible `assemblyPatterns` in order to only include your application's
+assemblies in the coverage analysis. This prevents lots of useless error log entries both in the
+uploader and in Teamscale. Patterns are glob patterns: `*` matches any number of characters,
+`?` matches any single character. The patterns must match the assembly name without the file extension.
+
+    assemblyPatterns:
+      include: [ "*YourAssembly*" ]
+      exclude: [ "*DoNotProfileThisAssembly*" ]
+
+## Uploading traces as-is
+
+In order for this to work, you must upload your PDB files to Teamscale __before__ you
+upload the first trace file.
+
+In the profiler config file you must specify an assembly from which to read the program version via
 the `versionAssembly` YAML config option.
 This will be used to select the correct PDB files to map the trace file contents
 back to source lines in the original code.
 
-When properly configured, the uploader process will run in the background after the
-profiler is launched for the first time. It writes a log file (`UploadDaemon.log`) to the
-directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
-`nlog.config` file in the same directory.
-
-Futher config options for the uploader:
+Futher config options for the uploader in this mode:
 
 - `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
 
-The following sections list several example config files.
+## Example: Teamscale upload with local line coverage conversion
 
-## Example: Teamscale upload
+**UploadDaemon.yaml:**
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      pdbDirectory: C:\pdbs
+      revisionFile: C:\pdbs\revision.txt
+      assemblyPatterns:
+        include: [ "MyCompany.*" ]
+      teamscale:
+        url: http://localhost:8080
+        username: build
+        accessKey: u7a9abc32r45r2uiig3vvv
+        project: your_project
+        partition: Manual Tests
+```
+
+## Example: Teamscale upload without local line coverage conversion
 
 **UploadDaemon.yaml:**
 
