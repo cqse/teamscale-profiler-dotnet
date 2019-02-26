@@ -293,6 +293,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def" />
+    <None Include="Profiler.example.yml" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

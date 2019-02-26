@@ -48,6 +48,7 @@ after_test:
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
+  - cmd: robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler LICENSE & exit 0
   - cmd: robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
   - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
