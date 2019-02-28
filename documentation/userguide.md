@@ -328,7 +328,7 @@ Futher config options for the uploader in this mode:
 
 ## Example: Teamscale upload with local line coverage conversion
 
-**UploadDaemon.yaml:**
+**Profiler.yml:**
 
 ```yaml
 match:
@@ -350,7 +350,7 @@ match:
 
 ## Example: Teamscale upload without local line coverage conversion
 
-**UploadDaemon.yaml:**
+**Profiler.yml:**
 
 ```yaml
 match:
@@ -369,7 +369,7 @@ match:
 
 ## Example: Move to network share
 
-**UploadDaemon.yaml:**
+**Profiler.yml:**
 
 ```yaml
 match:
@@ -383,9 +383,9 @@ match:
 
 ## Example: Azure File Storage
 
-**UploadDaemon.yaml:**
+To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
 
-  To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
+**Profiler.yml:**
 
 ```yaml
 match:
@@ -399,8 +399,6 @@ match:
         shareName: my-share
         directory: log/file/path
 ```
-
-  [azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
 
 ## Proxy
 
@@ -464,4 +462,6 @@ Once all the above-mentioned information is available and the Operations tasks h
 * Creation of one or more dashboards, depending on the test environment.
 * Customization of the dashboard, in order to collect the necessary data from the network share and start the preprocessing of the data.
 * Setup of the exclusion criteria as parameters of the dashboard.
+
+[azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
 
