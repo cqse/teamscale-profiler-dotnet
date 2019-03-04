@@ -69,8 +69,10 @@ namespace UploadDaemon.SymbolAnalysis
         {
             public int resolvedMethods = 0;
             public int unresolvedMethods = 0;
+            public int methodsWithoutSourceFile = 0;
             public int TotalMethods => resolvedMethods + unresolvedMethods;
             public string UnresolvedPercentage => string.Format("{0:F1}%", unresolvedMethods * 100 / (double)TotalMethods);
+            public string WithoutSourceFilePercentage => string.Format("{0:F1}%", methodsWithoutSourceFile * 100 / (double)TotalMethods);
         }
 
         /// <summary>
@@ -104,29 +106,42 @@ namespace UploadDaemon.SymbolAnalysis
                         traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
-                else
+                else if (sourceLocation.SourceFile == null)
                 {
-                    count.resolvedMethods += 1;
+                    count.methodsWithoutSourceFile += 1;
+                    logger.Debug("Could not resolve source file of method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
+                        " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
+                        traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                    continue;
                 }
 
+                count.resolvedMethods += 1;
                 AddToLineCoverage(lineCoverage, sourceLocation);
             }
 
             foreach (string assemblyName in resolutionCounts.Keys)
             {
                 AssemblyResolutionCount count = resolutionCounts[assemblyName];
-                if (count.unresolvedMethods == 0)
+                if (count.unresolvedMethods > 0)
                 {
-                    continue;
+                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
+                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                        " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
+                        " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
+                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                        count.unresolvedMethods, count.TotalMethods, count.UnresolvedPercentage,
+                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
                 }
-
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
-                    " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
-                    " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
-                    " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
-                    " You can exclude this assembly from the coverage analysis to suppress this warning.",
-                    count.unresolvedMethods, count.TotalMethods, count.UnresolvedPercentage,
-                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                if (count.methodsWithoutSourceFile > 0)
+                {
+                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
+                        " Read from trace file {traceFile} with symbols from" +
+                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                        " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
+                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                        count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
+                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                }
             }
 
             return lineCoverage;

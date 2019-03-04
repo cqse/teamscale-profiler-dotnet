@@ -22,7 +22,7 @@ namespace UploadDaemon.SymbolAnalysis
         public class SourceLocation
         {
             /// <summary>
-            ///  The source file path.
+            ///  The source file path. May be null when the PDB contains no source file path.
             /// </summary>
             public string SourceFile { get; set; }
 
