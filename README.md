@@ -10,7 +10,7 @@ The latest (and previous) releases can be downloaded from the [GitHib Release](h
 
 ## Documentation
 
-Documentation on installation and usage of the profiler can be found in the [GitHub Wiki](https://github.com/cqse/teamscale-profiler-dotnet/wiki).
+Documentation on installation and usage of the profiler can be found [here](./documentation/userguide.md).
 
 ## Contributing
 

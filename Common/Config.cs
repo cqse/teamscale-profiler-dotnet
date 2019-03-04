@@ -73,6 +73,13 @@ namespace Common
             /// </summary>
             public bool Enabled { get; private set; } = true;
 
+            /// <summary>
+            /// An optional prefix to prepend to the version before the upload.
+            /// Defaults to the empty string in case no prefix should be prepended.
+            /// This property is never null.
+            /// </summary>
+            public string VersionPrefix { get; set; } = string.Empty;
+
             public ConfigForProcess(string processPath)
             {
                 this.ProcessPath = processPath;
@@ -89,6 +96,7 @@ namespace Common
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
                 Enabled = section.Enabled ?? Enabled;
+                VersionPrefix = section.VersionPrefix ?? VersionPrefix;
             }
 
             /// <summary>

@@ -11,9 +11,16 @@
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
+CProfilerCallback* CProfilerCallback::instance = NULL;
+
+CProfilerCallback* CProfilerCallback::getInstance() {
+	return instance;
+}
+
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
+		instance = this;
 	}
 	catch (...) {
 		handleException("Constructor");
@@ -22,6 +29,7 @@ CProfilerCallback::CProfilerCallback() {
 
 CProfilerCallback::~CProfilerCallback() {
 	try {
+		instance = NULL;
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
@@ -63,7 +71,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	if (config.shouldStartUploadDaemon()) {
 		log.info("Starting upload deamon");
-		startUploadDeamon();
+		createDaemon().launch(log);
 	}
 
 	char appPool[BUFFER_SIZE];
@@ -108,14 +116,6 @@ void CProfilerCallback::dumpEnvironment() {
 	}
 }
 
-void CProfilerCallback::startUploadDeamon() {
-	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
-	std::string traceDirectory = StringUtils::removeLastPartOfPath(log.getLogFilePath());
-
-	UploadDaemon daemon(profilerPath, &log);
-	daemon.launch();
-}
-
 void CProfilerCallback::initializeConfig() {
 	std::string configFile = WindowsUtils::getConfigValueFromEnvironment("CONFIG");
 
@@ -128,29 +128,35 @@ void CProfilerCallback::initializeConfig() {
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
 
-HRESULT CProfilerCallback::ShutdownImplementation() {
+UploadDaemon CProfilerCallback::createDaemon() {
+	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	return UploadDaemon(profilerPath);
+}
+
+void CProfilerCallback::ShutdownOnce() {
 	if (!config.isProfilingEnabled()) {
-		return S_OK;
+		return;
 	}
 
 	EnterCriticalSection(&callbackSynchronization);
 	writeFunctionInfosToLog();
 
 	log.shutdown();
+	if (config.shouldStartUploadDaemon()) {
+		createDaemon().notifyShutdown();
+	}
 	profilerInfo->ForceGC();
 	LeaveCriticalSection(&callbackSynchronization);
-
-	return S_OK;
 }
 
 HRESULT CProfilerCallback::Shutdown() {
 	try {
-		return ShutdownImplementation();
+		std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
 	}
 	catch (...) {
 		handleException("Shutdown");
-		return S_OK;
 	}
+	return S_OK;
 }
 
 DWORD CProfilerCallback::getEventMask() {

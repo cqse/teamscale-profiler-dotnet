@@ -105,13 +105,44 @@ After restarting the IIS/recycling the pool and opening the application in a bro
 
 ### Azure Cloud
 
-Azure instantly kills the application when it is stopped/restarted, thus the profiler has no time to write anything to the trace file. To remedy this, enable eager mode (see the Configuration section. Please note that eager mode should only be used together with light mode as it will otherwise drastically increase lag during the application startup.
+If the application is running in an Azure App Service, the following steps need to be taken:
 
-To deploy the profiler to the Azure cloud, enable the FTP account. Store the profiler in a directory that will not be overwritten by a new deployment, e.g. `D:\home\site\repository\profiler\`
-Also create a new directory to write the traces to, e.g. `D:\home\site\repository\traces\`
+#### Install the Profiler
 
-To set the environment variables in Azure, go to the application settings and add them as new application settings entries.
+To deploy the profiler, [enable the Azure FTP account][AzureFTP] and upload the profiler DLLs to a location that will not be overwritten by a new app deployment, e.g., `D:\home\site\repository\profiler\`. To configure the profiler in Azure, go to the [application settings][AzureAppSettings] and add the environment variables as new application settings entries. You may use any configuration variable that the profiler supports. For the profiler target directory, you may use `D:\home\LogFiles` or a dedicated location, such as `D:\home\site\repository\profiler\traces` (remember to manually create this directory first).
 
+#### Install the UploadDaemon
+
+Deploy the upload daemon in the directory `.\UploadDaemon`, relative to the path where you deployed the profiler, e.g., in `D:\home\site\repository\profiler\UploadDaemon\`. Configure the trace upload as usual.
+
+#### Schedule Trace Upload
+
+By default, the profiler publishes traces when the app gets shut down (unless you configure "Eagerness"). Azure Apps are shut down automatically [in cases of user inactivity or at least every 29 hours][AzurePoolReset]. To use a different intervall, you can configure a different schedule in `D:\home\site\applicationHost.xdt`:
+
+```xml
+<?xml version="1.0"?>
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+  <system.applicationHost>
+    <applicationPools>
+      <add name="yourappname" xdt:Locator="Match(name)"> <!-- fill app name -->
+        <recycling xdt:Transform="Insert" >
+          <periodicRestart>
+            <schedule>
+              <clear />
+              <add value="03:00:00" />  <!-- adjust/add entries as needed -->
+            </schedule>
+          </periodicRestart>
+        </recycling>
+      </add>
+    </applicationPools>
+  </system.applicationHost>
+</configuration>
+```
+
+
+  [AzureFTP]: https://docs.microsoft.com/en-us/azure/app-service/app-service-deploy-ftp
+  [AzureAppSettings]: https://docs.microsoft.com/en-us/azure/app-service/web-sites-configure
+  [AzurePoolReset]: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-application-and-service-availability-faq#why-does-the-first-request-to-my-cloud-service-after-the-service-has-been-idle-for-some-time-take-longer-than-usual
 
 # Profiler Configuration
 
@@ -254,6 +285,10 @@ profiler is launched for the first time. It writes a log file (`UploadDaemon.log
 directory that contains the `UploadDaemon.exe`. To configure logging, you can edit the
 `nlog.config` file in the same directory.
 
+Futher config options for the uploader:
+
+- `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
+
 The following sections list several example config files.
 
 ## Example: Teamscale upload
@@ -302,6 +337,27 @@ match:
       versionAssembly: YourAssembly
       fileUpload: http://localserver.localdomain:8080
 ```
+
+## Example: Azure File Storage
+
+**UploadDaemon.yaml:**
+
+  To upload traces to an Azure File Storage first obtain the [connection string][azure-conn-str] for your storage account.
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      azureFileStorage:
+        connectionString: DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;
+        shareName: my-share
+        directory: log/file/path
+```
+
+  [azure-conn-str]: https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string
 
 ## Proxy
 

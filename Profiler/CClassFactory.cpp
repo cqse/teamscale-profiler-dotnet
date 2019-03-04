@@ -1,5 +1,6 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
+#include "CProfilerCallback.h"
 
 #define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 
@@ -8,6 +9,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 		// Save off the instance handle for later use.
 		DisableThreadLibraryCalls(hInstance);
 		profilerInstance = hInstance;
+	}
+	else if (dwReason == DLL_PROCESS_DETACH) {
+		// sometimes the CLR does not cleanly shut down the profiler but simply unloads
+		// our DLL. In these cases, we need to manually trigger the shutdown
+		CProfilerCallback* profiler = CProfilerCallback::getInstance();
+		if (profiler != NULL) {
+			profiler->Shutdown();
+		}
 	}
 
 	return TRUE;
