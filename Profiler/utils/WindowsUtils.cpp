@@ -1,9 +1,8 @@
 #include "WindowsUtils.h"
 #include <Windows.h>
 #include <vector>
-#include  <algorithm>
-
-extern char** _environ;
+#include <algorithm>
+#include <stdlib.h>
 
 /** Maximum size of an enironment variable value according to http://msdn.microsoft.com/en-us/library/ms683188.aspx */
 static const size_t MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE = 32767 * sizeof(char);
