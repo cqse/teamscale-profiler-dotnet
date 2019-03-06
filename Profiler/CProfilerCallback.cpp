@@ -166,7 +166,7 @@ DWORD CProfilerCallback::getEventMask() {
 
 	// disable force re-jitting for the light variant
 	if (!config.shouldUseLightMode()) {
-		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+		dwEventMask |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 	}
 
 	return dwEventMask;
