@@ -24,8 +24,8 @@ before_build:
   - ps: (Get-Content Profiler/version.h) | ForEach-Object { $_.Replace("1.0.0.0", $env:APPVEYOR_BUILD_VERSION).Replace("1,0,0,0", $env:APPVEYOR_BUILD_VERSION.Replace(".", ",").Split("-")[0]) } | Set-Content Profiler/version.h
 
 build_script:
+  # The Win32 build will also build the 64bit DLL
   - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - cmd: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
   - ps: >
@@ -51,9 +51,7 @@ after_test:
   - cmd: robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
   - cmd: robocopy . teamscale_dotnet_profiler LICENSE & exit 0
   - cmd: robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
-  - cmd: robocopy .\UploadDaemon\bin\Release teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
-  - cmd: robocopy .\ProfilerGUI\bin\Release teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
-  - cmd: robocopy .\documentation teamscale_dotnet_profiler/Documentation userguide.pdf & exit 0
+  - cmd: robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
   - cmd: 7z a %release_zip% .\teamscale_dotnet_profiler
 
 artifacts:
