@@ -39,7 +39,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private readonly Dictionary<string, Dictionary<uint, SourceLocation>> mappings = new Dictionary<string, Dictionary<uint, SourceLocation>>(StringComparer.OrdinalIgnoreCase);
 
-        private SymbolCollection(List<AssemblyMethodMappings> mappings)
+        public SymbolCollection(List<AssemblyMethodMappings> mappings)
         {
             WarnInCaseOfDuplicateMappings(mappings);
 

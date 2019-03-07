@@ -6,6 +6,8 @@ using System.IO;
 using System.Collections.Generic;
 
 using System.IO.Abstractions;
+using Moq;
+using Cqse.ConQAT.Dotnet.Bummer;
 
 [TestFixture]
 public class LineCoverageSynthesizerTest
@@ -60,6 +62,42 @@ public class LineCoverageSynthesizerTest
         });
 
         Assert.That(exception.Message, Contains.Substring("no symbols"));
+    }
+
+    [Test]
+    public void CompilerHiddenLinesShouldBeIgnored()
+    {
+        ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
+            "Assembly=Test:2 Version:1.0.0.0",
+            "Inlined=2:1234",
+        }, "coverage_12345_1234.txt");
+
+        AssemblyMethodMappings mappings = new AssemblyMethodMappings
+        {
+            AssemblyName = "Test",
+            SymbolFileName = "Test.pdb",
+        };
+        mappings.MethodMappings.Add(new MethodMapping
+        {
+            MethodToken = 1234,
+            SourceFile = "",
+            StartLine = 16707566,
+            EndLine = 16707566,
+        });
+        mappings.MethodMappings.Add(new MethodMapping
+        {
+            MethodToken = 1234,
+            SourceFile = @"c:\some\file.cs",
+            StartLine = 16707566,
+            EndLine = 16707566,
+        });
+
+        SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
+
+        Dictionary<string, LineCoverageSynthesizer.FileCoverage> coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
+            new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
+
+        Assert.That(coverage, Is.Empty);
     }
 
     private string NormalizeNewLines(string text)

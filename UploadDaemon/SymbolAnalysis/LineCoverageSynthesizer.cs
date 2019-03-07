@@ -1,4 +1,5 @@
 ﻿using Common;
+using Cqse.ConQAT.Dotnet.Bummer;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         /// The line coverage collected for one file.
         /// </summary>
-        private class FileCoverage
+        public class FileCoverage
         {
             /// <summary>
             /// The ranges of inclusive start and end lines that are covered in the file.
@@ -70,16 +71,20 @@ namespace UploadDaemon.SymbolAnalysis
             public int resolvedMethods = 0;
             public int unresolvedMethods = 0;
             public int methodsWithoutSourceFile = 0;
+            public int methodsWithCompilerHiddenLines = 0;
             public int TotalMethods => resolvedMethods + unresolvedMethods;
             public string UnresolvedPercentage => string.Format("{0:F1}%", unresolvedMethods * 100 / (double)TotalMethods);
             public string WithoutSourceFilePercentage => string.Format("{0:F1}%", methodsWithoutSourceFile * 100 / (double)TotalMethods);
+            public string WithCompilerHiddenLinesPercentage => string.Format("{0:F1}%", methodsWithCompilerHiddenLines * 100 / (double)TotalMethods);
         }
 
         /// <summary>
         /// Converts the given trace file to a dictionary containing all covered lines of each source file for which
         /// coverage could be resolved with the PDB files in the given symbol directory.
+        ///
+        /// Public for testing.
         /// </summary>
-        private static Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
+        public static Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
@@ -106,10 +111,18 @@ namespace UploadDaemon.SymbolAnalysis
                         traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
-                else if (sourceLocation.SourceFile == null)
+                else if (string.IsNullOrEmpty(sourceLocation.SourceFile))
                 {
                     count.methodsWithoutSourceFile += 1;
                     logger.Debug("Could not resolve source file of method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
+                        " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
+                        traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                    continue;
+                }
+                else if (sourceLocation.StartLine == PdbFile.CompilerHiddenLine || sourceLocation.EndLine == PdbFile.CompilerHiddenLine)
+                {
+                    count.methodsWithCompilerHiddenLines += 1;
+                    logger.Debug("Resolved lines of method ID {methodId} from assembly {assemblyName} contain compiler hidden lines in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
                         traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
@@ -140,6 +153,16 @@ namespace UploadDaemon.SymbolAnalysis
                         " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
                         " You can exclude this assembly from the coverage analysis to suppress this warning.",
                         count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
+                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                }
+                if (count.methodsWithoutSourceFile > 0)
+                {
+                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
+                        " Read from trace file {traceFile} with symbols from" +
+                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                        " This is usually not a problem as the compiler may generate additional code that does not correspond to any source code." +
+                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                        count.methodsWithCompilerHiddenLines, count.TotalMethods, count.WithCompilerHiddenLinesPercentage,
                         assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
                 }
             }
