@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Common;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
 {
@@ -102,9 +103,40 @@ namespace UploadDaemon.Upload
             await file.UploadFromFileAsync(sourceFilePath);
         }
 
+        private static async Task UploadTextAsync(string fileContent, string fileName, CloudFileDirectory targetDirectory)
+        {
+            CloudFile file = targetDirectory.GetFileReference(fileName);
+            await file.UploadTextAsync(fileContent);
+        }
+
         public string Describe()
         {
             return $"Azure share {storage.ShareName}, directory {storage.Directory}";
+        }
+
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            try
+            {
+                CloudStorageAccount account = GetStorageAccount();
+                logger.Debug("Uploading line coverage from {trace} to {azure}/{directory}/", originalTraceFilePath,
+                    account.FileStorageUri, storage.Directory);
+
+                CloudFileShare share = await GetOrCreateShareAsync(account);
+                CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
+                long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                await UploadTextAsync(lineCoverageReport, $"{unixSeconds}.simple", directory);
+                await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}.metadata", directory);
+
+                logger.Info("Successfully uploaded line coverage from {trace} to {azure}/{directory}", originalTraceFilePath,
+                    account.FileStorageUri, storage.Directory);
+                return true;
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Upload of line coverage from {trace} to Azure File Storage failed", originalTraceFilePath);
+                return false;
+            }
         }
 
         private class UploadFailedException : Exception

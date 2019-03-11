@@ -54,11 +54,6 @@ namespace Common
             public TeamscaleServer Teamscale { get; private set; } = null;
 
             /// <summary>
-            /// The url to POST the traces to.
-            /// </summary>
-            public string FileUpload { get; private set; } = null;
-
-            /// <summary>
             /// The directory to upload the traces to.
             /// </summary>
             public string Directory { get; private set; } = null;
@@ -80,6 +75,30 @@ namespace Common
             /// </summary>
             public string VersionPrefix { get; set; } = string.Empty;
 
+            /// <summary>
+            /// Directory from which to read PDB files to resolve method IDs in the trace files.
+            /// Defaults to null;
+            /// </summary>
+            public string PdbDirectory { get; set; } = null;
+
+            /// <summary>
+            /// File that contains the code revision to which to upload line coverage if PDBs are used to resolve the traces locally.
+            /// Defaults to null.
+            /// </summary>
+            public string RevisionFile { get; set; } = null;
+
+            /// <summary>
+            /// Patterns to select which assemblies to analyze.
+            /// Defaults to sane default patterns.
+            /// This property is never null.
+            /// </summary>
+            public GlobPatternList AssemblyPatterns { get; set; } = new GlobPatternList(DefaultAssemblyIncludePatterns, DefaultAssemblyExcludePatterns);
+
+            private static readonly List<String> DefaultAssemblyIncludePatterns = new List<string> { "*" };
+
+            private static readonly List<String> DefaultAssemblyExcludePatterns = new List<string> { "Microsoft.*", "Newtonsoft.*", "System.*",
+                "System", "mscorlib", "log4net*", "EntityFramework*", "Antlr*", "Anonymously Hosted *", "App_*"};
+
             public ConfigForProcess(string processPath)
             {
                 this.ProcessPath = processPath;
@@ -92,11 +111,23 @@ namespace Common
             {
                 VersionAssembly = section.VersionAssembly ?? VersionAssembly;
                 Teamscale = section.Teamscale ?? Teamscale;
-                FileUpload = section.FileUpload ?? FileUpload;
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
                 Enabled = section.Enabled ?? Enabled;
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
+                PdbDirectory = section.PdbDirectory ?? PdbDirectory;
+                RevisionFile = section.RevisionFile ?? RevisionFile;
+
+                if (section.AssemblyPatterns != null)
+                {
+                    // we ensure that something is always included by using "*" as the include if the user doesn't include anything
+                    List<string> includes = section.AssemblyPatterns.Include ?? DefaultAssemblyIncludePatterns;
+                    // unless the user explicitly overrides the excludes, we use the sane exclude patterns to prevent
+                    // the common error case of including System and other 3rd party assemblies. This prevents spamming the
+                    // logs with lots of useless errors/warnings both in the Uploader and in Teamscale
+                    List<string> excludes = section.AssemblyPatterns.Exclude ?? DefaultAssemblyExcludePatterns;
+                    AssemblyPatterns = new GlobPatternList(includes, excludes);
+                }
             }
 
             /// <summary>
@@ -105,20 +136,34 @@ namespace Common
             /// </summary>
             public IEnumerable<string> Validate()
             {
-                if (Teamscale == null && Directory == null && FileUpload == null && AzureFileStorage == null)
+                if (Teamscale == null && Directory == null && AzureFileStorage == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}. You must provide either" +
                         @" a Teamscale server (property ""teamscale"")" +
                         @" or a directory (property ""directory"")" +
-                        @" or an HTTP endpoint (property ""fileUpload"")" +
                         @" or an Azure File Storage (property ""azureFileStorage"")" +
-                        @" to upload trace files to.";
+                        @" to upload coverage files to.";
                 }
-                if (VersionAssembly == null)
+                if (VersionAssembly != null && PdbDirectory != null)
+                {
+                    yield return $"Invalid configuration for process {ProcessPath}." +
+                        @" You configured both method coverage upload (via property ""versionAssembly"")" +
+                        @" and line coverage upload (via property ""pdbDirectory""). Please decide which you would" +
+                        @" like to use and remove the other.";
+                }
+                if (VersionAssembly == null && PdbDirectory == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
                         @" You must provide an assembly name (property ""versionAssembly""," +
-                        @" without the file extension) to read the program version from";
+                        @" without the file extension) to read the program version from in order to upload method coverage." +
+                        @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
+                }
+                if (PdbDirectory != null && RevisionFile == null)
+                {
+                    yield return $"Invalid configuration for process {ProcessPath}." +
+                        @" You provided a path to PDB files but no revision file (property ""revisionFile"")." +
+                        @" This file must contain the ID of the commit in your VCS from which the profiled code" +
+                        @" was built (e.g. for TFS: the changeset number, for Git: the SHA1) in the format `revision: COMMIT_ID`.";
                 }
             }
         }

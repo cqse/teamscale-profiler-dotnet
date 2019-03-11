@@ -1,0 +1,53 @@
+disableSSLValidation: true
+match:
+  # This section matches all processes.
+  # We configure shared options here but disable the profiler.
+  # The later match sections will enable the profiler for specific processes.
+  - profiler:
+      enabled: false
+      # Trace files will be stored and archived here
+      targetdir: C:\Users\Public\Traces
+      # Light mode is recommended.
+      # Turn it off if you use ngen.exe for your assemblies
+      light_mode: true
+      # Enable upload to Teamscale
+      upload_daemon: true
+    uploader:
+      # Upload to this Teamscale instance
+      teamscale:
+        url: http://localhost:8080
+        username: build
+        # Obtain the access key from Admin > Users
+        accessKey: u7a9abc32r45r2uiig3vvv
+        # The ID or the alias of the project
+        project: your_project
+        # This identifier will show up in the Teamscale UI
+        # as the source of your coverage
+        partition: Manual Tests
+      # This directory must contain all the PDBs for your deployed
+      # application code
+      pdbDirectory: C:\Pdbs
+      # This file must contain the revision of your application code
+      # that was checked out (e.g. Git SHA1, TFS changeset ID, ...)
+      # in the format:
+      #
+      #     revision: REVISION
+      revisionFile: C:\Pdbs\revision.txt
+      # Glob patterns that identify the assemblies for which you'd like
+      # to obtain coverage. You must have PDB files for each of these
+      # in the pdbDirectory.
+      assemblyPatterns:
+        include:
+          - MyProduct*
+          - MyCompany.*
+          - MyOtherAssembly
+  # These sections turn on the profiler for specific executables.
+  - executableName: MyProduct.exe
+    profiler:
+      enabled: true
+  - executableName: MyProduct2.exe
+    profiler:
+      enabled: true
+
+
+

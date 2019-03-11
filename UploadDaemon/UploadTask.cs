@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
+using System.Timers;
+using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 
 namespace UploadDaemon
@@ -18,12 +20,14 @@ namespace UploadDaemon
         private readonly Config config;
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
+        private readonly ILineCoverageSynthesizer lineCoverageSynthesizer;
 
-        public UploadTask(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory)
+        public UploadTask(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizer lineCoverageSynthesizer)
         {
             this.config = config;
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
+            this.lineCoverageSynthesizer = lineCoverageSynthesizer;
         }
 
         /// <summary>
@@ -78,20 +82,71 @@ namespace UploadDaemon
             }
 
             Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath);
+            IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
+
+            if (processConfig.PdbDirectory == null)
+            {
+                await ProcessMethodCoverage(trace, archiver, processConfig, upload);
+            }
+            else
+            {
+                ProcessLineCoverage(trace, archiver, processConfig, upload);
+            }
+        }
+
+        private async void ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
+        {
+            logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
+            ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
+
+            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision;
+            try
+            {
+                timestampOrRevision = RevisionFileUtils.Parse(fileSystem.File.ReadAllLines(processConfig.RevisionFile), processConfig.RevisionFile);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read revision file {revisionFile} while processing {traceFile}. Will retry later",
+                    processConfig.RevisionFile, trace.FilePath);
+                return;
+            }
+
+            string report;
+            try
+            {
+                report = lineCoverageSynthesizer.ConvertToLineCoverageReport(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", trace.FilePath);
+                return;
+            }
+
+            if (await upload.UploadLineCoverageAsync("trace.txt", report, timestampOrRevision))
+            {
+                archiver.ArchiveUploadedFile(trace.FilePath);
+            }
+            else
+            {
+                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
+            }
+        }
+
+        private static async Task ProcessMethodCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
+        {
             string version = trace.FindVersion(processConfig.VersionAssembly);
             if (version == null)
             {
-                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}", trace.FilePath, processConfig.VersionAssembly);
+                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}",
+                    trace.FilePath, processConfig.VersionAssembly);
                 archiver.ArchiveFileWithoutVersionAssembly(trace.FilePath);
                 return;
             }
 
             string prefixedVersion = processConfig.VersionPrefix + version;
-            IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
             logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
 
-            bool success = await upload.UploadAsync(trace.FilePath, prefixedVersion);
-            if (success)
+            if (await upload.UploadAsync(trace.FilePath, prefixedVersion))
             {
                 archiver.ArchiveUploadedFile(trace.FilePath);
             }

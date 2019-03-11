@@ -34,12 +34,12 @@ namespace UploadDaemon
         /// <summary>
         /// The lines of text contained in the trace.
         /// </summary>
-        private readonly string[] lines;
+        public string[] Lines { get; private set; }
 
         public TraceFile(string filePath, string[] lines)
         {
             this.FilePath = filePath;
-            this.lines = lines;
+            this.Lines = lines;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace UploadDaemon
         public string FindVersion(string versionAssembly)
         {
             Regex versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
-            Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
+            Match matchingLine = Lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             return matchingLine?.Groups[1]?.Value;
         }
 
@@ -58,7 +58,7 @@ namespace UploadDaemon
         /// </summary>
         public string FindProcessPath()
         {
-            foreach (string line in lines)
+            foreach (string line in Lines)
             {
                 Match match = ProcessRegex.Match(line);
                 if (match.Success)
@@ -74,7 +74,7 @@ namespace UploadDaemon
         /// </summary>
         public bool IsEmpty()
         {
-            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+            return !Lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
         }
     }
 }

@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)AzureFileStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Config.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConfigParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GlobPatternList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)HttpClientUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TeamscaleServer.cs" />
   </ItemGroup>

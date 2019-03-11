@@ -259,6 +259,7 @@
     <None Include="Profiler.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Profiler.example.yml" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

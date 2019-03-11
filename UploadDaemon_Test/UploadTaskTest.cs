@@ -8,12 +8,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon;
 using UploadDaemon.Upload;
+using UploadDaemon.SymbolAnalysis;
 
 [TestFixture]
 public class UploadTaskTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
     private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
+    private const string PdbDirectory = @"C:\pdbs";
+    private const string RevisionFile = @"C:\revision.txt";
     private const string VersionAssembly = "VersionAssembly";
 
     private static readonly Config config = Config.Read($@"
@@ -21,6 +24,16 @@ public class UploadTaskTest
           - uploader:
               versionAssembly: {VersionAssembly}
               directory: C:\store
+            profiler:
+              targetdir: {TraceDirectory}
+    ");
+
+    private static readonly Config lineCoverageConfig = Config.Read($@"
+        match:
+          - uploader:
+              directory: C:\store
+              pdbDirectory: {PdbDirectory}
+              revisionFile: {RevisionFile}
             profiler:
               targetdir: {TraceDirectory}
     ");
@@ -36,7 +49,24 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(true)).Run();
+        new UploadTask(config, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
+    }
+
+    [Test]
+    public void TracesShouldBeArchivedAfterASuccessfulLineCoverageUpload()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(lineCoverageConfig, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
     }
@@ -51,7 +81,24 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false)).Run();
+        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
+    }
+
+    [Test]
+    public void TracesShouldNotBeArchivedAfterAFailedLineCoverageUpload()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(lineCoverageConfig, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
     }
@@ -66,7 +113,7 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false)).Run();
+        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-version\coverage_1_1.txt");
     }
@@ -80,7 +127,7 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false)).Run();
+        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
     }
@@ -94,7 +141,7 @@ Inlined=1:33555646:100678050" },
 Process=foo.exe" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(true)).Run();
+        new UploadTask(config, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
     }
@@ -118,7 +165,7 @@ Inlined=1:33555646:100678050" },
                   targetdir: {TraceDirectoryWithSpace}
         ");
 
-        new UploadTask(configWithSpaceInTraceDirectory, fileSystem, new MockUploadFactory(true)).Run();
+        new UploadTask(configWithSpaceInTraceDirectory, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
 
         AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt");
     }
@@ -144,7 +191,7 @@ Inlined=1:33555646:100678050" },
         });
 
         MockUploadFactory uploadFactory = new MockUploadFactory(true);
-        new UploadTask(config, fileSystem, uploadFactory).Run();
+        new UploadTask(config, fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run();
 
         Assert.That(uploadFactory.mockUpload.LastUsedVersion, Is.EqualTo("prefix_4.0.0.0"));
     }
@@ -190,6 +237,19 @@ Inlined=1:33555646:100678050" },
         public string Describe()
         {
             return "MockUpload";
+        }
+
+        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            return Task.FromResult(returnValue);
+        }
+    }
+
+    private class MockLineCoverageSynthesizer : ILineCoverageSynthesizer
+    {
+        public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        {
+            return "file1.cs\n12-33";
         }
     }
 
