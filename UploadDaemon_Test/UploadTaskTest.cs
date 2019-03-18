@@ -104,6 +104,23 @@ Inlined=1:33555646:100678050" },
     }
 
     [Test]
+    public void TestArchivingTracesThatProduceNoLineCoverage()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer(false)).Run(lineCoverageConfig);
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"no-line-coverage\coverage_1_1.txt");
+    }
+
+    [Test]
     public void TestArchivingTraceWithMissingVersion()
     {
         IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -247,9 +264,24 @@ Inlined=1:33555646:100678050" },
 
     private class MockLineCoverageSynthesizer : ILineCoverageSynthesizer
     {
+        private readonly bool shouldProduceCoverage;
+
+        public MockLineCoverageSynthesizer() : this(true)
+        {
+        }
+
+        public MockLineCoverageSynthesizer(bool shouldProduceCoverage)
+        {
+            this.shouldProduceCoverage = shouldProduceCoverage;
+        }
+
         public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            return "file1.cs\n12-33";
+            if (shouldProduceCoverage)
+            {
+                return "file1.cs\n12-33";
+            }
+            return null;
         }
     }
 

@@ -120,6 +120,13 @@ namespace UploadDaemon
                 return;
             }
 
+            if (report == null)
+            {
+                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
+                archiver.ArchiveFileWithoutLineCoverage(trace.FilePath);
+                return;
+            }
+
             if (await upload.UploadLineCoverageAsync("trace.txt", report, timestampOrRevision))
             {
                 archiver.ArchiveUploadedFile(trace.FilePath);

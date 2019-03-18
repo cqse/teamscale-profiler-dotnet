@@ -32,19 +32,15 @@ public class LineCoverageSynthesizerTest
     }
 
     [Test]
-    public void TracesWithoutCoverageShouldResultInException()
+    public void TracesWithoutCoverageShouldResultInNullBeingReturned()
     {
         ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
         }, "coverage_12345_1234.txt");
 
-        Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
-        {
-            new LineCoverageSynthesizer().ConvertToLineCoverageReport(traceFile, TestUtils.TestDataDirectory,
+        string report = new LineCoverageSynthesizer().ConvertToLineCoverageReport(traceFile, TestUtils.TestDataDirectory,
                 new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
-        });
-
-        Assert.That(exception.Message, Contains.Substring("no coverage"));
+        Assert.That(report, Is.Null);
     }
 
     [Test]
