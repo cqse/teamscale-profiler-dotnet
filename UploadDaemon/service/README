@@ -1,0 +1,40 @@
+The contents of this directory can be used to install Teamscale as a windows 
+service. This ensures, Teamscale is automatically restarted on system reboot.
+
+To install Teamscale as a service first configure Teamscale and ensure it can 
+be started normally. Then follow the next steps to install:
+
+1.) Edit the file teamscale-service.xml
+
+1.1.) Enter/edit the correct path to the Teamscale root directory, 
+      for example 
+      
+      <env name="TEAMSCALE_HOME" value="c:\opt\teamscale" />
+      
+1.2.) Enter/edit the correct path to the JDK or JRE installation directory, 
+      version 1.8 or better, for example 
+
+      <env name="JAVA_HOME" value="c:\program files\java\jdk1.8.0_21" />
+
+1.3.) Optionally uncomment and fill the section <serviceaccount> to run the 
+      services as a different user. Alternatively you can set this information
+      after installing using the service console, which avoids storing the
+      password in clear text.
+	  In both cases the user needs to have the "Logon as a service" right.
+      This right can be granted in the Local Security Policy management console
+      by navigating to "Local Policies > User Rights Assignment" and adding the
+      user to "Logon as a service".
+
+2.) Install the Teamscale service by running from the command line:
+
+    teamscale-service.exe install
+    
+4.) Check that the service is running. Directly after installation, you
+    might have to start the services manually or alternatively reboot the 
+    server.
+    
+If you later have to uninstall the service run the following commands:
+
+    teamscale-service.exe uninstall
+
+  

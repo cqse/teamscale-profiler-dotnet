@@ -1,0 +1,33 @@
+<service>
+	<id>teamscale-dotnet-profiler-upload-daemon</id>
+	<name>Teamscale DotNet Profiler UploadDaemon</name>
+	<description>Teamscale DotNet Profiler UploadDaemon</description>
+
+	<!-- Adjust these paths to your setup. -->
+	<!-- PROFILER_DIR should be the path that contains Profiler32.dll -->
+	<env name="PROFILER_DIR" value="c:\path\to\profiler" />
+
+	<executable>%PROFILER_DIR%\UploadDaemon\UploadDaemon.exe
+	</executable>
+	<arguments></arguments>
+	<workingdirectory>%PROFILER_DIR%\UploadDaemon</workingdirectory>
+
+	<logmode>rotate</logmode>
+
+	<stoptimeout>60sec</stoptimeout>
+
+	<!-- In case of problems try twice to restart -->
+	<onfailure action="restart" delay="10 sec" />
+	<onfailure action="restart" delay="20 sec" />
+	<onfailure action="none" />
+	<resetfailure>2 hour</resetfailure>
+
+	<!-- Optionally, you can run the service as another user. -->
+	<!--
+		<serviceaccount>
+			<domain>YOURDOMAIN</domain>
+			<user>useraccount</user>
+			<password>Pa55w0rd</password>
+		</serviceaccount>
+	-->
+</service>

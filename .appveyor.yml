@@ -53,7 +53,7 @@ after_test:
   # copy example config
   - cmd: robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
   # copy UploadDaemon
-  - cmd: robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /e /xf *.pdb & exit 0
   # copy GUI
   - cmd: robocopy .\Profiler\bin\Release\GUI teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
   # copy Licenses
