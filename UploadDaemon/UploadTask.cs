@@ -17,14 +17,12 @@ namespace UploadDaemon
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly Config config;
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
         private readonly ILineCoverageSynthesizer lineCoverageSynthesizer;
 
-        public UploadTask(Config config, IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizer lineCoverageSynthesizer)
+        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizer lineCoverageSynthesizer)
         {
-            this.config = config;
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
             this.lineCoverageSynthesizer = lineCoverageSynthesizer;
@@ -33,15 +31,15 @@ namespace UploadDaemon
         /// <summary>
         /// Scans the trace directories for traces to process and either tries to upload or archive them.
         /// </summary>
-        public async void Run()
+        public async void Run(Config config)
         {
             foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
-                await ScanDirectory(traceDirectory);
+                await ScanDirectory(traceDirectory, config);
             }
         }
 
-        private async Task ScanDirectory(string traceDirectory)
+        private async Task ScanDirectory(string traceDirectory, Config config)
         {
             logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
 
@@ -53,7 +51,7 @@ namespace UploadDaemon
             {
                 try
                 {
-                    await ProcessTraceFile(trace, archiver);
+                    await ProcessTraceFile(trace, archiver, config);
                 }
                 catch (Exception e)
                 {
@@ -64,7 +62,7 @@ namespace UploadDaemon
             logger.Debug("Finished scan");
         }
 
-        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver)
+        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver, Config config)
         {
             if (trace.IsEmpty())
             {

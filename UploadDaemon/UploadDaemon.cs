@@ -31,7 +31,6 @@ namespace UploadDaemon
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly Config config;
         private readonly UploadTask uploadTask;
         private readonly FileSystem fileSystem;
 
@@ -48,21 +47,8 @@ namespace UploadDaemon
                 return;
             }
 
-            Config config;
-            try
-            {
-                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
-                config = Config.ReadFromCentralConfigFile();
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
-                Environment.Exit(1);
-                return;
-            }
-
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-            var uploader = new UploadDaemon(config);
+            var uploader = new UploadDaemon();
             uploader.UploadOnce();
             uploader.ScheduleRegularUploads();
             uploader.WaitForNotifications();
@@ -81,17 +67,32 @@ namespace UploadDaemon
             return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
         }
 
-        public UploadDaemon(Config config)
+        public UploadDaemon()
         {
             fileSystem = new FileSystem();
+            uploadTask = new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer());
+        }
 
-            this.config = config;
+        private Config ReadConfig()
+        {
+            Config config;
+            try
+            {
+                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+                config = Config.ReadFromCentralConfigFile();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+                return null;
+            }
+
             if (config.DisableSslValidation)
             {
                 HttpClientUtils.DisableSslValidation();
             }
 
-            uploadTask = new UploadTask(config, fileSystem, new UploadFactory(), new LineCoverageSynthesizer());
+            return config;
         }
 
         /// <summary>
@@ -99,9 +100,22 @@ namespace UploadDaemon
         /// </summary>
         public void UploadOnce()
         {
+            Config config = ReadConfig();
+            if (config == null)
+            {
+                return;
+            }
+            UploadOnce(config);
+        }
+
+        /// <summary>
+        /// Uploads once, synchronously with the given config.
+        /// </summary>
+        public void UploadOnce(Config config)
+        {
             lock (SequentialUploadsLock)
             {
-                uploadTask.Run();
+                uploadTask.Run(config);
             }
         }
 
