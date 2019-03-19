@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DumpPdb
 {
@@ -26,11 +24,20 @@ namespace DumpPdb
             string assemblyName = Path.GetFileNameWithoutExtension(pdbFile);
             MethodMapper mapper = new MethodMapper();
             AssemblyMethodMappings assemblyMappings = mapper.GetMethodMappings(pdbFile, assemblyName);
+            // sorts the elements by source file and then line number since OrderBy guarantees a stable sort
+            IEnumerable<MethodMapping> sortedMappings = assemblyMappings.MethodMappings.OrderBy(mapping => mapping.StartLine)
+                .OrderBy(mapping => mapping.SourceFile);
 
-            Console.WriteLine("MethodToken, SourceFile, StartLine, EndLine");
+            Console.WriteLine("MethodToken, StartLine, EndLine, SourceFile");
             foreach (MethodMapping mapping in assemblyMappings.MethodMappings)
             {
-                Console.WriteLine($"{mapping.MethodToken}, {mapping.SourceFile}, {mapping.StartLine}, {mapping.EndLine}");
+                // we pad all fields to the length of the corresponding header plus the comma to align
+                // the fields nicely on the console for easy readability
+                // the source file is the last field because we cannot pad it to a fixed length
+                string tokenField = $"{mapping.MethodToken},".PadRight(12);
+                string startLineField = $"{mapping.StartLine},".PadRight(10);
+                string endLineField = $"{mapping.EndLine},".PadRight(8);
+                Console.WriteLine($"{tokenField} {startLineField} {endLineField} {mapping.SourceFile}");
             }
         }
     }
