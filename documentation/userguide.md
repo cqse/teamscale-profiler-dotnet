@@ -408,11 +408,7 @@ off the proxy altogether and for using a different proxy.
 
 ## SSL certificates
 
-By default, the upload daemon will validate SSL certificates and refuse to upload to endpoints with invalid
-certificates. In case you must upload to an endpoint with a self-signed, certificate, you can use the
-config option `disableSslValidation` to ignore invalid certificates.
-
-This is insecure and not recommended.
+By default, the upload daemon will not validate SSL certificates. We strongly recommend turning on the validation with the `enableSslValidation` option in the config file. The reason why it's off by default is that, according to our experience, it needs to be turned off more often than not.
 
 # Build Process
 

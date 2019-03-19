@@ -86,7 +86,7 @@ namespace UploadDaemon
             fileSystem = new FileSystem();
 
             this.config = config;
-            if (config.DisableSslValidation)
+            if (!config.EnableSslValidation)
             {
                 HttpClientUtils.DisableSslValidation();
             }

@@ -28,6 +28,7 @@ namespace Common
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Config.ConfigForProcess barConfig = config.CreateConfigForProcess("C:\\test\\bar.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
+            Assert.False(config.EnableSslValidation, "SSL verification disabled by default");
             Assert.Multiple(() =>
             {
                 Assert.That(fooConfig.Enabled, Is.True);
@@ -381,6 +382,28 @@ namespace Common
             ").CreateConfigForProcess("foo.exe");
 
             Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("include=Bar exclude=").And.Contains("mscorlib"));
+        }
+
+        [Test]
+        public void TestEnableSslVerification()
+        {
+            Config config = Config.Read(@"
+                enableSslValidation: true
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        versionAssembly: assembly
+                    - executableName: foo.exe
+                      uploader:
+                        directory: dir
+                    - executableName: bar.exe
+                      uploader:
+                        teamscale:
+                          url: ts
+            ");
+
+            Assert.True(config.EnableSslValidation, "Enabling of SSL validation");
         }
     }
 }
