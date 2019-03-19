@@ -392,15 +392,6 @@ namespace Common
                 match:
                     - profiler:
                         targetdir: C:\test1
-                    - uploader:
-                        versionAssembly: assembly
-                    - executableName: foo.exe
-                      uploader:
-                        directory: dir
-                    - executableName: bar.exe
-                      uploader:
-                        teamscale:
-                          url: ts
             ");
 
             Assert.True(config.EnableSslValidation, "Enabling of SSL validation");
