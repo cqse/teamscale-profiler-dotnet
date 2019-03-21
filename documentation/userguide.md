@@ -154,7 +154,7 @@ The profiler has several configuration options that can either be set as environ
 | :-------------------------------- | :--------------------------------------- | :--------------------------------------- |
 | COR_PROFILER_CONFIG               | Path                                     | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
-| COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `1`                  | Enable ultra-light mode by disabling re-jitting of assemblies. |
+| COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `1`                  | Enable ultra-light mode by disabling re-jitting of assemblies. Light mode must be disabled if you use the Native Image Cache. |
 | COR_PROFILER_ASSEMBLY_FILEVERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
 | COR_PROFILER_ASSEMBLY_PATHS       | `1` or `0`, default `0`                  | Print the path to loaded assemblies in the trace file. |
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This should only be used in conjunction with light mode. |
@@ -408,7 +408,7 @@ off the proxy altogether and for using a different proxy.
 
 ## SSL certificates
 
-By default, the upload daemon will not validate SSL certificates. We strongly recommend turning on the validation with the `enableSslValidation` option in the config file. The reason why it's off by default is that, according to our experience, it needs to be turned off more often than not.
+By default, the upload daemon will not validate SSL certificates. We strongly recommend turning on the validation on by setting the `disableSslValidation` option in the config file to `false`. It is disabled by default to allow for an easier setup in environments that use self-signed certificates or custom certificate authorities.
 
 # Build Process
 

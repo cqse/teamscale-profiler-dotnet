@@ -21,9 +21,9 @@ namespace Common
             public List<ProcessSection> Match { get; set; }
 
             /// <summary>
-            /// Whether SSL validation should be globally enabled. Null if the user did not set this property.
+            /// Whether SSL validation should be globally disabled. Null if the user did not set this property.
             /// </summary>
-            public bool? EnableSslValidation { get; set; }
+            public bool? DisableSslValidation { get; set; }
         }
 
         /// <summary>
