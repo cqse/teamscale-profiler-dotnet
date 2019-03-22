@@ -408,7 +408,7 @@ off the proxy altogether and for using a different proxy.
 
 ## SSL certificates
 
-By default, the upload daemon will not validate SSL certificates. We strongly recommend turning on the validation on by setting the `disableSslValidation` option in the config file to `false`. It is disabled by default to allow for an easier setup in environments that use self-signed certificates or custom certificate authorities.
+By default, the upload daemon will not validate SSL certificates. We strongly recommend turning the validation on by setting the `disableSslValidation` option in the config file to `false`. It is disabled by default to allow for an easier setup in environments that use self-signed certificates or custom certificate authorities.
 
 # Build Process
 
