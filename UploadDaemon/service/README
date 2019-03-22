@@ -1,0 +1,21 @@
+The contents of this directory can be used to install the UploadDaemon as a windows 
+service. This ensures, the UploadDaemon is automatically restarted on system reboot.
+
+To install the UploadDaemon as a service first configure the UploadDaemon and ensure it can 
+be started normally. Then follow the next steps to install:
+
+1.) Edit the file UploadDaemonService.xml and change all parts marked with TODO
+
+2.) Install the UploadDaemon service by running from the command line:
+
+    UploadDaemonService.exe install
+    
+3.) Check that the service is running. Directly after installation, you
+    might have to start the services manually or alternatively reboot the 
+    server.
+    
+If you later have to uninstall the service run the following commands:
+
+    UploadDaemonService.exe uninstall
+
+  

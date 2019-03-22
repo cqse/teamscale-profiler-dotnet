@@ -35,6 +35,9 @@ namespace UploadDaemon.SymbolAnalysis
         ///
         /// May throw exceptions if converting the trace file fails completely. Partial failures (e.g. missing
         /// PDB) are logged and no exception is thrown.
+        ///
+        /// Returns either the line coverage report to upload or null in case the conversion resulted in an
+        /// empty report.
         /// </summary>
         public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
@@ -48,9 +51,7 @@ namespace UploadDaemon.SymbolAnalysis
             Dictionary<string, FileCoverage> lineCoverage = ConvertToLineCoverage(traceFile, symbolCollection, symbolDirectory, assemblyPatterns);
             if (lineCoverage.Count == 0 || lineCoverage.Values.All(fileCoverage => fileCoverage.CoveredLineRanges.Count() == 0))
             {
-                throw new LineCoverageConversionFailedException($"Failed to convert {traceFile.FilePath} to line coverage." +
-                    $" The trace produced no coverage. Either it really doesn't contain any relevant coverage or" +
-                    $" the assembly patterns {assemblyPatterns.Describe()} are incorrect.");
+                return null;
             }
 
             StringBuilder report = new StringBuilder();

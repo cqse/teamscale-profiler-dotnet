@@ -17,6 +17,7 @@ namespace UploadDaemon
         private readonly string missingVersionDirectory;
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
+        private readonly string noLineCoverageDirectory;
 
         public Archiver(string traceDirectory, IFileSystem fileSystem)
         {
@@ -25,6 +26,7 @@ namespace UploadDaemon
             this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
+            this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
         }
 
         /// <summary>
@@ -57,6 +59,14 @@ namespace UploadDaemon
         public void ArchiveEmptyFile(string tracePath)
         {
             Archive(tracePath, emptyFileDirectory);
+        }
+
+        /// <summary>
+        /// Archives a file that, after being converted to line coverage, did not produce any coverage.
+        /// </summary>
+        public void ArchiveFileWithoutLineCoverage(string tracePath)
+        {
+            Archive(tracePath, noLineCoverageDirectory);
         }
 
         private void Archive(string tracePath, string targetDirectory)

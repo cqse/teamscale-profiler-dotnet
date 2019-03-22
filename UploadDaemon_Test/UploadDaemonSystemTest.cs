@@ -39,14 +39,14 @@ public class UploadDaemonSystemTest
 Process=foo.exe
 Inlined=1:33555646:100678050");
 
-        new UploadDaemon.UploadDaemon(Config.Read($@"
+        new UploadDaemon.UploadDaemon().UploadOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
                   versionAssembly: VersionAssembly
                   directory: {UploadDir}
-        ")).UploadOnce();
+        "));
 
         Assert.Multiple(() =>
         {
@@ -66,7 +66,7 @@ Inlined=2:{ExistingMethodToken}");
 
         File.WriteAllText(RevisionFile, "revision: 12345");
 
-        new UploadDaemon.UploadDaemon(Config.Read($@"
+        new UploadDaemon.UploadDaemon().UploadOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
@@ -74,7 +74,7 @@ Inlined=2:{ExistingMethodToken}");
                   directory: {UploadDir}
                   revisionFile: {RevisionFile}
                   pdbDirectory: {PdbDirectory}
-        ")).UploadOnce();
+        "));
 
         IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
 
