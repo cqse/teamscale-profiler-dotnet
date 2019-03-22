@@ -15,7 +15,7 @@ Documentation on installation and usage of the profiler can be found [here](./do
 ## Contributing
 
 The coverage profiler can be compiled using Visual Studio 2017. Ensure to have the Windows and .NET SDK installed.
-Please also install [CodeMaid][] to enable formatting the source code automatically on save. This keeps the
+Please also install [CodeMaid][codemaid] to enable formatting the source code automatically on save. This keeps the
 code consistently formatted for everyone.
 
 Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler.
