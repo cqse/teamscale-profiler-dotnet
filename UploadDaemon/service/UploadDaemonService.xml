@@ -3,8 +3,7 @@
 	<name>Teamscale DotNet Profiler UploadDaemon</name>
 	<description>Teamscale DotNet Profiler UploadDaemon</description>
 
-	<!-- Adjust these paths to your setup. -->
-	<!-- PROFILER_DIR should be the path that contains Profiler32.dll -->
+	<!-- TODO: adjust PROFILER_DIR to be the path that contains Profiler32.dll -->
 	<env name="PROFILER_DIR" value="c:\path\to\profiler" />
 
 	<executable>%PROFILER_DIR%\UploadDaemon\UploadDaemon.exe
