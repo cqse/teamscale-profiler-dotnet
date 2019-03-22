@@ -169,7 +169,7 @@ namespace Common
         }
 
         private readonly List<ConfigParser.ProcessSection> Sections;
-        public bool DisableSslValidation { get; private set; } = false;
+        public bool DisableSslValidation { get; private set; } = true;
 
         /// <summary>
         /// Returns all configured trace directories in which the uploader should
@@ -182,7 +182,7 @@ namespace Common
         public Config(ConfigParser.YamlConfig config)
         {
             this.Sections = config.Match;
-            this.DisableSslValidation = config.DisableSslValidation ?? false;
+            this.DisableSslValidation = config.DisableSslValidation ?? true;
         }
 
         /// <summary>

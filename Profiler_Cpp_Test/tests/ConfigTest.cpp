@@ -40,6 +40,7 @@ match:
 )", emptyEnvironment);
 
 		Assert::AreEqual(true, config.shouldIgnoreExceptions(), L"should use value from config");
+		Assert::AreEqual(true, config.shouldUseLightMode(), L"should use light mode");
 	}
 
 	TEST_METHOD(OnlyMatchingSectionsAreApplied)
@@ -201,6 +202,25 @@ match:
 
 		Assert::AreEqual(std::string("env"), config.getTargetDir(), L"must still load environment");
 		Assert::AreEqual(size_t(1), config.getProblems().size(), L"must log a problem for the nonexisting file");
+	}
+
+	TEST_METHOD(UseLightModeByDefault)
+	{
+		Config config = parse("", emptyEnvironment);
+
+		Assert::AreEqual(true, config.shouldUseLightMode(), L"should use light mode");
+	}
+
+	TEST_METHOD(DisableLightModeInConfigFile)
+	{
+		Config config = parse(R"(
+match:
+  - executablePathRegex: ".*"
+    profiler:
+        light_mode: false
+)", emptyEnvironment);
+
+		Assert::AreEqual(false, config.shouldUseLightMode(), L"should not use light mode when overwritten in config file");
 	}
 
 private:

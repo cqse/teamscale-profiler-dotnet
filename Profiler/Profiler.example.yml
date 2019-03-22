@@ -7,7 +7,7 @@ match:
       enabled: false
       # Trace files will be stored and archived here
       targetdir: C:\Users\Public\Traces
-      # Light mode is recommended.
+      # Light mode is recommended and enabled by default.
       # Turn it off if you use ngen.exe for your assemblies
       light_mode: true
       # Enable upload to Teamscale
