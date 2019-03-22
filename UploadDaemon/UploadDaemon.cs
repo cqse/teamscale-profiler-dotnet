@@ -75,17 +75,8 @@ namespace UploadDaemon
 
         private Config ReadConfig()
         {
-            Config config;
-            try
-            {
-                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
-                config = Config.ReadFromCentralConfigFile();
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
-                return null;
-            }
+            logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+            Config config = Config.ReadFromCentralConfigFile();
 
             if (config.DisableSslValidation)
             {
@@ -100,12 +91,14 @@ namespace UploadDaemon
         /// </summary>
         public void UploadOnce()
         {
-            Config config = ReadConfig();
-            if (config == null)
+            try
             {
-                return;
+                UploadOnce(ReadConfig());
             }
-            UploadOnce(config);
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+            }
         }
 
         /// <summary>

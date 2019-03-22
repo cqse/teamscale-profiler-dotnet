@@ -266,11 +266,7 @@ Inlined=1:33555646:100678050" },
     {
         private readonly bool shouldProduceCoverage;
 
-        public MockLineCoverageSynthesizer() : this(true)
-        {
-        }
-
-        public MockLineCoverageSynthesizer(bool shouldProduceCoverage)
+        public MockLineCoverageSynthesizer(bool shouldProduceCoverage = true)
         {
             this.shouldProduceCoverage = shouldProduceCoverage;
         }
