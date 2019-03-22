@@ -10,7 +10,7 @@ be started normally. Then follow the next steps to install:
 
     UploadDaemonService.exe install
     
-4.) Check that the service is running. Directly after installation, you
+3.) Check that the service is running. Directly after installation, you
     might have to start the services manually or alternatively reboot the 
     server.
     
