@@ -1,7 +1,7 @@
 #pragma once
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
-#include "Log.h"
+#include "TraceLog.h"
 #include "config/Config.h"
 #include "utils/WindowsUtils.h"
 #include <atlbase.h>
@@ -86,7 +86,7 @@ private:
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
 
 	/** The log to write all results and messages to. */
-	Log log;
+	TraceLog log;
 
 	/**
 	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe

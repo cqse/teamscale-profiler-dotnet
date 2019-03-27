@@ -1,27 +1,20 @@
 #pragma once
-#include "FunctionInfo.h"
-#include <atlbase.h>
 #include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include "config/Config.h"
+#include <atlbase.h>
+
+static const int BUFFER_SIZE = 2048;
 
 /**
- * Manages a log file on the file system to which both diagnostic messages and trace information is written.
+ * Manages a log file on the file system.
  * Unless mentioned otherwise, all methods in this class are thread-safe and perform their own synchronization.
  */
-class Log
+class FileLogBase
 {
 public:
-	Log();
-	virtual ~Log() noexcept;
+	FileLogBase();
+	virtual ~FileLogBase() noexcept;
 
-	/**
-	 * Create the log file and add general information. Must be the first method called on this object.
-	 * This method is not thread-safe or reentrant.
-	 */
-	void createLogFile(Config& config);
+	void createLogFile(std::string directory, std::string name);
 
 	/** Closes the log. Further calls to logging methods will be ignored. */
 	void shutdown();
@@ -47,14 +40,8 @@ public:
 	/** Returns the path to the log file. */
 	std::string getLogFilePath();
 
-	/** Write all information about the given jitted functions to the log. */
-	void writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
 
-	/** Write all information about the given inlined functions to the log. */
-	void writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
-
-private:
-
+protected:
 	/** Synchronizes access to the log file. */
 	CRITICAL_SECTION criticalSection;
 
@@ -69,12 +56,6 @@ private:
 
 	/** Writes the given name-value pair to the log file. */
 	void writeTupleToFile(const char* key, const char* value);
-
-	/** Write all information about the given functions to the log. */
-	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
-
-	/** Write all information about the given function to the log. */
-	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
 
 	/** Fills the given buffer with a string representing the current time. */
 	void getFormattedCurrentTime(char *result, size_t size);

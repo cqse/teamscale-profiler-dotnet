@@ -13,7 +13,7 @@ UploadDaemon::~UploadDaemon()
 	// nothing to do
 }
 
-void UploadDaemon::launch(Log &log)
+void UploadDaemon::launch(TraceLog &log)
 {
 	bool successful = execute();
 	if (!successful)

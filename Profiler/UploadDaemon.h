@@ -1,5 +1,5 @@
 #pragma once
-#include "Log.h"
+#include "TraceLog.h"
 #include <string>
 
 /**
@@ -15,7 +15,7 @@ public:
 	virtual ~UploadDaemon() noexcept;
 
 	/** Starts the upload daemon in a new background process. */
-	void launch(Log &log);
+	void launch(TraceLog &log);
 
 	/** Notifies the upload daemon that a profiler is shut down. */
 	void notifyShutdown();
@@ -23,7 +23,7 @@ public:
 private:
 
 	/** The log for error reporting. */
-	Log * log;
+	TraceLog * log;
 
 	/** Path to the executable of the upload daemon. */
 	std::string pathToExe;
