@@ -1,8 +1,9 @@
+#include "utils/WindowsUtils.h"
 #include "AttachLog.h"
 
 
 namespace {
-	/** The key to log information about inlined methods. */
+	/** The key to log information about processes to which the profiler is attached to. */
 	const char* LOG_KEY_ATTACH = "Attach";
 }
 
@@ -12,15 +13,17 @@ void AttachLog::createLogFile(std::string path) {
 }
 
 
-void AttachLog::logAttach(std::string processID, std::string executablePath)
+void AttachLog::logAttach()
 {
-	std::string message = "Attached to \"" + executablePath + "\" with PID " + processID;
+	std::string message = "Attached to \"" + WindowsUtils::getPathOfThisProcess() + 
+		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
 	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }
 
 
-void AttachLog::logDetach(std::string processID, std::string executablePath)
+void AttachLog::logDetach()
 {
-	std::string message = "Detached to \"" + executablePath + "\" with PID " + processID;
+	std::string message = "Detached from \"" + WindowsUtils::getPathOfThisProcess() + 
+		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
 	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }

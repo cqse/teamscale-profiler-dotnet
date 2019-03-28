@@ -6,8 +6,8 @@ class AttachLog: public FileLogBase
 public:
 	void createLogFile(std::string path);
 
-	void logAttach(std::string processId, std::string executablePath);
+	void logAttach();
 
-	void logDetach(std::string processId, std::string executablePath);
+	void logDetach();
 };
 

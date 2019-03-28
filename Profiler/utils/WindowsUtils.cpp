@@ -62,6 +62,11 @@ std::string WindowsUtils::getPathOfThisProcess() {
 	return std::string(appPath, length);
 }
 
+unsigned long WindowsUtils::getPidOfThisProcess() {
+	DWORD pid = GetCurrentProcessId();
+	return pid;
+}
+
 bool WindowsUtils::isFile(std::string path)
 {
 	DWORD dwAttrib = GetFileAttributes(path.c_str());

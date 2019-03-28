@@ -56,7 +56,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	// Place the attach log next to the config and profiler dll
 	std::string configPath = StringUtils::removeLastPartOfPath(config.getConfigPath());
 	attachLog.createLogFile(configPath);
-	attachLog.logAttach("", WindowsUtils::getPathOfThisProcess());
+	attachLog.logAttach();
 
 	traceLog.createLogFile(config);
 	traceLog.info("looking for configuration options in: " + config.getConfigPath());
@@ -354,20 +354,22 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 
 
 HRESULT CProfilerCallback::InitializeForAttach(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData) {
-	// TODO remove?
+		// TODO remove?
 	Debug::log("test init");
 	return S_OK;
 }
 
 HRESULT CProfilerCallback::ProfilerAttachComplete() {
+	// TODO remove?
 	Debug::log("test complete");
-	attachLog.logAttach("", "");
+	attachLog.logAttach();
 	return S_OK;
 }
 
 HRESULT CProfilerCallback::ProfilerDetachSucceeded() {
+	// TODO remove?
 	Debug::log("test detach");
-	attachLog.logDetach("", "");
+	attachLog.logDetach();
 	return S_OK;
 }
 
