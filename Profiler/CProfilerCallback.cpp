@@ -3,7 +3,7 @@
 #include "UploadDaemon.h"
 #include "utils/StringUtils.h"
 #include "utils/WindowsUtils.h"
-#include "utils/Debug.h"
+#include "utils\Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -53,37 +53,42 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		return S_OK;
 	}
 
-	log.createLogFile(config);
-	log.info("looking for configuration options in: " + config.getConfigPath());
+	// Place the attach log next to the config and profiler dll
+	std::string configPath = StringUtils::removeLastPartOfPath(config.getConfigPath());
+	attachLog.createLogFile(configPath);
+	attachLog.logAttach("", WindowsUtils::getPathOfThisProcess());
+
+	traceLog.createLogFile(config);
+	traceLog.info("looking for configuration options in: " + config.getConfigPath());
 
 	for (std::string problem : config.getProblems()) {
-		log.error(problem);
+		traceLog.error(problem);
 	}
 
 	if (config.shouldUseLightMode()) {
-		log.info("Mode: light");
+		traceLog.info("Mode: light");
 	}
 	else {
-		log.info("Mode: force re-jitting");
+		traceLog.info("Mode: force re-jitting");
 	}
 
-	log.info("Eagerness: " + std::to_string(config.getEagerness()));
+	traceLog.info("Eagerness: " + std::to_string(config.getEagerness()));
 
 	if (config.shouldStartUploadDaemon()) {
-		log.info("Starting upload deamon");
-		createDaemon().launch(log);
+		traceLog.info("Starting upload deamon");
+		createDaemon().launch(traceLog);
 	}
 
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
 		std::string message = "IIS AppPool: ";
 		message += appPool;
-		log.info(message);
+		traceLog.info(message);
 	}
 
 	std::string message = "Command Line: ";
 	message += GetCommandLine();
-	log.info(message);
+	traceLog.info(message);
 
 	if (config.shouldDumpEnvironment()) {
 		dumpEnvironment();
@@ -98,7 +103,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	profilerInfo->SetEventMask(dwEventMask);
 	profilerInfo->SetFunctionIDMapper(functionMapper);
 
-	log.logProcess(WindowsUtils::getPathOfThisProcess());
+	traceLog.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
 }
@@ -106,13 +111,13 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 void CProfilerCallback::dumpEnvironment() {
 	std::vector<std::string> environmentVariables = WindowsUtils::listEnvironmentVariables();
 	if (environmentVariables.empty()) {
-		log.error("Failed to list the environment variables");
+		traceLog.error("Failed to list the environment variables");
 		return;
 	}
 
 	for (size_t i = 0; i < environmentVariables.size(); i++)
 	{
-		log.logEnvironmentVariable(environmentVariables.at(i));
+		traceLog.logEnvironmentVariable(environmentVariables.at(i));
 	}
 }
 
@@ -141,7 +146,8 @@ void CProfilerCallback::ShutdownOnce() {
 	EnterCriticalSection(&callbackSynchronization);
 	writeFunctionInfosToLog();
 
-	log.shutdown();
+	traceLog.shutdown();
+	attachLog.shutdown();
 	if (config.shouldStartUploadDaemon()) {
 		createDaemon().notifyShutdown();
 	}
@@ -230,7 +236,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	if (config.shouldLogAssemblyPaths()) {
 		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
-	log.logAssembly(assemblyInfo);
+	traceLog.logAssembly(assemblyInfo);
 
 	// Always return OK
 	return S_OK;
@@ -346,6 +352,25 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 	return S_OK;
 }
 
+
+HRESULT CProfilerCallback::InitializeForAttach(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData) {
+	// TODO remove?
+	Debug::log("test init");
+	return S_OK;
+}
+
+HRESULT CProfilerCallback::ProfilerAttachComplete() {
+	Debug::log("test complete");
+	attachLog.logAttach("", "");
+	return S_OK;
+}
+
+HRESULT CProfilerCallback::ProfilerDetachSucceeded() {
+	Debug::log("test detach");
+	attachLog.logDetach("", "");
+	return S_OK;
+}
+
 void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, FunctionID calleeId) {
 	// Must be called from synchronized context
 
@@ -366,10 +391,10 @@ inline bool CProfilerCallback::shouldWriteEagerly() {
 
 void CProfilerCallback::writeFunctionInfosToLog() {
 	// Must be called from synchronized context
-	log.writeInlinedFunctionInfosToLog(&inlinedMethods);
+	traceLog.writeInlinedFunctionInfosToLog(&inlinedMethods);
 	inlinedMethods.clear();
 
-	log.writeJittedFunctionInfosToLog(&jittedMethods);
+	traceLog.writeJittedFunctionInfosToLog(&jittedMethods);
 	jittedMethods.clear();
 }
 

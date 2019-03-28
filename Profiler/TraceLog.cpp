@@ -15,15 +15,6 @@ namespace {
 	const char* LOG_KEY_JITTED = "Jitted";
 }
 
-TraceLog::TraceLog()
-{
-}
-
-TraceLog::~TraceLog()
-{
-}
-
-
 void TraceLog::writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
 	writeFunctionInfosToLog(LOG_KEY_JITTED, functions);

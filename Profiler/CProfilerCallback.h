@@ -2,6 +2,7 @@
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
 #include "TraceLog.h"
+#include "AttachLog.h"
 #include "config/Config.h"
 #include "utils/WindowsUtils.h"
 #include <atlbase.h>
@@ -42,6 +43,10 @@ public:
 
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+
+	STDMETHOD(InitializeForAttach)(IUnknown * pCorProfilerInfoUnk, void * pvClientData, UINT cbClientData);
+	STDMETHOD(ProfilerAttachComplete)();
+	STDMETHOD(ProfilerDetachSucceeded)();
 
 private:
 	static CProfilerCallback* instance;
@@ -86,7 +91,10 @@ private:
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
 
 	/** The log to write all results and messages to. */
-	TraceLog log;
+	TraceLog traceLog;
+
+	/** The log to write attach and detatch events to */
+	AttachLog attachLog;
 
 	/**
 	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe

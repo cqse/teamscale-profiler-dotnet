@@ -52,7 +52,7 @@ void FileLogBase::createLogFile(std::string directory, std::string name) {
 
 	// we must use backslash here or the WinAPI path manipulation functions will fail
 	// to split the path correctly
-	logFilePath = directory + "\\" + name;
+	std::string logFilePath = directory + "\\" + name;
 
 	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -74,11 +74,6 @@ void FileLogBase::shutdown()
 		CloseHandle(logFile);
 	}
 	LeaveCriticalSection(&criticalSection);
-}
-
-std::string FileLogBase::getLogFilePath()
-{
-	return std::string(logFilePath);
 }
 
 

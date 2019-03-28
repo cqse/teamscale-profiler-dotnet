@@ -37,19 +37,12 @@ public:
 	/** Writes info about a profiled assembly into the log. Should only be called once. */
 	void logAssembly(std::string assembly);
 
-	/** Returns the path to the log file. */
-	std::string getLogFilePath();
-
-
 protected:
 	/** Synchronizes access to the log file. */
 	CRITICAL_SECTION criticalSection;
 
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
 	HANDLE logFile = INVALID_HANDLE_VALUE;
-
-	/** Path of the result file. */
-	std::string logFilePath;
 
 	/** Writes the given string to the log file. */
 	int writeToFile(const char* string);
