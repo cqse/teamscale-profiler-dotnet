@@ -1,4 +1,4 @@
-disableSSLValidation: true
+disableSslValidation: true
 match:
   # This section matches all processes.
   # We configure shared options here but disable the profiler.
