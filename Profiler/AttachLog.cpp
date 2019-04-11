@@ -1,5 +1,5 @@
-#include "utils/WindowsUtils.h"
 #include "AttachLog.h"
+#include "utils/WindowsUtils.h"
 
 
 void AttachLog::createLogFile(std::string path) {
@@ -25,5 +25,5 @@ void AttachLog::logDetach() {
 
 	std::string message = timeStampString + " Detached from \"" + WindowsUtils::getPathOfThisProcess() + 
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
-	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
+	FileLogBase::writeTupleToFile(LOG_KEY_DETACH, message.c_str());
 }

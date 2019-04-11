@@ -14,6 +14,10 @@ public:
 	FileLogBase();
 	virtual ~FileLogBase() noexcept;
 
+	/**
+	 * Create the log file. Must be the first method called on this object.
+	 * This method is not thread-safe or reentrant.
+	 */
 	void createLogFile(std::string directory, std::string name, bool overwriteIfExists);
 
 	/** Closes the log. Further calls to logging methods will be ignored. */

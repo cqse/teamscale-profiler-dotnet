@@ -144,6 +144,7 @@ void CProfilerCallback::ShutdownOnce() {
 
 	EnterCriticalSection(&callbackSynchronization);
 	writeFunctionInfosToLog();
+	attachLog.logDetach();
 
 	traceLog.shutdown();
 	attachLog.shutdown();

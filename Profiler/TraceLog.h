@@ -22,11 +22,13 @@ public:
 	void writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
 
 	/**
-	 * Create the log file and add general information. Must be the first method called on this object.
+	 * Create the log file and add general information. 
+	 * Can be called as an alternative for createLogFile method of the base class as first method called on the object.
 	 * This method is not thread-safe or reentrant.
 	 */
 	void createLogFile(Config& config);
 
+	/** Writes a closing log entry to the file and closes the log file. Further calls to logging methods will be ignored. */
 	void shutdown();
 
 protected:
