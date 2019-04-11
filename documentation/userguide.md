@@ -244,7 +244,7 @@ Things to check if no trace files are written:
 In case the application doesn't start at all, please check the file `C:\Users\Public\profiler_debug.log`.
 It may contain stack traces in case the profiler crashed.
 
-The `attach.log` file in the directory of the profiler dlls might also provide some insights. It contains information about processes to which the profiler attached to/detached from.
+The `attach.log` file in the directory of the profiler dlls might also provide some insights. It contains information about processes to which the profiler attached to.
 
 ## Debugging Profiler crashes
 
