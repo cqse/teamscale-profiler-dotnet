@@ -39,6 +39,7 @@ namespace UploadDaemon
         /// </summary>
         public static void Main(string[] args)
         {
+            // TODO testing github integration
             if (IsAlreadyRunning())
             {
                 // Writing to console on purpose, to explain to users why the exe terminates immediately.
