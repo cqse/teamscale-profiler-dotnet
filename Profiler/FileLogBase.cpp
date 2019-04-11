@@ -7,6 +7,7 @@ FileLogBase::FileLogBase()
 	InitializeCriticalSection(&criticalSection);
 }
 
+
 FileLogBase::~FileLogBase()
 {
 	DeleteCriticalSection(&criticalSection);
@@ -41,6 +42,7 @@ void FileLogBase::shutdown()
 	}
 	LeaveCriticalSection(&criticalSection);
 }
+
 
 int FileLogBase::writeToFile(const char* string) {
 	int retVal = 0;

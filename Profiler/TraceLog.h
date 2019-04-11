@@ -15,9 +15,6 @@
 class TraceLog: public FileLogBase
 {
 public:
-	TraceLog();
-	virtual ~TraceLog() noexcept;
-
 	/** Write all information about the given jitted functions to the log. */
 	void writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
 

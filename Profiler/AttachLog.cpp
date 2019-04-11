@@ -1,15 +1,11 @@
 #include "AttachLog.h"
 #include "utils/WindowsUtils.h"
 
-AttachLog::AttachLog() {
-}
-
-AttachLog::~AttachLog() {
-}
 
 void AttachLog::createLogFile(std::string path) {
 	FileLogBase::createLogFile(path, "attach.log", false);
 }
+
 
 void AttachLog::logAttach() {
 	char timeStamp[BUFFER_SIZE];
@@ -20,6 +16,7 @@ void AttachLog::logAttach() {
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
 	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }
+
 
 void AttachLog::logDetach() {
 	char timeStamp[BUFFER_SIZE];
