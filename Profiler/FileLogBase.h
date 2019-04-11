@@ -14,7 +14,7 @@ public:
 	FileLogBase();
 	virtual ~FileLogBase() noexcept;
 
-	void createLogFile(std::string directory, std::string name);
+	void createLogFile(std::string directory, std::string name, bool overwriteIfExists);
 
 	/** Closes the log. Further calls to logging methods will be ignored. */
 	void shutdown();
@@ -38,6 +38,24 @@ public:
 	void logAssembly(std::string assembly);
 
 protected:
+	/** The key to log information useful when interpreting the traces. */
+	const char* LOG_KEY_INFO = "Info";
+
+	/** The key to log information about non-critical problems. */
+	const char* LOG_KEY_WARN = "Warn";
+
+	/** The key to log information about errors that should be addressed but don't prevent the profiler from tracing method calls. */
+	const char* LOG_KEY_ERROR = "Error";
+
+	/** The key to log information about a single assembly. */
+	const char* LOG_KEY_ASSEMBLY = "Assembly";
+
+	/** The key to log information about the profiled process. */
+	const char* LOG_KEY_PROCESS = "Process";
+
+	/** The key to log information about the environment variables the profiled process sees. */
+	const char* LOG_KEY_ENVIRONMENT = "Environment";
+
 	/** Synchronizes access to the log file. */
 	CRITICAL_SECTION criticalSection;
 

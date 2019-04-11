@@ -128,7 +128,6 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	Debug::log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
@@ -349,27 +348,6 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 	// Always allow inlining.
 	*pfShouldInline = true;
 
-	return S_OK;
-}
-
-
-HRESULT CProfilerCallback::InitializeForAttach(IUnknown * pCorProfilerInfoUnk,void * pvClientData, UINT cbClientData) {
-		// TODO remove?
-	Debug::log("test init");
-	return S_OK;
-}
-
-HRESULT CProfilerCallback::ProfilerAttachComplete() {
-	// TODO remove?
-	Debug::log("test complete");
-	attachLog.logAttach();
-	return S_OK;
-}
-
-HRESULT CProfilerCallback::ProfilerDetachSucceeded() {
-	// TODO remove?
-	Debug::log("test detach");
-	attachLog.logDetach();
 	return S_OK;
 }
 

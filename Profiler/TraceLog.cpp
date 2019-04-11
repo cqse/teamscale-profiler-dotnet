@@ -7,13 +7,6 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 
-namespace {
-	/** The key to log information about inlined methods. */
-	const char* LOG_KEY_INLINED = "Inlined";
-
-	/** The key to log information about jitted methods. */
-	const char* LOG_KEY_JITTED = "Jitted";
-}
 
 void TraceLog::writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
@@ -34,7 +27,10 @@ void TraceLog::createLogFile(Config& config) {
 	std::string fileName = "";
 	fileName = fileName + "coverage_" + timeStamp + ".txt";
 
-	FileLogBase::createLogFile(targetDir, fileName);
+	FileLogBase::createLogFile(targetDir, fileName, true);
+
+	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
+	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
@@ -49,4 +45,14 @@ void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info)
 	sprintf_s(signature, "%i:%i", info.assemblyNumber,
 		info.functionToken);
 	writeTupleToFile(key, signature);
+}
+
+void TraceLog::shutdown() {
+	char timeStamp[BUFFER_SIZE];
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
+	writeTupleToFile(LOG_KEY_STOPPED, timeStamp);
+
+	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler");
+
+	FileLogBase::shutdown();
 }

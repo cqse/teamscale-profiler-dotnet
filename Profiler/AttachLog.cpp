@@ -2,28 +2,28 @@
 #include "AttachLog.h"
 
 
-namespace {
-	/** The key to log information about processes to which the profiler is attached to. */
-	const char* LOG_KEY_ATTACH = "Attach";
-}
-
-
 void AttachLog::createLogFile(std::string path) {
-	FileLogBase::createLogFile(path, "attach.log");
+	FileLogBase::createLogFile(path, "attach.log", false);
 }
 
 
-void AttachLog::logAttach()
-{
-	std::string message = "Attached to \"" + WindowsUtils::getPathOfThisProcess() + 
+void AttachLog::logAttach() {
+	char timeStamp[BUFFER_SIZE];
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
+	std::string timeStampString(timeStamp);
+
+	std::string message = timeStampString + " Attached to \"" + WindowsUtils::getPathOfThisProcess() + 
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
 	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }
 
 
-void AttachLog::logDetach()
-{
-	std::string message = "Detached from \"" + WindowsUtils::getPathOfThisProcess() + 
+void AttachLog::logDetach() {
+	char timeStamp[BUFFER_SIZE];
+	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
+	std::string timeStampString(timeStamp);
+
+	std::string message = timeStampString + " Detached from \"" + WindowsUtils::getPathOfThisProcess() + 
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
 	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }

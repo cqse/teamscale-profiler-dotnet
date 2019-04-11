@@ -27,6 +27,21 @@ public:
 	 */
 	void createLogFile(Config& config);
 
+	void shutdown();
+
+protected:
+	/** The key to log information about the profiler startup. */
+	const char* LOG_KEY_STARTED = "Started";
+
+	/** The key to log information about the profiler shutdown. */
+	const char* LOG_KEY_STOPPED = "Stopped";
+
+	/** The key to log information about inlined methods. */
+	const char* LOG_KEY_INLINED = "Inlined";
+
+	/** The key to log information about jitted methods. */
+	const char* LOG_KEY_JITTED = "Jitted";
+
 private:
 	/** Write all information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);

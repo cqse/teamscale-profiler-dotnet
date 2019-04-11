@@ -13,33 +13,7 @@ FileLogBase::~FileLogBase()
 	DeleteCriticalSection(&criticalSection);
 }
 
-namespace {
-	/** The key to log information useful when interpreting the traces. */
-	const char* LOG_KEY_INFO = "Info";
-
-	/** The key to log information about non-critical problems. */
-	const char* LOG_KEY_WARN = "Warn";
-
-	/** The key to log information about errors that should be addressed but don't prevent the profiler from tracing method calls. */
-	const char* LOG_KEY_ERROR = "Error";
-
-	/** The key to log information about a single assembly. */
-	const char* LOG_KEY_ASSEMBLY = "Assembly";
-
-	/** The key to log information about the profiled process. */
-	const char* LOG_KEY_PROCESS = "Process";
-
-	/** The key to log information about the environment variables the profiled process sees. */
-	const char* LOG_KEY_ENVIRONMENT = "Environment";
-
-	/** The key to log information about the profiler startup. */
-	const char* LOG_KEY_STARTED = "Started";
-
-	/** The key to log information about the profiler shutdown. */
-	const char* LOG_KEY_STOPPED = "Stopped";
-}
-
-void FileLogBase::createLogFile(std::string directory, std::string name) {
+void FileLogBase::createLogFile(std::string directory, std::string name, bool overwriteIfExists) {
 	if (directory.empty()) {
 		// c:\users\public is usually writable for everyone
 		// we must use backslashes here or the WinAPI path manipulation functions will fail
@@ -47,28 +21,21 @@ void FileLogBase::createLogFile(std::string directory, std::string name) {
 		directory = "c:\\users\\public\\";
 	}
 
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
-
 	// we must use backslash here or the WinAPI path manipulation functions will fail
 	// to split the path correctly
 	std::string logFilePath = directory + "\\" + name;
 
-	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
-		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD creationPolicy = OPEN_ALWAYS;
+	if (overwriteIfExists) {
+		creationPolicy = OPEN_ALWAYS;
+	}
 
-	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
-	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
+	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
+		NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
 void FileLogBase::shutdown()
 {
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
-	writeTupleToFile(LOG_KEY_STOPPED, timeStamp);
-
-	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler");
-
 	EnterCriticalSection(&criticalSection);
 	if (logFile != INVALID_HANDLE_VALUE) {
 		CloseHandle(logFile);

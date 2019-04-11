@@ -44,10 +44,6 @@ public:
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
-	STDMETHOD(InitializeForAttach)(IUnknown * pCorProfilerInfoUnk, void * pvClientData, UINT cbClientData);
-	STDMETHOD(ProfilerAttachComplete)();
-	STDMETHOD(ProfilerDetachSucceeded)();
-
 private:
 	static CProfilerCallback* instance;
 
