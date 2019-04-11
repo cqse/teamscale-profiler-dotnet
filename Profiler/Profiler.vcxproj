@@ -213,11 +213,14 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="log\AttachLog.cpp" />
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="config\Config.cpp" />
     <ClCompile Include="config\ConfigParser.cpp" />
     <ClCompile Include="CProfilerCallbackBase.cpp" />
     <ClCompile Include="CProfilerCallback.cpp" />
+    <ClCompile Include="log\FileLogBase.cpp" />
+    <ClCompile Include="log\TraceLog.cpp" />
     <ClCompile Include="utils\Debug.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\binary.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\convert.cpp" />
@@ -247,16 +250,17 @@
     <ClCompile Include="lib\yaml-cpp\src\singledocparser.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\stream.cpp" />
     <ClCompile Include="lib\yaml-cpp\src\tag.cpp" />
-    <ClCompile Include="Log.cpp" />
     <ClCompile Include="lib\StackWalker\StackWalker.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="config\Config.h" />
     <ClInclude Include="config\ConfigParser.h" />
     <ClInclude Include="CProfilerCallbackBase.h" />
     <ClCompile Include="utils\StringUtils.cpp" />
+    <ClInclude Include="log\FileLogBase.h" />
     <ClInclude Include="lib\yaml-cpp\src\collectionstack.h" />
     <ClInclude Include="lib\yaml-cpp\src\directives.h" />
     <ClInclude Include="lib\yaml-cpp\src\emitterstate.h" />
@@ -279,6 +283,7 @@
     <ClInclude Include="lib\yaml-cpp\src\tag.h" />
     <ClInclude Include="lib\yaml-cpp\src\token.h" />
     <ClInclude Include="lib\StackWalker\StackWalker.h" />
+    <ClInclude Include="log\TraceLog.h" />
     <ClInclude Include="utils\Testing.h" />
     <ClInclude Include="utils\StringUtils.h" />
     <ClInclude Include="utils\Debug.h" />
@@ -287,7 +292,6 @@
     <ClCompile Include="utils\WindowsUtils.cpp">
       <FileType>CppCode</FileType>
     </ClCompile>
-    <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="UploadDaemon.h" />
     <ClInclude Include="version.h" />
