@@ -27,10 +27,10 @@ void FileLogBase::createLogFile(std::string directory, std::string name, bool ov
 
 	DWORD creationPolicy = OPEN_ALWAYS;
 	if (overwriteIfExists) {
-		creationPolicy = OPEN_ALWAYS;
+		creationPolicy = CREATE_ALWAYS;
 	}
 
-	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
+	logFile = CreateFile(logFilePath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
 		NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
