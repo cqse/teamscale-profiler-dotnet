@@ -7,6 +7,11 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 
+TraceLog::TraceLog() {
+}
+
+TraceLog::~TraceLog() {
+}
 
 void TraceLog::writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
@@ -34,6 +39,7 @@ void TraceLog::createLogFile(Config& config) {
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
+
 	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end(); i++) {
 		writeSingleFunctionInfoToLog(key, *i);
 	}
