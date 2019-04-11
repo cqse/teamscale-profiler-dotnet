@@ -1,5 +1,5 @@
 #pragma once
-#include "TraceLog.h"
+#include "log\TraceLog.h"
 #include <string>
 
 /**

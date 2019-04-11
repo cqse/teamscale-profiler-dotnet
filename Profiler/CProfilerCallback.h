@@ -1,8 +1,8 @@
 #pragma once
 #include "CProfilerCallbackBase.h"
 #include "FunctionInfo.h"
-#include "TraceLog.h"
-#include "AttachLog.h"
+#include "log\TraceLog.h"
+#include "log\AttachLog.h"
 #include "config/Config.h"
 #include "utils/WindowsUtils.h"
 #include <atlbase.h>

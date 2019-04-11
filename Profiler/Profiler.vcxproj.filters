@@ -141,13 +141,13 @@
     <ClCompile Include="lib\StackWalker\StackWalker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileLogBase.cpp">
+    <ClCompile Include="log\AttachLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TraceLog.cpp">
+    <ClCompile Include="log\FileLogBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AttachLog.cpp">
+    <ClCompile Include="log\TraceLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -257,13 +257,13 @@
     <ClInclude Include="lib\StackWalker\StackWalker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileLogBase.h">
+    <ClInclude Include="log\AttachLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TraceLog.h">
+    <ClInclude Include="log\FileLogBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AttachLog.h">
+    <ClInclude Include="log\TraceLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
