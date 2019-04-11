@@ -128,5 +128,25 @@ match:
             List<FileInfo> traces = RunProfiler(application);
             AssertNormalizedTraceFileEqualsReference(traces, expectedAssemblyIds);
         }
+
+        [Test]
+        public void TestAttachLog()
+        {
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            string[] lines = File.ReadAllLines(AttachLog);
+            string lastAttachLine = lines[lines.Length - 2];
+            Assert.That(lastAttachLine.StartsWith("Attach"));
+            Assert.That(lastAttachLine.Contains("ProfilerTestee.exe"));
+        }
+
+        [Test]
+        public void TestDetatchLog()
+        {
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            string[] lines = File.ReadAllLines(AttachLog);
+            string lastDetachLine = lines.Last();
+            Assert.That(lastDetachLine.StartsWith("Detach"));
+            Assert.That(lastDetachLine.Contains("ProfilerTestee.exe"));
+        }
     }
 }

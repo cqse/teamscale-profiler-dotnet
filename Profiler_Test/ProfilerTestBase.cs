@@ -77,6 +77,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 
         public static readonly string Profiler64Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler64.dll";
 
+        public static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
+
         /// <summary>
         /// Executes the test application with the profiler attached and returns the written traces.
         /// </summary>
