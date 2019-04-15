@@ -90,14 +90,18 @@ void FileLogBase::logAssembly(std::string assembly)
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
 }
 
-void FileLogBase::getFormattedCurrentTime(char *result, size_t size) {
+std::string FileLogBase::getFormattedCurrentTime() {
+	char formattedTime[BUFFER_SIZE];
 	SYSTEMTIME time;
 	GetSystemTime(&time);
 	// Four digits for milliseconds means we always have a leading 0 there.
 	// We consider this legacy and keep it here for compatibility reasons.
-	sprintf_s(result, size, "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
+	sprintf_s(formattedTime, sizeof(formattedTime), "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
 		time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
 		time.wMilliseconds);
+
+	std::string result(formattedTime);
+	return result;
 }
 
 void FileLogBase::writeTupleToFile(const char* key, const char* value) {

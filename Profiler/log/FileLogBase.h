@@ -73,5 +73,5 @@ protected:
 	void writeTupleToFile(const char* key, const char* value);
 
 	/** Fills the given buffer with a string representing the current time. */
-	void getFormattedCurrentTime(char *result, size_t size);
+	std::string getFormattedCurrentTime();
 };

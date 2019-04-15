@@ -21,8 +21,7 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 void TraceLog::createLogFile(Config& config) {
 	std::string targetDir = config.getTargetDir();
 
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
+	std::string timeStamp = getFormattedCurrentTime();
 
 	std::string fileName = "";
 	fileName = fileName + "coverage_" + timeStamp + ".txt";
@@ -30,7 +29,7 @@ void TraceLog::createLogFile(Config& config) {
 	FileLogBase::createLogFile(targetDir, fileName, true);
 
 	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
-	writeTupleToFile(LOG_KEY_STARTED, timeStamp);
+	writeTupleToFile(LOG_KEY_STARTED, timeStamp.c_str());
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
@@ -48,9 +47,8 @@ void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info)
 }
 
 void TraceLog::shutdown() {
-	char timeStamp[BUFFER_SIZE];
-	getFormattedCurrentTime(timeStamp, sizeof(timeStamp));
-	writeTupleToFile(LOG_KEY_STOPPED, timeStamp);
+	std::string timeStamp = getFormattedCurrentTime();
+	writeTupleToFile(LOG_KEY_STOPPED, timeStamp.c_str());
 
 	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler");
 
