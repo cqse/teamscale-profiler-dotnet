@@ -21,8 +21,6 @@ void FileLogBase::createLogFile(std::string directory, std::string name, bool ov
 		directory = "c:\\users\\public\\";
 	}
 
-	// we must use backslash here or the WinAPI path manipulation functions will fail
-	// to split the path correctly
 	std::string logFilePath = directory + "\\" + name;
 
 	DWORD creationPolicy = OPEN_ALWAYS;
