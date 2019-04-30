@@ -3,6 +3,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
@@ -44,13 +45,14 @@ namespace UploadDaemon
 
             TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
             Archiver archiver = new Archiver(traceDirectory, fileSystem);
+            LineCoverageMerger coverageMerger = new LineCoverageMerger();
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
             foreach (TraceFile trace in traces)
             {
                 try
                 {
-                    await ProcessTraceFile(trace, archiver, config);
+                    await ProcessTraceFile(trace, archiver, config, coverageMerger);
                 }
                 catch (Exception e)
                 {
@@ -58,10 +60,30 @@ namespace UploadDaemon
                 }
             }
 
+            // Tests correctness
+            // performance: -großer batch merge kleiner batch, - ram, - time
+            foreach (LineCoverageMerger.CoverageBatch batch in coverageMerger.GetBatches())
+            {
+                string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
+
+                string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
+                if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
+                {
+                    foreach (string tracePath in batch.TraceFilePaths)
+                    {
+                        archiver.ArchiveUploadedFile(tracePath);
+                    }
+                }
+                else
+                {
+                    logger.Error("Failed to upload merged line coverage from {traceFile} to {upload}. Will retry later", traceFilePaths, batch.Upload.Describe());
+                }
+            }
+
             logger.Debug("Finished scan");
         }
 
-        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver, Config config)
+        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver, Config config, LineCoverageMerger coverageMerger)
         {
             if (trace.IsEmpty())
             {
@@ -87,11 +109,11 @@ namespace UploadDaemon
             }
             else
             {
-                ProcessLineCoverage(trace, archiver, processConfig, upload);
+                ProcessLineCoverage(trace, archiver, processConfig, upload, coverageMerger);
             }
         }
 
-        private async void ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
+        private void ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
@@ -108,10 +130,10 @@ namespace UploadDaemon
                 return;
             }
 
-            string report;
+            Dictionary<string, FileCoverage> lineCoverage;
             try
             {
-                report = lineCoverageSynthesizer.ConvertToLineCoverageReport(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
             }
             catch (Exception e)
             {
@@ -119,21 +141,14 @@ namespace UploadDaemon
                 return;
             }
 
-            if (report == null)
+            if (lineCoverage == null)
             {
                 logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
                 archiver.ArchiveFileWithoutLineCoverage(trace.FilePath);
                 return;
             }
 
-            if (await upload.UploadLineCoverageAsync("trace.txt", report, timestampOrRevision))
-            {
-                archiver.ArchiveUploadedFile(trace.FilePath);
-            }
-            else
-            {
-                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
-            }
+            coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, lineCoverage);
         }
 
         private static async Task ProcessMethodCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)

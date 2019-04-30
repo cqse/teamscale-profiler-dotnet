@@ -97,7 +97,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archiver.cs" />
+    <Compile Include="CoverageMerger.cs" />
     <Compile Include="MessageFormatter.cs" />
+    <Compile Include="SymbolAnalysis\FileCoverage.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtils.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizer.cs" />

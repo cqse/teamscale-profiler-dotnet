@@ -10,7 +10,7 @@ namespace UploadDaemon.Upload
     /// <summary>
     /// Uploads data to a storage location, e.g. a directory on disk or a remote endpoint.
     /// </summary>
-    public interface IUpload
+    public interface IUpload : IEquatable<IUpload>
     {
         /// <summary>
         /// Performs the upload asynchronously (may also be synchronous).

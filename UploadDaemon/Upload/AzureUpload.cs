@@ -139,6 +139,16 @@ namespace UploadDaemon.Upload
             }
         }
 
+        public bool Equals(IUpload other)
+        {
+            if (!(other is AzureUpload otherAzureUpload))
+            {
+                return false;
+            }
+
+            return otherAzureUpload.storage.Equals(storage);
+        }
+
         private class UploadFailedException : Exception
         {
             public UploadFailedException(string message) : base(message)

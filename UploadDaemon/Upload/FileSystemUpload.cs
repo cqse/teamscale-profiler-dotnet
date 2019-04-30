@@ -76,5 +76,15 @@ namespace UploadDaemon.Upload
                 return Task.FromResult(false);
             }
         }
+
+        public bool Equals(IUpload other)
+        {
+            if (!(other is FileSystemUpload fileSystemUpload))
+            {
+                return false;
+            }
+
+            return targetDirectory == fileSystemUpload.targetDirectory;
+        }
     }
 }

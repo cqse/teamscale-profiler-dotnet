@@ -139,5 +139,21 @@ namespace UploadDaemon.Upload
                 }
             }
         }
+
+        /// <summary>
+        /// Compares this upload to the given one.
+        /// Only compares the server's URL, project and partition as these are the upload "coordinates".
+        /// Other attributes of the server do not lead to different handling of the upload in Teamscale and
+        /// are thus not relevant.
+        /// </summary>
+        public bool Equals(IUpload other)
+        {
+            if (!(other is TeamscaleUpload teamscaleUpload))
+            {
+                return false;
+            }
+
+            return server.Url == teamscaleUpload.server.Url && server.Project == teamscaleUpload.server.Project && server.Partition == teamscaleUpload.server.Partition;
+        }
     }
 }
