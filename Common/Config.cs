@@ -169,6 +169,10 @@ namespace Common
         }
 
         private readonly List<ConfigParser.ProcessSection> Sections;
+
+        /// <summary>
+        /// Whether SSL validation should be globally disabled.
+        /// </summary>
         public bool DisableSslValidation { get; private set; } = true;
 
         /// <summary>

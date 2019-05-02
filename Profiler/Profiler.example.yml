@@ -1,3 +1,4 @@
+# Whether SSL validation should be globally disabled.
 disableSslValidation: true
 match:
   # This section matches all processes.
