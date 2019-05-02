@@ -1,5 +1,10 @@
 # Whether SSL validation should be globally disabled.
 disableSslValidation: true
+# Upload new trace files every N minutes. Defaults to 5 minutes.
+# Set to 0 to disable scheduled uploads. This will cause the UploadDaemon to
+# shut down after the initial upload.
+uploadIntervalInMinutes: 5
+
 match:
   # This section matches all processes.
   # We configure shared options here but disable the profiler.

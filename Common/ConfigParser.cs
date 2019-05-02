@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
-using Common;
 
 namespace Common
 {
@@ -24,6 +23,11 @@ namespace Common
             /// Whether SSL validation should be globally disabled. Null if the user did not set this property.
             /// </summary>
             public bool? DisableSslValidation { get; set; }
+
+            /// <summary>
+            /// The interval to use for regular uploads (specified in minutes). Null if the user did not set this property.
+            /// </summary>
+            public int? UploadIntervalInMinutes { get; set; }
         }
 
         /// <summary>

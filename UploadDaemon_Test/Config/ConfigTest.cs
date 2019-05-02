@@ -29,6 +29,7 @@ namespace Common
             Config.ConfigForProcess barConfig = config.CreateConfigForProcess("C:\\test\\bar.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
             Assert.True(config.DisableSslValidation, "SSL verification disabled by default");
+            Assert.That(config.UploadIntervalInMinutes, Is.EqualTo(5));
             Assert.Multiple(() =>
             {
                 Assert.That(fooConfig.Enabled, Is.True);
@@ -395,6 +396,19 @@ namespace Common
             ");
 
             Assert.False(config.DisableSslValidation, "Enabling of SSL validation");
+        }
+
+        [Test]
+        public void TestConfigureUploadInterval()
+        {
+            Config config = Config.Read(@"
+                uploadIntervalInMinutes: 42
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.UploadIntervalInMinutes, Is.EqualTo(42));
         }
     }
 }
