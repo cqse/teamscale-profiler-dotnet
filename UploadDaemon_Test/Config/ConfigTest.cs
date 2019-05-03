@@ -410,5 +410,37 @@ namespace Common
 
             Assert.That(config.UploadIntervalInMinutes, Is.EqualTo(42));
         }
+
+        [Test]
+        public void TestConfigurePurgeThresholds()
+        {
+            Config config = Config.Read(@"
+                archivePurgingThresholdsInDays:
+                  uploadedTraces: 1
+                  emptyTraces: 3
+                  incompleteTraces: 7
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.FromDays(1)));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.EqualTo(TimeSpan.FromDays(3)));
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.EqualTo(TimeSpan.FromDays(7)));
+        }
+
+        [Test]
+        public void TestConfigurePurgeThresholdDefaults()
+        {
+            Config config = Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.Zero));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.EqualTo(TimeSpan.Zero));
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.EqualTo(TimeSpan.Zero));
+        }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using static Common.ConfigParser;
 
 namespace Common
 {
@@ -181,6 +182,11 @@ namespace Common
         public int UploadIntervalInMinutes { get; private set; }
 
         /// <summary>
+        /// The thresholds for purging upload archives. A value of <code>null</code> means purging is disabled.
+        /// </summary>
+        public PurgeUploadArchivesSection ArchivePurgingThresholds { get; private set; }
+
+        /// <summary>
         /// Returns all configured trace directories in which the uploader should
         /// regularly check for traces to upload.
         /// </summary>
@@ -193,6 +199,7 @@ namespace Common
             this.Sections = config.Match;
             this.DisableSslValidation = config.DisableSslValidation ?? true;
             this.UploadIntervalInMinutes = config.UploadIntervalInMinutes ?? 5;
+            this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new PurgeUploadArchivesSection();
         }
 
         /// <summary>
