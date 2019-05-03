@@ -430,7 +430,23 @@ namespace Common
         }
 
         [Test]
-        public void TestConfigurePurgeThresholdDefaults()
+        public void TestConfigureSomePurgeThreshold()
+        {
+            Config config = Config.Read(@"
+                archivePurgingThresholdsInDays:
+                  uploadedTraces: 1
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.FromDays(1)));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.LessThan(TimeSpan.Zero));
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.LessThan(TimeSpan.Zero));
+        }
+
+        [Test]
+        public void TestConfigureNoPurgeThreshold()
         {
             Config config = Config.Read(@"
                 match:
