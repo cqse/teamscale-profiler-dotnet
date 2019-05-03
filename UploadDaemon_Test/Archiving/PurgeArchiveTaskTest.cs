@@ -8,17 +8,23 @@ namespace UploadDaemon.Archiving
     [TestFixture]
     class PurgeArchiveTaskTest
     {
+        const string TestArchiveDirectoryPath = @"c:\tracepath";
+
+        Mock<IArchive> archive;
+        Mock<IArchiveFactory> archiveFactory;
+
+        [SetUp]
+        public void SetUp()
+        {
+            archive = new Mock<IArchive>();
+            archiveFactory = new Mock<IArchiveFactory>();
+            archiveFactory.Setup(f => f.CreateArchive(TestArchiveDirectoryPath)).Returns(archive.Object);
+        }
+
         [Test]
         public void ShouldNotPurgeAnythingIfDisabledInConfig()
         {
-            var archive = new Mock<IArchive>();
-            var archiveFactory = new Mock<IArchiveFactory>();
-            archiveFactory.Setup(f => f.CreateArchive(@"c:\tracepath")).Returns(archive.Object);
-            var config = Config.Read(@"
-                match:
-                    - profiler:
-                        targetdir: c:\tracepath
-            ");
+            var config = CreateMinimalValidConfigWithPurgingThresholdsSection("");
 
             new PurgeArchiveTask(archiveFactory.Object).Run(config);
 
@@ -28,20 +34,24 @@ namespace UploadDaemon.Archiving
         [Test]
         public void ShouldPurgeUploadedFiles()
         {
-            var archive = new Mock<IArchive>();
-            var archiveFactory = new Mock<IArchiveFactory>();
-            archiveFactory.Setup(f => f.CreateArchive(@"c:\tracepath")).Returns(archive.Object);
-            var config = Config.Read(@"
+            var config = CreateMinimalValidConfigWithPurgingThresholdsSection(@"
                 archivePurgingThresholdsInDays:
                   uploadedTraces: 1
-                match:
-                    - profiler:
-                        targetdir: c:\tracepath
             ");
 
             new PurgeArchiveTask(archiveFactory.Object).Run(config);
 
             archive.Verify(a => a.PurgeUploadedFiles(TimeSpan.FromDays(1)));
+        }
+
+        private Config CreateMinimalValidConfigWithPurgingThresholdsSection(string purgingThresholdsSection)
+        {
+            return Config.Read($@"
+                {purgingThresholdsSection}
+                match:
+                    - profiler:
+                        targetdir: {TestArchiveDirectoryPath}
+            ");
         }
     }
 }
