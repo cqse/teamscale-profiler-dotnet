@@ -101,7 +101,8 @@ namespace UploadDaemon.Archiving
                 }
                 catch (Exception e)
                 {
-                    logger.Error(e, "Unable to create archive directory {archivePath}. Trace file {trace} cannot be archived and will be processed again later", targetDirectory, tracePath);
+                    logger.Error(e, "Unable to create archive directory {archivePath}. Trace file {trace}" +
+                        " cannot be archived and will be processed again later", targetDirectory, tracePath);
                     return;
                 }
             }
@@ -125,13 +126,33 @@ namespace UploadDaemon.Archiving
                 return;
             }
 
-            foreach (string file in fileSystem.Directory.GetFiles(archiveDirectory))
+            try
             {
-                DateTime creationTime = fileSystem.File.GetCreationTime(file);
-                if (dateTimeProvider.Now > (creationTime + maximumAge))
+                foreach (string file in fileSystem.Directory.GetFiles(archiveDirectory))
                 {
-                    fileSystem.File.Delete(file);
+                    DateTime creationTime = fileSystem.File.GetCreationTime(file);
+                    if (dateTimeProvider.Now > (creationTime + maximumAge))
+                    {
+                        DeleteFile(file);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Error while purging {archive}. Some purgeable files might not have been" +
+                    " deleted.", archiveDirectory);
+            }
+        }
+
+        private void DeleteFile(string file)
+        {
+            try
+            {
+                fileSystem.File.Delete(file);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Unable to purge {trace}. The file will remain in the archive.", file);
             }
         }
     }
