@@ -173,7 +173,7 @@ namespace Common
         /// <summary>
         /// Whether SSL validation should be globally disabled.
         /// </summary>
-        public bool DisableSslValidation { get; private set; } = true;
+        public bool DisableSslValidation { get; private set; };
 
         /// <summary>
         /// The interval to use for regular uploads (specified in minutes). A value &lt;= 0 means regular uploads are disabled.
