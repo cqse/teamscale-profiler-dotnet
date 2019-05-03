@@ -141,17 +141,17 @@ namespace Common
             /// <summary>
             /// Minimal timespan to keep uploaded traces.
             /// </summary>
-            public TimeSpan UploadedTraces { get; set; }
+            public TimeSpan UploadedTraces { get; set; } = TimeSpan.MinValue;
 
             /// <summary>
             /// Minimal timespan to keep empty traces.
             /// </summary>
-            public TimeSpan EmptyTraces { get; set; }
+            public TimeSpan EmptyTraces { get; set; } = TimeSpan.MinValue;
 
             /// <summary>
             /// Minimal timespan to keep incomplete traces.
             /// </summary>
-            public TimeSpan IncompleteTraces { get; set; }
+            public TimeSpan IncompleteTraces { get; set; } = TimeSpan.MinValue;
         }
 
         /// <summary>

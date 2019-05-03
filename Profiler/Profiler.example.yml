@@ -5,7 +5,8 @@ disableSslValidation: true
 # upload once and shut down afterwards.
 uploadIntervalInMinutes: 5
 # Duration after which trace files can be purged from the UploadDaemon's
-# archives (in days). Remove this section to disable purging.
+# archives (in days). Remove this section to disable purging. Set thresholds
+# to 0 to purge immediately after upload.
 archivePurgingThresholdsInDays:
   uploadedTraces: 7
   emptyTraces: 3
