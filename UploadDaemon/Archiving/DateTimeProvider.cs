@@ -18,7 +18,9 @@ namespace UploadDaemon.Archiving
     /// </summary>
     public class DefaultDateTimeProvider : IDateTimeProvider
     {
-        /// <inheritDoc/>
+        /// <summary>
+        /// Current date time.
+        /// </summary>
         public DateTime Now => DateTime.Now;
     }
 }

@@ -30,7 +30,9 @@ namespace UploadDaemon.Archiving
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        /// <inheritDoc/>
+        /// <summary>
+        /// Creates an archive based in the given directory.
+        /// </summary>
         public IArchive CreateArchive(string baseDirectoryPath)
         {
             return new Archive(baseDirectoryPath, fileSystem, dateTimeProvider);
