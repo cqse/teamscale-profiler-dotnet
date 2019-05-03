@@ -18,8 +18,6 @@ namespace UploadDaemon
     /// </summary>
     public class UploadDaemon
     {
-        private const long MinuteToMillisecondsFactor = 1000 * 60;
-
         private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
 
         private const string DaemonControlCommandUpload = "upload";
@@ -124,7 +122,7 @@ namespace UploadDaemon
         {
             Timer timer = new Timer();
             timer.Elapsed += (sender, args) => UploadOnce();
-            timer.Interval = uploadIntervalInMinutes * MinuteToMillisecondsFactor;
+            timer.Interval = TimeSpan.FromMinutes(uploadIntervalInMinutes).TotalMilliseconds;
             timer.Enabled = true;
         }
 
