@@ -42,6 +42,7 @@ namespace UploadDaemon.Archiving
             new PurgeArchiveTask(archiveFactory.Object).Run(config);
 
             archive.Verify(a => a.PurgeUploadedFiles(TimeSpan.FromDays(1)));
+            archive.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -56,6 +57,7 @@ namespace UploadDaemon.Archiving
 
             archive.Verify(a => a.PurgeFilesWithoutLineCoverage(TimeSpan.FromDays(2)));
             archive.Verify(a => a.PurgeEmptyFiles(TimeSpan.FromDays(2)));
+            archive.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -70,6 +72,7 @@ namespace UploadDaemon.Archiving
 
             archive.Verify(a => a.PurgeFilesWithoutProcess(TimeSpan.FromDays(3)));
             archive.Verify(a => a.PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(3)));
+            archive.VerifyNoOtherCalls();
         }
 
         private Config CreateMinimalValidConfigWithPurgingThresholdsSection(string purgingThresholdsSection)
