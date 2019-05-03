@@ -15,11 +15,11 @@ namespace UploadDaemon.Archiving
         public void ShouldMoveFilesToCorrectSubfolders()
         {
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectory("coverage_1_1.txt"), @"uploaded" },
-            { FileInTraceDirectory("coverage_1_2.txt"), @"missing version" },
-            { FileInTraceDirectory("coverage_1_3.txt"), @"empty trace" },
-        });
+            {
+                { FileInTraceDirectory("coverage_1_1.txt"), @"uploaded" },
+                { FileInTraceDirectory("coverage_1_2.txt"), @"missing version" },
+                { FileInTraceDirectory("coverage_1_3.txt"), @"empty trace" },
+            });
 
             new Archiver(TraceDirectory, fileSystem).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
             new Archiver(TraceDirectory, fileSystem).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
@@ -28,22 +28,24 @@ namespace UploadDaemon.Archiving
             string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
             Assert.That(files, Is.EquivalentTo(new string[] {
-            FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-            FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
-            FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
-        }));
+                FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
+                FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
+                FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
+            }));
         }
 
         [Test]
         public void ShouldHandleExceptionsGracefully()
         {
             IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
-            {
-                fileMock.Setup(file => file.ReadAllLines(FileInTraceDirectory("coverage_1_1.txt"))).Throws<IOException>();
-            }, directoryMock =>
-            {
-            // not needed
-        }).Object;
+                {
+                    fileMock.Setup(file => file.ReadAllLines(FileInTraceDirectory("coverage_1_1.txt"))).Throws<IOException>();
+                },
+            directoryMock =>
+                {
+                    // not needed
+                }
+            ).Object;
 
             new Archiver(TraceDirectory, fileSystemMock).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
         }
