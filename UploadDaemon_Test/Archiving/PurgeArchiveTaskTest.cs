@@ -44,6 +44,34 @@ namespace UploadDaemon.Archiving
             archive.Verify(a => a.PurgeUploadedFiles(TimeSpan.FromDays(1)));
         }
 
+        [Test]
+        public void ShouldPurgeEmptyFiles()
+        {
+            var config = CreateMinimalValidConfigWithPurgingThresholdsSection(@"
+                archivePurgingThresholdsInDays:
+                  emptyTraces: 2
+            ");
+
+            new PurgeArchiveTask(archiveFactory.Object).Run(config);
+
+            archive.Verify(a => a.PurgeFilesWithoutLineCoverage(TimeSpan.FromDays(2)));
+            archive.Verify(a => a.PurgeEmptyFiles(TimeSpan.FromDays(2)));
+        }
+
+        [Test]
+        public void ShouldPurgeIncompleteFiles()
+        {
+            var config = CreateMinimalValidConfigWithPurgingThresholdsSection(@"
+                archivePurgingThresholdsInDays:
+                  incompleteTraces: 3
+            ");
+
+            new PurgeArchiveTask(archiveFactory.Object).Run(config);
+
+            archive.Verify(a => a.PurgeFilesWithoutProcess(TimeSpan.FromDays(3)));
+            archive.Verify(a => a.PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(3)));
+        }
+
         private Config CreateMinimalValidConfigWithPurgingThresholdsSection(string purgingThresholdsSection)
         {
             return Config.Read($@"
