@@ -415,6 +415,12 @@ By default, the upload daemon will not validate SSL certificates. We strongly re
 By default, the upload daemon will upload finished trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
 Set the option to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
 
+## Disabling Trace File Merging
+
+By default, the upload daemon will merge all line coverage that will be uploaded to the same
+destination into one file. This saves disk space and reduces the number of uploads.
+If this is not desired, you can turn this off by setting the `mergeLineCoverage` option to `false`.
+
 # Build Process
 
 In order to be able to interpret the generated coverage data, Teamscale needs access to the corresponding PDB files. These contain the mapping from the compiled assemblies back to the source code.
