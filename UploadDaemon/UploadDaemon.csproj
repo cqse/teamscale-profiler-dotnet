@@ -98,6 +98,7 @@
   <ItemGroup>
     <Compile Include="Archiving\Archive.cs" />
     <Compile Include="Archiving\ArchiveFactory.cs" />
+    <Compile Include="Archiving\DateTimeProvider.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="Archiving\PurgeArchiveTask.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />

@@ -209,14 +209,4 @@ namespace UploadDaemon.Archiving
             }
         }
     }
-
-    public interface IDateTimeProvider
-    {
-        DateTime Now { get; }
-    }
-
-    public class DefaultDateTimeProvider : IDateTimeProvider
-    {
-        public DateTime Now => DateTime.Now;
-    }
 }
