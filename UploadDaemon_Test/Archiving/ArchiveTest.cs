@@ -9,7 +9,7 @@ using System.IO.Abstractions.TestingHelpers;
 namespace UploadDaemon.Archiving
 {
     [TestFixture]
-    public class ArchiverTest
+    public class ArchiveTest
     {
         private const string TraceDirectory = @"C:\users\public\traces";
         private Mock<IDateTimeProvider> dateTimeProvider;
@@ -30,9 +30,9 @@ namespace UploadDaemon.Archiving
                 { FileInTraceDirectory("coverage_1_3.txt"), @"empty trace" },
             });
 
-            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
-            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
-            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_3.txt"));
+            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
+            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_3.txt"));
 
             string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
@@ -56,7 +56,7 @@ namespace UploadDaemon.Archiving
                 }
             ).Object;
 
-            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
         }
 
         [Test]
@@ -72,9 +72,9 @@ namespace UploadDaemon.Archiving
                 { FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"), FileCreatedOn(2019, 5, 1) },
             });
 
-            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(2));
-            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(2));
-            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(5));
+            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(2));
+            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(2));
+            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(5));
 
             string[] remainingFiles = fileSystemMock.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
             Assert.That(remainingFiles, Is.EquivalentTo(new string[] {

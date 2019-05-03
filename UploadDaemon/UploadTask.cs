@@ -44,14 +44,14 @@ namespace UploadDaemon
             logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
 
             TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
-            Archiver archiver = new Archiver(traceDirectory, fileSystem, new DefaultDateTimeProvider());
+            Archive archive = new Archive(traceDirectory, fileSystem, new DefaultDateTimeProvider());
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
             foreach (TraceFile trace in traces)
             {
                 try
                 {
-                    await ProcessTraceFile(trace, archiver, config);
+                    await ProcessTraceFile(trace, archive, config);
                 }
                 catch (Exception e)
                 {
@@ -62,12 +62,12 @@ namespace UploadDaemon
             logger.Debug("Finished scan");
         }
 
-        private async Task ProcessTraceFile(TraceFile trace, Archiver archiver, Config config)
+        private async Task ProcessTraceFile(TraceFile trace, Archive archive, Config config)
         {
             if (trace.IsEmpty())
             {
                 logger.Info("Archiving {trace} because it does not contain any coverage", trace.FilePath);
-                archiver.ArchiveEmptyFile(trace.FilePath);
+                archive.ArchiveEmptyFile(trace.FilePath);
                 return;
             }
 
@@ -75,7 +75,7 @@ namespace UploadDaemon
             if (processPath == null)
             {
                 logger.Info("Archiving {trace} because it does not contain a Process= line", trace.FilePath);
-                archiver.ArchiveFileWithoutProcess(trace.FilePath);
+                archive.ArchiveFileWithoutProcess(trace.FilePath);
                 return;
             }
 
@@ -84,15 +84,15 @@ namespace UploadDaemon
 
             if (processConfig.PdbDirectory == null)
             {
-                await ProcessMethodCoverage(trace, archiver, processConfig, upload);
+                await ProcessMethodCoverage(trace, archive, processConfig, upload);
             }
             else
             {
-                ProcessLineCoverage(trace, archiver, processConfig, upload);
+                ProcessLineCoverage(trace, archive, processConfig, upload);
             }
         }
 
-        private async void ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
+        private async void ProcessLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
@@ -123,13 +123,13 @@ namespace UploadDaemon
             if (report == null)
             {
                 logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
-                archiver.ArchiveFileWithoutLineCoverage(trace.FilePath);
+                archive.ArchiveFileWithoutLineCoverage(trace.FilePath);
                 return;
             }
 
             if (await upload.UploadLineCoverageAsync("trace.txt", report, timestampOrRevision))
             {
-                archiver.ArchiveUploadedFile(trace.FilePath);
+                archive.ArchiveUploadedFile(trace.FilePath);
             }
             else
             {
@@ -137,14 +137,14 @@ namespace UploadDaemon
             }
         }
 
-        private static async Task ProcessMethodCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
+        private static async Task ProcessMethodCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
         {
             string version = trace.FindVersion(processConfig.VersionAssembly);
             if (version == null)
             {
                 logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}",
                     trace.FilePath, processConfig.VersionAssembly);
-                archiver.ArchiveFileWithoutVersionAssembly(trace.FilePath);
+                archive.ArchiveFileWithoutVersionAssembly(trace.FilePath);
                 return;
             }
 
@@ -153,7 +153,7 @@ namespace UploadDaemon
 
             if (await upload.UploadAsync(trace.FilePath, prefixedVersion))
             {
-                archiver.ArchiveUploadedFile(trace.FilePath);
+                archive.ArchiveUploadedFile(trace.FilePath);
             }
             else
             {
