@@ -60,9 +60,25 @@ namespace UploadDaemon
                 }
             }
 
-            // performance: -großer batch merge kleiner batch, - ram, - time
-            foreach (LineCoverageMerger.CoverageBatch batch in coverageMerger.GetBatches())
+            await UploadMergedCoverage(archiver, coverageMerger);
+
+            logger.Debug("Finished scan");
+        }
+
+        private static async Task UploadMergedCoverage(Archiver archiver, LineCoverageMerger coverageMerger)
+        {
+            IEnumerable<LineCoverageMerger.CoverageBatch> batches = coverageMerger.GetBatches();
+            if (batches.Count() == 0)
             {
+                logger.Debug("Skipping upload of merged coverage since none was recorded");
+                return;
+            }
+
+            logger.Debug("Uploading line coverage of {count} batches", batches.Count());
+            foreach (LineCoverageMerger.CoverageBatch batch in batches)
+            {
+                logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
+                    string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
                 string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
 
                 string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
@@ -78,8 +94,6 @@ namespace UploadDaemon
                     logger.Error("Failed to upload merged line coverage from {traceFile} to {upload}. Will retry later", traceFilePaths, batch.Upload.Describe());
                 }
             }
-
-            logger.Debug("Finished scan");
         }
 
         private async Task ProcessTraceFile(TraceFile trace, Archiver archiver, Config config, LineCoverageMerger coverageMerger)
@@ -149,10 +163,12 @@ namespace UploadDaemon
 
             if (processConfig.MergeLineCoverage)
             {
+                logger.Debug("Merging line coverage from {traceFile} into previous line coverage", trace.FilePath);
                 coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, lineCoverage);
                 return;
             }
 
+            logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
             if (await upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision))
             {
