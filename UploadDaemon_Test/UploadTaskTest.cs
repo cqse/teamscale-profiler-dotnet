@@ -221,6 +221,7 @@ Inlined=1:33555646:100678050" },
             this.mockUpload = new MockUpload(returnValue);
         }
 
+        /// <inheritDoc />
         public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
         {
             return mockUpload;
@@ -236,6 +237,7 @@ Inlined=1:33555646:100678050" },
             this.shouldProduceCoverage = shouldProduceCoverage;
         }
 
+        /// <inheritDoc />
         public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             if (!shouldProduceCoverage)
