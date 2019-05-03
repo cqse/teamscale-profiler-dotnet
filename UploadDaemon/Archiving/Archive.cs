@@ -31,81 +31,61 @@ namespace UploadDaemon.Archiving
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
         }
 
-        /// <summary>
-        /// Archives a file that was successfully uploaded.
-        /// </summary>
+        /// <inheritDoc/>
         public void ArchiveUploadedFile(string tracePath)
         {
             MoveFileToArchive(tracePath, uploadedDirectory);
         }
 
-        /// <summary>
-        /// Deletes all uploaded files that are older than the given maximum age from the archive.
-        /// </summary>
+        /// <inheritDoc/>
         public void PurgeUploadedFiles(TimeSpan maximumAge)
         {
             PurgeFiles(uploadedDirectory, maximumAge);
         }
 
-        /// <summary>
-        /// Archives a file that has no version assembly.
-        /// </summary>
+        /// <inheritDoc/>
         public void ArchiveFileWithoutVersionAssembly(string tracePath)
         {
             MoveFileToArchive(tracePath, missingVersionDirectory);
         }
 
-        /// <summary>
-        /// Deletes all files without version assembly that are older than the given maximum age from the archive.
-        /// </summary>
+        /// <inheritDoc/>
         public void PurgeFilesWithoutVersionAssembly(TimeSpan maximumAge)
         {
             PurgeFiles(missingVersionDirectory, maximumAge);
         }
 
-        /// <summary>
-        /// Archives a file that has no profiled process path.
-        /// </summary>
+        /// <inheritDoc/>
         public void ArchiveFileWithoutProcess(string tracePath)
         {
             MoveFileToArchive(tracePath, missingProcessDirectory);
         }
 
-        /// <summary>
-        /// Deletes all files without a profiled process that are older than the given maximum age from the archive.
-        /// </summary>
+        /// <inheritDoc/>
         public void PurgeFilesWithoutProcess(TimeSpan maximumAge)
         {
             PurgeFiles(missingProcessDirectory, maximumAge);
         }
 
-        /// <summary>
-        /// Archives a file that has no coverage data (Jitted=, Inlined= lines).
-        /// </summary>
+        /// <inheritDoc/>
         public void ArchiveEmptyFile(string tracePath)
         {
             MoveFileToArchive(tracePath, emptyFileDirectory);
         }
 
-        /// <summary>
-        /// Deletes all files without coverage that are older than the given maximum age from the archive.
-        /// </summary>
+        /// <inheritDoc/>
         public void PurgeEmptyFiles(TimeSpan maximumAge)
         {
             PurgeFiles(emptyFileDirectory, maximumAge);
         }
 
-        /// <summary>
-        /// Archives a file that, after being converted to line coverage, did not produce any coverage.
-        /// </summary>
+        /// <inheritDoc/>
         public void ArchiveFileWithoutLineCoverage(string tracePath)
         {
             MoveFileToArchive(tracePath, noLineCoverageDirectory);
         }
 
-        /// <summary>
-        /// Deletes all files without line coverage that are older than the given maximum age from the archive.
-        /// </summary>
+        /// <inheritDoc/>
         public void PurgeFilesWithoutLineCoverage(TimeSpan maximumAge)
         {
             PurgeFiles(noLineCoverageDirectory, maximumAge);
