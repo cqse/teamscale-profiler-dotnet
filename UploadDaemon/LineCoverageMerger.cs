@@ -15,7 +15,7 @@ namespace UploadDaemon
     /// This allows uploading the coverage in one go instead of splitting it into multiple requests and thus
     /// commits in Teamscale.
     /// </summary>
-    internal class LineCoverageMerger
+    public class LineCoverageMerger
     {
         private class MergeKey
         {
@@ -46,7 +46,7 @@ namespace UploadDaemon
             /// <summary>
             /// The original trace files from which the line coverage was generated. Used for logging.
             /// </summary>
-            public List<string> TraceFilePaths { get; }
+            public List<string> TraceFilePaths { get; } = new List<string>();
 
             public CoverageBatch(IUpload upload, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
             {
@@ -73,17 +73,19 @@ namespace UploadDaemon
             if (!mergedCoverage.TryGetValue(key, out CoverageBatch batch))
             {
                 batch = new CoverageBatch(key.Upload, key.RevisionOrTimestamp);
+                mergedCoverage[key] = batch;
             }
 
             batch.TraceFilePaths.Add(traceFilePath);
 
             foreach (string file in lineCoverage.Keys)
             {
-                if (!batch.LineCoverage.ContainsKey(file))
+                if (!batch.LineCoverage.TryGetValue(file, out FileCoverage fileCoverage))
                 {
-                    batch.LineCoverage[file] = new FileCoverage();
+                    fileCoverage = new FileCoverage();
+                    batch.LineCoverage[file] = fileCoverage;
                 }
-                batch.LineCoverage[file].CoveredLineRanges.UnionWith(lineCoverage[file].CoveredLineRanges);
+                fileCoverage.CoveredLineRanges.UnionWith(lineCoverage[file].CoveredLineRanges);
             }
         }
 

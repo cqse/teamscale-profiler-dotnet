@@ -260,6 +260,11 @@ Inlined=1:33555646:100678050" },
         {
             return Task.FromResult(returnValue);
         }
+
+        public bool Equals(IUpload other)
+        {
+            return base.Equals(other);
+        }
     }
 
     private class MockLineCoverageSynthesizer : ILineCoverageSynthesizer
@@ -271,13 +276,19 @@ Inlined=1:33555646:100678050" },
             this.shouldProduceCoverage = shouldProduceCoverage;
         }
 
-        public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            if (shouldProduceCoverage)
+            if (!shouldProduceCoverage)
             {
-                return "file1.cs\n12-33";
+                return null;
             }
-            return null;
+
+            FileCoverage fileCoverage = new FileCoverage();
+            fileCoverage.CoveredLineRanges.Add((12, 33));
+            return new Dictionary<string, FileCoverage>()
+            {
+                { "file1.cs", fileCoverage }
+            };
         }
     }
 

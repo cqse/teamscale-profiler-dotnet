@@ -98,6 +98,7 @@
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Config\ConfigTest.cs" />
     <Compile Include="Config\ConfigParserTest.cs" />
+    <Compile Include="LineCoverageMergerTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
     <Compile Include="ArchiverTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />

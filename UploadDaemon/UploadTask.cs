@@ -60,7 +60,6 @@ namespace UploadDaemon
                 }
             }
 
-            // Tests correctness
             // performance: -großer batch merge kleiner batch, - ram, - time
             foreach (LineCoverageMerger.CoverageBatch batch in coverageMerger.GetBatches())
             {
