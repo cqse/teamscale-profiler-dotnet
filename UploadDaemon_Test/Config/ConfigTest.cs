@@ -32,6 +32,7 @@ namespace Common
             Assert.Multiple(() =>
             {
                 Assert.That(fooConfig.Enabled, Is.True);
+                Assert.That(fooConfig.MergeLineCoverage, Is.True);
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
                 Assert.That(fooConfig.VersionPrefix, Is.Empty);

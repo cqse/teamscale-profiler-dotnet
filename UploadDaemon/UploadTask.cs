@@ -108,11 +108,11 @@ namespace UploadDaemon
             }
             else
             {
-                ProcessLineCoverage(trace, archiver, processConfig, upload, coverageMerger);
+                await ProcessLineCoverage(trace, archiver, processConfig, upload, coverageMerger);
             }
         }
 
-        private void ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
+        private async Task ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
@@ -147,7 +147,21 @@ namespace UploadDaemon
                 return;
             }
 
-            coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, lineCoverage);
+            if (processConfig.MergeLineCoverage)
+            {
+                coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, lineCoverage);
+                return;
+            }
+
+            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
+            if (await upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision))
+            {
+                archiver.ArchiveUploadedFile(trace.FilePath);
+            }
+            else
+            {
+                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
+            }
         }
 
         private static async Task ProcessMethodCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)

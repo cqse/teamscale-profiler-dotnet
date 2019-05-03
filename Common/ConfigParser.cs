@@ -103,6 +103,11 @@ namespace Common
             public bool? Enabled { get; set; }
 
             /// <summary>
+            /// Whether the uploader should merge line coverage before uploading it.
+            /// </summary>
+            public bool? MergeLineCoverage { get; set; }
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// </summary>
             public string VersionPrefix { get; set; }
