@@ -5,13 +5,12 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
-using System.Threading.Tasks;
 using UploadDaemon;
 using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
 
 [TestFixture]
-public class UploadTaskTest
+public partial class UploadTaskTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
     private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
@@ -225,45 +224,6 @@ Inlined=1:33555646:100678050" },
         public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
         {
             return mockUpload;
-        }
-    }
-
-    private class MockUpload : IUpload
-    {
-        private readonly bool returnValue;
-
-        /// <summary>
-        /// The last version that was passed to the UploadAsnyc method or null if that method was never called.
-        /// </summary>
-        public string LastUsedVersion { get; private set; } = null;
-
-        public MockUpload(bool returnValue)
-        {
-            this.returnValue = returnValue;
-        }
-
-        /// <summary>
-        /// Fakes an upload and returns the result passed to the constructor.
-        /// </summary>
-        public Task<bool> UploadAsync(string filePath, string version)
-        {
-            LastUsedVersion = version;
-            return Task.FromResult(returnValue);
-        }
-
-        public string Describe()
-        {
-            return "MockUpload";
-        }
-
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
-        {
-            return Task.FromResult(returnValue);
-        }
-
-        public bool Equals(IUpload other)
-        {
-            return base.Equals(other);
         }
     }
 

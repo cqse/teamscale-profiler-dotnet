@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Common;
 using UploadDaemon.SymbolAnalysis;
+using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -139,16 +140,6 @@ namespace UploadDaemon.Upload
             }
         }
 
-        public bool Equals(IUpload other)
-        {
-            if (!(other is AzureUpload otherAzureUpload))
-            {
-                return false;
-            }
-
-            return otherAzureUpload.storage.Equals(storage);
-        }
-
         private class UploadFailedException : Exception
         {
             public UploadFailedException(string message) : base(message)
@@ -158,6 +149,11 @@ namespace UploadDaemon.Upload
             public UploadFailedException(string message, Exception innerException) : base(message, innerException)
             {
             }
+        }
+
+        public object GetDictionaryKey()
+        {
+            return storage;
         }
     }
 }

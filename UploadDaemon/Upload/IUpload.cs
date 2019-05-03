@@ -10,7 +10,7 @@ namespace UploadDaemon.Upload
     /// <summary>
     /// Uploads data to a storage location, e.g. a directory on disk or a remote endpoint.
     /// </summary>
-    public interface IUpload : IEquatable<IUpload>
+    public interface IUpload
     {
         /// <summary>
         /// Performs the upload asynchronously (may also be synchronous).
@@ -36,5 +36,12 @@ namespace UploadDaemon.Upload
         /// Must not contain passwords/access keys/...
         /// </summary>
         string Describe();
+
+        /// <summary>
+        /// Returns an object that implements GetHashCode and Equals which can
+        /// be used as a key in a Dictionary that identifies this upload. I.e.
+        /// two keys should only be equal if they represent the same upload destination.
+        /// </summary>
+        object GetDictionaryKey();
     }
 }

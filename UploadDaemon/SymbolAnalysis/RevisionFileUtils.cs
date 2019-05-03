@@ -26,6 +26,13 @@ namespace UploadDaemon.SymbolAnalysis
             /// </summary>
             public bool IsRevision { get; set; }
 
+            public override bool Equals(object other) =>
+                other is RevisionOrTimestamp revision && revision.Value.Equals(Value) &&
+                revision.IsRevision.Equals(IsRevision);
+
+            public override int GetHashCode() =>
+                (Value, IsRevision).GetHashCode();
+
             /// <summary>
             /// Returns the contents of a revision file that represents the same revision or timestamp
             /// as this object.

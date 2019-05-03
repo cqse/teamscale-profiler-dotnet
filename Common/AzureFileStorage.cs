@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace Common
 {
     /// <summary>
     /// Data class that holds all details necessary to connect to an Azure File Storage.
     /// </summary>
-    public class AzureFileStorage : IEquatable<AzureFileStorage>
+    public class AzureFileStorage
     {
         /// <summary>
         /// Connection string for a file storage. For details on how to create connection strings,
@@ -27,9 +28,11 @@ namespace Common
         [JsonProperty(Required = Required.Default)]
         public string Directory { get; set; }
 
-        public bool Equals(AzureFileStorage other)
-        {
-            return other.ConnectionString == ConnectionString && other.Directory == Directory && other.ShareName == ShareName;
-        }
+        public override bool Equals(object other) =>
+            other is AzureFileStorage storage && storage.ConnectionString.Equals(ConnectionString) &&
+            storage.ShareName.Equals(ShareName) && storage.Directory.Equals(Directory);
+
+        public override int GetHashCode() =>
+            (ConnectionString, ShareName, Directory).GetHashCode();
     }
 }

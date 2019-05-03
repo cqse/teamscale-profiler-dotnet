@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
@@ -77,14 +78,9 @@ namespace UploadDaemon.Upload
             }
         }
 
-        public bool Equals(IUpload other)
+        public object GetDictionaryKey()
         {
-            if (!(other is FileSystemUpload fileSystemUpload))
-            {
-                return false;
-            }
-
-            return targetDirectory == fileSystemUpload.targetDirectory;
+            return targetDirectory;
         }
     }
 }

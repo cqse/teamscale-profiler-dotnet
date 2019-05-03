@@ -20,7 +20,15 @@ namespace UploadDaemon
         private class MergeKey
         {
             public RevisionFileUtils.RevisionOrTimestamp RevisionOrTimestamp;
-            public IUpload Upload;
+            public object UploadDictionaryKey;
+            public Type UploadType;
+
+            public override bool Equals(object other) =>
+                other is MergeKey key && key.RevisionOrTimestamp.Equals(RevisionOrTimestamp)
+                && key.UploadType.Equals(UploadType) && key.UploadDictionaryKey.Equals(UploadDictionaryKey);
+
+            public override int GetHashCode() =>
+                (RevisionOrTimestamp, UploadType, UploadDictionaryKey).GetHashCode();
         }
 
         /// <summary>
@@ -67,12 +75,13 @@ namespace UploadDaemon
             MergeKey key = new MergeKey
             {
                 RevisionOrTimestamp = revisionOrTimestamp,
-                Upload = upload,
+                UploadDictionaryKey = upload.GetDictionaryKey(),
+                UploadType = upload.GetType()
             };
 
             if (!mergedCoverage.TryGetValue(key, out CoverageBatch batch))
             {
-                batch = new CoverageBatch(key.Upload, key.RevisionOrTimestamp);
+                batch = new CoverageBatch(upload, key.RevisionOrTimestamp);
                 mergedCoverage[key] = batch;
             }
 
