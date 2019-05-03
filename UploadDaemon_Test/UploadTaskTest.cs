@@ -10,7 +10,7 @@ using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
 
 [TestFixture]
-public partial class UploadTaskTest
+public class UploadTaskTest
 {
     private const string TraceDirectory = @"C:\users\public\traces";
     private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";

@@ -129,35 +129,15 @@ namespace UploadDaemon
         private async Task ProcessLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
-            ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
-
-            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision;
-            try
+            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
+            if (timestampOrRevision == null)
             {
-                timestampOrRevision = RevisionFileUtils.Parse(fileSystem.File.ReadAllLines(processConfig.RevisionFile), processConfig.RevisionFile);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read revision file {revisionFile} while processing {traceFile}. Will retry later",
-                    processConfig.RevisionFile, trace.FilePath);
                 return;
             }
 
-            Dictionary<string, FileCoverage> lineCoverage;
-            try
-            {
-                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", trace.FilePath);
-                return;
-            }
-
+            Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archiver, processConfig);
             if (lineCoverage == null)
             {
-                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
-                archiver.ArchiveFileWithoutLineCoverage(trace.FilePath);
                 return;
             }
 
@@ -178,6 +158,51 @@ namespace UploadDaemon
             {
                 logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
             }
+        }
+
+        /// <summary>
+        /// Tries to read the revision file based on the config. Logs and returns null if this fails.
+        /// </summary>
+        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(TraceFile trace, Config.ConfigForProcess processConfig)
+        {
+            try
+            {
+                return RevisionFileUtils.Parse(fileSystem.File.ReadAllLines(processConfig.RevisionFile), processConfig.RevisionFile);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read revision file {revisionFile} while processing {traceFile}. Will retry later",
+                    processConfig.RevisionFile, trace.FilePath);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Tries to read and convert the trace file. Logs and returns null if this fails.
+        /// Empty trace files are archived and null is returned as well.
+        /// </summary>
+        private Dictionary<string, FileCoverage> ConvertTraceFileToLineCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig)
+        {
+            ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
+            Dictionary<string, FileCoverage> lineCoverage;
+            try
+            {
+                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", trace.FilePath);
+                return null;
+            }
+
+            if (lineCoverage == null)
+            {
+                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
+                archiver.ArchiveFileWithoutLineCoverage(trace.FilePath);
+                return null;
+            }
+
+            return lineCoverage;
         }
 
         private static async Task ProcessMethodCoverage(TraceFile trace, Archiver archiver, Config.ConfigForProcess processConfig, IUpload upload)
