@@ -13,15 +13,17 @@ namespace UploadDaemon.Archiving
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly IFileSystem fileSystem;
+        private readonly IDateTimeProvider dateTimeProvider;
         private readonly string uploadedDirectory;
         private readonly string missingVersionDirectory;
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
 
-        public Archiver(string traceDirectory, IFileSystem fileSystem)
+        public Archiver(string traceDirectory, IFileSystem fileSystem, IDateTimeProvider dateTimeProvider)
         {
             this.fileSystem = fileSystem;
+            this.dateTimeProvider = dateTimeProvider;
             this.uploadedDirectory = Path.Combine(traceDirectory, "uploaded");
             this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
@@ -38,11 +40,27 @@ namespace UploadDaemon.Archiving
         }
 
         /// <summary>
+        /// Deletes all uploaded files that are older than the given maximum age from the archive.
+        /// </summary>
+        public void PurgeUploadedFiles(TimeSpan maximumAge)
+        {
+            PurgeFiles(uploadedDirectory, maximumAge);
+        }
+
+        /// <summary>
         /// Archives a file that has no version assembly.
         /// </summary>
         public void ArchiveFileWithoutVersionAssembly(string tracePath)
         {
             Archive(tracePath, missingVersionDirectory);
+        }
+
+        /// <summary>
+        /// Deletes all files without version assembly that are older than the given maximum age from the archive.
+        /// </summary>
+        public void PurgeFilesWithoutVersionAssembly(TimeSpan maximumAge)
+        {
+            PurgeFiles(missingVersionDirectory, maximumAge);
         }
 
         /// <summary>
@@ -54,6 +72,14 @@ namespace UploadDaemon.Archiving
         }
 
         /// <summary>
+        /// Deletes all files without a profiled process that are older than the given maximum age from the archive.
+        /// </summary>
+        public void PurgeFilesWithoutProcess(TimeSpan maximumAge)
+        {
+            PurgeFiles(missingProcessDirectory, maximumAge);
+        }
+
+        /// <summary>
         /// Archives a file that has no coverage data (Jitted=, Inlined= lines).
         /// </summary>
         public void ArchiveEmptyFile(string tracePath)
@@ -62,11 +88,27 @@ namespace UploadDaemon.Archiving
         }
 
         /// <summary>
+        /// Deletes all files without coverage that are older than the given maximum age from the archive.
+        /// </summary>
+        public void PurgeEmptyFiles(TimeSpan maximumAge)
+        {
+            PurgeFiles(emptyFileDirectory, maximumAge);
+        }
+
+        /// <summary>
         /// Archives a file that, after being converted to line coverage, did not produce any coverage.
         /// </summary>
         public void ArchiveFileWithoutLineCoverage(string tracePath)
         {
             Archive(tracePath, noLineCoverageDirectory);
+        }
+
+        /// <summary>
+        /// Deletes all files without line coverage that are older than the given maximum age from the archive.
+        /// </summary>
+        public void PurgeFilesWithoutLineCoverage(TimeSpan maximumAge)
+        {
+            PurgeFiles(noLineCoverageDirectory, maximumAge);
         }
 
         private void Archive(string tracePath, string targetDirectory)
@@ -95,5 +137,27 @@ namespace UploadDaemon.Archiving
                     " which may lead to it being uploaded multiple times", tracePath, targetDirectory);
             }
         }
+
+        private void PurgeFiles(string archiveDirectory, TimeSpan maximumAge)
+        {
+            foreach (string file in fileSystem.Directory.GetFiles(archiveDirectory))
+            {
+                DateTime creationTime = fileSystem.File.GetCreationTime(file);
+                if (dateTimeProvider.Now > (creationTime + maximumAge))
+                {
+                    fileSystem.File.Delete(file);
+                }
+            }
+        }
+    }
+
+    public interface IDateTimeProvider
+    {
+        DateTime Now { get; }
+    }
+
+    public class DefaultDateTimeProvider : IDateTimeProvider
+    {
+        public DateTime Now => DateTime.Now;
     }
 }

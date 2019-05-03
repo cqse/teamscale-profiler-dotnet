@@ -44,7 +44,7 @@ namespace UploadDaemon
             logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
 
             TraceFileScanner scanner = new TraceFileScanner(traceDirectory, fileSystem);
-            Archiver archiver = new Archiver(traceDirectory, fileSystem);
+            Archiver archiver = new Archiver(traceDirectory, fileSystem, new DefaultDateTimeProvider());
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
             foreach (TraceFile trace in traces)

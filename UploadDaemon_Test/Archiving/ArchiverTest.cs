@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using Moq;
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
@@ -10,6 +12,13 @@ namespace UploadDaemon.Archiving
     public class ArchiverTest
     {
         private const string TraceDirectory = @"C:\users\public\traces";
+        private Mock<IDateTimeProvider> dateTimeProvider;
+
+        [SetUp]
+        public void SetUp()
+        {
+            dateTimeProvider = new Mock<IDateTimeProvider>();
+        }
 
         [Test]
         public void ShouldMoveFilesToCorrectSubfolders()
@@ -21,9 +30,9 @@ namespace UploadDaemon.Archiving
                 { FileInTraceDirectory("coverage_1_3.txt"), @"empty trace" },
             });
 
-            new Archiver(TraceDirectory, fileSystem).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
-            new Archiver(TraceDirectory, fileSystem).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
-            new Archiver(TraceDirectory, fileSystem).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_3.txt"));
+            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
+            new Archiver(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_3.txt"));
 
             string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
@@ -47,7 +56,32 @@ namespace UploadDaemon.Archiving
                 }
             ).Object;
 
-            new Archiver(TraceDirectory, fileSystemMock).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
+        }
+
+        [Test]
+        public void ShouldPurgeOldFiles()
+        {
+            dateTimeProvider.Setup(dtp => dtp.Now).Returns(new DateTime(2019, 5, 4));
+            IFileSystem fileSystemMock = new MockFileSystem(new Dictionary<string, MockFileData>()
+            {
+                { FileInTraceDirectory(@"uploaded\coverage_1_1.txt"), FileCreatedOn(2019, 5, 1) },
+                { FileInTraceDirectory(@"uploaded\coverage_1_2.txt"), FileCreatedOn(2019, 5, 2) },
+                { FileInTraceDirectory(@"uploaded\coverage_1_3.txt"), FileCreatedOn(2019, 5, 3) },
+                { FileInTraceDirectory(@"missing-version\coverage_1_2.txt"), FileCreatedOn(2019, 4, 1) },
+                { FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"), FileCreatedOn(2019, 5, 1) },
+            });
+
+            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(2));
+            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(2));
+            new Archiver(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(5));
+
+            string[] remainingFiles = fileSystemMock.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
+            Assert.That(remainingFiles, Is.EquivalentTo(new string[] {
+               FileInTraceDirectory(@"uploaded\coverage_1_2.txt"),
+               FileInTraceDirectory(@"uploaded\coverage_1_3.txt"),
+               FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
+            }));
         }
 
         /// <summary>
@@ -56,6 +90,14 @@ namespace UploadDaemon.Archiving
         private string FileInTraceDirectory(string fileName)
         {
             return Path.Combine(TraceDirectory, fileName);
+        }
+
+        private MockFileData FileCreatedOn(int year, int month, int day)
+        {
+            return new MockFileData("")
+            {
+                CreationTime = new DateTime(year, month, day)
+            };
         }
     }
 }
