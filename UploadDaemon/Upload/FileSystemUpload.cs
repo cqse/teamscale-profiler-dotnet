@@ -78,6 +78,7 @@ namespace UploadDaemon.Upload
             }
         }
 
+        /// <inheritDoc />
         public object GetDictionaryKey()
         {
             return targetDirectory;

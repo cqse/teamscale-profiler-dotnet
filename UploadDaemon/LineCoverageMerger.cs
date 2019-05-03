@@ -17,10 +17,27 @@ namespace UploadDaemon
     /// </summary>
     public class LineCoverageMerger
     {
+        /// <summary>
+        /// Key to a dictionary holding all batches of coverage.
+        /// Each key identifies a destination to which coverage should be uploaded.
+        /// Coverage that has the same destination, i.e. the same MergeKey, will
+        /// be merged.
+        /// </summary>
         private class MergeKey
         {
+            /// <summary>
+            /// Revision or timestamp to which the coverage should be uploaded.
+            /// </summary>
             public RevisionFileUtils.RevisionOrTimestamp RevisionOrTimestamp;
+
+            /// <summary>
+            /// Key provided by the IUploader to group coverage with the same destination.
+            /// </summary>
             public object UploadDictionaryKey;
+
+            /// <summary>
+            /// The type of IUploader to use for the coverage.
+            /// </summary>
             public Type UploadType;
 
             public override bool Equals(object other) =>

@@ -141,6 +141,7 @@ namespace UploadDaemon.Upload
             }
         }
 
+        /// <inheritDoc />
         public object GetDictionaryKey()
         {
             return (server.Url, server.Project, server.Partition);

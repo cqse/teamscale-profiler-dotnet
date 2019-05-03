@@ -40,7 +40,9 @@ namespace UploadDaemon.Upload
         /// <summary>
         /// Returns an object that implements GetHashCode and Equals which can
         /// be used as a key in a Dictionary that identifies this upload. I.e.
-        /// two keys should only be equal if they represent the same upload destination.
+        /// two keys from the same type of IUpload should only be equal if
+        /// they represent the same upload destination and coverage targeted
+        /// at both IUploads can be merged and uploaded in one go.
         /// </summary>
         object GetDictionaryKey();
     }

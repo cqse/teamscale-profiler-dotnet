@@ -151,6 +151,7 @@ namespace UploadDaemon.Upload
             }
         }
 
+        /// <inheritDoc />
         public object GetDictionaryKey()
         {
             return storage;
