@@ -5,6 +5,9 @@ using System.IO.Abstractions;
 
 namespace UploadDaemon.Archiving
 {
+    /// <summary>
+    /// A trace-file archive.
+    /// </summary>
     public interface IArchive
     {
         /// <summary>
