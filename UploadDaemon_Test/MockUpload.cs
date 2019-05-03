@@ -28,11 +28,13 @@ public class MockUpload : IUpload
         return Task.FromResult(returnValue);
     }
 
+    /// <inheritDoc />
     public string Describe()
     {
         return "MockUpload";
     }
 
+    /// <inheritDoc />
     public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
     {
         return Task.FromResult(returnValue);
