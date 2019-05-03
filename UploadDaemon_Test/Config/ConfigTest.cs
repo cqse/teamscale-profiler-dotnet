@@ -441,8 +441,8 @@ namespace Common
             ");
 
             Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.FromDays(1)));
-            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.LessThan(TimeSpan.Zero));
-            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.LessThan(TimeSpan.Zero));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
         }
 
         [Test]
@@ -454,9 +454,9 @@ namespace Common
                         targetdir: C:\test1
             ");
 
-            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.LessThan(TimeSpan.Zero));
-            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.LessThan(TimeSpan.Zero));
-            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.LessThan(TimeSpan.Zero));
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
         }
     }
 }

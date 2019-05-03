@@ -31,30 +31,30 @@ namespace UploadDaemon.Archiving
 
         private static void PurgeIncompleteFiles(Config config, IArchive archive)
         {
-            TimeSpan threshold = config.ArchivePurgingThresholds.IncompleteTraces;
-            if (threshold >= TimeSpan.Zero)
+            TimeSpan? threshold = config.ArchivePurgingThresholds.IncompleteTraces;
+            if (threshold != null)
             {
-                archive.PurgeFilesWithoutProcess(threshold);
-                archive.PurgeFilesWithoutVersionAssembly(threshold);
+                archive.PurgeFilesWithoutProcess((TimeSpan) threshold);
+                archive.PurgeFilesWithoutVersionAssembly((TimeSpan)threshold);
             }
         }
 
         private static void PurgeEmptyFiles(Config config, IArchive archive)
         {
-            TimeSpan threshold = config.ArchivePurgingThresholds.EmptyTraces;
+            TimeSpan? threshold = config.ArchivePurgingThresholds.EmptyTraces;
             if (threshold >= TimeSpan.Zero)
             {
-                archive.PurgeEmptyFiles(threshold);
-                archive.PurgeFilesWithoutLineCoverage(threshold);
+                archive.PurgeEmptyFiles((TimeSpan) threshold);
+                archive.PurgeFilesWithoutLineCoverage((TimeSpan) threshold);
             }
         }
 
         private static void PurgeUploadedFiles(Config config, IArchive archive)
         {
-            TimeSpan threshold = config.ArchivePurgingThresholds.UploadedTraces;
+            TimeSpan? threshold = config.ArchivePurgingThresholds.UploadedTraces;
             if (threshold >= TimeSpan.Zero)
             {
-                archive.PurgeUploadedFiles(threshold);
+                archive.PurgeUploadedFiles((TimeSpan) threshold);
             }
         }
     }

@@ -139,19 +139,19 @@ namespace Common
         public class PurgeUploadArchivesSection
         {
             /// <summary>
-            /// Minimal timespan to keep uploaded traces.
+            /// Minimal timespan to keep uploaded traces. Null if traces should be kept indefinitely.
             /// </summary>
-            public TimeSpan UploadedTraces { get; set; } = TimeSpan.MinValue;
+            public TimeSpan? UploadedTraces { get; set; }
 
             /// <summary>
-            /// Minimal timespan to keep empty traces.
+            /// Minimal timespan to keep empty traces. Null if traces should be kept indefinitely.
             /// </summary>
-            public TimeSpan EmptyTraces { get; set; } = TimeSpan.MinValue;
+            public TimeSpan? EmptyTraces { get; set; }
 
             /// <summary>
-            /// Minimal timespan to keep incomplete traces.
+            /// Minimal timespan to keep incomplete traces. Null if traces should be kept indefinitely.
             /// </summary>
-            public TimeSpan IncompleteTraces { get; set; } = TimeSpan.MinValue;
+            public TimeSpan? IncompleteTraces { get; set; }
         }
 
         /// <summary>
