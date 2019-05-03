@@ -96,7 +96,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Archiver.cs" />
+    <Compile Include="Archiving\Archiver.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtils.cs" />

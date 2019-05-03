@@ -99,7 +99,7 @@
     <Compile Include="Config\ConfigTest.cs" />
     <Compile Include="Config\ConfigParserTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
-    <Compile Include="ArchiverTest.cs" />
+    <Compile Include="Archiving\ArchiverTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />
     <Compile Include="TraceFileScannerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
