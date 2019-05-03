@@ -410,6 +410,11 @@ off the proxy altogether and for using a different proxy.
 
 By default, the upload daemon will not validate SSL certificates. We strongly recommend turning the validation on by setting the `disableSslValidation` option in the config file to `false`. It is disabled by default to allow for an easier setup in environments that use self-signed certificates or custom certificate authorities.
 
+## Upload Interval
+
+By default, the upload daemon will upload finished trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
+Set the option to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
+
 # Build Process
 
 In order to be able to interpret the generated coverage data, Teamscale needs access to the corresponding PDB files. These contain the mapping from the compiled assemblies back to the source code.

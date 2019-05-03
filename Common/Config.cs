@@ -175,7 +175,16 @@ namespace Common
         }
 
         private readonly List<ConfigParser.ProcessSection> Sections;
-        public bool DisableSslValidation { get; private set; } = true;
+
+        /// <summary>
+        /// Whether SSL validation should be globally disabled.
+        /// </summary>
+        public bool DisableSslValidation { get; private set; }
+
+        /// <summary>
+        /// The interval to use for regular uploads (specified in minutes). A value &lt;= 0 means regular uploads are disabled.
+        /// </summary>
+        public int UploadIntervalInMinutes { get; private set; }
 
         /// <summary>
         /// Returns all configured trace directories in which the uploader should
@@ -189,6 +198,7 @@ namespace Common
         {
             this.Sections = config.Match;
             this.DisableSslValidation = config.DisableSslValidation ?? true;
+            this.UploadIntervalInMinutes = config.UploadIntervalInMinutes ?? 5;
         }
 
         /// <summary>
