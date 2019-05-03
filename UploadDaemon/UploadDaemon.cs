@@ -48,9 +48,9 @@ namespace UploadDaemon
             uploader.RunOnce();
 
             Config config = ReadConfig();
-            if (config.UploadIntervalInMinutes > 0)
+            if (config.UploadInterval > TimeSpan.Zero)
             {
-                uploader.ScheduleRegularRuns(config.UploadIntervalInMinutes);
+                uploader.ScheduleRegularRuns(config.UploadInterval);
                 uploader.WaitForNotifications();
             }
         }
@@ -112,11 +112,11 @@ namespace UploadDaemon
         /// <summary>
         /// Schedules uploader runs on a regular intervall.
         /// </summary>
-        private void ScheduleRegularRuns(int runIntervalInMinutes)
+        private void ScheduleRegularRuns(TimeSpan runInterval)
         {
             Timer timer = new Timer();
             timer.Elapsed += (sender, args) => RunOnce();
-            timer.Interval = TimeSpan.FromMinutes(runIntervalInMinutes).TotalMilliseconds;
+            timer.Interval = runInterval.TotalMilliseconds;
             timer.Enabled = true;
         }
 

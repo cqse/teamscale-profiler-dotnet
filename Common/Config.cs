@@ -179,7 +179,7 @@ namespace Common
         /// <summary>
         /// The interval to use for regular uploads (specified in minutes). A value &lt;= 0 means regular uploads are disabled.
         /// </summary>
-        public int UploadIntervalInMinutes { get; private set; }
+        public TimeSpan UploadInterval { get; private set; }
 
         /// <summary>
         /// The thresholds for purging upload archives. A value of <code>null</code> means purging is disabled.
@@ -198,7 +198,7 @@ namespace Common
         {
             this.Sections = config.Match;
             this.DisableSslValidation = config.DisableSslValidation ?? true;
-            this.UploadIntervalInMinutes = config.UploadIntervalInMinutes ?? 5;
+            this.UploadInterval = TimeSpan.FromMinutes(config.UploadIntervalInMinutes ?? 5);
             this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new PurgeUploadArchivesSection();
         }
 
