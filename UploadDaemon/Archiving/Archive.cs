@@ -194,6 +194,11 @@ namespace UploadDaemon.Archiving
 
         private void PurgeFiles(string archiveDirectory, TimeSpan maximumAge)
         {
+            if (!fileSystem.Directory.Exists(archiveDirectory))
+            {
+                return;
+            }
+
             foreach (string file in fileSystem.Directory.GetFiles(archiveDirectory))
             {
                 DateTime creationTime = fileSystem.File.GetCreationTime(file);

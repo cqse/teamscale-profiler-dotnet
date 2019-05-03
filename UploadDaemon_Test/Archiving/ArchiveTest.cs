@@ -44,7 +44,7 @@ namespace UploadDaemon.Archiving
         }
 
         [Test]
-        public void ShouldHandleExceptionsGracefully()
+        public void ShouldHandleArchivingExceptionsGracefully()
         {
             IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
                 {
@@ -82,6 +82,22 @@ namespace UploadDaemon.Archiving
                FileInTraceDirectory(@"uploaded\coverage_1_3.txt"),
                FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
             }));
+        }
+
+        [Test]
+        public void ShouldHandlePurgingExceptionsGracefully()
+        {
+            IFileSystem fileSystemMock = FileSystemMockingUtils.MockFileSystem(fileMock =>
+                {
+                    // not needed
+                },
+            directoryMock =>
+                {
+                    directoryMock.Setup(dir => dir.GetFiles(Path.Combine(TraceDirectory, "empty-traces"))).Throws<IOException>();
+                }
+            ).Object;
+
+            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeEmptyFiles(TimeSpan.FromDays(42));
         }
 
         /// <summary>
