@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.IO.Abstractions;
 
-namespace UploadDaemon
+namespace UploadDaemon.Archiving
 {
     /// <summary>
     /// Archives processed traces to different archive directories.

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
+using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 
