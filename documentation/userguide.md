@@ -412,8 +412,8 @@ By default, the upload daemon will not validate SSL certificates. We strongly re
 
 ## Upload Interval
 
-By default, the upload daemon will upload new trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
-Set the option to `0`, to disable scheduled uploads. The uploader will then upload existing trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
+By default, the upload daemon will upload finished trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
+Set the option to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
 
 # Build Process
 
