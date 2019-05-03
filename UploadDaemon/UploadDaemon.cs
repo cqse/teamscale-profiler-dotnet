@@ -3,13 +3,13 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Timers;
 using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
-using UploadDaemon.Upload;
+using System.Timers;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 namespace UploadDaemon
 {
@@ -18,8 +18,6 @@ namespace UploadDaemon
     /// </summary>
     public class UploadDaemon
     {
-        private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
-
         private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
 
         private const string DaemonControlCommandUpload = "upload";
@@ -50,8 +48,13 @@ namespace UploadDaemon
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             var uploader = new UploadDaemon();
             uploader.UploadOnce();
-            uploader.ScheduleRegularUploads();
-            uploader.WaitForNotifications();
+
+            Config config = ReadConfig();
+            if (config.UploadIntervalInMinutes > 0)
+            {
+                uploader.ScheduleRegularUploads(config.UploadIntervalInMinutes);
+                uploader.WaitForNotifications();
+            }
         }
 
         private static bool IsAlreadyRunning()
@@ -73,7 +76,7 @@ namespace UploadDaemon
             uploadTask = new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer());
         }
 
-        private Config ReadConfig()
+        private static Config ReadConfig()
         {
             logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
             Config config = Config.ReadFromCentralConfigFile();
@@ -115,11 +118,11 @@ namespace UploadDaemon
         /// <summary>
         /// Schedule uploads on a regular intervall.
         /// </summary>
-        private void ScheduleRegularUploads()
+        private void ScheduleRegularUploads(int uploadIntervalInMinutes)
         {
             Timer timer = new Timer();
             timer.Elapsed += (sender, args) => UploadOnce();
-            timer.Interval = TimerIntervalInMilliseconds;
+            timer.Interval = TimeSpan.FromMinutes(uploadIntervalInMinutes).TotalMilliseconds;
             timer.Enabled = true;
         }
 
