@@ -31,61 +31,61 @@ namespace UploadDaemon.Archiving
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void ArchiveUploadedFile(string tracePath)
         {
             MoveFileToArchive(tracePath, uploadedDirectory);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void PurgeUploadedFiles(TimeSpan maximumAge)
         {
             PurgeFiles(uploadedDirectory, maximumAge);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void ArchiveFileWithoutVersionAssembly(string tracePath)
         {
             MoveFileToArchive(tracePath, missingVersionDirectory);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void PurgeFilesWithoutVersionAssembly(TimeSpan maximumAge)
         {
             PurgeFiles(missingVersionDirectory, maximumAge);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void ArchiveFileWithoutProcess(string tracePath)
         {
             MoveFileToArchive(tracePath, missingProcessDirectory);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void PurgeFilesWithoutProcess(TimeSpan maximumAge)
         {
             PurgeFiles(missingProcessDirectory, maximumAge);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void ArchiveEmptyFile(string tracePath)
         {
             MoveFileToArchive(tracePath, emptyFileDirectory);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void PurgeEmptyFiles(TimeSpan maximumAge)
         {
             PurgeFiles(emptyFileDirectory, maximumAge);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void ArchiveFileWithoutLineCoverage(string tracePath)
         {
             MoveFileToArchive(tracePath, noLineCoverageDirectory);
         }
 
-        /// <inheritDoc/>
+        /// <inheritdoc/>
         public void PurgeFilesWithoutLineCoverage(TimeSpan maximumAge)
         {
             PurgeFiles(noLineCoverageDirectory, maximumAge);

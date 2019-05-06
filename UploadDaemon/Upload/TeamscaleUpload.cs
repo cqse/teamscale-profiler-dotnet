@@ -141,7 +141,7 @@ namespace UploadDaemon.Upload
             }
         }
 
-        /// <inheritDoc />
+        /// <inheritdoc/>
         public object GetTargetId()
         {
             return (server.Url, server.Project, server.Partition);

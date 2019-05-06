@@ -20,7 +20,7 @@ namespace ProfilerGUI.Source.Configurator
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <summary> <inheritDoc /> </summary>
+        /// <inheritdoc/>
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>

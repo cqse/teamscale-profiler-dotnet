@@ -16,7 +16,7 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
