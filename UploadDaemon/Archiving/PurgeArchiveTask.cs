@@ -42,7 +42,7 @@ namespace UploadDaemon.Archiving
         private static void PurgeEmptyFiles(Config config, IArchive archive)
         {
             TimeSpan? threshold = config.ArchivePurgingThresholds.EmptyTraces;
-            if (threshold >= TimeSpan.Zero)
+            if (threshold != null)
             {
                 archive.PurgeEmptyFiles((TimeSpan) threshold);
                 archive.PurgeFilesWithoutLineCoverage((TimeSpan) threshold);
@@ -52,7 +52,7 @@ namespace UploadDaemon.Archiving
         private static void PurgeUploadedFiles(Config config, IArchive archive)
         {
             TimeSpan? threshold = config.ArchivePurgingThresholds.UploadedTraces;
-            if (threshold >= TimeSpan.Zero)
+            if (threshold != null)
             {
                 archive.PurgeUploadedFiles((TimeSpan) threshold);
             }
