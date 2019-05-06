@@ -421,6 +421,19 @@ By default, the upload daemon will merge all line coverage that will be uploaded
 destination into one file. This saves disk space and reduces the number of uploads.
 If this is not desired, you can turn this off by setting the `mergeLineCoverage` option in the config file to `false`.
 
+## Archiving Trace Files
+
+The uploader archives processed trace files in subdirectories of the respective trace directory. Thereby, it separates files that have been successfully uploaded from files that could not be processed, because they contained no coverage or lacked necessary information.
+
+By default, the uploader leaves trace files in these archives indefinitely. To change this, add the following section to the config file, to specify the number of days the different types of files should be kept. Note that a value of 0 leads to the files being purged immediately after processing.
+
+```yaml
+archivePurgingThresholdsInDays:
+  uploadedTraces: 7
+  emptyTraces: 3
+  incompleteTraces: 3
+```
+
 # Build Process
 
 In order to be able to interpret the generated coverage data, Teamscale needs access to the corresponding PDB files. These contain the mapping from the compiled assemblies back to the source code.
