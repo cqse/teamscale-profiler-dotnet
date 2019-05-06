@@ -151,7 +151,10 @@ namespace UploadDaemon.Upload
             }
         }
 
-        /// <inheritDoc />
+        /// <summary>
+        /// We can merge all coverage destined for the same storage as the line coverage files
+        /// don't contain any meta data anymore so they are indistinguishable at that point.
+        /// </summary>
         public object GetTargetId()
         {
             return storage;

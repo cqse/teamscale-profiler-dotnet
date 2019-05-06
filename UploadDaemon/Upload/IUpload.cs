@@ -39,9 +39,10 @@ namespace UploadDaemon.Upload
 
         /// <summary>
         /// Returns an object that implements GetHashCode and Equals and identifies this upload.
-        /// I.e. two target IDs from the same type of IUpload should only be equal if
-        /// they represent the same upload destination and coverage targeted
-        /// at both IUploads can be safely merged and uploaded in one go.
+        /// I.e. two uploads of the same subclass should return equal target IDs if and only if
+        /// the result of uploading coverage through either of them will be the same, i.e.,
+        /// the coverage will be uploaded to the same destination and it will be indistinguishable
+        /// which of the uploads was used, after the fact.
         /// </summary>
         object GetTargetId();
     }
