@@ -130,11 +130,7 @@ namespace UploadDaemon.Archiving
             {
                 foreach (string file in fileSystem.Directory.GetFiles(archiveDirectory))
                 {
-                    DateTime creationTime = fileSystem.File.GetCreationTime(file);
-                    if (dateTimeProvider.Now > (creationTime + maximumAge))
-                    {
-                        DeleteFile(file);
-                    }
+                    DeleteFileIfOlderThan(file, maximumAge);
                 }
             }
             catch (Exception e)
@@ -144,11 +140,15 @@ namespace UploadDaemon.Archiving
             }
         }
 
-        private void DeleteFile(string file)
+        private void DeleteFileIfOlderThan(string file, TimeSpan maximumAge)
         {
             try
             {
-                fileSystem.File.Delete(file);
+                DateTime creationTime = fileSystem.File.GetCreationTime(file);
+                if (dateTimeProvider.Now > (creationTime + maximumAge))
+                {
+                    fileSystem.File.Delete(file);
+                }
             }
             catch (Exception e)
             {
