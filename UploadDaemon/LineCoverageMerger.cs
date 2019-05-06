@@ -1,17 +1,12 @@
-﻿using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
-using static UploadDaemon.SymbolAnalysis.LineCoverageSynthesizer;
 
 namespace UploadDaemon
 {
     /// <summary>
-    /// Merges all line coverage that will be uploaded for the same timestamp/revision into one "batch".
+    /// Merges all line coverage that will be uploaded for the same timestamp/revision and upload destination into one "batch".
     /// This allows uploading the coverage in one go instead of splitting it into multiple requests and thus
     /// commits in Teamscale.
     /// </summary>
@@ -69,7 +64,7 @@ namespace UploadDaemon
             public Dictionary<string, FileCoverage> LineCoverage { get; } = new Dictionary<string, FileCoverage>();
 
             /// <summary>
-            /// The original trace files from which the line coverage was generated. Used for logging.
+            /// The original trace files from which the line coverage was generated.
             /// </summary>
             public List<string> TraceFilePaths { get; } = new List<string>();
 
@@ -92,7 +87,7 @@ namespace UploadDaemon
             MergeKey key = new MergeKey
             {
                 RevisionOrTimestamp = revisionOrTimestamp,
-                UploadDictionaryKey = upload.GetDictionaryKey(),
+                UploadDictionaryKey = upload.GetTargetId(),
                 UploadType = upload.GetType()
             };
 

@@ -45,7 +45,7 @@ public class MockUpload : IUpload
     /// if they have the same return value.
     /// </summary>
     /// <returns></returns>
-    public object GetDictionaryKey()
+    public object GetTargetId()
     {
         return returnValue;
     }

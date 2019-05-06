@@ -142,7 +142,7 @@ namespace UploadDaemon.Upload
         }
 
         /// <inheritDoc />
-        public object GetDictionaryKey()
+        public object GetTargetId()
         {
             return (server.Url, server.Project, server.Partition);
         }

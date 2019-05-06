@@ -79,7 +79,7 @@ namespace UploadDaemon.Upload
         }
 
         /// <inheritDoc />
-        public object GetDictionaryKey()
+        public object GetTargetId()
         {
             return targetDirectory;
         }

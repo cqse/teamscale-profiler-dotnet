@@ -38,12 +38,11 @@ namespace UploadDaemon.Upload
         string Describe();
 
         /// <summary>
-        /// Returns an object that implements GetHashCode and Equals which can
-        /// be used as a key in a Dictionary that identifies this upload. I.e.
-        /// two keys from the same type of IUpload should only be equal if
+        /// Returns an object that implements GetHashCode and Equals and identifies this upload.
+        /// I.e. two target IDs from the same type of IUpload should only be equal if
         /// they represent the same upload destination and coverage targeted
-        /// at both IUploads can be merged and uploaded in one go.
+        /// at both IUploads can be safely merged and uploaded in one go.
         /// </summary>
-        object GetDictionaryKey();
+        object GetTargetId();
     }
 }

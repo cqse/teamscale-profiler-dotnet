@@ -16,13 +16,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public HashSet<(uint, uint)> CoveredLineRanges { get; } = new HashSet<(uint, uint)>();
 
-        public FileCoverage()
-        {
-        }
-
-        /// <summary>
-        /// Constructor for testing to easily construct FileCoverage objects.
-        /// </summary>
         public FileCoverage(params (uint, uint)[] lineRanges)
         {
             foreach ((uint, uint) range in lineRanges)
