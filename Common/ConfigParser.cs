@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
+using System;
 
 namespace Common
 {
@@ -28,6 +29,11 @@ namespace Common
             /// The interval to use for regular uploads (specified in minutes). Null if the user did not set this property.
             /// </summary>
             public int? UploadIntervalInMinutes { get; set; }
+
+            /// <summary>
+            /// Section that contains the config options for purging the upload archives. Null if the user did not set this property.
+            /// </summary>
+            public PurgeUploadArchivesSection ArchivePurgingThresholdsInDays { get; set; }
         }
 
         /// <summary>
@@ -125,6 +131,27 @@ namespace Common
             /// Patterns to select which assemblies to analyze.
             /// </summary>
             public IncludeExcludePatterns AssemblyPatterns { get; set; }
+        }
+
+        /// <summary>
+        /// Contains the thresholds for purging trace files from the upload archives.
+        /// </summary>
+        public class PurgeUploadArchivesSection
+        {
+            /// <summary>
+            /// Minimal timespan to keep uploaded traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? UploadedTraces { get; set; }
+
+            /// <summary>
+            /// Minimal timespan to keep empty traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? EmptyTraces { get; set; }
+
+            /// <summary>
+            /// Minimal timespan to keep incomplete traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? IncompleteTraces { get; set; }
         }
 
         /// <summary>

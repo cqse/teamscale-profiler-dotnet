@@ -89,6 +89,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Archiving\PurgeArchiveTaskTest.cs" />
     <Compile Include="SymbolAnalysis\ParsedTraceFileTest.cs" />
     <Compile Include="SymbolAnalysis\GlobPatternListTest.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
@@ -99,7 +100,7 @@
     <Compile Include="Config\ConfigTest.cs" />
     <Compile Include="Config\ConfigParserTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
-    <Compile Include="ArchiverTest.cs" />
+    <Compile Include="Archiving\ArchiveTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />
     <Compile Include="TraceFileScannerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
