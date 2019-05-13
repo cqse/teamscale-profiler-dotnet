@@ -251,6 +251,7 @@ Inlined=1:33555646:100678050" },
                 return null;
             }
 
+            // Return some arbitrary coverage
             FileCoverage fileCoverage = new FileCoverage();
             fileCoverage.CoveredLineRanges.Add((12, 33));
             return new Dictionary<string, FileCoverage>()
