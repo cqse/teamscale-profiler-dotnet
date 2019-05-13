@@ -1,14 +1,10 @@
-using Common;
+using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
-using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
-using System.Threading.Tasks;
 using UploadDaemon;
-using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class LineCoverageMergerTest
@@ -25,18 +21,25 @@ public class LineCoverageMergerTest
         Value = "rev2"
     };
 
-    private static readonly IUpload Upload1 = new MockUpload(true);
-    private static readonly IUpload Upload2 = new MockUpload(false);
+    private static IUpload Upload;
+
+    [SetUp]
+    public void SetUpMocks()
+    {
+        var uploadMock = new Mock<IUpload>();
+        uploadMock.Setup(upload => upload.GetTargetId()).Returns("constant-string");
+        Upload = uploadMock.Object;
+    }
 
     [Test]
     public void TestMergingOfEqualRanges()
     {
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
@@ -45,18 +48,18 @@ public class LineCoverageMergerTest
         Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
         Assert.That(batches.First().LineCoverage.Keys, Is.EquivalentTo(new string[] { "file1.cs" }), "Files");
         Assert.That(batches.First().LineCoverage.Values, Is.EquivalentTo(
-            new FileCoverage[] { new FileCoverage((10, 20)) }), "Covered line ranges");
+            new []{ new FileCoverage((10, 20)) }), "Covered line ranges");
     }
 
     [Test]
     public void TestMergingOfUnequalRanges()
     {
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((30, 40)) }
         });
@@ -65,7 +68,7 @@ public class LineCoverageMergerTest
         Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
         Assert.That(batches.First().LineCoverage.Keys, Is.EquivalentTo(new string[] { "file1.cs" }), "Files");
         Assert.That(batches.First().LineCoverage.Values, Is.EquivalentTo(
-            new FileCoverage[] { new FileCoverage((10, 20), (30, 40)) }), "Covered line ranges");
+            new []{ new FileCoverage((10, 20), (30, 40)) }), "Covered line ranges");
     }
 
     /// <summary>
@@ -77,11 +80,11 @@ public class LineCoverageMergerTest
     public void TestMergingOfOverlappingRanges()
     {
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((15, 17)) }
         });
@@ -90,18 +93,18 @@ public class LineCoverageMergerTest
         Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
         Assert.That(batches.First().LineCoverage.Keys, Is.EquivalentTo(new string[] { "file1.cs" }), "Files");
         Assert.That(batches.First().LineCoverage.Values, Is.EquivalentTo(
-            new FileCoverage[] { new FileCoverage((10, 20), (15, 17)) }), "Covered line ranges");
+            new []{ new FileCoverage((10, 20), (15, 17)) }), "Covered line ranges");
     }
 
     [Test]
     public void TestMergingOfDifferentFiles()
     {
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file2.cs",  new FileCoverage((10, 20)) }
         });
@@ -110,18 +113,18 @@ public class LineCoverageMergerTest
         Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
         Assert.That(batches.First().LineCoverage.Keys, Is.EquivalentTo(new string[] { "file1.cs", "file2.cs" }), "Files");
         Assert.That(batches.First().LineCoverage.Values, Is.EquivalentTo(
-            new FileCoverage[] { new FileCoverage((10, 20)), new FileCoverage((10, 20)) }), "Covered line ranges");
+            new []{ new FileCoverage((10, 20)), new FileCoverage((10, 20)) }), "Covered line ranges");
     }
 
     [Test]
     public void ShouldNotMergeWhenRevisionIsDifferent()
     {
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision2, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision2, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
@@ -133,12 +136,16 @@ public class LineCoverageMergerTest
     [Test]
     public void ShouldNotMergeWhenUploadIsDifferent()
     {
+        var uploadMock = new Mock<IUpload>();
+        uploadMock.Setup(upload => upload.GetTargetId()).Returns("otherTargetId");
+        IUpload UploadWithDifferentTarget = uploadMock.Object;
+
         LineCoverageMerger merger = new LineCoverageMerger();
-        merger.AddLineCoverage("trace1.txt", Revision1, Upload1, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, Upload2, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, UploadWithDifferentTarget, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });

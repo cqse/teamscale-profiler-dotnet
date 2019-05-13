@@ -1,13 +1,15 @@
 using Common;
+using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
+using System.Threading.Tasks;
 using UploadDaemon;
-using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class UploadTaskTest
@@ -209,22 +211,26 @@ Inlined=1:33555646:100678050" },
         MockUploadFactory uploadFactory = new MockUploadFactory(true);
         new UploadTask(fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run(config);
 
-        Assert.That(uploadFactory.mockUpload.LastUsedVersion, Is.EqualTo("prefix_4.0.0.0"));
+        uploadFactory.uploadMock.Verify(upload => upload.UploadAsync(It.IsAny<string>(), "prefix_4.0.0.0"));
     }
 
     private class MockUploadFactory : IUploadFactory
     {
-        public readonly MockUpload mockUpload;
+        public readonly Mock<IUpload> uploadMock;
 
-        public MockUploadFactory(bool returnValue)
+        public MockUploadFactory(bool successfull)
         {
-            this.mockUpload = new MockUpload(returnValue);
+            this.uploadMock = new Mock<IUpload>();
+            uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.FromResult(successfull));
+            uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
+                .Returns(Task.FromResult(successfull));
         }
 
         /// <inheritdoc/>
         public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
         {
-            return mockUpload;
+            return uploadMock.Object;
         }
     }
 

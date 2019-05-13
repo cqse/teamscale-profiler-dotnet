@@ -89,7 +89,6 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MockUpload.cs" />
     <Compile Include="Archiving\PurgeArchiveTaskTest.cs" />
     <Compile Include="SymbolAnalysis\ParsedTraceFileTest.cs" />
     <Compile Include="SymbolAnalysis\GlobPatternListTest.cs" />
