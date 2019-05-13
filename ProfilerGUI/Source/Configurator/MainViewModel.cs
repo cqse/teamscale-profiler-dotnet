@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using ProfilerGUI.Source.Runner;
 using ProfilerGUI.Source.Shared;
 using System;

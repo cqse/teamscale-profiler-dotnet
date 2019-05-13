@@ -1,4 +1,5 @@
 using Common;
+using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +8,8 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon;
-using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class UploadTaskTest
@@ -210,55 +211,26 @@ Inlined=1:33555646:100678050" },
         MockUploadFactory uploadFactory = new MockUploadFactory(true);
         new UploadTask(fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run(config);
 
-        Assert.That(uploadFactory.mockUpload.LastUsedVersion, Is.EqualTo("prefix_4.0.0.0"));
+        uploadFactory.uploadMock.Verify(upload => upload.UploadAsync(It.IsAny<string>(), "prefix_4.0.0.0"));
     }
 
     private class MockUploadFactory : IUploadFactory
     {
-        public readonly MockUpload mockUpload;
+        public readonly Mock<IUpload> uploadMock;
 
-        public MockUploadFactory(bool returnValue)
+        public MockUploadFactory(bool successfull)
         {
-            this.mockUpload = new MockUpload(returnValue);
+            this.uploadMock = new Mock<IUpload>();
+            uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.FromResult(successfull));
+            uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
+                .Returns(Task.FromResult(successfull));
         }
 
+        /// <inheritdoc/>
         public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
         {
-            return mockUpload;
-        }
-    }
-
-    private class MockUpload : IUpload
-    {
-        private readonly bool returnValue;
-
-        /// <summary>
-        /// The last version that was passed to the UploadAsnyc method or null if that method was never called.
-        /// </summary>
-        public string LastUsedVersion { get; private set; } = null;
-
-        public MockUpload(bool returnValue)
-        {
-            this.returnValue = returnValue;
-        }
-
-        /// <summary>
-        /// Fakes an upload and returns the result passed to the constructor.
-        /// </summary>
-        public Task<bool> UploadAsync(string filePath, string version)
-        {
-            LastUsedVersion = version;
-            return Task.FromResult(returnValue);
-        }
-
-        public string Describe()
-        {
-            return "MockUpload";
-        }
-
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
-        {
-            return Task.FromResult(returnValue);
+            return uploadMock.Object;
         }
     }
 
@@ -271,13 +243,21 @@ Inlined=1:33555646:100678050" },
             this.shouldProduceCoverage = shouldProduceCoverage;
         }
 
-        public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        /// <inheritdoc/>
+        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            if (shouldProduceCoverage)
+            if (!shouldProduceCoverage)
             {
-                return "file1.cs\n12-33";
+                return null;
             }
-            return null;
+
+            // Return some arbitrary coverage
+            FileCoverage fileCoverage = new FileCoverage();
+            fileCoverage.CoveredLineRanges.Add((12, 33));
+            return new Dictionary<string, FileCoverage>()
+            {
+                { "file1.cs", fileCoverage }
+            };
         }
     }
 

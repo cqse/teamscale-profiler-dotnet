@@ -413,7 +413,12 @@ By default, the upload daemon will not validate SSL certificates. We strongly re
 ## Upload Interval
 
 By default, the upload daemon will upload finished trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
-Set the option to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
+Set the option in the config file to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
+
+## Trace-File Merging
+
+By default, the upload daemon merges all line coverage that will be uploaded to the same
+destination into a single file, to save disk space and reduce the number of uploads. Set the option `mergeLineCoverage` in the config file to `false`, to disable trace-file merging.
 
 ## Archiving Trace Files
 

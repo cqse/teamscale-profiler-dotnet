@@ -70,6 +70,11 @@ namespace Common
             public bool Enabled { get; private set; } = true;
 
             /// <summary>
+            /// Whether the uploader should merge line coverage before uploading it.
+            /// </summary>
+            public bool MergeLineCoverage { get; private set; } = true;
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// Defaults to the empty string in case no prefix should be prepended.
             /// This property is never null.
@@ -118,6 +123,7 @@ namespace Common
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
+                MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
 
                 if (section.AssemblyPatterns != null)
                 {

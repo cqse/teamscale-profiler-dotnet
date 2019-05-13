@@ -8,6 +8,7 @@ using System.Web;
 using NLog;
 using Common;
 using UploadDaemon.SymbolAnalysis;
+using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -138,6 +139,12 @@ namespace UploadDaemon.Upload
                     return false;
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public object GetTargetId()
+        {
+            return (server.Url, server.Project, server.Partition);
         }
     }
 }

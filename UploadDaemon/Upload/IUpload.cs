@@ -36,5 +36,14 @@ namespace UploadDaemon.Upload
         /// Must not contain passwords/access keys/...
         /// </summary>
         string Describe();
+
+        /// <summary>
+        /// Returns an object that implements GetHashCode and Equals and identifies this upload.
+        /// I.e. two uploads of the same subclass should return equal target IDs if and only if
+        /// the result of uploading coverage through either of them will be the same, i.e.,
+        /// the coverage will be uploaded to the same destination and it will be indistinguishable
+        /// which of the uploads was used, after the fact.
+        /// </summary>
+        object GetTargetId();
     }
 }
