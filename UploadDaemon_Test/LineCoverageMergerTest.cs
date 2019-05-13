@@ -138,14 +138,14 @@ public class LineCoverageMergerTest
     {
         var uploadMock = new Mock<IUpload>();
         uploadMock.Setup(upload => upload.GetTargetId()).Returns("otherTargetId");
-        IUpload UploadWithDifferentTarget = uploadMock.Object;
+        IUpload uploadWithDifferentTarget = uploadMock.Object;
 
         LineCoverageMerger merger = new LineCoverageMerger();
         merger.AddLineCoverage("trace1.txt", Revision1, Upload, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
-        merger.AddLineCoverage("trace2.txt", Revision1, UploadWithDifferentTarget, new Dictionary<string, FileCoverage>()
+        merger.AddLineCoverage("trace2.txt", Revision1, uploadWithDifferentTarget, new Dictionary<string, FileCoverage>()
         {
             { "file1.cs",  new FileCoverage((10, 20)) }
         });
