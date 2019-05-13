@@ -1,15 +1,9 @@
-﻿using Newtonsoft.Json;
 using NLog;
 using ProfilerGUI.Source.Runner;
 using ProfilerGUI.Source.Shared;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Common;
-using System.IO.Abstractions;
 
 namespace ProfilerGUI.Source.Configurator
 {
@@ -20,7 +14,7 @@ namespace ProfilerGUI.Source.Configurator
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
