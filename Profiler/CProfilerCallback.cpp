@@ -123,7 +123,7 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	Debug::log(configFile);
+	//Debug::log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
@@ -181,7 +181,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 		return functionId;
 	}
 	catch (...) {
-		Debug::logStacktrace("functionMapper");
+		//Debug::logStacktrace("functionMapper");
 		// since this function must be static, we have no way to access the config so we always terminate the program.
 		throw;
 	}
@@ -298,7 +298,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	Debug::logStacktrace(context);
+	//Debug::logStacktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
