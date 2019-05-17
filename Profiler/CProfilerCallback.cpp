@@ -298,7 +298,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	debugLog.logStacktrace(context);
+	debugLog.logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}

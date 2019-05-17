@@ -28,8 +28,8 @@ void Debug::log(std::string message)
 	LeaveCriticalSection(&loggingSynchronization);
 }
 
-void Debug::logStacktrace(std::string context) {
-	log("Stacktrace: " + context);
+void Debug::logErrorWithStracktrace(std::string context) {
+	log("Error in " + context + ". Stacktrace: ");
 	CustomStackWalker stackWalker;
 	stackWalker.ShowCallstack();
 	log(stackWalker.output);

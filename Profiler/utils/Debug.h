@@ -14,8 +14,8 @@ public:
 	/** Logs the given message to the debug log. */
 	void log(std::string message);
 
-	/** Logs the given stack trace to the debug log. */
-	void logStacktrace(std::string context);
+	/** Logs the given context and the current stacktrace to the debug log. */
+	void logErrorWithStracktrace(std::string context);
 
 	virtual ~Debug();
 private:
