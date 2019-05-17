@@ -10,26 +10,13 @@ public:
 	}
 };
 
-void Debug::log(std::string message)
-{
-	getInstance().logInternal(message);
-}
-
 Debug::Debug() {
 	InitializeCriticalSection(&loggingSynchronization);
 	logFile = CreateFile("C:\\Users\\Public\\profiler_debug.log", GENERIC_WRITE, FILE_SHARE_READ,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
-Debug::~Debug()
-{
-	if (logFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(logFile);
-	}
-	DeleteCriticalSection(&loggingSynchronization);
-}
-
-void Debug::logInternal(std::string message)
+void Debug::log(std::string message)
 {
 	if (logFile == INVALID_HANDLE_VALUE) {
 		return;
@@ -45,4 +32,12 @@ void Debug::logStacktrace(std::string context) {
 	CustomStackWalker stackWalker;
 	stackWalker.ShowCallstack();
 	log(stackWalker.output);
+}
+
+Debug::~Debug()
+{
+	if (logFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(logFile);
+	}
+	DeleteCriticalSection(&loggingSynchronization);
 }

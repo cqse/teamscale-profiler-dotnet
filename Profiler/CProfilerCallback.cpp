@@ -3,7 +3,6 @@
 #include "UploadDaemon.h"
 #include "utils/StringUtils.h"
 #include "utils/WindowsUtils.h"
-#include "utils/Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -49,6 +48,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	initializeConfig();
+
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
@@ -123,7 +123,7 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	//Debug::log(configFile);
+	debugLog.log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
@@ -298,7 +298,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	//Debug::logStacktrace(context);
+	debugLog.logStacktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
