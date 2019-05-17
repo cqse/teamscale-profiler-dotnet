@@ -24,7 +24,7 @@ void Debug::log(std::string message)
 	EnterCriticalSection(&loggingSynchronization);
 	message += "\r\n";
 	DWORD dwWritten = 0;
-	WriteFile(logFile, message.c_str(), (DWORD)strlen(message.c_str()), &dwWritten, NULL);
+	WriteFile(logFile, message.c_str(), static_cast<DWORD>(strlen(message.c_str())), &dwWritten, NULL);
 	LeaveCriticalSection(&loggingSynchronization);
 }
 
