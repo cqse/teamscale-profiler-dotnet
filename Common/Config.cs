@@ -188,6 +188,11 @@ namespace Common
         public TimeSpan UploadInterval { get; private set; }
 
         /// <summary>
+        /// Whether the uploader should archive the generated line coverage and the merged line coverage to disk.
+        /// </summary>
+        public bool ArchiveLineCoverage { get; private set; }
+
+        /// <summary>
         /// The thresholds for purging upload archives. A value of <code>null</code> means purging is disabled.
         /// </summary>
         public PurgeUploadArchivesSection ArchivePurgingThresholds { get; private set; }
@@ -205,6 +210,7 @@ namespace Common
             this.Sections = config.Match;
             this.DisableSslValidation = config.DisableSslValidation ?? true;
             this.UploadInterval = TimeSpan.FromMinutes(config.UploadIntervalInMinutes ?? 5);
+            this.ArchiveLineCoverage = config.ArchiveLineCoverage ?? false;
             this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new PurgeUploadArchivesSection();
         }
 

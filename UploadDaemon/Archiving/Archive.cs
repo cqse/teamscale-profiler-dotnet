@@ -19,6 +19,7 @@ namespace UploadDaemon.Archiving
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
+        private readonly string lineCoverageDirectory;
 
         public Archive(string traceDirectory, IFileSystem fileSystem, IDateTimeProvider dateTimeProvider)
         {
@@ -29,6 +30,28 @@ namespace UploadDaemon.Archiving
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
+            this.lineCoverageDirectory = Path.Combine(traceDirectory, "converted-line-coverage");
+        }
+
+        /// <inheritdoc/>
+        public void ArchiveLineCoverage(string fileName, string lineCoverageReport)
+        {
+            if (!EnsureDirectoryExists(lineCoverageDirectory))
+            {
+                return;
+            }
+
+            // make sure there's no .. or other path components in the file name
+            string sanitizedFileName = Path.GetFileName(fileName);
+            string targetPath = Path.Combine(lineCoverageDirectory, sanitizedFileName);
+            try
+            {
+                fileSystem.File.WriteAllText(targetPath, lineCoverageReport);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Unable to archive line coverage to {archivePath}.", targetPath);
+            }
         }
 
         /// <inheritdoc/>
@@ -93,18 +116,9 @@ namespace UploadDaemon.Archiving
 
         private void MoveFileToArchive(string tracePath, string targetDirectory)
         {
-            if (!fileSystem.Directory.Exists(targetDirectory))
+            if (!EnsureDirectoryExists(targetDirectory))
             {
-                try
-                {
-                    fileSystem.Directory.CreateDirectory(targetDirectory);
-                }
-                catch (Exception e)
-                {
-                    logger.Error(e, "Unable to create archive directory {archivePath}. Trace file {trace}" +
-                        " cannot be archived and will be processed again later", targetDirectory, tracePath);
-                    return;
-                }
+                return;
             }
 
             string targetPath = Path.Combine(targetDirectory, Path.GetFileName(tracePath));
@@ -116,6 +130,25 @@ namespace UploadDaemon.Archiving
             {
                 logger.Error(e, "Unable to archive {trace} to {archivePath}. The file will remain there" +
                     " which may lead to it being uploaded multiple times", tracePath, targetDirectory);
+            }
+        }
+
+        private bool EnsureDirectoryExists(string directory)
+        {
+            if (fileSystem.Directory.Exists(directory))
+            {
+                return true;
+            }
+
+            try
+            {
+                fileSystem.Directory.CreateDirectory(directory);
+                return true;
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Unable to create archive directory {archivePath}", directory);
+                return false;
             }
         }
 
