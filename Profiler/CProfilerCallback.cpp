@@ -11,16 +11,44 @@
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-CProfilerCallback* CProfilerCallback::instance = NULL;
+class InstanceGuard {
+public:
+	InstanceGuard() {
+		InitializeCriticalSection(&section);
+	}
 
-CProfilerCallback* CProfilerCallback::getInstance() {
+	void setInstance(CProfilerCallback* callback) {
+		instance = callback;
+	}
+
+	void shutdownInstance() {
+		EnterCriticalSection(&section);
+		if (instance != NULL) {
+			instance->Shutdown();
+			instance = NULL;
+		}
+		LeaveCriticalSection(&section);
+	}
+
+private:
+	CRITICAL_SECTION section;
+	CProfilerCallback* instance = NULL;
+};
+
+static InstanceGuard& getInstanceGuard() {
+	// C++ 11 guarantees that this initialization will only happen once in a thread-safe manner
+	static InstanceGuard instance;
 	return instance;
+}
+
+void CProfilerCallback::ShutdownIfStillRunning() {
+	getInstanceGuard().shutdownInstance();
 }
 
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
-		instance = this;
+		getInstanceGuard().setInstance(this);
 	}
 	catch (...) {
 		handleException("Constructor");
@@ -29,7 +57,10 @@ CProfilerCallback::CProfilerCallback() {
 
 CProfilerCallback::~CProfilerCallback() {
 	try {
-		instance = NULL;
+		// make sure we flush to disk and disable access to this instance for other threads
+		// even if the .NET framework doesn't call Shutdown() itself
+		getInstanceGuard().shutdownInstance();
+
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {

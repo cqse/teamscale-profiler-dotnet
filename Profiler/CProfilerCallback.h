@@ -19,8 +19,8 @@
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
 
-	/** Returns the profiler, unless it was already destroyed or not yet constructed. */
-	static CProfilerCallback* getInstance();
+	/** Shuts down the profiler if it is still running. */
+	static void ShutdownIfStillRunning();
 
 	/** Constructor. */
 	CProfilerCallback();
@@ -44,8 +44,6 @@ public:
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
 private:
-	static CProfilerCallback* instance;
-
 	std::once_flag shutdownCompletedFlag;
 
 	/** Synchronizes profiling callbacks. */
