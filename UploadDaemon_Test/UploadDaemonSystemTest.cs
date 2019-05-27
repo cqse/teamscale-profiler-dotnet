@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 [TestFixture]
 public class UploadDaemonSystemTest
@@ -85,6 +86,9 @@ Inlined=2:{ExistingMethodToken}");
         });
     }
 
+    // This test unfortunately fails on fast machines.
+    // I think the disk IO of archiving the successfully uploaded trace file is asynchronous and completes
+    // after we read the current date time in the archiver. Thus the file isn't purged
     [Test]
     public void TestArchivePurging()
     {

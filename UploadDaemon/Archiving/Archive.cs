@@ -10,6 +10,9 @@ namespace UploadDaemon.Archiving
     /// </summary>
     public class Archive : IArchive
     {
+        // TODO just for testing this
+        public static bool ShouldArchiveLineCoverage = false;
+
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly IFileSystem fileSystem;
@@ -19,6 +22,7 @@ namespace UploadDaemon.Archiving
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
+        private readonly string lineCoverageDirectory;
 
         public Archive(string traceDirectory, IFileSystem fileSystem, IDateTimeProvider dateTimeProvider)
         {
@@ -29,6 +33,43 @@ namespace UploadDaemon.Archiving
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
+            this.lineCoverageDirectory = Path.Combine(traceDirectory, "converted-line-coverage");
+        }
+
+        /// <inheritdoc/>
+        public void ArchiveLineCoverage(string fileName, string lineCoverageReport)
+        {
+            if (!ShouldArchiveLineCoverage)
+            {
+                return;
+            }
+
+            // TODO refactor
+            if (!fileSystem.Directory.Exists(lineCoverageDirectory))
+            {
+                try
+                {
+                    fileSystem.Directory.CreateDirectory(lineCoverageDirectory);
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, "Unable to create archive directory {archivePath}. Line coverage will not be archived",
+                        lineCoverageDirectory);
+                    return;
+                }
+            }
+
+            // make sure there's no .. or other path components in the file name
+            string sanitizedFileName = Path.GetFileName(fileName);
+            string targetPath = Path.Combine(lineCoverageDirectory, sanitizedFileName);
+            try
+            {
+                fileSystem.File.WriteAllText(targetPath, lineCoverageReport);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Unable to archive line coverage to {archivePath}.", targetPath);
+            }
         }
 
         /// <inheritdoc/>

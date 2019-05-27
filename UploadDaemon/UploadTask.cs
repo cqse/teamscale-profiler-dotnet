@@ -2,6 +2,7 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
@@ -86,6 +87,10 @@ namespace UploadDaemon
                     batch.Upload.Describe(), traceFilePaths);
                 string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
 
+                // TODO make optional
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                archive.ArchiveLineCoverage($"merged_{timestamp}.simple", report);
+
                 if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
                 {
                     logger.Info("Successfully uploaded merged line coverage to {upload} from {traceFiles}",
@@ -155,6 +160,9 @@ namespace UploadDaemon
             {
                 logger.Debug("Merging line coverage from {traceFile} into previous line coverage", trace.FilePath);
                 coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, lineCoverage);
+                // TODO make optional
+                archive.ArchiveLineCoverage(Path.GetFileName(trace.FilePath) + ".simple",
+                    LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
                 return;
             }
 
