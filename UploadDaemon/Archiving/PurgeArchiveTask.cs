@@ -1,4 +1,5 @@
 ﻿using Common;
+using NLog;
 using System;
 
 namespace UploadDaemon.Archiving
@@ -8,6 +9,8 @@ namespace UploadDaemon.Archiving
     /// </summary>
     public class PurgeArchiveTask
     {
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         private readonly IArchiveFactory archiveFactory;
 
         public PurgeArchiveTask(IArchiveFactory archiveFactory)
@@ -20,6 +23,7 @@ namespace UploadDaemon.Archiving
         /// </summary>
         public void Run(Config config)
         {
+            logger.Debug("Purging archives");
             foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
                 IArchive archive = archiveFactory.CreateArchive(traceDirectory);
@@ -34,7 +38,7 @@ namespace UploadDaemon.Archiving
             TimeSpan? threshold = config.ArchivePurgingThresholds.IncompleteTraces;
             if (threshold != null)
             {
-                archive.PurgeFilesWithoutProcess((TimeSpan) threshold);
+                archive.PurgeFilesWithoutProcess((TimeSpan)threshold);
                 archive.PurgeFilesWithoutVersionAssembly((TimeSpan)threshold);
             }
         }
@@ -44,8 +48,8 @@ namespace UploadDaemon.Archiving
             TimeSpan? threshold = config.ArchivePurgingThresholds.EmptyTraces;
             if (threshold != null)
             {
-                archive.PurgeEmptyFiles((TimeSpan) threshold);
-                archive.PurgeFilesWithoutLineCoverage((TimeSpan) threshold);
+                archive.PurgeEmptyFiles((TimeSpan)threshold);
+                archive.PurgeFilesWithoutLineCoverage((TimeSpan)threshold);
             }
         }
 
@@ -54,7 +58,7 @@ namespace UploadDaemon.Archiving
             TimeSpan? threshold = config.ArchivePurgingThresholds.UploadedTraces;
             if (threshold != null)
             {
-                archive.PurgeUploadedFiles((TimeSpan) threshold);
+                archive.PurgeUploadedFiles((TimeSpan)threshold);
             }
         }
     }

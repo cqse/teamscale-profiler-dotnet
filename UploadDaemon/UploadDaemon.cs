@@ -47,12 +47,15 @@ namespace UploadDaemon
             var uploader = new UploadDaemon();
             uploader.RunOnce();
 
+            logger.Debug("Checking if daemon should upload in regular intervals");
             Config config = ReadConfig();
             if (config.UploadInterval > TimeSpan.Zero)
             {
+                logger.Info("Will check for new files to upload every {}min", config.UploadInterval.TotalMinutes);
                 uploader.ScheduleRegularRuns(config.UploadInterval);
                 uploader.WaitForNotifications();
             }
+            logger.Info("Daemon shutting down");
         }
 
         private static bool IsAlreadyRunning()

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
@@ -34,6 +35,7 @@ namespace UploadDaemon
         /// </summary>
         public async void Run(Config config)
         {
+            logger.Debug("Scanning for new files to upload");
             foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
                 await ScanDirectory(traceDirectory, config);
@@ -78,13 +80,17 @@ namespace UploadDaemon
             logger.Debug("Uploading line coverage of {count} batches", batches.Count());
             foreach (LineCoverageMerger.CoverageBatch batch in batches)
             {
-                logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
-                    string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
+                string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
+
+                logger.Debug("Uploading merged line coverage to {upload} from {traceFiles}",
+                    batch.Upload.Describe(), traceFilePaths);
                 string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
 
-                string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
                 if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
                 {
+                    logger.Info("Successfully uploaded merged line coverage to {upload} from {traceFiles}",
+                        batch.Upload.Describe(), traceFilePaths);
+                    logger.Debug("Archiving successfully uploaded trace files {traceFiles}", traceFilePaths);
                     foreach (string tracePath in batch.TraceFilePaths)
                     {
                         archive.ArchiveUploadedFile(tracePath);
@@ -92,7 +98,8 @@ namespace UploadDaemon
                 }
                 else
                 {
-                    logger.Error("Failed to upload merged line coverage from {traceFile} to {upload}. Will retry later", traceFilePaths, batch.Upload.Describe());
+                    logger.Error("Failed to upload merged line coverage to {upload} from {traceFiles}. Will retry later",
+                        batch.Upload.Describe(), traceFilePaths);
                 }
             }
         }
@@ -119,17 +126,19 @@ namespace UploadDaemon
 
             if (processConfig.PdbDirectory == null)
             {
+                logger.Debug("No PDB directory configured for {trace}", trace.FilePath);
                 await ProcessMethodCoverage(trace, archive, processConfig, upload);
             }
             else
             {
+                logger.Debug("Converting {trace} to line coverage", trace.FilePath);
                 await ProcessLineCoverage(trace, archive, processConfig, upload, coverageMerger);
             }
         }
 
         private async Task ProcessLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
-            logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
+            logger.Debug("Converting {traceFile} to line coverage for uploading to {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
             if (timestampOrRevision == null)
             {
@@ -153,11 +162,13 @@ namespace UploadDaemon
             string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
             if (await upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision))
             {
+                logger.Debug("Archiving successfully uploaded file {traceFile}", trace.FilePath);
                 archive.ArchiveUploadedFile(trace.FilePath);
             }
             else
             {
-                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
+                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later",
+                    trace.FilePath, upload.Describe());
             }
         }
 
