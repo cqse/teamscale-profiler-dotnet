@@ -178,7 +178,11 @@ namespace UploadDaemon.Archiving
             try
             {
                 DateTime creationTime = fileSystem.File.GetCreationTime(file);
-                if (dateTimeProvider.Now > (creationTime + maximumAge))
+                // NTFS, FAT32 and maybe other file systems only have a resolution of 1-2 seconds for
+                // file timestamps. To make our tests work reliably, we look 3 seconds into the future
+                // in this check. This doesn't affect any real-world scenarios but ensures that a maximumAge
+                // of 0 has the desired effect of always deleting all archived files right away
+                if ((dateTimeProvider.Now + TimeSpan.FromSeconds(3)) > (creationTime + maximumAge))
                 {
                     fileSystem.File.Delete(file);
                 }
