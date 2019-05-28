@@ -433,6 +433,9 @@ archivePurgingThresholdsInDays:
   incompleteTraces: 3
 ```
 
+When the uploader is instructed to convert the traces locally to line coverage before uploading to Teamscale, the created line coverage is normally not stored on disk.
+For debugging, it can be helpful to dump it to disk. To do so, declare `archiveLineCoverage: true` at the top of your YAML file. These files will never be pruned.
+
 # Build Process
 
 In order to be able to interpret the generated coverage data, Teamscale needs access to the corresponding PDB files. These contain the mapping from the compiled assemblies back to the source code.
