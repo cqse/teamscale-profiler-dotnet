@@ -39,6 +39,18 @@ public class UploadTaskTest
               targetdir: {TraceDirectory}
     ");
 
+    private static readonly Config archiveLineCoverageConfig = Config.Read($@"
+        archiveLineCoverage: true
+        match:
+          - uploader:
+              directory: C:\store
+              pdbDirectory: {PdbDirectory}
+              revisionFile: {RevisionFile}
+              mergeLineCoverage: false
+            profiler:
+              targetdir: {TraceDirectory}
+    ");
+
     [Test]
     public void TracesShouldBeArchivedAfterASuccessfulUpload()
 
@@ -119,6 +131,23 @@ Inlined=1:33555646:100678050" },
         new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer(false)).Run(lineCoverageConfig);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"no-line-coverage\coverage_1_1.txt");
+    }
+
+    [Test]
+    public void TestArchivingUploadedLineCoverage()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(archiveLineCoverageConfig);
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-line-coverage\coverage_1_1.txt.simple");
     }
 
     [Test]
