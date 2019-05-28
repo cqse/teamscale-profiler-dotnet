@@ -1,6 +1,7 @@
 #include "CProfilerCallback.h"
 #include "CClassFactory.h"
 #include "CProfilerCallback.h"
+#include "utils/Debug.h"
 
 #define ARRAY_LENGTH(s) (sizeof(s) / sizeof(s[0]))
 
@@ -11,6 +12,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 		profilerInstance = hInstance;
 	}
 	else if (dwReason == DLL_PROCESS_DETACH) {
+		Debug::getInstance().log("DLL detach: shutting down profiler");
 		// sometimes the CLR does not cleanly shut down the profiler but simply unloads
 		// our DLL. In these cases, we need to manually trigger the shutdown
 		CProfilerCallback::ShutdownIfStillRunning();

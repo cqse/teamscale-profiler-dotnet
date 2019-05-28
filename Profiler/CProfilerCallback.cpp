@@ -6,6 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
+#include "utils/Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -14,17 +15,25 @@ class InstanceGuard {
 public:
 	InstanceGuard() {
 		InitializeCriticalSection(&section);
+		Debug::getInstance().log("Instance guard created");
 	}
 
 	void setInstance(CProfilerCallback* callback) {
+		Debug::getInstance().log("Setting instance in guard");
 		instance = callback;
 	}
 
 	void shutdownInstance() {
+		Debug::getInstance().log("Guard shutting down instance");
 		EnterCriticalSection(&section);
-		if (instance != NULL) {
+		if (instance == NULL) {
+			Debug::getInstance().log("No instance to shut down");
+		}
+		else {
+			Debug::getInstance().log("Found instance to shut down");
 			instance->Shutdown();
 			instance = NULL;
+			Debug::getInstance().log("Guard instance pointer set to null");
 		}
 		LeaveCriticalSection(&section);
 	}
@@ -55,16 +64,20 @@ CProfilerCallback::CProfilerCallback() {
 }
 
 CProfilerCallback::~CProfilerCallback() {
+	Debug::getInstance().log("Destroying callback");
 	try {
+		Debug::getInstance().log("Trigger shutdown from destructor");
 		// make sure we flush to disk and disable access to this instance for other threads
 		// even if the .NET framework doesn't call Shutdown() itself
 		getInstanceGuard().shutdownInstance();
 
+		Debug::getInstance().log("delete callback sync");
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
 		handleException("Destructor");
 	}
+	Debug::getInstance().log("callback destroyed");
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
@@ -165,10 +178,12 @@ UploadDaemon CProfilerCallback::createDaemon() {
 }
 
 void CProfilerCallback::ShutdownOnce() {
+	Debug::getInstance().log("actually triggering shutdown");
 	if (!config.isProfilingEnabled()) {
 		return;
 	}
 
+	Debug::getInstance().log("Acquiring callback sync lock");
 	EnterCriticalSection(&callbackSynchronization);
 	writeFunctionInfosToLog();
 
@@ -177,10 +192,13 @@ void CProfilerCallback::ShutdownOnce() {
 		createDaemon().notifyShutdown();
 	}
 	profilerInfo->ForceGC();
+	Debug::getInstance().log("shutdown complete, releasing callback sync lock");
 	LeaveCriticalSection(&callbackSynchronization);
+	Debug::getInstance().log("callback sync lock released");
 }
 
 HRESULT CProfilerCallback::Shutdown() {
+	Debug::getInstance().log("shutting down profiler once");
 	try {
 		std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
 	}
