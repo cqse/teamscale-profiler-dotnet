@@ -41,6 +41,7 @@ namespace UploadDaemon
             {
                 await ScanDirectory(traceDirectory, config);
             }
+            logger.Debug("Done UploadTask#Run");
         }
 
         private async Task ScanDirectory(string traceDirectory, Config config)
@@ -106,6 +107,7 @@ namespace UploadDaemon
                     logger.Error("Failed to upload merged line coverage to {upload} from {traceFiles}. Will retry later",
                         batch.Upload.Describe(), traceFilePaths);
                 }
+                logger.Debug("done UploadTask.UploadMergedCoverage");
             }
         }
 

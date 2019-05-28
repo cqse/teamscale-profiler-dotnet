@@ -109,9 +109,13 @@ namespace UploadDaemon.Upload
 
             try
             {
+                logger.Debug("using stream");
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
-                    return await PerformLineCoverageUpload(originalTraceFilePaths, timestampParameter, revisionOrTimestamp.Value, url, stream);
+                    logger.Debug("call PerformLineCoverageUpload");
+                    bool result = await PerformLineCoverageUpload(originalTraceFilePaths, timestampParameter, revisionOrTimestamp.Value, url, stream);
+                    logger.Debug($"result={result}");
+                    return result;
                 }
             }
             catch (Exception e)
@@ -126,8 +130,10 @@ namespace UploadDaemon.Upload
         {
             try
             {
+                logger.Debug("await UploadMultiPart");
                 using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
                 {
+                    logger.Debug("UploadMultiPart done");
                     if (response.IsSuccessStatusCode)
                     {
                         logger.Info("Successfully uploaded line coverage with {parameter}={parameterValue} to {teamscale} from {traces}",

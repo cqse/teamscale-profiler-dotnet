@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -12,6 +13,8 @@ namespace Common
     /// </summary>
     public class HttpClientUtils
     {
+        private static readonly Logger logger = LogManager.GetLogger("HttpClientUtils");
+
         /// <summary>
         /// Disables all SSL validation.
         /// </summary>
@@ -48,13 +51,16 @@ namespace Common
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
         /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-        public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
+        public static Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
         {
+            logger.Debug("Using MultipartFormDataContent");
             using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
             {
+                logger.Debug("adding content");
                 content.Add(new StreamContent(stream), multipartParameterName, fileName);
 
-                return await client.PostAsync(url, content);
+                logger.Debug("PostAsync");
+                return client.PostAsync(url, content);
             }
         }
     }
