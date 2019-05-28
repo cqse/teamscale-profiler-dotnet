@@ -7,6 +7,7 @@ using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Timers;
 using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
@@ -30,13 +31,17 @@ namespace UploadDaemon
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        private static void HandleUnobservedTaskExceptions(object sender, UnobservedTaskExceptionEventArgs args)
+        {
+            logger.Error(args.Exception, "Caught unobserved task exception. This is a programming error");
+        }
+
         /// <summary>
         /// Main entry point. Expects a single argument: the path to a directory that contains the trace files to upload.
         /// </summary>
         public static void Main(string[] args)
         {
-            // TODO just for testing this
-            Archive.ShouldArchiveLineCoverage = true;
+            TaskScheduler.UnobservedTaskException += new EventHandler<UnobservedTaskExceptionEventArgs>(HandleUnobservedTaskExceptions);
 
             if (IsAlreadyRunning())
             {
