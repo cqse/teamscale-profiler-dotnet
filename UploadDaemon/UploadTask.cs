@@ -144,13 +144,8 @@ namespace UploadDaemon
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
-            if (timestampOrRevision == null)
-            {
-                return;
-            }
-
             Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
-            if (lineCoverage == null)
+            if (timestampOrRevision == null || lineCoverage == null)
             {
                 return;
             }
