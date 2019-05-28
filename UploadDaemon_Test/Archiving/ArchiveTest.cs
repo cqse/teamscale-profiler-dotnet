@@ -78,7 +78,6 @@ namespace UploadDaemon.Archiving
 
             string[] remainingFiles = fileSystemMock.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
             Assert.That(remainingFiles, Is.EquivalentTo(new string[] {
-               FileInTraceDirectory(@"uploaded\coverage_1_2.txt"),
                FileInTraceDirectory(@"uploaded\coverage_1_3.txt"),
                FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
             }));
