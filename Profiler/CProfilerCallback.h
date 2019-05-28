@@ -84,9 +84,6 @@ private:
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
 
-	/** The log to write debug information to. */
-	Debug debugLog;
-
 	/** The log to write all results and messages to. */
 	Log log;
 

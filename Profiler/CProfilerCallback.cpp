@@ -154,7 +154,7 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	debugLog.log(configFile);
+	Debug::getInstance().log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
@@ -328,7 +328,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	debugLog.logErrorWithStracktrace(context);
+	Debug::getInstance().logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
