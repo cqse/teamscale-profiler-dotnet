@@ -31,11 +31,14 @@ public:
 		}
 		else {
 			Debug::getInstance().log("Found instance to shut down");
-			instance->Shutdown();
+			instance->ShutdownOnce();
+			Debug::getInstance().log("nulling instance pointer");
 			instance = NULL;
 			Debug::getInstance().log("Guard instance pointer set to null");
 		}
+		Debug::getInstance().log("leave guard section");
 		LeaveCriticalSection(&section);
+		Debug::getInstance().log("guard done");
 	}
 
 private:
@@ -50,6 +53,7 @@ static InstanceGuard& getInstanceGuard() {
 }
 
 void CProfilerCallback::ShutdownIfStillRunning() {
+	Debug::getInstance().log("shutdown if still running");
 	getInstanceGuard().shutdownInstance();
 }
 
@@ -178,19 +182,25 @@ UploadDaemon CProfilerCallback::createDaemon() {
 }
 
 void CProfilerCallback::ShutdownOnce() {
-	Debug::getInstance().log("actually triggering shutdown");
+	Debug::getInstance().log("actually shutting down once");
 	if (!config.isProfilingEnabled()) {
+		Debug::getInstance().log("Profiling is disabled");
 		return;
 	}
 
 	Debug::getInstance().log("Acquiring callback sync lock");
 	EnterCriticalSection(&callbackSynchronization);
+	Debug::getInstance().log("write fns");
 	writeFunctionInfosToLog();
 
+	Debug::getInstance().log("close log");
 	log.shutdown();
+	Debug::getInstance().log("notify daemon?");
 	if (config.shouldStartUploadDaemon()) {
+		Debug::getInstance().log("notify daemon");
 		createDaemon().notifyShutdown();
 	}
+	Debug::getInstance().log("force gc");
 	profilerInfo->ForceGC();
 	Debug::getInstance().log("shutdown complete, releasing callback sync lock");
 	LeaveCriticalSection(&callbackSynchronization);
@@ -198,9 +208,9 @@ void CProfilerCallback::ShutdownOnce() {
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-	Debug::getInstance().log("shutting down profiler once");
+	Debug::getInstance().log("clr triggered shutdown");
 	try {
-		std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
+		ShutdownIfStillRunning();
 	}
 	catch (...) {
 		handleException("Shutdown");

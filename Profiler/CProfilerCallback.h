@@ -43,9 +43,10 @@ public:
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
-private:
-	std::once_flag shutdownCompletedFlag;
+	/** Implements the actual shutdown procedure. Must only be called once. */
+	void CProfilerCallback::ShutdownOnce();
 
+private:
 	/** Synchronizes profiling callbacks. */
 	CRITICAL_SECTION callbackSynchronization;
 
@@ -136,9 +137,6 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
-
-	/** Implements the actual shutdown procedure. Must only be called once. */
-	void CProfilerCallback::ShutdownOnce();
 
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
