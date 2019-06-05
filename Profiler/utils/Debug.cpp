@@ -1,5 +1,7 @@
 #include "Debug.h"
 #include "StackWalker.h"
+#include <string>
+#include <processthreadsapi.h>
 
 class CustomStackWalker : public StackWalker {
 public:
@@ -22,7 +24,9 @@ Debug& Debug::getInstance() {
 
 Debug::Debug() {
 	InitializeCriticalSection(&loggingSynchronization);
-	logFile = CreateFile("C:\\Users\\Public\\profiler_debug.log", GENERIC_WRITE, FILE_SHARE_READ,
+	DWORD pid = GetCurrentProcessId();
+	std::string logFilePath = "C:\\Users\\Public\\profiler_debug." + std::to_string(pid) + ".log";
+	logFile = CreateFile(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
