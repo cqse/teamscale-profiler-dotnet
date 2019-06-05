@@ -51,7 +51,7 @@ namespace Common
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
         /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-        public static Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
+        public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
         {
             logger.Debug("Using MultipartFormDataContent");
             using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
@@ -60,7 +60,7 @@ namespace Common
                 content.Add(new StreamContent(stream), multipartParameterName, fileName);
 
                 logger.Debug("PostAsync");
-                return client.PostAsync(url, content);
+                return await client.PostAsync(url, content);
             }
         }
     }
