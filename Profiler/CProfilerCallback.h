@@ -20,7 +20,7 @@ class CProfilerCallback : public CProfilerCallbackBase {
 public:
 
 	/** Shuts down the profiler if it is still running. */
-	static void ShutdownIfStillRunning();
+	static void ShutdownFromDllMainDetach();
 
 	/** Constructor. */
 	CProfilerCallback();
@@ -44,7 +44,7 @@ public:
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
 	/** Implements the actual shutdown procedure. Must only be called once. */
-	void CProfilerCallback::ShutdownOnce();
+	void CProfilerCallback::ShutdownOnce(bool clrIsAvailable);
 
 private:
 	/** Synchronizes profiling callbacks. */

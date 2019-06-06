@@ -15,7 +15,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved) {
 		Debug::getInstance().log("DLL detach: shutting down profiler");
 		// sometimes the CLR does not cleanly shut down the profiler but simply unloads
 		// our DLL. In these cases, we need to manually trigger the shutdown
-		CProfilerCallback::ShutdownIfStillRunning();
+		CProfilerCallback::ShutdownFromDllMainDetach();
 		Debug::getInstance().log("end DLL detach");
 	}
 

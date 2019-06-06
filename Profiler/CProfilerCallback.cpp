@@ -23,7 +23,7 @@ public:
 		instance = callback;
 	}
 
-	void shutdownInstance() {
+	void shutdownInstance(bool clrIsAvailable) {
 		Debug::getInstance().log("Guard shutting down instance");
 		EnterCriticalSection(&section);
 		if (instance == NULL) {
@@ -31,7 +31,7 @@ public:
 		}
 		else {
 			Debug::getInstance().log("Found instance to shut down");
-			instance->ShutdownOnce();
+			instance->ShutdownOnce(clrIsAvailable);
 			Debug::getInstance().log("nulling instance pointer");
 			instance = NULL;
 			Debug::getInstance().log("Guard instance pointer set to null");
@@ -52,9 +52,9 @@ static InstanceGuard& getInstanceGuard() {
 	return instance;
 }
 
-void CProfilerCallback::ShutdownIfStillRunning() {
+void CProfilerCallback::ShutdownFromDllMainDetach() {
 	Debug::getInstance().log("shutdown if still running");
-	getInstanceGuard().shutdownInstance();
+	getInstanceGuard().shutdownInstance(false);
 }
 
 CProfilerCallback::CProfilerCallback() {
@@ -73,7 +73,7 @@ CProfilerCallback::~CProfilerCallback() {
 		Debug::getInstance().log("Trigger shutdown from destructor");
 		// make sure we flush to disk and disable access to this instance for other threads
 		// even if the .NET framework doesn't call Shutdown() itself
-		getInstanceGuard().shutdownInstance();
+		getInstanceGuard().shutdownInstance(false);
 
 		Debug::getInstance().log("delete callback sync");
 		DeleteCriticalSection(&callbackSynchronization);
@@ -181,7 +181,7 @@ UploadDaemon CProfilerCallback::createDaemon() {
 	return UploadDaemon(profilerPath);
 }
 
-void CProfilerCallback::ShutdownOnce() {
+void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	Debug::getInstance().log("actually shutting down once");
 	if (!config.isProfilingEnabled()) {
 		Debug::getInstance().log("Profiling is disabled");
@@ -201,7 +201,9 @@ void CProfilerCallback::ShutdownOnce() {
 		createDaemon().notifyShutdown();
 	}
 	Debug::getInstance().log("force gc");
-	profilerInfo->ForceGC();
+	if (clrIsAvailable) {
+		profilerInfo->ForceGC();
+	}
 	Debug::getInstance().log("shutdown complete, releasing callback sync lock");
 	LeaveCriticalSection(&callbackSynchronization);
 	Debug::getInstance().log("callback sync lock released");
@@ -210,7 +212,7 @@ void CProfilerCallback::ShutdownOnce() {
 HRESULT CProfilerCallback::Shutdown() {
 	Debug::getInstance().log("clr triggered shutdown");
 	try {
-		ShutdownIfStillRunning();
+		getInstanceGuard().shutdownInstance(true);
 	}
 	catch (...) {
 		handleException("Shutdown");
