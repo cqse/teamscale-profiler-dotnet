@@ -3,6 +3,7 @@
 #include "UploadDaemon.h"
 #include "utils/StringUtils.h"
 #include "utils/WindowsUtils.h"
+#include "utils/Debug.h"
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
@@ -21,6 +22,8 @@ public:
 		// death like any other memory
 		InitializeCriticalSection(&section);
 	}
+
+	~ShutdownGuard() {}
 
 	void setInstance(CProfilerCallback* callback) {
 		instance = callback;
@@ -339,6 +342,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
+	Debug::getInstance().logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}
