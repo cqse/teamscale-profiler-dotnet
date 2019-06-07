@@ -23,7 +23,7 @@ public:
 		InitializeCriticalSection(&section);
 	}
 
-	~ShutdownGuard() {}
+	virtual ~ShutdownGuard() {}
 
 	void setInstance(CProfilerCallback* callback) {
 		instance = callback;
