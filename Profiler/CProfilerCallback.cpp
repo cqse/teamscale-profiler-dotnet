@@ -226,6 +226,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 		return functionId;
 	}
 	catch (...) {
+		Debug::getInstance().logErrorWithStracktrace("functionMapper");
 		// since this function must be static, we have no way to access the config so we always terminate the program.
 		throw;
 	}
