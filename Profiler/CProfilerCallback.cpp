@@ -6,39 +6,38 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
-#include "utils/Debug.h"
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-class InstanceGuard {
+/**
+ * Serializes access to the singleton profiler instance when trying to shut it down.
+ * This prevents race conditions that can result in deadlocks that freeze the profiled process.
+ */
+class ShutdownGuard {
 public:
-	InstanceGuard() {
+	ShutdownGuard() {
+		// we never delete this critical section. This is not needed as it's cleaned up on process
+		// death like any other memory
 		InitializeCriticalSection(&section);
-		Debug::getInstance().log("Instance guard created");
 	}
 
 	void setInstance(CProfilerCallback* callback) {
-		Debug::getInstance().log("Setting instance in guard");
 		instance = callback;
 	}
 
+	/**
+	 * Shuts down the instance. If clrIsAvailable is true, also tries to force a GC.
+	 * Note that forcing a GC after the CLR has shut down can result in deadlocks so this
+	 * should be set only when calling from a CLR callback.
+	 */
 	void shutdownInstance(bool clrIsAvailable) {
-		Debug::getInstance().log("Guard shutting down instance");
 		EnterCriticalSection(&section);
-		if (instance == NULL) {
-			Debug::getInstance().log("No instance to shut down");
-		}
-		else {
-			Debug::getInstance().log("Found instance to shut down");
+		if (instance != NULL) {
 			instance->ShutdownOnce(clrIsAvailable);
-			Debug::getInstance().log("nulling instance pointer");
 			instance = NULL;
-			Debug::getInstance().log("Guard instance pointer set to null");
 		}
-		Debug::getInstance().log("leave guard section");
 		LeaveCriticalSection(&section);
-		Debug::getInstance().log("guard done");
 	}
 
 private:
@@ -46,21 +45,20 @@ private:
 	CProfilerCallback* instance = NULL;
 };
 
-static InstanceGuard& getInstanceGuard() {
-	// C++ 11 guarantees that this initialization will only happen once in a thread-safe manner
-	static InstanceGuard instance;
+static ShutdownGuard& getShutdownGuard() {
+	// C++ 11 guarantees that this initialization will only happen once and in a thread-safe manner
+	static ShutdownGuard instance;
 	return instance;
 }
 
 void CProfilerCallback::ShutdownFromDllMainDetach() {
-	Debug::getInstance().log("shutdown if still running");
-	getInstanceGuard().shutdownInstance(false);
+	getShutdownGuard().shutdownInstance(false);
 }
 
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
-		getInstanceGuard().setInstance(this);
+		getShutdownGuard().setInstance(this);
 	}
 	catch (...) {
 		handleException("Constructor");
@@ -68,20 +66,15 @@ CProfilerCallback::CProfilerCallback() {
 }
 
 CProfilerCallback::~CProfilerCallback() {
-	Debug::getInstance().log("Destroying callback");
 	try {
-		Debug::getInstance().log("Trigger shutdown from destructor");
 		// make sure we flush to disk and disable access to this instance for other threads
 		// even if the .NET framework doesn't call Shutdown() itself
-		getInstanceGuard().shutdownInstance(false);
-
-		Debug::getInstance().log("delete callback sync");
+		getShutdownGuard().shutdownInstance(false);
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
 		handleException("Destructor");
 	}
-	Debug::getInstance().log("callback destroyed");
 }
 
 HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
@@ -171,7 +164,6 @@ void CProfilerCallback::initializeConfig() {
 	if (!configFileWasManuallySpecified) {
 		configFile = Config::getDefaultConfigPath();
 	}
-	Debug::getInstance().log(configFile);
 
 	config.load(configFile, WindowsUtils::getPathOfThisProcess(), configFileWasManuallySpecified);
 }
@@ -182,37 +174,26 @@ UploadDaemon CProfilerCallback::createDaemon() {
 }
 
 void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
-	Debug::getInstance().log("actually shutting down once");
 	if (!config.isProfilingEnabled()) {
-		Debug::getInstance().log("Profiling is disabled");
 		return;
 	}
 
-	Debug::getInstance().log("Acquiring callback sync lock");
 	EnterCriticalSection(&callbackSynchronization);
-	Debug::getInstance().log("write fns");
 	writeFunctionInfosToLog();
 
-	Debug::getInstance().log("close log");
 	log.shutdown();
-	Debug::getInstance().log("notify daemon?");
 	if (config.shouldStartUploadDaemon()) {
-		Debug::getInstance().log("notify daemon");
 		createDaemon().notifyShutdown();
 	}
-	Debug::getInstance().log("force gc");
 	if (clrIsAvailable) {
 		profilerInfo->ForceGC();
 	}
-	Debug::getInstance().log("shutdown complete, releasing callback sync lock");
 	LeaveCriticalSection(&callbackSynchronization);
-	Debug::getInstance().log("callback sync lock released");
 }
 
 HRESULT CProfilerCallback::Shutdown() {
-	Debug::getInstance().log("clr triggered shutdown");
 	try {
-		getInstanceGuard().shutdownInstance(true);
+		getShutdownGuard().shutdownInstance(true);
 	}
 	catch (...) {
 		handleException("Shutdown");
@@ -358,7 +339,6 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	Debug::getInstance().logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}

@@ -3,8 +3,8 @@
 #include <string>
 
 /**
- * Helper for debugging. Logs messages to C:\Users\Public\profiler_debug.log.
- * The log will be overwritten with every run of the profiler.
+ * Helper for debugging. Logs messages to C:\Users\Public\profiler_debug.PID.log where
+ * PID is the ID of the profiled process.
  * This class implements the singleton pattern so we are able to log from every class of the profiler.
  */
 class Debug

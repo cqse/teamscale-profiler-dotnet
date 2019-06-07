@@ -19,7 +19,7 @@
 class CProfilerCallback : public CProfilerCallbackBase {
 public:
 
-	/** Shuts down the profiler if it is still running. */
+	/** Shuts down the profiler from the DllMain function on Dll detach if it is still running. */
 	static void ShutdownFromDllMainDetach();
 
 	/** Constructor. */
@@ -43,7 +43,12 @@ public:
 	/** Record inlining of method, but generally allow it. */
 	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
 
-	/** Implements the actual shutdown procedure. Must only be called once. */
+	/**
+	 * Implements the actual shutdown procedure. Must only be called once.
+	 * If clrIsAvailable is true, also tries to force a GC.
+	 * Note that forcing a GC after the CLR has shut down can result in deadlocks so this
+	 * should be set only when calling from a CLR callback.
+	 */
 	void CProfilerCallback::ShutdownOnce(bool clrIsAvailable);
 
 private:
