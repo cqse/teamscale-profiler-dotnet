@@ -3,37 +3,25 @@
 #include <string>
 
 /**
- * Helper for debugging. Logs messages to C:\Users\Public\profiler_debug.log.
- * The log will be overwritten with every run of the profiler.
+ * Helper for debugging. Logs messages to C:\Users\Public\profiler_debug.PID.log where
+ * PID is the ID of the profiled process.
+ * This class implements the singleton pattern so we are able to log from every class of the profiler.
  */
 class Debug
 {
 public:
+
 	/** Logs the given message to the debug log. */
-	static void log(std::string message);
+	void log(std::string message);
 
-	/** Logs the current stack trace. */
-	static void logStacktrace(std::string context);
+	/** Logs the given context and the current stacktrace to the debug log. */
+	void logErrorWithStracktrace(std::string context);
 
-	virtual ~Debug();
+	static Debug& getInstance();
 
 private:
 	Debug();
-
-	void logInternal(std::string message);
-
-	/**
-	 * Implements a thread-safe singleton pattern and ensures that the instance
-	 * is properly destroyed and thus the file handle freed.
-	 * See https://stackoverflow.com/a/1008289/1396068
-	 */
-	static Debug& getInstance()
-	{
-		// Guaranteed to be destroyed.
-		// Instantiated on first use.
-		static Debug instance;
-		return instance;
-	}
+	virtual ~Debug();
 
 	HANDLE logFile = INVALID_HANDLE_VALUE;
 	CRITICAL_SECTION loggingSynchronization;
