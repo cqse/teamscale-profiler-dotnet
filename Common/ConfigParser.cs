@@ -31,6 +31,11 @@ namespace Common
             public int? UploadIntervalInMinutes { get; set; }
 
             /// <summary>
+            /// Whether the uploader should archive the generated line coverage and the merged line coverage to disk.
+            /// </summary>
+            public bool? ArchiveLineCoverage { get; set; }
+
+            /// <summary>
             /// Section that contains the config options for purging the upload archives. Null if the user did not set this property.
             /// </summary>
             public PurgeUploadArchivesSection ArchivePurgingThresholdsInDays { get; set; }

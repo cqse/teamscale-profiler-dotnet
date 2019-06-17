@@ -33,6 +33,11 @@ namespace UploadDaemon.Archiving
         void ArchiveFileWithoutProcess(string tracePath);
 
         /// <summary>
+        /// Archives a line coverage report for debugging.
+        /// </summary>
+        void ArchiveLineCoverage(string fileName, string lineCoverageReport);
+
+        /// <summary>
         /// Deletes all files without a profiled process that are older than the given maximum age from the archive.
         /// </summary>
         void PurgeFilesWithoutProcess(TimeSpan maximumAge);

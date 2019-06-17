@@ -2,6 +2,7 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
@@ -61,12 +62,12 @@ namespace UploadDaemon
                 }
             }
 
-            await UploadMergedCoverage(archive, coverageMerger);
+            await UploadMergedCoverage(archive, coverageMerger, config);
 
             logger.Debug("Finished scan");
         }
 
-        private static async Task UploadMergedCoverage(Archive archive, LineCoverageMerger coverageMerger)
+        private static async Task UploadMergedCoverage(Archive archive, LineCoverageMerger coverageMerger, Config config)
         {
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = coverageMerger.GetBatches();
             if (batches.Count() == 0)
@@ -78,22 +79,34 @@ namespace UploadDaemon
             logger.Debug("Uploading line coverage of {count} batches", batches.Count());
             foreach (LineCoverageMerger.CoverageBatch batch in batches)
             {
-                logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
-                    string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
-                string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
+                await UploadCoverageBatch(archive, config, batch);
+            }
+        }
 
-                string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
-                if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
+        private static async Task UploadCoverageBatch(Archive archive, Config config, LineCoverageMerger.CoverageBatch batch)
+        {
+            logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
+                                string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
+            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
+
+            string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
+
+            if (config.ArchiveLineCoverage)
+            {
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                archive.ArchiveLineCoverage($"merged_{timestamp}.simple", report);
+            }
+
+            if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
+            {
+                foreach (string tracePath in batch.TraceFilePaths)
                 {
-                    foreach (string tracePath in batch.TraceFilePaths)
-                    {
-                        archive.ArchiveUploadedFile(tracePath);
-                    }
+                    archive.ArchiveUploadedFile(tracePath);
                 }
-                else
-                {
-                    logger.Error("Failed to upload merged line coverage from {traceFile} to {upload}. Will retry later", traceFilePaths, batch.Upload.Describe());
-                }
+            }
+            else
+            {
+                logger.Error("Failed to upload merged line coverage from {traceFile} to {upload}. Will retry later", traceFilePaths, batch.Upload.Describe());
             }
         }
 
@@ -123,23 +136,24 @@ namespace UploadDaemon
             }
             else
             {
-                await ProcessLineCoverage(trace, archive, processConfig, upload, coverageMerger);
+                await ProcessLineCoverage(trace, archive, config, processConfig, upload, coverageMerger);
             }
         }
 
-        private async Task ProcessLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
+        private async Task ProcessLineCoverage(TraceFile trace, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
-            if (timestampOrRevision == null)
+            Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
+            if (timestampOrRevision == null || lineCoverage == null)
             {
                 return;
             }
 
-            Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
-            if (lineCoverage == null)
+            if (config.ArchiveLineCoverage)
             {
-                return;
+                archive.ArchiveLineCoverage(Path.GetFileName(trace.FilePath) + ".simple",
+                    LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
             }
 
             if (processConfig.MergeLineCoverage)
