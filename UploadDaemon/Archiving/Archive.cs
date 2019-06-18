@@ -41,7 +41,7 @@ namespace UploadDaemon.Archiving
                 return;
             }
 
-            // make sure there's no .. or other path components in the file name
+            // Remove path components from file name.
             string sanitizedFileName = Path.GetFileName(fileName);
             string targetPath = Path.Combine(lineCoverageDirectory, sanitizedFileName);
             try
