@@ -1,14 +1,12 @@
+using Common;
+using NLog;
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using NLog;
-using Common;
 using UploadDaemon.SymbolAnalysis;
-using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -95,21 +93,31 @@ namespace UploadDaemon.Upload
             logger.Debug("Uploading line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
                 originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, server.ToString());
 
-            string message = messageFormatter.Format(timestampParameter);
-            string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedProject = HttpUtility.UrlEncode(server.Project);
-            string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
-            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
-                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
-                $"&{timestampParameter}={encodedTimestamp}";
-
-            byte[] reportBytes = Encoding.ASCII.GetBytes(lineCoverageReport);
+            string url;
+            try
+            {
+                string message = messageFormatter.Format(timestampParameter);
+                string encodedMessage = HttpUtility.UrlEncode(message);
+                string encodedProject = HttpUtility.UrlEncode(server.Project);
+                string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
+                string encodedPartition = HttpUtility.UrlEncode(server.Partition);
+                url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
+                    $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
+                    $"&{timestampParameter}={encodedTimestamp}";
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to prepare upload parameters");
+                return false;
+            }
 
             try
             {
+                logger.Debug("Starting upload of line coverage to {url}", url);
+                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
+                    logger.Debug("Loaded data, sending request.");
                     return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
                 }
             }
