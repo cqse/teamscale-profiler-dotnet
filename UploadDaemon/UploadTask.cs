@@ -33,15 +33,15 @@ namespace UploadDaemon
         /// <summary>
         /// Scans the trace directories for traces to process and either tries to upload or archive them.
         /// </summary>
-        public async Task Run(Config config)
+        public void Run(Config config)
         {
             foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
-                await ScanDirectory(traceDirectory, config);
+                ScanDirectory(traceDirectory, config);
             }
         }
 
-        private async Task ScanDirectory(string traceDirectory, Config config)
+        private void ScanDirectory(string traceDirectory, Config config)
         {
             logger.Debug("Scanning trace directory {traceDirectory}", traceDirectory);
 
@@ -54,7 +54,7 @@ namespace UploadDaemon
             {
                 try
                 {
-                    await ProcessTraceFile(trace, archive, config, coverageMerger);
+                    ProcessTraceFile(trace, archive, config, coverageMerger);
                 }
                 catch (Exception e)
                 {
@@ -62,12 +62,12 @@ namespace UploadDaemon
                 }
             }
 
-            await UploadMergedCoverage(archive, coverageMerger, config);
+            UploadMergedCoverage(archive, coverageMerger, config);
 
             logger.Debug("Finished scan");
         }
 
-        private static async Task UploadMergedCoverage(Archive archive, LineCoverageMerger coverageMerger, Config config)
+        private static void UploadMergedCoverage(Archive archive, LineCoverageMerger coverageMerger, Config config)
         {
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = coverageMerger.GetBatches();
             if (batches.Count() == 0)
@@ -79,11 +79,11 @@ namespace UploadDaemon
             logger.Debug("Uploading line coverage of {count} batches", batches.Count());
             foreach (LineCoverageMerger.CoverageBatch batch in batches)
             {
-                await UploadCoverageBatch(archive, config, batch);
+                UploadCoverageBatch(archive, config, batch);
             }
         }
 
-        private static async Task UploadCoverageBatch(Archive archive, Config config, LineCoverageMerger.CoverageBatch batch)
+        private static void UploadCoverageBatch(Archive archive, Config config, LineCoverageMerger.CoverageBatch batch)
         {
             logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
                                 string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
@@ -97,7 +97,7 @@ namespace UploadDaemon
                 archive.ArchiveLineCoverage($"merged_{timestamp}.simple", report);
             }
 
-            if (await batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp))
+            if (RunSync(batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp)))
             {
                 foreach (string tracePath in batch.TraceFilePaths)
                 {
@@ -110,7 +110,7 @@ namespace UploadDaemon
             }
         }
 
-        private async Task ProcessTraceFile(TraceFile trace, Archive archive, Config config, LineCoverageMerger coverageMerger)
+        private void ProcessTraceFile(TraceFile trace, Archive archive, Config config, LineCoverageMerger coverageMerger)
         {
             if (trace.IsEmpty())
             {
@@ -132,15 +132,15 @@ namespace UploadDaemon
 
             if (processConfig.PdbDirectory == null)
             {
-                await ProcessMethodCoverage(trace, archive, processConfig, upload);
+                ProcessMethodCoverage(trace, archive, processConfig, upload);
             }
             else
             {
-                await ProcessLineCoverage(trace, archive, config, processConfig, upload, coverageMerger);
+                ProcessLineCoverage(trace, archive, config, processConfig, upload, coverageMerger);
             }
         }
 
-        private async Task ProcessLineCoverage(TraceFile trace, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
+        private void ProcessLineCoverage(TraceFile trace, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
@@ -165,7 +165,7 @@ namespace UploadDaemon
 
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
             string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
-            if (await upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision))
+            if (RunSync(upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision)))
             {
                 archive.ArchiveUploadedFile(trace.FilePath);
             }
@@ -220,7 +220,7 @@ namespace UploadDaemon
             return lineCoverage;
         }
 
-        private static async Task ProcessMethodCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
+        private static void ProcessMethodCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
         {
             string version = trace.FindVersion(processConfig.VersionAssembly);
             if (version == null)
@@ -234,7 +234,7 @@ namespace UploadDaemon
             string prefixedVersion = processConfig.VersionPrefix + version;
             logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
 
-            if (await upload.UploadAsync(trace.FilePath, prefixedVersion))
+            if (RunSync(upload.UploadAsync(trace.FilePath, prefixedVersion)))
             {
                 archive.ArchiveUploadedFile(trace.FilePath);
             }
@@ -242,6 +242,18 @@ namespace UploadDaemon
             {
                 logger.Error("Upload of {trace} to {upload} failed. Will retry later", trace.FilePath, upload.Describe());
             }
+        }
+
+        /// <summary>
+        /// Runs a task synchronously. We want to be blocking until uploads finish, because otherwise uploads may not
+        /// finish before the daemon terminates or may happen in parallel. This was always our intention, but we kept
+        /// forgetting awaits all over the place. Therefore, we explicitly wait for uploads now here and there's no
+        /// need to await anything further up the call stack.
+        /// </summary>
+        static T RunSync<T>(Task<T> task)
+        {
+            task.Wait();
+            return task.Result;
         }
     }
 }
