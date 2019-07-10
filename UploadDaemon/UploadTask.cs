@@ -33,7 +33,7 @@ namespace UploadDaemon
         /// <summary>
         /// Scans the trace directories for traces to process and either tries to upload or archive them.
         /// </summary>
-        public async void Run(Config config)
+        public async Task Run(Config config)
         {
             foreach (string traceDirectory in config.TraceDirectoriesToWatch)
             {
