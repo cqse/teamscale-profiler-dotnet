@@ -142,7 +142,7 @@ namespace UploadDaemon
 
         private void ProcessLineCoverage(TraceFile trace, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
-            logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
+            logger.Debug("Preparing line coverage from {traceFile} for {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
             Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
             if (timestampOrRevision == null || lineCoverage == null)
