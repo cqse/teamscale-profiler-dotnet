@@ -13,9 +13,25 @@ namespace Common
     public class HttpClientUtils
     {
         /// <summary>
+        /// Sets common options for all HTTP requests.
+        /// </summary>
+        public static void ConfigureHttpStack(bool disableSslValidation)
+        {
+            // Teamscale's Jetty only supports TLS 1.2 so we enforce it here
+            // Otherwise we get weird errors about aborted SSL connections from the .NET
+            // network stack that are hard to debug
+            ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
+            if (disableSslValidation)
+            {
+                DisableSslValidation();
+            }
+        }
+
+        /// <summary>
         /// Disables all SSL validation.
         /// </summary>
-        public static void DisableSslValidation()
+        private static void DisableSslValidation()
         {
             // c.f. https://stackoverflow.com/a/18232008/1396068
             ServicePointManager.ServerCertificateValidationCallback +=
