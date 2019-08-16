@@ -4,6 +4,10 @@ Teamscale Ephemeral .NET Profiler
 
 Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
 
+## System Requirements
+
+.NET Framework 4.6 or newer must be installed (older versions have problems with communicating with Teamscale over TLS)
+
 ## Download
 
 The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
