@@ -17,10 +17,11 @@ namespace Common
         /// </summary>
         public static void ConfigureHttpStack(bool disableSslValidation)
         {
-            // Teamscale's Jetty only supports TLS 1.2 so we enforce it here
-            // Otherwise we get weird errors about aborted SSL connections from the .NET
-            // network stack that are hard to debug
-            ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            // Make sure this client and the server endpoint both speak the same
+            // protocol. On older .NET framework versions, TLS 1.2 for example is not
+            // enabled by default.
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls |
+                SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
             if (disableSslValidation)
             {
