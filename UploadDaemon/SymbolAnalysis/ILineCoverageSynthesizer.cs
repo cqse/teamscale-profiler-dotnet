@@ -1,8 +1,5 @@
-﻿using Common;
-using NLog;
-using System.Collections.Generic;
-using System.IO.Abstractions;
-using System.Text;
+﻿using System.Collections.Generic;
+using UploadDaemon.Utils;
 
 namespace UploadDaemon.SymbolAnalysis
 {

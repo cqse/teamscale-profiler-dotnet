@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
-using Common;
 using System.Collections.Generic;
+using UploadDaemon.Utils;
 
 [TestFixture]
 public class GlobPatternListTest

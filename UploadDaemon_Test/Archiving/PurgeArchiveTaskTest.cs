@@ -1,7 +1,8 @@
-﻿using Common;
+﻿using UploadDaemon;
 using Moq;
 using NUnit.Framework;
 using System;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Archiving
 {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Common
+namespace UploadDaemon.Configuration
 {
     /// <summary>
     /// Data class that holds all details needed to connect to Teamscale.

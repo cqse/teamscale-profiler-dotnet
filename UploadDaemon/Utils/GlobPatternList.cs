@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Common
+namespace UploadDaemon.Utils
 {
     /// <summary>
     /// Maintains a list of include and exclude glob patterns.

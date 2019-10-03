@@ -1,4 +1,4 @@
-using Common;
+using UploadDaemon;
 using NLog;
 using System;
 using System.IO;
@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Upload
 {

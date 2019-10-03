@@ -1,7 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
+using UploadDaemon.Configuration;
 
-namespace Common
+namespace UploadDaemon
 {
     [TestFixture]
     public class ConfigParserTest

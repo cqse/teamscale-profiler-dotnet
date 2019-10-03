@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.IO.Abstractions;
+using UploadDaemon.Utils;
 
 [TestFixture]
 public class SymbolCollectionTest
@@ -17,7 +18,7 @@ public class SymbolCollectionTest
     public void TestPdbParsing()
     {
         SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-            new Common.GlobPatternList(new List<string> { "ProfilerGUI" }, new List<string> { }));
+            new GlobPatternList(new List<string> { "ProfilerGUI" }, new List<string> { }));
 
         SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
         Assert.Multiple(() =>
@@ -38,7 +39,7 @@ public class SymbolCollectionTest
     public void OneInvalidPdbShouldNotPreventParsingOthers()
     {
         SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-               new Common.GlobPatternList(new List<string> { "Invalid", "ProfilerGUI" }, new List<string> { }));
+               new GlobPatternList(new List<string> { "Invalid", "ProfilerGUI" }, new List<string> { }));
 
         SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
         Assert.That(existingMethod, Is.Not.Null);
@@ -54,7 +55,7 @@ public class SymbolCollectionTest
     public void DuplicatePdbsShouldNotThrowExceptions()
     {
         SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-               new Common.GlobPatternList(new List<string> { "ProfilerGUI", "ProfilerGUICopy" }, new List<string> { }));
+               new GlobPatternList(new List<string> { "ProfilerGUI", "ProfilerGUICopy" }, new List<string> { }));
 
         SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
         Assert.That(existingMethod, Is.Not.Null);
@@ -70,7 +71,7 @@ public class SymbolCollectionTest
     public void RespectsGlobPatterns()
     {
         SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-               new Common.GlobPatternList(new List<string> { "*" }, new List<string> { "Profiler*" }));
+               new GlobPatternList(new List<string> { "*" }, new List<string> { "Profiler*" }));
 
         SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
         Assert.That(existingMethod, Is.Null);
@@ -80,7 +81,7 @@ public class SymbolCollectionTest
     public void SearchesSubdirectories()
     {
         SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-               new Common.GlobPatternList(new List<string> { "Sub" }, new List<string> { }));
+               new GlobPatternList(new List<string> { "Sub" }, new List<string> { }));
 
         SymbolCollection.SourceLocation existingMethod = collection.Resolve("Sub", ExistingMethodToken);
         Assert.That(existingMethod, Is.Not.Null);

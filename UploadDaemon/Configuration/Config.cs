@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
-using static Common.ConfigParser;
+using UploadDaemon.Utils;
 
-namespace Common
+namespace UploadDaemon.Configuration
 {
     /// <summary>
     /// Stores the uploader's config and applies it depending on the
@@ -13,7 +13,7 @@ namespace Common
     public class Config
     {
         /// <summary>
-        /// Path to the config file. It's located one directory above the uploader's and GUI's DLLs.
+        /// Path to the config file. It's located one directory above the uploader's DLLs.
         /// </summary>
         public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
 
@@ -195,7 +195,7 @@ namespace Common
         /// <summary>
         /// The thresholds for purging upload archives. A value of <code>null</code> means purging is disabled.
         /// </summary>
-        public PurgeUploadArchivesSection ArchivePurgingThresholds { get; private set; }
+        public ConfigParser.PurgeUploadArchivesSection ArchivePurgingThresholds { get; private set; }
 
         /// <summary>
         /// Returns all configured trace directories in which the uploader should
@@ -211,7 +211,7 @@ namespace Common
             this.DisableSslValidation = config.DisableSslValidation ?? true;
             this.UploadInterval = TimeSpan.FromMinutes(config.UploadIntervalInMinutes ?? 5);
             this.ArchiveLineCoverage = config.ArchiveLineCoverage ?? false;
-            this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new PurgeUploadArchivesSection();
+            this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new ConfigParser.PurgeUploadArchivesSection();
         }
 
         /// <summary>

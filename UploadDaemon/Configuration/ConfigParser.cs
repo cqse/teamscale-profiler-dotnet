@@ -3,7 +3,7 @@ using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
 using System;
 
-namespace Common
+namespace UploadDaemon.Configuration
 {
     /// <summary>
     /// Parses the YAML config file into C# objects.

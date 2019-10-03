@@ -1,8 +1,9 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UploadDaemon.Configuration;
 
-namespace Common
+namespace UploadDaemon
 {
     [TestFixture]
     public class ConfigTest

@@ -4,7 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Common;
+using UploadDaemon;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon
 {

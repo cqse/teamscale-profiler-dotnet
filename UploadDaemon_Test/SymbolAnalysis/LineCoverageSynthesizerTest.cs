@@ -1,13 +1,9 @@
 ﻿using NUnit.Framework;
 using UploadDaemon.SymbolAnalysis;
-using UploadDaemon;
 using System;
-using System.IO;
 using System.Collections.Generic;
-
-using System.IO.Abstractions;
-using Moq;
 using Cqse.ConQAT.Dotnet.Bummer;
+using UploadDaemon.Utils;
 
 [TestFixture]
 public class LineCoverageSynthesizerTest
@@ -24,7 +20,7 @@ public class LineCoverageSynthesizerTest
             $"Inlined=2:{ExistingMethodToken}",
         }, "coverage_12345_1234.txt");
         string coverageReport = Convert(traceFile, TestUtils.TestDataDirectory,
-            new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
+            new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
         Assert.That(NormalizeNewLines(coverageReport.Trim()), Is.EqualTo(NormalizeNewLines(@"# isMethodAccurate=true
 \\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs
@@ -39,7 +35,7 @@ public class LineCoverageSynthesizerTest
         }, "coverage_12345_1234.txt");
 
         Dictionary<string, FileCoverage> report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
-            new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
+            new GlobPatternList(new List<string> { "*" }, new List<string> { }));
         Assert.That(report, Is.Null);
     }
 
@@ -53,7 +49,7 @@ public class LineCoverageSynthesizerTest
 
         Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
         {
-            Convert(traceFile, TestUtils.TestDataDirectory, new Common.GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
+            LineCoverageSynthesizerTest.Convert(traceFile, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
         });
 
         Assert.That(exception.Message, Contains.Substring("no symbols"));
@@ -90,7 +86,7 @@ public class LineCoverageSynthesizerTest
         SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
 
         Dictionary<string, FileCoverage> coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
-            new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
+            new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
         Assert.That(coverage, Is.Empty);
     }
@@ -100,7 +96,7 @@ public class LineCoverageSynthesizerTest
         return text.Replace("\r\n", "\n").Replace("\r", "\n");
     }
 
-    private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, Common.GlobPatternList assemlyPatterns)
+    private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
     {
         return LineCoverageSynthesizer.ConvertToLineCoverageReport(new LineCoverageSynthesizer().ConvertToLineCoverage(
             traceFile, symbolDirectory, assemlyPatterns));

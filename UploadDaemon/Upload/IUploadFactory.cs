@@ -1,5 +1,6 @@
-﻿using Common;
+﻿using UploadDaemon;
 using System.IO.Abstractions;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Upload
 {

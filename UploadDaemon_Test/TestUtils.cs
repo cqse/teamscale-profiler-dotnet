@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
-using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
-using Common;
-using Moq;
 using NUnit.Framework;
-using UploadDaemon;
 
 /// <summary>
 /// Utilities for accessing test folders.
