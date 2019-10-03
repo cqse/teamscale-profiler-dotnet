@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UploadDaemon
+namespace UploadDaemon.Configuration
 {
     /// <summary>
     /// Data class that holds all details necessary to connect to an Azure File Storage.

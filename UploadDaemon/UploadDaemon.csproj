@@ -119,7 +119,7 @@
     <Compile Include="TraceFile.cs" />
     <Compile Include="TraceFileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Upload\AzureFileStorage.cs" />
+    <Compile Include="Configuration\AzureFileStorage.cs" />
     <Compile Include="Upload\HttpClientUtils.cs" />
     <Compile Include="Upload\IUploadFactory.cs" />
     <Compile Include="Configuration\TeamscaleServer.cs" />
