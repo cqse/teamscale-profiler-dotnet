@@ -9,8 +9,9 @@ using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Scanning;
+using UploadDaemon.Upload;
 
-namespace UploadDaemon.Upload
+namespace UploadDaemon
 {
     /// <summary>
     /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.
