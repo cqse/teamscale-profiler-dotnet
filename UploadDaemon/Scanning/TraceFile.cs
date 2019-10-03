@@ -1,14 +1,7 @@
-﻿using NLog;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace UploadDaemon
+namespace UploadDaemon.Scanning
 {
     /// <summary>
     /// Represents one trace file found by the TraceFileScanner.

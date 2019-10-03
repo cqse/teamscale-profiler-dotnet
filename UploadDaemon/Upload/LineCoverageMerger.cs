@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 
-namespace UploadDaemon
+namespace UploadDaemon.Upload
 {
     /// <summary>
     /// Merges all line coverage that will be uploaded for the same timestamp/revision and upload destination into one "batch".

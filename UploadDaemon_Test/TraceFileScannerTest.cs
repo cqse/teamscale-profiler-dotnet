@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
-using UploadDaemon;
+using UploadDaemon.Scanning;
 
 [TestFixture]
 public class TraceFileScannerTest

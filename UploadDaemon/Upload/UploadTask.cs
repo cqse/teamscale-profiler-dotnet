@@ -1,5 +1,4 @@
-﻿using UploadDaemon;
-using NLog;
+﻿using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,10 +7,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
-using UploadDaemon.Upload;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
-namespace UploadDaemon
+namespace UploadDaemon.Upload
 {
     /// <summary>
     /// Triggered any time the timer goes off. Performs the scan and upload/archiving of trace files.

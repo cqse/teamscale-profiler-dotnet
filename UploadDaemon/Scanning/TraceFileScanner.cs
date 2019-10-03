@@ -4,11 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace UploadDaemon
+namespace UploadDaemon.Scanning
 {
     /// <summary>
     /// Scans the trace directory for trace files that are ready to upload or archive.

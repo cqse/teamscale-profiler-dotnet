@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UploadDaemon;
 using UploadDaemon.Configuration;
 
-namespace UploadDaemon
+namespace UploadDaemon.Utils
 {
     /// <summary>
     /// Formats the message for an upload commit.
