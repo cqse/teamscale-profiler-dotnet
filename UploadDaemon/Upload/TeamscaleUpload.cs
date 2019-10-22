@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
-using UploadDaemon.Utils;
 
 namespace UploadDaemon.Upload
 {

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using UploadDaemon.Utils;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.SymbolAnalysis
 {

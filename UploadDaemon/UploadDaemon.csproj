@@ -107,7 +107,7 @@
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
-    <Compile Include="Utils\MessageFormatter.cs" />
+    <Compile Include="Upload\MessageFormatter.cs" />
     <Compile Include="SymbolAnalysis\FileCoverage.cs" />
     <Compile Include="Archiving\PurgeArchiveTask.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
@@ -129,7 +129,7 @@
     <Compile Include="Upload\TeamscaleUpload.cs" />
     <Compile Include="Upload\AzureUpload.cs" />
     <Compile Include="UploadDaemon.cs" />
-    <Compile Include="Utils\GlobPatternList.cs" />
+    <Compile Include="Configuration\GlobPatternList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

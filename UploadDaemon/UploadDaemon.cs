@@ -1,4 +1,3 @@
-using UploadDaemon;
 using NLog;
 using System;
 using System.Diagnostics;

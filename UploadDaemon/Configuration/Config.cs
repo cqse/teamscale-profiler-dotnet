@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
-using UploadDaemon.Utils;
 
 namespace UploadDaemon.Configuration
 {

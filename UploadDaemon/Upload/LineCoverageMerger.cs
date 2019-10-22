@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UploadDaemon.SymbolAnalysis;
-using UploadDaemon.Upload;
 
 namespace UploadDaemon.Upload
 {

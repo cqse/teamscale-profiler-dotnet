@@ -91,19 +91,19 @@
   <ItemGroup>
     <Compile Include="Archiving\PurgeArchiveTaskTest.cs" />
     <Compile Include="SymbolAnalysis\ParsedTraceFileTest.cs" />
-    <Compile Include="SymbolAnalysis\GlobPatternListTest.cs" />
+    <Compile Include="Configuration\GlobPatternListTest.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionTest.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtilsTest.cs" />
     <Compile Include="TestUtils.cs" />
     <Compile Include="UploadDaemonSystemTest.cs" />
-    <Compile Include="Config\ConfigTest.cs" />
-    <Compile Include="Config\ConfigParserTest.cs" />
-    <Compile Include="LineCoverageMergerTest.cs" />
+    <Compile Include="Configuration\ConfigTest.cs" />
+    <Compile Include="Configuration\ConfigParserTest.cs" />
+    <Compile Include="Upload\LineCoverageMergerTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
     <Compile Include="Archiving\ArchiveTest.cs" />
     <Compile Include="FileSystemMockingUtils.cs" />
-    <Compile Include="TraceFileScannerTest.cs" />
+    <Compile Include="Scanning\TraceFileScannerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

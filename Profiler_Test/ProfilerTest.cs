@@ -1,10 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.IO;
-using System.Text;
 
 namespace Cqse.Teamscale.Profiler.Dotnet
 {

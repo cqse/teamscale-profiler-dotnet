@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace UploadDaemon.Utils
+namespace UploadDaemon.Configuration
 {
     /// <summary>
     /// Maintains a list of include and exclude glob patterns.

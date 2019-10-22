@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UploadDaemon;
 using UploadDaemon.Configuration;
 
-namespace UploadDaemon.Utils
+namespace UploadDaemon.Upload
 {
     /// <summary>
     /// Formats the message for an upload commit.

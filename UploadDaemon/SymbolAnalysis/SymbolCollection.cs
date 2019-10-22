@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Cqse.ConQAT.Dotnet.Bummer;
 using NLog;
-using UploadDaemon.Utils;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.SymbolAnalysis
 {
