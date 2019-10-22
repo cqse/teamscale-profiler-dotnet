@@ -14,9 +14,26 @@ namespace UploadDaemon.Upload
     public class HttpClientUtils
     {
         /// <summary>
+        /// Sets common options for all HTTP requests.
+        /// </summary>
+        public static void ConfigureHttpStack(bool disableSslValidation)
+        {
+            // Make sure this client and the server endpoint both speak the same
+            // protocol. On older .NET framework versions, TLS 1.2 for example is not
+            // enabled by default.
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls |
+                SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            if (disableSslValidation)
+            {
+                DisableSslValidation();
+            }
+        }
+
+        /// <summary>
         /// Disables all SSL validation.
         /// </summary>
-        public static void DisableSslValidation()
+        private static void DisableSslValidation()
         {
             // c.f. https://stackoverflow.com/a/18232008/1396068
             ServicePointManager.ServerCertificateValidationCallback +=

@@ -72,12 +72,7 @@ namespace UploadDaemon
         {
             logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
             Config config = Config.ReadFromCentralConfigFile();
-
-            if (config.DisableSslValidation)
-            {
-                HttpClientUtils.DisableSslValidation();
-            }
-
+            HttpClientUtils.ConfigureHttpStack(config.DisableSslValidation);
             return config;
         }
 

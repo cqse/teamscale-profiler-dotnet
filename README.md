@@ -6,7 +6,7 @@ Lightweight profiler for .NET applications that provides method-level coverage i
 
 ## System Requirements
 
-.NET Framework 4.6 or newer must be installed (older versions have problems with communicating with Teamscale over TLS)
+.NET Framework 4.5 or newer must be installed.
 
 ## Download
 
