@@ -1,5 +1,5 @@
-﻿using Common;
-using System.IO.Abstractions;
+﻿using System.IO.Abstractions;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Upload
 {

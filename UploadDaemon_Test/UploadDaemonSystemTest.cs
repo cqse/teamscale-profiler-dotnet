@@ -1,46 +1,46 @@
-﻿using Common;
-using NUnit.Framework;
-using System;
+﻿using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using UploadDaemon.Configuration;
 
-[TestFixture]
-public class UploadDaemonSystemTest
+namespace UploadDaemon
 {
-    // 100663427 corresponds to MainViewModel#get_SelectedBitnessIndex in ProfilerGUI.pdb
-    // obtained with cvdump.exe
-    private static readonly uint ExistingMethodToken = 100663427;
-
-    private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
-    private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");
-    private static string RevisionFile => Path.Combine(TestUtils.TestTempDirectory, "revision.txt");
-    private static string PdbDirectory => TestUtils.TestDataDirectory;
-
-    [SetUp]
-    public void CreateTemporaryTestDir()
+    [TestFixture]
+    public class UploadDaemonSystemTest
     {
-        var testDir = new DirectoryInfo(TestUtils.TestTempDirectory);
-        if (testDir.Exists)
+        // 100663427 corresponds to MainViewModel#get_SelectedBitnessIndex in ProfilerGUI.pdb
+        // obtained with cvdump.exe
+        private static readonly uint ExistingMethodToken = 100663427;
+
+        private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
+        private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");
+        private static string RevisionFile => Path.Combine(TestUtils.TestTempDirectory, "revision.txt");
+        private static string PdbDirectory => TestUtils.TestDataDirectory;
+
+        [SetUp]
+        public void CreateTemporaryTestDir()
         {
-            testDir.Delete(true);
+            var testDir = new DirectoryInfo(TestUtils.TestTempDirectory);
+            if (testDir.Exists)
+            {
+                testDir.Delete(true);
+            }
+
+            testDir.Create();
+            new DirectoryInfo(TargetDir).Create();
+            new DirectoryInfo(UploadDir).Create();
         }
 
-        testDir.Create();
-        new DirectoryInfo(TargetDir).Create();
-        new DirectoryInfo(UploadDir).Create();
-    }
-
-    [Test]
-    public void TestSimpleDirectoryUpload()
-    {
-        string coverageFileName = "coverage_1_1.txt";
-        File.WriteAllText(Path.Combine(TargetDir, coverageFileName), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+        [Test]
+        public void TestSimpleDirectoryUpload()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
 Inlined=1:33555646:100678050");
 
-        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
+            new UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
@@ -49,25 +49,25 @@ Inlined=1:33555646:100678050");
                   directory: {UploadDir}
         "));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(File.Exists(Path.Combine(UploadDir, coverageFileName)), Is.True, "file was uploaded successfully");
-            Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
-            Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
-        });
-    }
+            Assert.Multiple(() =>
+            {
+                Assert.That(File.Exists(Path.Combine(UploadDir, coverageFileName)), Is.True, "file was uploaded successfully");
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
+            });
+        }
 
-    [Test]
-    public void TestSimpleDirectoryLineCoverageUpload()
-    {
-        string coverageFileName = "coverage_1_1.txt";
-        File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerGUI:2 Version:1.0.0.0
+        [Test]
+        public void TestSimpleDirectoryLineCoverageUpload()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerGUI:2 Version:1.0.0.0
 Process=foo.exe
 Inlined=2:{ExistingMethodToken}");
 
-        File.WriteAllText(RevisionFile, "revision: 12345");
+            File.WriteAllText(RevisionFile, "revision: 12345");
 
-        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
+            new UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
@@ -77,25 +77,25 @@ Inlined=2:{ExistingMethodToken}");
                   pdbDirectory: {PdbDirectory}
         "));
 
-        IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
+            IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
 
-        Assert.Multiple(() =>
+            Assert.Multiple(() =>
+            {
+                Assert.That(uploadedFiles.Select(file => Path.GetExtension(file)), Is.EquivalentTo(new string[] { ".simple", ".metadata" }));
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
+            });
+        }
+
+        [Test]
+        public void TestArchivePurging()
         {
-            Assert.That(uploadedFiles.Select(file => Path.GetExtension(file)), Is.EquivalentTo(new string[] { ".simple", ".metadata" }));
-            Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
-            Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
-        });
-    }
-
-    [Test]
-    public void TestArchivePurging()
-    {
-        File.WriteAllText(Path.Combine(TargetDir, "coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+            File.WriteAllText(Path.Combine(TargetDir, "coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
 Inlined=1:33555646:100678050");
-        File.WriteAllText(Path.Combine(TargetDir, "coverage_1_2.txt"), @"");
+            File.WriteAllText(Path.Combine(TargetDir, "coverage_1_2.txt"), @"");
 
-        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
+            new UploadDaemon().RunOnce(Config.Read($@"
             archivePurgingThresholdsInDays:
               uploadedTraces: 0
               emptyTraces: 0
@@ -107,7 +107,8 @@ Inlined=1:33555646:100678050");
                   directory: {UploadDir}
         "));
 
-        IEnumerable<string> archivedFiles = Directory.GetFiles(TargetDir, "*.txt", SearchOption.AllDirectories);
-        Assert.That(archivedFiles, Is.Empty);
+            IEnumerable<string> archivedFiles = Directory.GetFiles(TargetDir, "*.txt", SearchOption.AllDirectories);
+            Assert.That(archivedFiles, Is.Empty);
+        }
     }
 }

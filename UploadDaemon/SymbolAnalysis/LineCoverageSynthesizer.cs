@@ -1,11 +1,10 @@
-﻿using Common;
-using Cqse.ConQAT.Dotnet.Bummer;
+﻿using Cqse.ConQAT.Dotnet.Bummer;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
+using UploadDaemon.Configuration;
 
 namespace UploadDaemon.SymbolAnalysis
 {

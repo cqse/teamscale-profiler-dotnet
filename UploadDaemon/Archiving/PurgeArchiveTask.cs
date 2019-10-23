@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using UploadDaemon.Configuration;
 using System;
 
 namespace UploadDaemon.Archiving
