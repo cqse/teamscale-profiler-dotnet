@@ -98,11 +98,10 @@ If the application is running in an Azure App Service, the following steps need 
 
 #### Install the Profiler
 
-To deploy the profiler, [enable the Azure FTP account][AzureFTP] and upload the profiler DLLs to a location that will not be overwritten by a new app deployment, e.g., `D:\home\site\repository\profiler\`. To configure the profiler in Azure, go to the [application settings][AzureAppSettings] and add the environment variables as new application settings entries. You may use any configuration variable that the profiler supports. For the profiler target directory, you may use `D:\home\LogFiles` or a dedicated location, such as `D:\home\site\repository\profiler\traces` (remember to manually create this directory first).
-
-#### Install the UploadDaemon
-
-Deploy the upload daemon in the directory `.\UploadDaemon`, relative to the path where you deployed the profiler, e.g., in `D:\home\site\repository\profiler\UploadDaemon\`. Configure the trace upload as usual.
+1. Download the latest profiler release.
+2. [Enable the Azure FTP account][AzureFTP] and upload the profiler to a location that will not be overwritten by a new app deployment, e.g., `D:\home\site\repository\profiler\`.
+3. In Azure, go to the [application settings][AzureAppSettings] and add the profiler environment variables as new application settings entries.
+4. Configure the profiler (and UploadDaemon) as usual. For the profiler target directory, you may use `D:\home\LogFiles` or a dedicated location, such as `D:\home\site\repository\profiler\traces` (remember to manually create this directory first).
 
 #### Schedule Trace Upload
 
