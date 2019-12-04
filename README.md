@@ -38,17 +38,18 @@ So please don't add any linked libraries to the solution configuration unless ab
 
 ## Release Process
 
-The release process is outomated with GitHub Releases and Appveyor:
+The release process is automated with GitHub Releases and Appveyor:
 
 We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
 
 1. Edit `.appveyor.yml` and adjust the `version` property.
-2. Go to GitHub Releases and draft a new release
-3. Enter the tag name and release name. It is good practice to give both the same name, e.g. `v18.2.0`.
-4. Enter a short description of changes
-5. Publish the release
-
-AppVeyor will then take care of attaching the release binary.
+2. Edit `CHANGELOG.md` and create a new release section with all changes in the release.
+2. Commit these changes to master directly.
+2. Go to [GitHub Releases](https://github.com/cqse/teamscale-profiler-dotnet/releases) and draft a new release.
+3. Enter the tag name and release name. Give both the same name, e.g. `v18.2.0`.
+4. Copy-paste the `CHANGELOG.md` content of this release into the description.
+5. Publish the release.
+6. AppVeyor will then take care of attaching the release binary. Ensure this is done properly.
 
 [codemaid]: http://www.codemaid.net/
 
