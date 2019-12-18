@@ -135,7 +135,7 @@ namespace UploadDaemon.SymbolAnalysis
             logger.Debug("Searching PDB files in {symbolDirectory}.", symbolDirectory);
             List<string> pdbFiles = Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories).ToList();
             List<string> relevantFiles = pdbFiles.Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file))).ToList();
-            return SymbolCollection.CreateFromFiles(relevantFiles);
+            return CreateFromFiles(relevantFiles);
         }
     }
 }
