@@ -40,6 +40,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         public SymbolCollection(List<AssemblyMethodMappings> mappings)
         {
+            logger.Debug("Creating symbol collection from mappings");
             WarnInCaseOfDuplicateMappings(mappings);
 
             foreach (AssemblyMethodMappings mapping in mappings)
@@ -106,6 +107,7 @@ namespace UploadDaemon.SymbolAnalysis
             List<AssemblyMethodMappings> mappings = new List<AssemblyMethodMappings>();
             foreach (string filePath in pdbFilePaths)
             {
+                logger.Debug("Loading mappings from PDB {filePath}", filePath);
                 string assemblyName = Path.GetFileNameWithoutExtension(filePath);
                 try
                 {
@@ -130,6 +132,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public static SymbolCollection CreateFromPdbFiles(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
+            logger.Debug("Searching PDB files in {symbolDirectory}.", symbolDirectory);
             List<string> pdbFiles = Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories).ToList();
             List<string> relevantFiles = pdbFiles.Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file))).ToList();
             return SymbolCollection.CreateFromFiles(relevantFiles);

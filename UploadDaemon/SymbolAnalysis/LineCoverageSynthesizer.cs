@@ -73,6 +73,7 @@ namespace UploadDaemon.SymbolAnalysis
         public static Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
+            logger.Debug("Converting trace {traceFile} to line coverage", traceFile);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
             Dictionary<string, FileCoverage> lineCoverage = new Dictionary<string, FileCoverage>();
             foreach ((string assemblyName, uint methodId) in traceFile.CoveredMethods)
