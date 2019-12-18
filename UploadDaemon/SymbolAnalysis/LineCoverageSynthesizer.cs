@@ -15,10 +15,23 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        // TODO (SA) replace this hacked cache by something maintainable!
+        private readonly IDictionary<string, SymbolCollection> symbolCollections = new Dictionary<string, SymbolCollection>();
+
         /// <inheritdoc/>
         public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            SymbolCollection symbolCollection = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
+            SymbolCollection symbolCollection;
+            if (symbolCollections.ContainsKey(symbolDirectory))
+            {
+                symbolCollection = symbolCollections[symbolDirectory];
+            }
+            else
+            {
+                symbolCollection = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
+                symbolCollections[symbolDirectory] = symbolCollection;
+            }
+
             if (symbolCollection.IsEmpty)
             {
                 throw new LineCoverageConversionFailedException($"Failed to convert {traceFile.FilePath} to line coverage." +
