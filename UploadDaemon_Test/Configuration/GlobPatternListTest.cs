@@ -43,5 +43,23 @@ namespace UploadDaemon.Configuration
                 Assert.That(pattern.Matches("foobarX"), Is.True, "foobarX");
             });
         }
+
+        [Test]
+        public void AreEqualIfIdentical()
+        {
+            GlobPatternList pattern1 = new GlobPatternList(new List<string> { "foo*" }, new List<string> { "*bar" });
+            GlobPatternList pattern2 = new GlobPatternList(new List<string> { "foo*" }, new List<string> { "*bar" });
+            
+            Assert.That(pattern1, Is.EqualTo(pattern2));
+        }
+
+        [Test]
+        public void AreNotEqualIfDifferent()
+        {
+            GlobPatternList pattern1 = new GlobPatternList(new List<string> { "foo*" }, new List<string> { "*bar" });
+            GlobPatternList pattern2 = new GlobPatternList(new List<string> { "baz*" }, new List<string> { "*fom" });
+
+            Assert.That(pattern1, Is.Not.EqualTo(pattern2));
+        }
     }
 }
