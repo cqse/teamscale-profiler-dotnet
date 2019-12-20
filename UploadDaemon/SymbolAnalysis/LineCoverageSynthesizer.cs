@@ -138,42 +138,52 @@ namespace UploadDaemon.SymbolAnalysis
                 AddToLineCoverage(lineCoverage, sourceLocation);
             }
 
+            LogResolutionFailures(traceFile, symbolDirectory, assemblyPatterns, resolutionCounts);
+
+            return lineCoverage;
+        }
+
+        private static void LogResolutionFailures(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)
+        {
             foreach (string assemblyName in resolutionCounts.Keys)
             {
                 AssemblyResolutionCount count = resolutionCounts[assemblyName];
-                if (count.unresolvedMethods > 0)
-                {
-                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
-                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
-                        " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
-                        " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
-                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
-                        count.unresolvedMethods, count.TotalMethods, count.UnresolvedPercentage,
-                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
-                }
-                if (count.methodsWithoutSourceFile > 0)
-                {
-                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
-                        " Read from trace file {traceFile} with symbols from" +
-                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
-                        " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
-                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
-                        count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
-                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
-                }
-                if (count.methodsWithoutSourceFile > 0)
-                {
-                    logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
-                        " Read from trace file {traceFile} with symbols from" +
-                        " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
-                        " This is usually not a problem as the compiler may generate additional code that does not correspond to any source code." +
-                        " You can exclude this assembly from the coverage analysis to suppress this warning.",
-                        count.methodsWithCompilerHiddenLines, count.TotalMethods, count.WithCompilerHiddenLinesPercentage,
-                        assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
-                }
+                LogResolutionFailuresForAssembly(traceFile, symbolDirectory, assemblyPatterns, assemblyName, count);
             }
+        }
 
-            return lineCoverage;
+        private static void LogResolutionFailuresForAssembly(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, string assemblyName, AssemblyResolutionCount count)
+        {
+            if (count.unresolvedMethods > 0)
+            {
+                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
+                    " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                    " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
+                    " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
+                    " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                    count.unresolvedMethods, count.TotalMethods, count.UnresolvedPercentage,
+                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+            }
+            if (count.methodsWithoutSourceFile > 0)
+            {
+                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
+                    " Read from trace file {traceFile} with symbols from" +
+                    " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                    " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
+                    " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                    count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
+                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+            }
+            if (count.methodsWithoutSourceFile > 0)
+            {
+                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
+                    " Read from trace file {traceFile} with symbols from" +
+                    " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
+                    " This is usually not a problem as the compiler may generate additional code that does not correspond to any source code." +
+                    " You can exclude this assembly from the coverage analysis to suppress this warning.",
+                    count.methodsWithCompilerHiddenLines, count.TotalMethods, count.WithCompilerHiddenLinesPercentage,
+                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+            }
         }
 
         private static void AddToLineCoverage(Dictionary<string, FileCoverage> lineCoverage, SymbolCollection.SourceLocation sourceLocation)
