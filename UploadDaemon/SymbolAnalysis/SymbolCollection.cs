@@ -132,7 +132,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public static SymbolCollection CreateFromPdbFiles(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            logger.Debug("Searching PDB files in {symbolDirectory}.", symbolDirectory);
+            logger.Debug("Searching PDB files in {symbolDirectory} using pattern '{pattern}'.", symbolDirectory, assemblyPatterns.Describe());
             List<string> pdbFiles = Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories).ToList();
             List<string> relevantFiles = pdbFiles.Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file))).ToList();
             return CreateFromFiles(relevantFiles);
