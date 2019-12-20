@@ -102,7 +102,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         private static SymbolCollection CreateFromFiles(List<string> pdbFilePaths)
         {
-            List<string> assemblyNames = pdbFilePaths.Select(file => Path.GetFileName(file)).ToList();
             MethodMapper mapper = new MethodMapper();
             List<AssemblyMethodMappings> mappings = new List<AssemblyMethodMappings>();
             foreach (string filePath in pdbFilePaths)
