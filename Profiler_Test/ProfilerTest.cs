@@ -1,10 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.IO;
-using System.Text;
 
 namespace Cqse.Teamscale.Profiler.Dotnet
 {
@@ -36,6 +34,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 }
             }
         }
+
+		[TearDown]
+		public void TearDown()
+		{
+			File.Delete(AttachLog);
+		}
 
         /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
@@ -134,9 +138,9 @@ match:
         {
             RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
             string[] lines = File.ReadAllLines(AttachLog);
-            string lastAttachLine = lines[lines.Length - 2];
-            Assert.That(lastAttachLine.StartsWith("Attach"));
-            Assert.That(lastAttachLine.Contains("ProfilerTestee.exe"));
+            string firstLine = lines[0];
+            Assert.That(firstLine.StartsWith("Attach"));
+            Assert.That(firstLine.Contains("ProfilerTestee.exe"));
         }
 
         [Test]
@@ -144,9 +148,9 @@ match:
         {
             RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
             string[] lines = File.ReadAllLines(AttachLog);
-            string lastLogLine = lines.Last();
-            Assert.That(lastLogLine.StartsWith("Detach"));
-            Assert.That(lastLogLine.Contains("ProfilerTestee.exe"));
+			string secondLine = lines[1];
+            Assert.That(secondLine.StartsWith("Detach"));
+            Assert.That(secondLine.Contains("ProfilerTestee.exe"));
         }
     }
 }
