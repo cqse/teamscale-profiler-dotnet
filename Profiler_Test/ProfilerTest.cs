@@ -144,9 +144,9 @@ match:
         {
             RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
             string[] lines = File.ReadAllLines(AttachLog);
-            string lastDetachLine = lines.Last();
-            Assert.That(lastDetachLine.StartsWith("Detach"));
-            Assert.That(lastDetachLine.Contains("ProfilerTestee.exe"));
+            string lastLogLine = lines.Last();
+            Assert.That(lastLogLine.StartsWith("Detach"));
+            Assert.That(lastLogLine.Contains("ProfilerTestee.exe"));
         }
     }
 }
