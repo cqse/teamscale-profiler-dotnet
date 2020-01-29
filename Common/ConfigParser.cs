@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
-using Common;
+using System;
 
 namespace Common
 {
@@ -24,6 +24,21 @@ namespace Common
             /// Whether SSL validation should be globally disabled. Null if the user did not set this property.
             /// </summary>
             public bool? DisableSslValidation { get; set; }
+
+            /// <summary>
+            /// The interval to use for regular uploads (specified in minutes). Null if the user did not set this property.
+            /// </summary>
+            public int? UploadIntervalInMinutes { get; set; }
+
+            /// <summary>
+            /// Whether the uploader should archive the generated line coverage and the merged line coverage to disk.
+            /// </summary>
+            public bool? ArchiveLineCoverage { get; set; }
+
+            /// <summary>
+            /// Section that contains the config options for purging the upload archives. Null if the user did not set this property.
+            /// </summary>
+            public PurgeUploadArchivesSection ArchivePurgingThresholdsInDays { get; set; }
         }
 
         /// <summary>
@@ -103,6 +118,11 @@ namespace Common
             public bool? Enabled { get; set; }
 
             /// <summary>
+            /// Whether the uploader should merge line coverage before uploading it.
+            /// </summary>
+            public bool? MergeLineCoverage { get; set; }
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// </summary>
             public string VersionPrefix { get; set; }
@@ -121,6 +141,27 @@ namespace Common
             /// Patterns to select which assemblies to analyze.
             /// </summary>
             public IncludeExcludePatterns AssemblyPatterns { get; set; }
+        }
+
+        /// <summary>
+        /// Contains the thresholds for purging trace files from the upload archives.
+        /// </summary>
+        public class PurgeUploadArchivesSection
+        {
+            /// <summary>
+            /// Minimal timespan to keep uploaded traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? UploadedTraces { get; set; }
+
+            /// <summary>
+            /// Minimal timespan to keep empty traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? EmptyTraces { get; set; }
+
+            /// <summary>
+            /// Minimal timespan to keep incomplete traces. Null if traces should be kept indefinitely.
+            /// </summary>
+            public TimeSpan? IncompleteTraces { get; set; }
         }
 
         /// <summary>

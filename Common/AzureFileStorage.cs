@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace Common
 {
@@ -25,5 +27,12 @@ namespace Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public string Directory { get; set; }
+
+        public override bool Equals(object other) =>
+            other is AzureFileStorage storage && storage.ConnectionString.Equals(ConnectionString) &&
+            storage.ShareName.Equals(ShareName) && storage.Directory.Equals(Directory);
+
+        public override int GetHashCode() =>
+            (ConnectionString, ShareName, Directory).GetHashCode();
     }
 }

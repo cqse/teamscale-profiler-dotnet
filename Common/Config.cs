@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using static Common.ConfigParser;
 
 namespace Common
 {
@@ -69,6 +70,11 @@ namespace Common
             public bool Enabled { get; private set; } = true;
 
             /// <summary>
+            /// Whether the uploader should merge line coverage before uploading it.
+            /// </summary>
+            public bool MergeLineCoverage { get; private set; } = true;
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// Defaults to the empty string in case no prefix should be prepended.
             /// This property is never null.
@@ -117,6 +123,7 @@ namespace Common
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
+                MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
 
                 if (section.AssemblyPatterns != null)
                 {
@@ -169,7 +176,26 @@ namespace Common
         }
 
         private readonly List<ConfigParser.ProcessSection> Sections;
-        public bool DisableSslValidation { get; private set; } = false;
+
+        /// <summary>
+        /// Whether SSL validation should be globally disabled.
+        /// </summary>
+        public bool DisableSslValidation { get; private set; }
+
+        /// <summary>
+        /// The interval to use for regular uploads (specified in minutes). A value &lt;= 0 means regular uploads are disabled.
+        /// </summary>
+        public TimeSpan UploadInterval { get; private set; }
+
+        /// <summary>
+        /// Whether the uploader should archive the generated line coverage and the merged line coverage to disk.
+        /// </summary>
+        public bool ArchiveLineCoverage { get; private set; }
+
+        /// <summary>
+        /// The thresholds for purging upload archives. A value of <code>null</code> means purging is disabled.
+        /// </summary>
+        public PurgeUploadArchivesSection ArchivePurgingThresholds { get; private set; }
 
         /// <summary>
         /// Returns all configured trace directories in which the uploader should
@@ -182,7 +208,10 @@ namespace Common
         public Config(ConfigParser.YamlConfig config)
         {
             this.Sections = config.Match;
-            this.DisableSslValidation = config.DisableSslValidation ?? false;
+            this.DisableSslValidation = config.DisableSslValidation ?? true;
+            this.UploadInterval = TimeSpan.FromMinutes(config.UploadIntervalInMinutes ?? 5);
+            this.ArchiveLineCoverage = config.ArchiveLineCoverage ?? false;
+            this.ArchivePurgingThresholds = config.ArchivePurgingThresholdsInDays ?? new PurgeUploadArchivesSection();
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 [TestFixture]
 public class UploadDaemonSystemTest
@@ -39,14 +40,14 @@ public class UploadDaemonSystemTest
 Process=foo.exe
 Inlined=1:33555646:100678050");
 
-        new UploadDaemon.UploadDaemon(Config.Read($@"
+        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
                   versionAssembly: VersionAssembly
                   directory: {UploadDir}
-        ")).UploadOnce();
+        "));
 
         Assert.Multiple(() =>
         {
@@ -66,7 +67,7 @@ Inlined=2:{ExistingMethodToken}");
 
         File.WriteAllText(RevisionFile, "revision: 12345");
 
-        new UploadDaemon.UploadDaemon(Config.Read($@"
+        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
@@ -74,7 +75,7 @@ Inlined=2:{ExistingMethodToken}");
                   directory: {UploadDir}
                   revisionFile: {RevisionFile}
                   pdbDirectory: {PdbDirectory}
-        ")).UploadOnce();
+        "));
 
         IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
 
@@ -84,5 +85,29 @@ Inlined=2:{ExistingMethodToken}");
             Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
             Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
         });
+    }
+
+    [Test]
+    public void TestArchivePurging()
+    {
+        File.WriteAllText(Path.Combine(TargetDir, "coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050");
+        File.WriteAllText(Path.Combine(TargetDir, "coverage_1_2.txt"), @"");
+
+        new UploadDaemon.UploadDaemon().RunOnce(Config.Read($@"
+            archivePurgingThresholdsInDays:
+              uploadedTraces: 0
+              emptyTraces: 0
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  versionAssembly: VersionAssembly
+                  directory: {UploadDir}
+        "));
+
+        IEnumerable<string> archivedFiles = Directory.GetFiles(TargetDir, "*.txt", SearchOption.AllDirectories);
+        Assert.That(archivedFiles, Is.Empty);
     }
 }

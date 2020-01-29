@@ -1,4 +1,5 @@
 using Common;
+using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +8,8 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon;
-using UploadDaemon.Upload;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 [TestFixture]
 public class UploadTaskTest
@@ -38,6 +39,18 @@ public class UploadTaskTest
               targetdir: {TraceDirectory}
     ");
 
+    private static readonly Config archiveLineCoverageConfig = Config.Read($@"
+        archiveLineCoverage: true
+        match:
+          - uploader:
+              directory: C:\store
+              pdbDirectory: {PdbDirectory}
+              revisionFile: {RevisionFile}
+              mergeLineCoverage: false
+            profiler:
+              targetdir: {TraceDirectory}
+    ");
+
     [Test]
     public void TracesShouldBeArchivedAfterASuccessfulUpload()
 
@@ -49,7 +62,7 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(config);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
     }
@@ -66,7 +79,7 @@ Inlined=1:33555646:100678050" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-        new UploadTask(lineCoverageConfig, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(lineCoverageConfig);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
     }
@@ -81,7 +94,7 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
     }
@@ -98,9 +111,43 @@ Inlined=1:33555646:100678050" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-        new UploadTask(lineCoverageConfig, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(lineCoverageConfig);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
+    }
+
+    [Test]
+    public void TestArchivingTracesThatProduceNoLineCoverage()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer(false)).Run(lineCoverageConfig);
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"no-line-coverage\coverage_1_1.txt");
+    }
+
+    [Test]
+    public void TestArchivingUploadedLineCoverage()
+    {
+        IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
+        {
+            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
+Process=foo.exe
+Inlined=1:33555646:100678050" },
+            { RevisionFile, @"revision: 12345" },
+            { PdbDirectory, new MockDirectoryData() },
+        });
+
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(archiveLineCoverageConfig);
+
+        AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-line-coverage\coverage_1_1.txt.simple");
     }
 
     [Test]
@@ -113,7 +160,7 @@ Process=foo.exe
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-version\coverage_1_1.txt");
     }
@@ -127,7 +174,7 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
     }
@@ -141,7 +188,7 @@ Inlined=1:33555646:100678050" },
 Process=foo.exe" },
         });
 
-        new UploadTask(config, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(config);
 
         AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
     }
@@ -165,7 +212,7 @@ Inlined=1:33555646:100678050" },
                   targetdir: {TraceDirectoryWithSpace}
         ");
 
-        new UploadTask(configWithSpaceInTraceDirectory, fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(configWithSpaceInTraceDirectory);
 
         AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt");
     }
@@ -191,65 +238,55 @@ Inlined=1:33555646:100678050" },
         });
 
         MockUploadFactory uploadFactory = new MockUploadFactory(true);
-        new UploadTask(config, fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run();
+        new UploadTask(fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run(config);
 
-        Assert.That(uploadFactory.mockUpload.LastUsedVersion, Is.EqualTo("prefix_4.0.0.0"));
+        uploadFactory.uploadMock.Verify(upload => upload.UploadAsync(It.IsAny<string>(), "prefix_4.0.0.0"));
     }
 
     private class MockUploadFactory : IUploadFactory
     {
-        public readonly MockUpload mockUpload;
+        public readonly Mock<IUpload> uploadMock;
 
-        public MockUploadFactory(bool returnValue)
+        public MockUploadFactory(bool successfull)
         {
-            this.mockUpload = new MockUpload(returnValue);
+            this.uploadMock = new Mock<IUpload>();
+            uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.FromResult(successfull));
+            uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
+                .Returns(Task.FromResult(successfull));
         }
 
+        /// <inheritdoc/>
         public IUpload CreateUpload(Config.ConfigForProcess config, IFileSystem fileSystem)
         {
-            return mockUpload;
-        }
-    }
-
-    private class MockUpload : IUpload
-    {
-        private readonly bool returnValue;
-
-        /// <summary>
-        /// The last version that was passed to the UploadAsnyc method or null if that method was never called.
-        /// </summary>
-        public string LastUsedVersion { get; private set; } = null;
-
-        public MockUpload(bool returnValue)
-        {
-            this.returnValue = returnValue;
-        }
-
-        /// <summary>
-        /// Fakes an upload and returns the result passed to the constructor.
-        /// </summary>
-        public Task<bool> UploadAsync(string filePath, string version)
-        {
-            LastUsedVersion = version;
-            return Task.FromResult(returnValue);
-        }
-
-        public string Describe()
-        {
-            return "MockUpload";
-        }
-
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
-        {
-            return Task.FromResult(returnValue);
+            return uploadMock.Object;
         }
     }
 
     private class MockLineCoverageSynthesizer : ILineCoverageSynthesizer
     {
-        public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        private readonly bool shouldProduceCoverage;
+
+        public MockLineCoverageSynthesizer(bool shouldProduceCoverage = true)
         {
-            return "file1.cs\n12-33";
+            this.shouldProduceCoverage = shouldProduceCoverage;
+        }
+
+        /// <inheritdoc/>
+        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        {
+            if (!shouldProduceCoverage)
+            {
+                return null;
+            }
+
+            // Return some arbitrary coverage
+            FileCoverage fileCoverage = new FileCoverage();
+            fileCoverage.CoveredLineRanges.Add((12, 33));
+            return new Dictionary<string, FileCoverage>()
+            {
+                { "file1.cs", fileCoverage }
+            };
         }
     }
 

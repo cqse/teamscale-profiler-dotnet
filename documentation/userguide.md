@@ -154,7 +154,7 @@ The profiler has several configuration options that can either be set as environ
 | :-------------------------------- | :--------------------------------------- | :--------------------------------------- |
 | COR_PROFILER_CONFIG               | Path                                     | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
-| COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `0`                  | Enable ultra-light mode by disabling re-jitting of assemblies. |
+| COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `1`                  | Enable ultra-light mode by disabling re-jitting of assemblies. Light mode must be disabled if you use the Native Image Cache. |
 | COR_PROFILER_ASSEMBLY_FILEVERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
 | COR_PROFILER_ASSEMBLY_PATHS       | `1` or `0`, default `0`                  | Print the path to loaded assemblies in the trace file. |
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This should only be used in conjunction with light mode. |
@@ -410,11 +410,33 @@ off the proxy altogether and for using a different proxy.
 
 ## SSL certificates
 
-By default, the upload daemon will validate SSL certificates and refuse to upload to endpoints with invalid
-certificates. In case you must upload to an endpoint with a self-signed, certificate, you can use the
-config option `disableSslValidation` to ignore invalid certificates.
+By default, the upload daemon will not validate SSL certificates. We strongly recommend turning the validation on by setting the `disableSslValidation` option in the config file to `false`. It is disabled by default to allow for an easier setup in environments that use self-signed certificates or custom certificate authorities.
 
-This is insecure and not recommended.
+## Upload Interval
+
+By default, the upload daemon will upload finished trace files every 5 minutes. To change this interval, set the `uploadIntervalInMinutes` option in the config file to the desired value.
+Set the option in the config file to `0` to disable scheduled uploads. The uploader will then upload finished trace files when invoked and terminate immediately after. This allows complete manual control of uploads.
+
+## Trace-File Merging
+
+By default, the upload daemon merges all line coverage that will be uploaded to the same
+destination into a single file, to save disk space and reduce the number of uploads. Set the option `mergeLineCoverage` in the config file to `false`, to disable trace-file merging.
+
+## Archiving Trace Files
+
+The uploader archives processed trace files in subdirectories of the respective trace directory. Thereby, it separates files that have been successfully uploaded from files that could not be processed, because they contained no coverage or lacked necessary information.
+
+By default, the uploader leaves trace files in these archives indefinitely. To change this, add the following section to the config file, to specify the number of days the different types of files should be kept. Note that a value of 0 leads to the files being purged immediately after processing.
+
+```yaml
+archivePurgingThresholdsInDays:
+  uploadedTraces: 7
+  emptyTraces: 3
+  incompleteTraces: 3
+```
+
+When the uploader is instructed to convert the traces locally to line coverage before uploading to Teamscale, the created line coverage is normally not stored on disk.
+For debugging, it can be helpful to dump it to disk. To do so, declare `archiveLineCoverage: true` at the top of your YAML file. These files will never be pruned.
 
 # Build Process
 

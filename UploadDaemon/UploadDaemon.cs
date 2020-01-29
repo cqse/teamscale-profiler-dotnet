@@ -3,13 +3,14 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Timers;
 using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
-using UploadDaemon.Upload;
+using System.Timers;
+using UploadDaemon.Archiving;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Upload;
 
 namespace UploadDaemon
 {
@@ -18,11 +19,9 @@ namespace UploadDaemon
     /// </summary>
     public class UploadDaemon
     {
-        private const long TimerIntervalInMilliseconds = 1000 * 60 * 5;
-
         private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
 
-        private const string DaemonControlCommandUpload = "upload";
+        private const string DaemonControlCommandRunNow = "run";
 
         /// <summary>
         /// Lock used to ensure that no two uploads happen in parallel.
@@ -30,10 +29,6 @@ namespace UploadDaemon
         private static readonly object SequentialUploadsLock = new object();
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-        private readonly Config config;
-        private readonly UploadTask uploadTask;
-        private readonly FileSystem fileSystem;
 
         /// <summary>
         /// Main entry point. Expects a single argument: the path to a directory that contains the trace files to upload.
@@ -48,24 +43,16 @@ namespace UploadDaemon
                 return;
             }
 
-            Config config;
-            try
-            {
-                logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
-                config = Config.ReadFromCentralConfigFile();
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
-                Environment.Exit(1);
-                return;
-            }
-
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-            var uploader = new UploadDaemon(config);
-            uploader.UploadOnce();
-            uploader.ScheduleRegularUploads();
-            uploader.WaitForNotifications();
+            var uploader = new UploadDaemon();
+            uploader.RunOnce();
+
+            Config config = ReadConfig();
+            if (config.UploadInterval > TimeSpan.Zero)
+            {
+                uploader.ScheduleRegularRuns(config.UploadInterval);
+                uploader.WaitForNotifications();
+            }
         }
 
         private static bool IsAlreadyRunning()
@@ -81,38 +68,50 @@ namespace UploadDaemon
             return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
         }
 
-        public UploadDaemon(Config config)
+        private static Config ReadConfig()
         {
-            fileSystem = new FileSystem();
-
-            this.config = config;
-            if (config.DisableSslValidation)
-            {
-                HttpClientUtils.DisableSslValidation();
-            }
-
-            uploadTask = new UploadTask(config, fileSystem, new UploadFactory(), new LineCoverageSynthesizer());
+            logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
+            Config config = Config.ReadFromCentralConfigFile();
+            HttpClientUtils.ConfigureHttpStack(config.DisableSslValidation);
+            return config;
         }
 
         /// <summary>
-        /// Uploads once, synchronously.
+        /// Runs the daemon tasks once, synchronously.
         /// </summary>
-        public void UploadOnce()
+        public void RunOnce()
+        {
+            try
+            {
+                RunOnce(ReadConfig());
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+            }
+        }
+
+        /// <summary>
+        /// Runs the daemon tasks once, synchronously, with the given config.
+        /// </summary>
+        public void RunOnce(Config config)
         {
             lock (SequentialUploadsLock)
             {
-                uploadTask.Run();
+                var fileSystem = new FileSystem();
+                new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer()).Run(config);
+                new PurgeArchiveTask(new ArchiveFactory(fileSystem, new DefaultDateTimeProvider())).Run(config);
             }
         }
 
         /// <summary>
-        /// Schedule uploads on a regular intervall.
+        /// Schedules uploader runs on a regular intervall.
         /// </summary>
-        private void ScheduleRegularUploads()
+        private void ScheduleRegularRuns(TimeSpan runInterval)
         {
             Timer timer = new Timer();
-            timer.Elapsed += (sender, args) => UploadOnce();
-            timer.Interval = TimerIntervalInMilliseconds;
+            timer.Elapsed += (sender, args) => RunOnce();
+            timer.Interval = runInterval.TotalMilliseconds;
             timer.Enabled = true;
         }
 
@@ -131,7 +130,7 @@ namespace UploadDaemon
                         // There is currently only one command (DaemonControlCommandUpload), hence,
                         // we immediately trigger an upload without checking what we received.
                         pipeStream.ReadLine();
-                        UploadOnce();
+                        RunOnce();
                     }
                 }
             }
@@ -148,7 +147,7 @@ namespace UploadDaemon
 
                 using (var pipeStream = new StreamWriter(pipeClientStream))
                 {
-                    pipeStream.WriteLine(DaemonControlCommandUpload);
+                    pipeStream.WriteLine(DaemonControlCommandRunNow);
                 }
             }
         }

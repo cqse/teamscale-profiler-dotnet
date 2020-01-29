@@ -23,7 +23,7 @@ public class LineCoverageSynthesizerTest
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
             $"Inlined=2:{ExistingMethodToken}",
         }, "coverage_12345_1234.txt");
-        string coverageReport = new LineCoverageSynthesizer().ConvertToLineCoverageReport(traceFile, TestUtils.TestDataDirectory,
+        string coverageReport = Convert(traceFile, TestUtils.TestDataDirectory,
             new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
         Assert.That(NormalizeNewLines(coverageReport.Trim()), Is.EqualTo(NormalizeNewLines(@"# isMethodAccurate=true
@@ -32,19 +32,15 @@ public class LineCoverageSynthesizerTest
     }
 
     [Test]
-    public void TracesWithoutCoverageShouldResultInException()
+    public void TracesWithoutCoverageShouldResultInNullBeingReturned()
     {
         ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
         }, "coverage_12345_1234.txt");
 
-        Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
-        {
-            new LineCoverageSynthesizer().ConvertToLineCoverageReport(traceFile, TestUtils.TestDataDirectory,
-                new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
-        });
-
-        Assert.That(exception.Message, Contains.Substring("no coverage"));
+        Dictionary<string, FileCoverage> report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
+            new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
+        Assert.That(report, Is.Null);
     }
 
     [Test]
@@ -57,8 +53,7 @@ public class LineCoverageSynthesizerTest
 
         Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
         {
-            new LineCoverageSynthesizer().ConvertToLineCoverageReport(traceFile, TestUtils.TestDataDirectory,
-                new Common.GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
+            Convert(traceFile, TestUtils.TestDataDirectory, new Common.GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
         });
 
         Assert.That(exception.Message, Contains.Substring("no symbols"));
@@ -94,14 +89,20 @@ public class LineCoverageSynthesizerTest
 
         SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
 
-        Dictionary<string, LineCoverageSynthesizer.FileCoverage> coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
+        Dictionary<string, FileCoverage> coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
             new Common.GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
         Assert.That(coverage, Is.Empty);
     }
 
-    private string NormalizeNewLines(string text)
+    private static string NormalizeNewLines(string text)
     {
         return text.Replace("\r\n", "\n").Replace("\r", "\n");
+    }
+
+    private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, Common.GlobPatternList assemlyPatterns)
+    {
+        return LineCoverageSynthesizer.ConvertToLineCoverageReport(new LineCoverageSynthesizer().ConvertToLineCoverage(
+            traceFile, symbolDirectory, assemlyPatterns));
     }
 }

@@ -1,4 +1,17 @@
-disableSSLValidation: true
+# Whether SSL validation should be globally disabled.
+disableSslValidation: true
+# Upload finished trace files every N minutes. Defaults to 5 minutes.
+# Set to 0 to disable scheduled uploads. This will cause the UploadDaemon to
+# upload once and shut down afterwards.
+uploadIntervalInMinutes: 5
+# Duration after which trace files can be purged from the UploadDaemon's
+# archives (in days). Remove this section to disable purging. Set thresholds
+# to 0 to purge immediately after upload.
+archivePurgingThresholdsInDays:
+  uploadedTraces: 7
+  emptyTraces: 3
+  incompleteTraces: 3
+
 match:
   # This section matches all processes.
   # We configure shared options here but disable the profiler.
@@ -7,7 +20,7 @@ match:
       enabled: false
       # Trace files will be stored and archived here
       targetdir: C:\Users\Public\Traces
-      # Light mode is recommended.
+      # Light mode is recommended and enabled by default.
       # Turn it off if you use ngen.exe for your assemblies
       light_mode: true
       # Enable upload to Teamscale

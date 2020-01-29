@@ -70,7 +70,7 @@ void Config::setOptions()
 {
 	targetDir = getOption("targetdir");
 	enabled = getBooleanOption("enabled", true);
-	useLightMode = getBooleanOption("light_mode", false);
+	useLightMode = getBooleanOption("light_mode", true);
 	logAssemblyFileVersion = getBooleanOption("assembly_file_version", false);
 	logAssemblyPaths = getBooleanOption("assembly_paths", false);
 	dumpEnvironment = getBooleanOption("dump_environment", false);

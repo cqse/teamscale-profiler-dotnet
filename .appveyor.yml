@@ -1,6 +1,6 @@
 image: Visual Studio 2017
 
-version: 19.3.0.{build}
+version: 19.6.1.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -44,6 +44,7 @@ after_test:
   - cmd: mkdir teamscale_dotnet_profiler\GUI
   - cmd: mkdir teamscale_dotnet_profiler\Documentation
   - cmd: mkdir teamscale_dotnet_profiler\Licenses
+  - cmd: mkdir teamscale_dotnet_profiler\Tools
   # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
   # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
   # we achieve this by following up the robocopy commands with "exit 0"
@@ -54,8 +55,12 @@ after_test:
   - cmd: robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
   # copy UploadDaemon
   - cmd: robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+  - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon\service
+  - cmd: robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* & exit 0
   # copy GUI
   - cmd: robocopy .\Profiler\bin\Release\GUI teamscale_dotnet_profiler\GUI *.* /xf *.pdb & exit 0
+  # copy DumpPdb
+  - cmd: robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb & exit 0
   # copy Licenses
   - cmd: robocopy . teamscale_dotnet_profiler LICENSE & exit 0
   - cmd: robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0

@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Common;
 using UploadDaemon.SymbolAnalysis;
+using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -148,6 +149,15 @@ namespace UploadDaemon.Upload
             public UploadFailedException(string message, Exception innerException) : base(message, innerException)
             {
             }
+        }
+
+        /// <summary>
+        /// We can merge all coverage destined for the same storage as the line coverage files
+        /// don't contain any meta data anymore so they are indistinguishable at that point.
+        /// </summary>
+        public object GetTargetId()
+        {
+            return storage;
         }
     }
 }

@@ -4,6 +4,10 @@ Teamscale Ephemeral .NET Profiler
 
 Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
 
+## System Requirements
+
+.NET Framework 4.5 or newer must be installed.
+
 ## Download
 
 The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
@@ -15,6 +19,8 @@ Documentation on installation and usage of the profiler can be found [here](./do
 ## Contributing
 
 The coverage profiler can be compiled using Visual Studio 2017. Ensure to have the Windows and .NET SDK installed.
+Please also install [CodeMaid][codemaid] to enable formatting the source code automatically on save. This keeps the
+code consistently formatted for everyone.
 
 Unit tests exist in the form of .NET NUnit tests. These are included in the same solution as the profiler.
 During development, always build the `Win32` variant as this is configured to also build the x64 variant as well.
@@ -43,3 +49,6 @@ We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
 5. Publish the release
 
 AppVeyor will then take care of attaching the release binary.
+
+[codemaid]: http://www.codemaid.net/
+

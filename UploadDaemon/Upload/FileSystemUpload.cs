@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
@@ -75,6 +76,15 @@ namespace UploadDaemon.Upload
                     originalTraceFilePath, targetDirectory);
                 return Task.FromResult(false);
             }
+        }
+
+        /// <summary>
+        /// We can merge all coverage destined for the same target directory as the line coverage files
+        /// don't contain any meta data anymore so they are indistinguishable at that point.
+        /// </summary>
+        public object GetTargetId()
+        {
+            return targetDirectory;
         }
     }
 }

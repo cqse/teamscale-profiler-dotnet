@@ -28,9 +28,12 @@ namespace Common
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Config.ConfigForProcess barConfig = config.CreateConfigForProcess("C:\\test\\bar.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
+            Assert.True(config.DisableSslValidation, "SSL verification disabled by default");
+            Assert.That(config.UploadInterval, Is.EqualTo(TimeSpan.FromMinutes(5)));
             Assert.Multiple(() =>
             {
                 Assert.That(fooConfig.Enabled, Is.True);
+                Assert.That(fooConfig.MergeLineCoverage, Is.True);
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
                 Assert.That(fooConfig.VersionPrefix, Is.Empty);
@@ -381,6 +384,80 @@ namespace Common
             ").CreateConfigForProcess("foo.exe");
 
             Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("include=Bar exclude=").And.Contains("mscorlib"));
+        }
+
+        [Test]
+        public void TestEnableSslVerification()
+        {
+            Config config = Config.Read(@"
+                disableSslValidation: false
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.False(config.DisableSslValidation, "Enabling of SSL validation");
+        }
+
+        [Test]
+        public void TestConfigureUploadInterval()
+        {
+            Config config = Config.Read(@"
+                uploadIntervalInMinutes: 42
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.UploadInterval, Is.EqualTo(TimeSpan.FromMinutes(42)));
+        }
+
+        [Test]
+        public void TestConfigurePurgeThresholds()
+        {
+            Config config = Config.Read(@"
+                archivePurgingThresholdsInDays:
+                  uploadedTraces: 1
+                  emptyTraces: 3
+                  incompleteTraces: 7
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.FromDays(1)));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.EqualTo(TimeSpan.FromDays(3)));
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.EqualTo(TimeSpan.FromDays(7)));
+        }
+
+        [Test]
+        public void TestConfigureSomePurgeThreshold()
+        {
+            Config config = Config.Read(@"
+                archivePurgingThresholdsInDays:
+                  uploadedTraces: 1
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.EqualTo(TimeSpan.FromDays(1)));
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
+        }
+
+        [Test]
+        public void TestConfigureNoPurgeThreshold()
+        {
+            Config config = Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+            ");
+
+            Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
+            Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
         }
     }
 }

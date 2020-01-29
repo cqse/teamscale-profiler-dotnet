@@ -11,16 +11,57 @@
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
 
-CProfilerCallback* CProfilerCallback::instance = NULL;
+/**
+ * Serializes access to the singleton profiler instance when trying to shut it down.
+ * This prevents race conditions that can result in deadlocks that freeze the profiled process.
+ */
+class ShutdownGuard {
+public:
+	ShutdownGuard() {
+		// we never delete this critical section. This is not needed as it's cleaned up on process
+		// death like any other memory
+		InitializeCriticalSection(&section);
+	}
 
-CProfilerCallback* CProfilerCallback::getInstance() {
+	virtual ~ShutdownGuard() {}
+
+	void setInstance(CProfilerCallback* callback) {
+		instance = callback;
+	}
+
+	/**
+	 * Shuts down the instance. If clrIsAvailable is true, also tries to force a GC.
+	 * Note that forcing a GC after the CLR has shut down can result in deadlocks so this
+	 * should be set only when calling from a CLR callback.
+	 */
+	void shutdownInstance(bool clrIsAvailable) {
+		EnterCriticalSection(&section);
+		if (instance != NULL) {
+			instance->ShutdownOnce(clrIsAvailable);
+			instance = NULL;
+		}
+		LeaveCriticalSection(&section);
+	}
+
+private:
+	CRITICAL_SECTION section;
+	CProfilerCallback* instance = NULL;
+};
+
+static ShutdownGuard& getShutdownGuard() {
+	// C++ 11 guarantees that this initialization will only happen once and in a thread-safe manner
+	static ShutdownGuard instance;
 	return instance;
+}
+
+void CProfilerCallback::ShutdownFromDllMainDetach() {
+	getShutdownGuard().shutdownInstance(false);
 }
 
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
-		instance = this;
+		getShutdownGuard().setInstance(this);
 	}
 	catch (...) {
 		handleException("Constructor");
@@ -29,7 +70,9 @@ CProfilerCallback::CProfilerCallback() {
 
 CProfilerCallback::~CProfilerCallback() {
 	try {
-		instance = NULL;
+		// make sure we flush to disk and disable access to this instance for other threads
+		// even if the .NET framework doesn't call Shutdown() itself
+		getShutdownGuard().shutdownInstance(false);
 		DeleteCriticalSection(&callbackSynchronization);
 	}
 	catch (...) {
@@ -49,6 +92,7 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	initializeConfig();
+
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
@@ -137,7 +181,7 @@ UploadDaemon CProfilerCallback::createDaemon() {
 	return UploadDaemon(profilerPath);
 }
 
-void CProfilerCallback::ShutdownOnce() {
+void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	if (!config.isProfilingEnabled()) {
 		return;
 	}
@@ -151,13 +195,15 @@ void CProfilerCallback::ShutdownOnce() {
 	if (config.shouldStartUploadDaemon()) {
 		createDaemon().notifyShutdown();
 	}
-	profilerInfo->ForceGC();
+	if (clrIsAvailable) {
+		profilerInfo->ForceGC();
+	}
 	LeaveCriticalSection(&callbackSynchronization);
 }
 
 HRESULT CProfilerCallback::Shutdown() {
 	try {
-		std::call_once(shutdownCompletedFlag, &CProfilerCallback::ShutdownOnce, this);
+		getShutdownGuard().shutdownInstance(true);
 	}
 	catch (...) {
 		handleException("Shutdown");
@@ -187,7 +233,7 @@ UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFu
 		return functionId;
 	}
 	catch (...) {
-		Debug::logStacktrace("functionMapper");
+		Debug::getInstance().logErrorWithStracktrace("functionMapper");
 		// since this function must be static, we have no way to access the config so we always terminate the program.
 		throw;
 	}
@@ -304,7 +350,7 @@ HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
 }
 
 void CProfilerCallback::handleException(std::string context) {
-	Debug::logStacktrace(context);
+	Debug::getInstance().logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
 		throw;
 	}

@@ -16,27 +16,8 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// The line coverage collected for one file.
-        /// </summary>
-        public class FileCoverage
-        {
-            /// <summary>
-            /// The ranges of inclusive start and end lines that are covered in the file.
-            /// </summary>
-            public List<(uint, uint)> CoveredLineRanges = new List<(uint, uint)>();
-        }
-
-        /// <summary>
-        /// Converts the given trace file to a line coverage report (format SIMPLE) with the PDB files
-        /// in the given symbol directory.
-        ///
-        /// The assembly patterns are used to select both the assemblies from the trace files for which
-        /// coverage should be generated and the PDB files which should be searched for mappings.
-        ///
-        /// May throw exceptions if converting the trace file fails completely. Partial failures (e.g. missing
-        /// PDB) are logged and no exception is thrown.
-        /// </summary>
-        public string ConvertToLineCoverageReport(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        /// <inheritdoc/>
+        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
             if (symbolCollection.IsEmpty)
@@ -48,11 +29,17 @@ namespace UploadDaemon.SymbolAnalysis
             Dictionary<string, FileCoverage> lineCoverage = ConvertToLineCoverage(traceFile, symbolCollection, symbolDirectory, assemblyPatterns);
             if (lineCoverage.Count == 0 || lineCoverage.Values.All(fileCoverage => fileCoverage.CoveredLineRanges.Count() == 0))
             {
-                throw new LineCoverageConversionFailedException($"Failed to convert {traceFile.FilePath} to line coverage." +
-                    $" The trace produced no coverage. Either it really doesn't contain any relevant coverage or" +
-                    $" the assembly patterns {assemblyPatterns.Describe()} are incorrect.");
+                return null;
             }
 
+            return lineCoverage;
+        }
+
+        /// <summary>
+        /// Converts the given line coverage (covered line ranges per file) into a SIMPLE format report for Teamscale.
+        /// </summary>
+        public static string ConvertToLineCoverageReport(Dictionary<string, FileCoverage> lineCoverage)
+        {
             StringBuilder report = new StringBuilder();
             report.AppendLine("# isMethodAccurate=true");
             foreach (string file in lineCoverage.Keys)
