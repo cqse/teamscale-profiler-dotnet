@@ -102,7 +102,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	attachLog.createLogFile(configPath);
 	attachLog.logAttach();
 
-	traceLog.createLogFile(config);
+	traceLog.createLogFile(config.getTargetDir());
 	traceLog.info("looking for configuration options in: " + config.getConfigPath());
 
 	for (std::string problem : config.getProblems()) {

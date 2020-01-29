@@ -18,8 +18,7 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
-void TraceLog::createLogFile(Config& config) {
-	std::string targetDir = config.getTargetDir();
+void TraceLog::createLogFile(std::string targetDir) {
 
 	std::string timeStamp = getFormattedCurrentTime();
 
