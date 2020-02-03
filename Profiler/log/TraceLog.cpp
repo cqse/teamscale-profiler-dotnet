@@ -7,7 +7,9 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 
-TraceLog::~TraceLog() {}
+TraceLog::~TraceLog() {
+	// Nothing to do here, destructing is handled in FileLogBase
+}
 
 void TraceLog::writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
