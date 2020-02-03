@@ -12,6 +12,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
+
+        private static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
+
         [OneTimeSetUp]
         public static void SetUpFixture()
         {
