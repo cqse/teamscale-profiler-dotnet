@@ -68,8 +68,14 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
 #if DEBUG
+		/// <summary>
+		/// Field holding the build configuration, either 'Release' or 'Debug'
+		/// </summary>
         protected static readonly string Configuration = "Debug";
 #else
+		/// <summary>
+		/// Field holding the build configuration, either 'Release' or 'Debug'
+		/// </summary>
         protected static readonly string Configuration = "Release";
 #endif
 
