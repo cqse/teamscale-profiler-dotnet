@@ -8,6 +8,7 @@
 class AttachLog: public FileLogBase
 {
 public:
+	virtual ~AttachLog() noexcept ;
 
 	/**
 	 * Create the log file.

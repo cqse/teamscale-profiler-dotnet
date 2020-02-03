@@ -2,6 +2,9 @@
 #include "utils/WindowsUtils.h"
 
 
+AttachLog::~AttachLog() {}
+
+
 void AttachLog::createLogFile(std::string path) {
 	FileLogBase::createLogFile(path, "attach.log", false);
 }

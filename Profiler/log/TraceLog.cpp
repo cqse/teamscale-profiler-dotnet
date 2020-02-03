@@ -7,6 +7,7 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 
+TraceLog::~TraceLog() {}
 
 void TraceLog::writeJittedFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
