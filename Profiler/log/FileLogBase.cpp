@@ -61,33 +61,10 @@ int FileLogBase::writeToFile(const char* string) {
 	return retVal;
 }
 
-void FileLogBase::info(std::string message) {
-	writeTupleToFile(LOG_KEY_INFO, message.c_str());
-}
-
-void FileLogBase::warn(std::string message)
-{
-	writeTupleToFile(LOG_KEY_WARN, message.c_str());
-}
-
-void FileLogBase::error(std::string message)
-{
-	writeTupleToFile(LOG_KEY_ERROR, message.c_str());
-}
-
-void FileLogBase::logEnvironmentVariable(std::string variable)
-{
-	writeTupleToFile(LOG_KEY_ENVIRONMENT, variable.c_str());
-}
-
-void FileLogBase::logProcess(std::string process)
-{
-	writeTupleToFile(LOG_KEY_PROCESS, process.c_str());
-}
-
-void FileLogBase::logAssembly(std::string assembly)
-{
-	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+void FileLogBase::writeTupleToFile(const char* key, const char* value) {
+	char buffer[BUFFER_SIZE];
+	sprintf_s(buffer, "%s=%s\r\n", key, value);
+	writeToFile(buffer);
 }
 
 std::string FileLogBase::getFormattedCurrentTime() {
@@ -103,10 +80,3 @@ std::string FileLogBase::getFormattedCurrentTime() {
 	std::string result(formattedTime);
 	return result;
 }
-
-void FileLogBase::writeTupleToFile(const char* key, const char* value) {
-	char buffer[BUFFER_SIZE];
-	sprintf_s(buffer, "%s=%s\r\n", key, value);
-	writeToFile(buffer);
-}
-

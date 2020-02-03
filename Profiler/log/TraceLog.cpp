@@ -45,6 +45,35 @@ void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info)
 	writeTupleToFile(key, signature);
 }
 
+void TraceLog::info(std::string message) {
+	writeTupleToFile(LOG_KEY_INFO, message.c_str());
+}
+
+void TraceLog::warn(std::string message)
+{
+	writeTupleToFile(LOG_KEY_WARN, message.c_str());
+}
+
+void TraceLog::error(std::string message)
+{
+	writeTupleToFile(LOG_KEY_ERROR, message.c_str());
+}
+
+void TraceLog::logEnvironmentVariable(std::string variable)
+{
+	writeTupleToFile(LOG_KEY_ENVIRONMENT, variable.c_str());
+}
+
+void TraceLog::logProcess(std::string process)
+{
+	writeTupleToFile(LOG_KEY_PROCESS, process.c_str());
+}
+
+void TraceLog::logAssembly(std::string assembly)
+{
+	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+}
+
 void TraceLog::shutdown() {
 	std::string timeStamp = getFormattedCurrentTime();
 	writeTupleToFile(LOG_KEY_STOPPED, timeStamp.c_str());

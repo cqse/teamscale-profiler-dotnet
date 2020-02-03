@@ -11,7 +11,7 @@ void AttachLog::logAttach() {
 	std::string timeStamp = getFormattedCurrentTime();
 	std::string message = timeStamp + " Attached to \"" + WindowsUtils::getPathOfThisProcess() + 
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
-	FileLogBase::writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
+	writeTupleToFile(LOG_KEY_ATTACH, message.c_str());
 }
 
 
@@ -19,5 +19,5 @@ void AttachLog::logDetach() {
 	std::string timeStamp = getFormattedCurrentTime();
 	std::string message = timeStamp + " Detached from \"" + WindowsUtils::getPathOfThisProcess() +
 		"\" with PID " + std::to_string(WindowsUtils::getPidOfThisProcess());
-	FileLogBase::writeTupleToFile(LOG_KEY_DETACH, message.c_str());
+	writeTupleToFile(LOG_KEY_DETACH, message.c_str());
 }
