@@ -36,9 +36,6 @@
     <ClCompile Include="CClassFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Log.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UploadDaemon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,6 +141,15 @@
     <ClCompile Include="lib\StackWalker\StackWalker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="log\AttachLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="log\FileLogBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="log\TraceLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -162,9 +168,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UploadDaemon.h">
@@ -252,6 +255,15 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="lib\StackWalker\StackWalker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="log\AttachLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="log\FileLogBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="log\TraceLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

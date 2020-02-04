@@ -67,9 +67,15 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
 #if DEBUG
-        private static readonly string Configuration = "Debug";
+		/// <summary>
+		/// Field holding the build configuration, either 'Release' or 'Debug'
+		/// </summary>
+        protected static readonly string Configuration = "Debug";
 #else
-        private static readonly string Configuration = "Release";
+		/// <summary>
+		/// Field holding the build configuration, either 'Release' or 'Debug'
+		/// </summary>
+        protected static readonly string Configuration = "Release";
 #endif
 
         public static readonly string Profiler32Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler32.dll";

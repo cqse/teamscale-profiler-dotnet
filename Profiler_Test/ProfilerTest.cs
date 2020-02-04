@@ -12,6 +12,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
+
+        private static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
+
         [OneTimeSetUp]
         public static void SetUpFixture()
         {
@@ -34,6 +37,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 }
             }
         }
+
+		[TearDown]
+		public void TearDown()
+		{
+			File.Delete(AttachLog);
+		}
 
         /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
@@ -125,6 +134,26 @@ match:
         {
             List<FileInfo> traces = RunProfiler(application);
             AssertNormalizedTraceFileEqualsReference(traces, expectedAssemblyIds);
+        }
+
+        [Test]
+        public void TestAttachLog()
+        {
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            string[] lines = File.ReadAllLines(AttachLog);
+            string firstLine = lines[0];
+            Assert.That(firstLine.StartsWith("Attach"));
+            Assert.That(firstLine.Contains("ProfilerTestee.exe"));
+        }
+
+        [Test]
+        public void TestDetatchLog()
+        {
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            string[] lines = File.ReadAllLines(AttachLog);
+			string secondLine = lines[1];
+            Assert.That(secondLine.StartsWith("Detach"));
+            Assert.That(secondLine.Contains("ProfilerTestee.exe"));
         }
     }
 }
