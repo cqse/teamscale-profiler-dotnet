@@ -15,12 +15,17 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly IDictionary<string, IDictionary<GlobPatternList, SymbolCollection>> symbolCollectionsCache = new Dictionary<string, IDictionary<GlobPatternList, SymbolCollection>>();
+        private readonly SymbolCollectionResolver symbolCollectionResolver;
+
+        public LineCoverageSynthesizer(SymbolCollectionResolver symbolCollectionResolver)
+        {
+            this.symbolCollectionResolver = symbolCollectionResolver;
+        }
 
         /// <inheritdoc/>
         public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            SymbolCollection symbolCollection = LoadSymbolCollection(symbolDirectory, assemblyPatterns);
+            SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
 
             if (symbolCollection.IsEmpty)
             {
@@ -35,22 +40,6 @@ namespace UploadDaemon.SymbolAnalysis
             }
 
             return lineCoverage;
-        }
-
-        private SymbolCollection LoadSymbolCollection(string symbolDirectory, GlobPatternList assemblyPatterns)
-        {
-            if (!symbolCollectionsCache.ContainsKey(symbolDirectory))
-            {
-                symbolCollectionsCache[symbolDirectory] = new Dictionary<GlobPatternList, SymbolCollection>();
-            }
-
-            IDictionary<GlobPatternList, SymbolCollection> collections = symbolCollectionsCache[symbolDirectory];
-            if (!collections.ContainsKey(assemblyPatterns))
-            {
-                collections[assemblyPatterns] = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
-            }
-
-            return collections[assemblyPatterns];
         }
 
         /// <summary>
