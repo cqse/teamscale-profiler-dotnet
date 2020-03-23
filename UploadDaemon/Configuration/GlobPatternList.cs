@@ -77,15 +77,10 @@ namespace UploadDaemon.Configuration
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
-        {
-            return this.Describe().Equals((obj as GlobPatternList)?.Describe());
-        }
+        public override bool Equals(object other) => other is GlobPatternList gpl && gpl.includePatterns.SequenceEqual(includePatterns)
+                && gpl.excludePatterns.SequenceEqual(excludePatterns);
 
         /// <inheritdoc/>
-        public override int GetHashCode()
-        {
-            return this.Describe().GetHashCode();
-        }
+        public override int GetHashCode() => (includePatterns, excludePatterns).GetHashCode();
     }
 }
