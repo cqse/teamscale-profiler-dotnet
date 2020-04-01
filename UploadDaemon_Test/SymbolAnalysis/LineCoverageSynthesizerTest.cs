@@ -35,7 +35,7 @@ namespace UploadDaemon.SymbolAnalysis
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
         }, "coverage_12345_1234.txt");
 
-            Dictionary<string, FileCoverage> report = new LineCoverageSynthesizer(new SymbolCollectionResolver()).ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
+            Dictionary<string, FileCoverage> report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
             Assert.That(report, Is.Null);
         }
@@ -99,7 +99,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return LineCoverageSynthesizer.ConvertToLineCoverageReport(new LineCoverageSynthesizer(new SymbolCollectionResolver()).ConvertToLineCoverage(
+            return LineCoverageSynthesizer.ConvertToLineCoverageReport(new LineCoverageSynthesizer().ConvertToLineCoverage(
                 traceFile, symbolDirectory, assemlyPatterns));
         }
     }

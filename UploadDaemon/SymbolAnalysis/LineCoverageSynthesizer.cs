@@ -17,9 +17,9 @@ namespace UploadDaemon.SymbolAnalysis
 
         private readonly SymbolCollectionResolver symbolCollectionResolver;
 
-        public LineCoverageSynthesizer(SymbolCollectionResolver symbolCollectionResolver)
+        public LineCoverageSynthesizer()
         {
-            this.symbolCollectionResolver = symbolCollectionResolver;
+            this.symbolCollectionResolver = new SymbolCollectionResolver();
         }
 
         /// <inheritdoc/>

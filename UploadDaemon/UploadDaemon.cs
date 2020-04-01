@@ -99,7 +99,7 @@ namespace UploadDaemon
             lock (SequentialUploadsLock)
             {
                 var fileSystem = new FileSystem();
-                new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer(new SymbolCollectionResolver())).Run(config);
+                new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer()).Run(config);
                 new PurgeArchiveTask(new ArchiveFactory(fileSystem, new DefaultDateTimeProvider())).Run(config);
             }
         }
