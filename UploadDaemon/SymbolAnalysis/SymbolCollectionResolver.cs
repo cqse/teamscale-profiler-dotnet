@@ -10,12 +10,12 @@ namespace UploadDaemon.SymbolAnalysis
     /// </summary>
     public class SymbolCollectionResolver
     {
-        private readonly IDictionary<Tuple<string, GlobPatternList>, SymbolCollection> symbolCollectionsCache =
-            new Dictionary<Tuple<string, GlobPatternList>, SymbolCollection>();
+        private readonly IDictionary<(string, GlobPatternList), SymbolCollection> symbolCollectionsCache =
+            new Dictionary<(string, GlobPatternList), SymbolCollection>();
 
         public SymbolCollection ResolveFrom(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            Tuple<string, GlobPatternList> key = GetCacheKey(symbolDirectory, assemblyPatterns);
+            (string, GlobPatternList) key = GetCacheKey(symbolDirectory, assemblyPatterns);
             if (!symbolCollectionsCache.ContainsKey(key))
             {
                 symbolCollectionsCache[key] = SymbolCollection.CreateFromPdbFiles(symbolDirectory, assemblyPatterns);
@@ -23,9 +23,9 @@ namespace UploadDaemon.SymbolAnalysis
             return symbolCollectionsCache[key];
         }
 
-        private static Tuple<string, GlobPatternList> GetCacheKey(string symbolDirectory, GlobPatternList assemblyPatterns)
+        private static (string, GlobPatternList) GetCacheKey(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            return (symbolDirectory, assemblyPatterns).ToTuple();
+            return (symbolDirectory, assemblyPatterns);
         }
     }
 }
