@@ -13,6 +13,10 @@ namespace UploadDaemon.SymbolAnalysis
         private readonly IDictionary<(string, GlobPatternList), SymbolCollection> symbolCollectionsCache =
             new Dictionary<(string, GlobPatternList), SymbolCollection>();
 
+        /// <summary>
+        /// Resolves the <see cref="SymbolCollection"/> from the given path filtered by the given assembly patterns.
+        /// The result is cached, to reduce I/O.
+        /// </summary>
         public SymbolCollection ResolveFrom(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             (string, GlobPatternList) key = GetCacheKey(symbolDirectory, assemblyPatterns);
