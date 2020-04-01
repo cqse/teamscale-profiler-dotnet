@@ -11,6 +11,7 @@ namespace UploadDaemon.SymbolAnalysis
     class SymbolCollectionResolverTest
     {
         private readonly GlobPatternList someAssemblyPatterns = new GlobPatternList(new List<string> { "*" }, new List<string> { });
+        private readonly string testSymbolFileName = $"{TestUtils.TestDataDirectory}\\Some.pdb";
 
         private SymbolCollectionResolver resolver;
 
@@ -18,6 +19,7 @@ namespace UploadDaemon.SymbolAnalysis
         public void SetUp()
         {
             resolver = new SymbolCollectionResolver();
+            File.SetLastWriteTime($"{TestUtils.TestDataDirectory}\\Some.pdb", new DateTime(2019, 1, 1));
         }
 
         [Test]
@@ -25,7 +27,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = resolver.ResolveFrom(TestUtils.TestDataDirectory, someAssemblyPatterns);
 
-            Assert.That(Normalized(collection.SymbolFileNames), Is.EqualTo(new[] { "\\test-data\\UploadDaemon.SymbolAnalysis.SymbolCollectionResolverTest\\Some.pdb" }));
+            Assert.That(collection.SymbolFileNames, Is.EqualTo(new[] { testSymbolFileName }));
         }
 
         [Test]
@@ -62,18 +64,10 @@ namespace UploadDaemon.SymbolAnalysis
             Assert.That(collection2, Is.SameAs(collection3));
         }
 
-        /// <summary>
-        /// Removes user-specific path prefix from PDB file names in test-data.
-        /// </summary>
-        private IEnumerable<string> Normalized(ICollection<string> symbolFileNames)
-        {
-            return symbolFileNames.Select(symbolFileName => symbolFileName.Substring(symbolFileName.IndexOf("\\test-data\\")));
-        }
-
         private void SimulateSymbolFileChange(string symbolFileName)
         {
             DateTime originalLastWriteDate = File.GetLastAccessTime(symbolFileName);
-            DateTime newLastWriteDate = originalLastWriteDate.AddSeconds(1);
+            DateTime newLastWriteDate = originalLastWriteDate.AddDays(1);
             File.SetLastWriteTime(symbolFileName, newLastWriteDate);
         }
     }
