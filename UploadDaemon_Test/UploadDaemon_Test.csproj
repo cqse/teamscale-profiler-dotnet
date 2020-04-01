@@ -93,6 +93,7 @@
     <Compile Include="SymbolAnalysis\ParsedTraceFileTest.cs" />
     <Compile Include="Configuration\GlobPatternListTest.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
+    <Compile Include="SymbolAnalysis\SymbolCollectionResolverTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionTest.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtilsTest.cs" />
     <Compile Include="TestUtils.cs" />

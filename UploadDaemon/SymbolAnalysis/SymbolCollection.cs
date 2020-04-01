@@ -43,6 +43,8 @@ namespace UploadDaemon.SymbolAnalysis
             logger.Debug("Creating symbol collection from mappings");
             WarnInCaseOfDuplicateMappings(mappings);
 
+            SymbolFileNames = mappings.Select(mapping => mapping.SymbolFileName).ToList();
+
             foreach (AssemblyMethodMappings mapping in mappings)
             {
                 // in case of duplicate mappings we merge the mappings by reusing the existing dictionary here
@@ -69,6 +71,11 @@ namespace UploadDaemon.SymbolAnalysis
         /// Returns true if no mappings are contained in this collection.
         /// </summary>
         public bool IsEmpty => mappings.Count() == 0 || mappings.Values.All(mapping => mapping.Count() == 0);
+
+        /// <summary>
+        /// The paths of the PDB symbol files considered in this collection.
+        /// </summary>
+        public ICollection<string> SymbolFileNames { get; private set; }
 
         private void WarnInCaseOfDuplicateMappings(List<AssemblyMethodMappings> mappings)
         {
