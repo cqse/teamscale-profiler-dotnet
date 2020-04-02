@@ -107,7 +107,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Creates a symbol collection from the given PDB files.
         /// </summary>
-        private static SymbolCollection CreateFromFiles(List<string> pdbFilePaths)
+        public static SymbolCollection CreateFromFiles(IEnumerable<string> pdbFilePaths)
         {
             MethodMapper mapper = new MethodMapper();
             List<AssemblyMethodMappings> mappings = new List<AssemblyMethodMappings>();
