@@ -16,8 +16,8 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private class SymbolFileInfo
         {
-            public string Path;
-            public DateTime LastWriteTime;
+            internal string Path;
+            internal DateTime LastWriteTime;
         }
 
         private readonly IDictionary<(string, GlobPatternList), SymbolCollection> symbolCollectionsCache =
