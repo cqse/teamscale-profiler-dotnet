@@ -43,17 +43,17 @@ namespace UploadDaemon.SymbolAnalysis
 
         private bool IsValid(SymbolCollection collection)
         {
-            return collection.SymbolFileNames.All(symbolFileName => ReadLastWriteDate(symbolFileName).Equals(symbolFileLastWriteDates[symbolFileName]));
+            return collection.SymbolFilePaths.All(symbolFilePath => ReadLastWriteDate(symbolFilePath).Equals(symbolFileLastWriteDates[symbolFilePath]));
         }
 
         private void UpdateValidationInfo(SymbolCollection collection)
         {
-            foreach (string symbolFileName in collection.SymbolFileNames)
+            foreach (string symbolFilePath in collection.SymbolFilePaths)
             {
-                symbolFileLastWriteDates[symbolFileName] = ReadLastWriteDate(symbolFileName);
+                symbolFileLastWriteDates[symbolFilePath] = ReadLastWriteDate(symbolFilePath);
             }
         }
 
-        private static DateTime ReadLastWriteDate(string symbolFileName) => File.GetLastWriteTimeUtc(symbolFileName);
+        private static DateTime ReadLastWriteDate(string symbolFilePath) => File.GetLastWriteTimeUtc(symbolFilePath);
     }
 }
