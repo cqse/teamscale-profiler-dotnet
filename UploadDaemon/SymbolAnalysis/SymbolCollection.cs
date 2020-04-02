@@ -128,20 +128,5 @@ namespace UploadDaemon.SymbolAnalysis
             }
             return new SymbolCollection(mappings);
         }
-
-        /// <summary>
-        /// Creates a symbol collection based on the PDB files in the given symbol directory whose file names without extension
-        /// match the given pattern list.
-        ///
-        /// May throw exceptions if e.g. the symbol directory cannot be read. If one PDB file cannot be read or parsed, it will
-        /// be ignored. No exception is thrown in this case.
-        /// </summary>
-        public static SymbolCollection CreateFromPdbFiles(string symbolDirectory, GlobPatternList assemblyPatterns)
-        {
-            logger.Debug("Searching PDB files in {symbolDirectory} using pattern '{pattern}'.", symbolDirectory, assemblyPatterns.Describe());
-            List<string> pdbFiles = Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories).ToList();
-            List<string> relevantFiles = pdbFiles.Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file))).ToList();
-            return CreateFromFiles(relevantFiles);
-        }
     }
 }

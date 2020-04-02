@@ -11,7 +11,7 @@ namespace UploadDaemon.SymbolAnalysis
     class SymbolCollectionResolverTest
     {
         private static readonly string TestDataDirectory = $"{TestUtils.TestDataDirectory}\\Tmp";
-        private static readonly string TestSymbolFileName = $"{TestDataDirectory}\\Some.pdb";
+        private static readonly string TestSymbolFilePath = $"{TestDataDirectory}\\Some.pdb";
 
         private readonly GlobPatternList includeAllAssembliesPattern = new GlobPatternList(new List<string> { "*" }, new List<string> { });
 
@@ -23,8 +23,8 @@ namespace UploadDaemon.SymbolAnalysis
             resolver = new SymbolCollectionResolver();
 
             Directory.CreateDirectory(TestDataDirectory);
-            File.Copy($"{TestUtils.TestDataDirectory}\\Some.pdb", TestSymbolFileName);
-            File.SetLastWriteTime(TestSymbolFileName, new DateTime(2019, 1, 1));
+            File.Copy($"{TestUtils.TestDataDirectory}\\Some.pdb", TestSymbolFilePath);
+            File.SetLastWriteTime(TestSymbolFilePath, new DateTime(2019, 1, 1));
         }
 
         [TearDown]
@@ -34,11 +34,33 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         [Test]
-        public void CollectsSymbolFileNames()
+        public void ConsidersSymbolFileIncludes()
         {
-            SymbolCollection collection = resolver.ResolveFrom(TestDataDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection = resolver.ResolveFrom(TestUtils.TestDataDirectory,
+                   new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> {}));
 
-            Assert.That(collection.SymbolFilePaths, Is.EqualTo(new[] { TestSymbolFileName }));
+            Assert.That(collection.IsEmpty, Is.True);
+        }
+
+        [Test]
+        public void ConsidersSymbolFileExcludes()
+        {
+            SymbolCollection collection = resolver.ResolveFrom(TestUtils.TestDataDirectory,
+                   new GlobPatternList(new List<string> { "*" }, new List<string> { "So*" }));
+
+            Assert.That(collection.IsEmpty, Is.True);
+        }
+
+        [Test]
+        public void IncludesSymbolFilesFromSubDirectories()
+        {
+            var testDataSubDirectory = $"{TestDataDirectory}\\Sub";
+            Directory.CreateDirectory(testDataSubDirectory);
+            File.Move(TestSymbolFilePath, $"{testDataSubDirectory}\\Some.pdb");
+
+            SymbolCollection collection = resolver.ResolveFrom(TestUtils.TestDataDirectory, includeAllAssembliesPattern);
+
+            Assert.That(collection.IsEmpty, Is.False);
         }
 
         [Test]
@@ -55,7 +77,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection1 = resolver.ResolveFrom(TestDataDirectory, includeAllAssembliesPattern);
 
-            File.Copy(TestSymbolFileName, $"{TestDataDirectory}\\SomeNew.pdb");
+            File.Copy(TestSymbolFilePath, $"{TestDataDirectory}\\SomeNew.pdb");
 
             SymbolCollection collection2 = resolver.ResolveFrom(TestDataDirectory, includeAllAssembliesPattern);
 
@@ -79,7 +101,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection1 = resolver.ResolveFrom(TestDataDirectory, includeAllAssembliesPattern);
 
-            File.Delete(TestSymbolFileName);
+            File.Delete(TestSymbolFilePath);
 
             SymbolCollection collection2 = resolver.ResolveFrom(TestDataDirectory, includeAllAssembliesPattern);
 

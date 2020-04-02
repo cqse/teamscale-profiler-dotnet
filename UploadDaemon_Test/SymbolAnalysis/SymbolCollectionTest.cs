@@ -1,12 +1,13 @@
 ﻿using NUnit.Framework;
-using System.Collections.Generic;
-using UploadDaemon.Configuration;
 
 namespace UploadDaemon.SymbolAnalysis
 {
     [TestFixture]
     public class SymbolCollectionTest
     {
+        private static readonly string TestPdbPath = $"{TestUtils.TestDataDirectory}\\ProfilerGUI.pdb";
+        private static readonly string TestPDBCopyPath = $"{TestUtils.TestDataDirectory}\\ProfilerGUICopy.pdb";
+
         // 100663427 corresponds to MainViewModel#get_SelectedBitnessIndex in ProfilerGUI.pdb
         // obtained with cvdump.exe
         private static readonly uint ExistingMethodToken = 100663427;
@@ -14,8 +15,7 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TestPdbParsing()
         {
-            SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "ProfilerGUI" }, new List<string> { }));
+            SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
 
             SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.Multiple(() =>
@@ -35,8 +35,7 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void OneInvalidPdbShouldNotPreventParsingOthers()
         {
-            SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-                   new GlobPatternList(new List<string> { "Invalid", "ProfilerGUI" }, new List<string> { }));
+            SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { $"{TestUtils.TestDataDirectory}\\Invalid.pdb", TestPdbPath });
 
             SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
@@ -51,8 +50,7 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void DuplicatePdbsShouldNotThrowExceptions()
         {
-            SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-                   new GlobPatternList(new List<string> { "ProfilerGUI", "ProfilerGUICopy" }, new List<string> { }));
+            SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath, TestPDBCopyPath });
 
             SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
@@ -65,23 +63,11 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         [Test]
-        public void RespectsGlobPatterns()
+        public void CollectsSymbolFilePaths()
         {
-            SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-                   new GlobPatternList(new List<string> { "*" }, new List<string> { "Profiler*" }));
+            SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
 
-            SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
-            Assert.That(existingMethod, Is.Null);
-        }
-
-        [Test]
-        public void SearchesSubdirectories()
-        {
-            SymbolCollection collection = SymbolCollection.CreateFromPdbFiles(TestUtils.TestDataDirectory,
-                   new GlobPatternList(new List<string> { "Sub" }, new List<string> { }));
-
-            SymbolCollection.SourceLocation existingMethod = collection.Resolve("Sub", ExistingMethodToken);
-            Assert.That(existingMethod, Is.Not.Null);
+            Assert.That(collection.SymbolFilePaths, Is.EqualTo(new[] { TestPdbPath }));
         }
     }
 }
