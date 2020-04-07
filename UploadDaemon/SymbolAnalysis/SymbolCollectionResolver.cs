@@ -75,9 +75,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             return new HashSet<SymbolFileInfo>(Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories)
                 .Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file)))
-                .Select(file => new SymbolFileInfo { Path = file, LastWriteTime = ReadLastWriteDate(file) }));
+                .Select(file => new SymbolFileInfo { Path = file, LastWriteTime = File.GetLastWriteTimeUtc(file) }));
         }
-
-        private static DateTime ReadLastWriteDate(string symbolFilePath) => File.GetLastWriteTimeUtc(symbolFilePath);
     }
 }
