@@ -75,5 +75,12 @@ namespace UploadDaemon.Configuration
         {
             return includeRegexes.Any(regex => regex.IsMatch(text)) && !excludeRegexes.Any(regex => regex.IsMatch(text));
         }
+
+        /// <inheritdoc/>
+        public override bool Equals(object other) => other is GlobPatternList otherList && otherList.includePatterns.SequenceEqual(includePatterns)
+                && otherList.excludePatterns.SequenceEqual(excludePatterns);
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => (includePatterns, excludePatterns).GetHashCode();
     }
 }

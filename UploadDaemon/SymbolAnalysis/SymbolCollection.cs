@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Cqse.ConQAT.Dotnet.Bummer;
 using NLog;
-using UploadDaemon.Configuration;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -40,7 +39,10 @@ namespace UploadDaemon.SymbolAnalysis
 
         public SymbolCollection(List<AssemblyMethodMappings> mappings)
         {
+            logger.Debug("Creating symbol collection from mappings");
             WarnInCaseOfDuplicateMappings(mappings);
+
+            SymbolFilePaths = new HashSet<string>(mappings.Select(mapping => mapping.SymbolFileName));
 
             foreach (AssemblyMethodMappings mapping in mappings)
             {
@@ -68,6 +70,11 @@ namespace UploadDaemon.SymbolAnalysis
         /// Returns true if no mappings are contained in this collection.
         /// </summary>
         public bool IsEmpty => mappings.Count() == 0 || mappings.Values.All(mapping => mapping.Count() == 0);
+
+        /// <summary>
+        /// The paths of the PDB symbol files considered in this collection.
+        /// </summary>
+        public HashSet<string> SymbolFilePaths { get; private set; }
 
         private void WarnInCaseOfDuplicateMappings(List<AssemblyMethodMappings> mappings)
         {
@@ -99,13 +106,13 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Creates a symbol collection from the given PDB files.
         /// </summary>
-        private static SymbolCollection CreateFromFiles(List<string> pdbFilePaths)
+        public static SymbolCollection CreateFromFiles(IEnumerable<string> pdbFilePaths)
         {
-            List<string> assemblyNames = pdbFilePaths.Select(file => Path.GetFileName(file)).ToList();
             MethodMapper mapper = new MethodMapper();
             List<AssemblyMethodMappings> mappings = new List<AssemblyMethodMappings>();
             foreach (string filePath in pdbFilePaths)
             {
+                logger.Debug("Loading mappings from PDB {filePath}", filePath);
                 string assemblyName = Path.GetFileNameWithoutExtension(filePath);
                 try
                 {
@@ -119,20 +126,6 @@ namespace UploadDaemon.SymbolAnalysis
                 }
             }
             return new SymbolCollection(mappings);
-        }
-
-        /// <summary>
-        /// Creates a symbol collection based on the PDB files in the given symbol directory whose file names without extension
-        /// match the given pattern list.
-        ///
-        /// May throw exceptions if e.g. the symbol directory cannot be read. If one PDB file cannot be read or parsed, it will
-        /// be ignored. No exception is thrown in this case.
-        /// </summary>
-        public static SymbolCollection CreateFromPdbFiles(string symbolDirectory, GlobPatternList assemblyPatterns)
-        {
-            List<string> pdbFiles = Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories).ToList();
-            List<string> relevantFiles = pdbFiles.Where(file => assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file))).ToList();
-            return SymbolCollection.CreateFromFiles(relevantFiles);
         }
     }
 }
