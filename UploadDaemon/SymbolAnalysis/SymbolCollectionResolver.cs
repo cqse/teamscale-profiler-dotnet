@@ -60,7 +60,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private static bool ContainsExactly(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFilePaths)
         {
-            return new HashSet<string>(relevantSymbolFilePaths.Select(info => info.Path)).SetEquals(collection.SymbolFilePaths);
+            return collection.SymbolFilePaths.SetEquals(relevantSymbolFilePaths.Select(info => info.Path));
         }
 
         private void UpdateValidationInfo(ICollection<SymbolFileInfo> relevantSymbolFiles)
