@@ -12,8 +12,7 @@ namespace UploadDaemon.SymbolAnalysis
     {
         private static readonly string TestDataDirectory = $"{TestUtils.TestDataDirectory}\\Tmp";
         private static readonly string TestSymbolFilePath = $"{TestDataDirectory}\\Some.pdb";
-
-        private readonly GlobPatternList includeAllAssembliesPattern = new GlobPatternList(new List<string> { "*" }, new List<string> { });
+        private static readonly GlobPatternList includeAllAssembliesPattern = new GlobPatternList(new List<string> { "*" }, new List<string> { });
 
         private SymbolCollectionResolver resolver;
 
