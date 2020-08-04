@@ -23,6 +23,13 @@ match:
       # Light mode is recommended and enabled by default.
       # Turn it off if you use ngen.exe for your assemblies
       light_mode: true
+      # Enable eager writing of traces after the specified amount
+      # of method calls (i.e. write to disk immediately).
+      # This is useful to get coverage in cases where the
+      # .NET runtime is killed instead of gracefully shut down
+      # as it's the case in some Azure environments.
+      # It should only be used in conjunction with light mode.
+      eagerness: 0
       # Enable upload to Teamscale
       upload_daemon: true
     uploader:
