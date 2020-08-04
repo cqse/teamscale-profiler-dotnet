@@ -25,7 +25,10 @@ match:
       light_mode: true
       # Enable eager writing of traces after the specified amount
       # of method calls (i.e. write to disk immediately).
-      # This should only be used in conjunction with light mode.
+      # This is useful to get coverage in cases where the
+      # .Net runtime is killed instead of gracefully shut down
+      # as it's the case in some Azure environments.
+      # It should only be used in conjunction with light mode.
       eagerness: 0
       # Enable upload to Teamscale
       upload_daemon: true
