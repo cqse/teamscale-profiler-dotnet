@@ -23,10 +23,10 @@ match:
       # Light mode is recommended and enabled by default.
       # Turn it off if you use ngen.exe for your assemblies
       light_mode: true
-	  # Enable eager writing of traces after the specified amount
-	  # of method calls (i.e. write to disk immediately).
-	  # This should only be used in conjunction with light mode.
-	  eagerness: 0
+      # Enable eager writing of traces after the specified amount
+      # of method calls (i.e. write to disk immediately).
+      # This should only be used in conjunction with light mode.
+      eagerness: 0
       # Enable upload to Teamscale
       upload_daemon: true
     uploader:
