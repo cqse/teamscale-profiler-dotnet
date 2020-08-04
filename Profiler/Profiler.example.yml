@@ -26,7 +26,7 @@ match:
       # Enable eager writing of traces after the specified amount
       # of method calls (i.e. write to disk immediately).
       # This is useful to get coverage in cases where the
-      # .Net runtime is killed instead of gracefully shut down
+      # .NET runtime is killed instead of gracefully shut down
       # as it's the case in some Azure environments.
       # It should only be used in conjunction with light mode.
       eagerness: 0
