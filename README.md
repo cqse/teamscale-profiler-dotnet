@@ -10,7 +10,7 @@ Lightweight profiler for .NET applications that provides method-level coverage i
 
 ## Download
 
-The latest (and previous) releases can be downloaded from the [GitHib Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
+The latest (and previous) releases can be downloaded from the [GitHub Release](https://github.com/cqse/teamscale-profiler-dotnet/releases) website.
 
 ## Documentation
 
