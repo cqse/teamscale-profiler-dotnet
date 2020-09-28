@@ -1,26 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Configuration;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProfilerGui
 {
-    class MainWindowVM : INotifyPropertyChanged
+    internal class MainWindowVM : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
         private bool enableProfiling = true;
+
         public bool EnableProfiling
-        { 
+        {
             get => enableProfiling;
             set => SetField(ref enableProfiling, value);
         }
 
         private bool testWiseProfiling = false;
+
         public bool TestWiseProfiling
         {
             get => testWiseProfiling;
@@ -28,6 +25,7 @@ namespace ProfilerGui
         }
 
         private string testName = null;
+
         public string TestName
         {
             get => testName;
@@ -35,14 +33,15 @@ namespace ProfilerGui
         }
 
         private bool needsUpdate = false;
+
         public bool NeedsUpdate
         {
             get => needsUpdate;
             set => SetField(ref needsUpdate, value);
         }
 
-
         private string statusText = null;
+
         public string StatusText
         {
             get => statusText;

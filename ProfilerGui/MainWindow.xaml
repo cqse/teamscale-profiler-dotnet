@@ -8,16 +8,16 @@
         Title="Teamscale .NET Profiler" Height="143.212" Width="419.635" ResizeMode="NoResize">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="116*"/>
-            <ColumnDefinition Width="91*"/>
+            <ColumnDefinition Width="116*" />
+            <ColumnDefinition Width="91*" />
         </Grid.ColumnDefinitions>
-        <CheckBox Content="Enable Profiling" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="363" Height="15" IsChecked="{Binding Path=EnableProfiling}" Grid.ColumnSpan="2"/>
+        <CheckBox Content="Enable Profiling" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="363" Height="15" IsChecked="{Binding Path=EnableProfiling}" Grid.ColumnSpan="2" />
         <Grid HorizontalAlignment="Left" Height="40" Margin="0,25,0,0" VerticalAlignment="Top" Width="400"  IsEnabled="{Binding Path=EnableProfiling}" Grid.ColumnSpan="2">
-            <CheckBox Content="Testwise Profiling" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top" Height="15" Width="130" IsChecked="{Binding Path=TestWiseProfiling}"/>
-            <TextBox HorizontalAlignment="Left" Height="23" Margin="245,10,0,0" TextWrapping="Wrap" Text="{Binding Path=TestName, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="145" IsEnabled="{Binding Path=TestWiseProfiling}"/>
-            <Label Content="Test Name" HorizontalAlignment="Left" Margin="171,9,0,0" VerticalAlignment="Top" Width="69" IsEnabled="False" Height="26"/>
+            <CheckBox Content="Testwise Profiling" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top" Height="15" Width="130" IsChecked="{Binding Path=TestWiseProfiling}" />
+            <TextBox HorizontalAlignment="Left" Height="23" Margin="245,10,0,0" TextWrapping="Wrap" Text="{Binding Path=TestName, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="145" IsEnabled="{Binding Path=TestWiseProfiling}" />
+            <Label Content="Test Name" HorizontalAlignment="Left" Margin="171,9,0,0" VerticalAlignment="Top" Width="69" IsEnabled="False" Height="26" />
         </Grid>
-        <Button Content="Update" HorizontalAlignment="Left" Margin="10,73,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click" Height="20" IsEnabled="{Binding Path=NeedsUpdate}"/>
-        <Label HorizontalAlignment="Left" Margin="90,70,0,0" VerticalAlignment="Top" Width="283" IsEnabled="False" Height="26" Content="{Binding Path=StatusText}" Grid.ColumnSpan="2"/>
+        <Button Content="Update" HorizontalAlignment="Left" Margin="10,73,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click" Height="20" IsEnabled="{Binding Path=NeedsUpdate}" />
+        <Label HorizontalAlignment="Left" Margin="90,70,0,0" VerticalAlignment="Top" Width="283" IsEnabled="False" Height="26" Content="{Binding Path=StatusText}" Grid.ColumnSpan="2" />
     </Grid>
 </Window>
