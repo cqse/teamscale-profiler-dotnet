@@ -22,7 +22,6 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 }
 
 void TraceLog::createLogFile(std::string targetDir) {
-
 	std::string timeStamp = getFormattedCurrentTime();
 
 	std::string fileName = "";
@@ -75,6 +74,11 @@ void TraceLog::logProcess(std::string process)
 void TraceLog::logAssembly(std::string assembly)
 {
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+}
+
+void TraceLog::logTestCase(std::string testName)
+{
+	writeTupleToFile(LOG_KEY_TESTCASE, testName.c_str());
 }
 
 void TraceLog::shutdown() {

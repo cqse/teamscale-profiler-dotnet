@@ -11,7 +11,7 @@
  * Manages a log file on the file system to which both diagnostic messages and trace information is written.
  * Unless mentioned otherwise, all methods in this class are thread-safe and perform their own synchronization.
  */
-class TraceLog: public FileLogBase
+class TraceLog : public FileLogBase
 {
 public:
 	virtual ~TraceLog() noexcept;
@@ -23,7 +23,7 @@ public:
 	void writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
 
 	/**
-	 * Create the log file and add general information. 
+	 * Create the log file and add general information.
 	 * Can be called as an alternative for createLogFile method of the base class as first method called on the object.
 	 * This method is not thread-safe or reentrant.
 	 */
@@ -50,6 +50,8 @@ public:
 	/** Writes info about a profiled assembly into the log. Should only be called once. */
 	void logAssembly(std::string assembly);
 
+	void logTestCase(std::string testName);
+
 protected:
 	/** The key to log information about the profiler startup. */
 	const char* LOG_KEY_STARTED = "Started";
@@ -62,6 +64,9 @@ protected:
 
 	/** The key to log information about jitted methods. */
 	const char* LOG_KEY_JITTED = "Jitted";
+
+	/** The key to log information about test cases. */
+	const char* LOG_KEY_TESTCASE = "Test";
 
 	/** The key to log information useful when interpreting the traces. */
 	const char* LOG_KEY_INFO = "Info";
@@ -80,7 +85,6 @@ protected:
 
 	/** The key to log information about the environment variables the profiled process sees. */
 	const char* LOG_KEY_ENVIRONMENT = "Environment";
-
 
 private:
 	/** Write all information about the given functions to the log. */

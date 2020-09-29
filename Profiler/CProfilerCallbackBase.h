@@ -1,4 +1,7 @@
 #pragma once
+#ifdef TIA
+#define _WINSOCKAPI_ // has to be defined for zmq before including windows.h
+#endif
 #include <windows.h>
 #include <stdio.h>
 #include <cor.h>

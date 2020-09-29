@@ -80,7 +80,19 @@ public:
 	size_t getEagerness() {
 		return eagerness;
 	}
+#ifdef TIA
+	bool isTiaEnabled() {
+		return tiaEnabled;
+	}
 
+	std::string getTiaRequestSocket() {
+		return tiaRequestSocket;
+	}
+
+	std::string getTiaSubscribeSocket() {
+		return tiaSubscribeSocket;
+	}
+#endif
 private:
 
 	std::string processPath;
@@ -98,6 +110,11 @@ private:
 	bool ignoreExceptions;
 	bool startUploadDaemon;
 	size_t eagerness;
+#ifdef TIA
+	bool tiaEnabled;
+	std::string tiaRequestSocket;
+	std::string tiaSubscribeSocket;
+#endif
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);

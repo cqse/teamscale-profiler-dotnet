@@ -123,6 +123,13 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		createDaemon().launch(traceLog);
 	}
 
+#ifdef TIA
+	if (config.isTiaEnabled()) {
+		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
+		this->ipc = new Ipc(&this->config);
+		traceLog.logTestCase(this->ipc->getCurrentTestName());
+	}
+#endif
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
 		std::string message = "IIS AppPool: ";
@@ -192,12 +199,19 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 
 	traceLog.shutdown();
 	attachLog.shutdown();
+#ifdef TIA
+	if (this->ipc != NULL) {
+		delete ipc;
+		ipc = NULL;
+	}
+#endif
 	if (config.shouldStartUploadDaemon()) {
 		createDaemon().notifyShutdown();
 	}
 	if (clrIsAvailable) {
 		profilerInfo->ForceGC();
 	}
+
 	LeaveCriticalSection(&callbackSynchronization);
 }
 

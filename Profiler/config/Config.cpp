@@ -76,7 +76,18 @@ void Config::setOptions()
 	dumpEnvironment = getBooleanOption("dump_environment", false);
 	ignoreExceptions = getBooleanOption("ignore_exceptions", false);
 	startUploadDaemon = getBooleanOption("upload_daemon", false);
+#ifdef TIA
+	tiaEnabled = getBooleanOption("tia", false);
+	tiaSubscribeSocket = getOption("tia_subscribe_socket");
+	if (tiaSubscribeSocket.empty()) {
+		tiaSubscribeSocket = "tcp://127.0.0.1:7145"; // 7145 for leet TIA-Socket :)
+	}
 
+	tiaRequestSocket = getOption("tia_request_socket");
+	if (tiaSubscribeSocket.empty()) {
+		tiaSubscribeSocket = "tcp://127.0.0.1:7146";
+	}
+#endif
 	std::string eagernessValue = getOption("eagerness");
 	if (eagernessValue.empty()) {
 		eagerness = 0;
