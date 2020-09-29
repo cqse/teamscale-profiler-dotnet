@@ -1,8 +1,7 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Dotnet
 {
@@ -12,38 +11,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
-
-        private static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
-
-        [OneTimeSetUp]
-        public static void SetUpFixture()
-        {
-            Assume.That(File.Exists(Profiler32Dll), "Could not find profiler 32bit DLL at " + Profiler32Dll);
-            Assume.That(File.Exists(Profiler64Dll), "Could not find profiler 64bit DLL at " + Profiler64Dll);
-        }
-
-        /// <summary>
-        /// Clears the profiler environment variables to guarantee a stable test even if
-        /// the developer has variables set on their development machine.
-        /// </summary>
-        [SetUp]
-        public void SetUp()
-        {
-            foreach (string variable in Environment.GetEnvironmentVariables().Keys)
-            {
-                if (variable.StartsWith("COR"))
-                {
-                    Environment.SetEnvironmentVariable(variable, null);
-                }
-            }
-        }
-
-		[TearDown]
-		public void TearDown()
-		{
-			File.Delete(AttachLog);
-		}
-
         /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
         /// </summary>
@@ -151,7 +118,7 @@ match:
         {
             RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
             string[] lines = File.ReadAllLines(AttachLog);
-			string secondLine = lines[1];
+            string secondLine = lines[1];
             Assert.That(secondLine.StartsWith("Detach"));
             Assert.That(secondLine.Contains("ProfilerTestee.exe"));
         }

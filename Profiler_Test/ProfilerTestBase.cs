@@ -72,15 +72,46 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 		/// </summary>
         protected static readonly string Configuration = "Debug";
 #else
-		/// <summary>
-		/// Field holding the build configuration, either 'Release' or 'Debug'
-		/// </summary>
+
+        /// <summary>
+        /// Field holding the build configuration, either 'Release' or 'Debug'
+        /// </summary>
         protected static readonly string Configuration = "Release";
+
 #endif
 
         public static readonly string Profiler32Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler32.dll";
-
         public static readonly string Profiler64Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler64.dll";
+        public static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
+
+        [OneTimeSetUp]
+        public static void SetUpFixture()
+        {
+            Assume.That(File.Exists(Profiler32Dll), "Could not find profiler 32bit DLL at " + Profiler32Dll);
+            Assume.That(File.Exists(Profiler64Dll), "Could not find profiler 64bit DLL at " + Profiler64Dll);
+        }
+
+        /// <summary>
+        /// Clears the profiler environment variables to guarantee a stable test even if
+        /// the developer has variables set on their development machine.
+        /// </summary>
+        [SetUp]
+        public void SetUp()
+        {
+            foreach (string variable in Environment.GetEnvironmentVariables().Keys)
+            {
+                if (variable.StartsWith("COR"))
+                {
+                    Environment.SetEnvironmentVariable(variable, null);
+                }
+            }
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            File.Delete(AttachLog);
+        }
 
         /// <summary>
         /// Executes the test application with the profiler attached and returns the written traces.

@@ -44,8 +44,12 @@
       <HintPath>..\packages\NUnit.3.11.0\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="ZeroMQ, Version=4.1.0.31, Culture=neutral, PublicKeyToken=4a9630883fd6c563, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZeroMQ.4.1.0.31\lib\net40\ZeroMQ.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TiaTest.cs" />
     <Compile Include="ProfilerTest.cs" />
     <Compile Include="ProfilerTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -61,5 +65,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\NUnit.3.11.0\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.11.0\build\NUnit.props'))" />
     <Error Condition="!Exists('..\packages\NUnit3TestAdapter.3.13.0\build\net35\NUnit3TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit3TestAdapter.3.13.0\build\net35\NUnit3TestAdapter.props'))" />
+    <Error Condition="!Exists('..\packages\ZeroMQ.4.1.0.31\build\net40\ZeroMQ.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ZeroMQ.4.1.0.31\build\net40\ZeroMQ.targets'))" />
   </Target>
+  <Import Project="..\packages\ZeroMQ.4.1.0.31\build\net40\ZeroMQ.targets" Condition="Exists('..\packages\ZeroMQ.4.1.0.31\build\net40\ZeroMQ.targets')" />
 </Project>
