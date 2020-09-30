@@ -61,16 +61,20 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /** Separator used to concatenate method keys */
         public const char KEY_SEPARATOR = ':';
 
+        private List<Process> startedProcesses = new List<Process>();
+
         /// <summary>
         /// The directory containing profiler solution.
         /// </summary>
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
 #if DEBUG
-		/// <summary>
-		/// Field holding the build configuration, either 'Release' or 'Debug'
-		/// </summary>
+
+        /// <summary>
+        /// Field holding the build configuration, either 'Release' or 'Debug'
+        /// </summary>
         protected static readonly string Configuration = "Debug";
+
 #else
 
         /// <summary>
@@ -110,6 +114,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         [TearDown]
         public void TearDown()
         {
+            startedProcesses.Where(process => !process.HasExited).ToList().ForEach(process => process.Kill());
             File.Delete(AttachLog);
         }
 
@@ -139,6 +144,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             }
 
             Process result = Process.Start(startInfo);
+            startedProcesses.Add(result);
             result.StandardOutput.ReadToEnd();
             result.WaitForExit();
 
