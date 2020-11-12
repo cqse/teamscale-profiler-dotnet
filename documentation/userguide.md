@@ -215,8 +215,10 @@ You must ensure that the profiled application has read permissions to the locati
 You can check whether the environment variables are visible to a certain process using the free [Microsoft Process Explorer](http://technet.microsoft.com/en-gb/sysinternals/bb896653.aspx):
 
 1. Open Process Explorer, and look for the respective process (e.g. the IIS user mode worker process `w3wp.exe`).
-2. Right click on the process, click Properties and then click the Environment tab.
-3. Look for the `COR_ENABLE_PROFILING` and `COR_PROFILER` values.
+2. Right click on the process, click Properties
+3. Check the "image" entry for whether the process is 32 or 64bit and if that matches the Profiler DLL you selected in the config
+4. Click the Environment tab and look for the `COR_ENABLE_PROFILING` and `COR_PROFILER` values if they are set correctly.
+5. Check the user under which the process is running and if that matches your expectation and if that user really has access to the `targetdir`
 
 The .NET runtime will create an error message to the event log if loading the profiler fails. This means that the environment variables were noticed by the runtime but the profiler crashed before it could be used.
 
@@ -232,6 +234,9 @@ Things to check if no trace files are written:
 In case the application doesn't start at all, please check the file `C:\Users\Public\profiler_debug.log`.
 It may contain stack traces in case the profiler crashed.
 The `attach.log` file in the directory of the profiler DLLs might also provide some insights. It contains information about processes to which the profiler attached.
+
+If none of the above helps, try starting with a minimal working setup, e.g. profiling all processes and setting `targetdir` to `C:\Users\Public` and starting `powershell.exe` and seeing if that creates a trace file.
+If that works, try one-by-one changing options until you have a working configuration for your application.
 
 ## Debugging Profiler crashes
 
