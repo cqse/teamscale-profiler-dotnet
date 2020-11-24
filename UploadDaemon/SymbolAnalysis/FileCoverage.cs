@@ -20,6 +20,14 @@ namespace UploadDaemon.SymbolAnalysis
             }
         }
 
+        /// <summary>
+        /// Modifies the current <see cref="FileCoverage"/> to contain all the coverage from the both itself and the other <see cref="FileCoverage"/>.
+        /// </summary>
+        public void UnionWith(FileCoverage otherCoverage)
+        {
+            CoveredLineRanges.UnionWith(otherCoverage.CoveredLineRanges);
+        }
+
         public override bool Equals(object obj) =>
             obj is FileCoverage fileCoverage && fileCoverage.CoveredLineRanges.SetEquals(CoveredLineRanges);
 

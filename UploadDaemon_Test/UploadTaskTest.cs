@@ -275,20 +275,18 @@ Inlined=1:33555646:100678050" },
             }
 
             /// <inheritdoc/>
-            public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+            public LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
             {
-                if (!shouldProduceCoverage)
+                var coverage = new Dictionary<string, FileCoverage>();
+                if (shouldProduceCoverage)
                 {
-                    return null;
+                    // Return some arbitrary coverage
+                    FileCoverage fileCoverage = new FileCoverage();
+                    fileCoverage.CoveredLineRanges.Add((12, 33));
+                    coverage["file1.cs"] = fileCoverage;
                 }
 
-                // Return some arbitrary coverage
-                FileCoverage fileCoverage = new FileCoverage();
-                fileCoverage.CoveredLineRanges.Add((12, 33));
-                return new Dictionary<string, FileCoverage>()
-            {
-                { "file1.cs", fileCoverage }
-            };
+                return new LineCoverageReport(coverage);
             }
         }
 

@@ -29,15 +29,15 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         [Test]
-        public void TracesWithoutCoverageShouldResultInNullBeingReturned()
+        public void TracesWithoutCoverageShouldResultInEmptyTrace()
         {
             ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
         }, "coverage_12345_1234.txt");
 
-            Dictionary<string, FileCoverage> report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
+            LineCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
-            Assert.That(report, Is.Null);
+            Assert.That(report.IsEmpty, Is.True);
         }
 
         [Test]
@@ -86,10 +86,10 @@ namespace UploadDaemon.SymbolAnalysis
 
             SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
 
-            Dictionary<string, FileCoverage> coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
+            LineCoverageReport coverage = LineCoverageSynthesizer.ConvertToLineCoverage(traceFile, symbolCollection, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
-            Assert.That(coverage, Is.Empty);
+            Assert.That(coverage.IsEmpty, Is.True);
         }
 
         private static string NormalizeNewLines(string text)
@@ -99,8 +99,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return LineCoverageSynthesizer.ConvertToLineCoverageReport(new LineCoverageSynthesizer().ConvertToLineCoverage(
-                traceFile, symbolDirectory, assemlyPatterns));
+            return new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, symbolDirectory, assemlyPatterns).ToReportString();
         }
     }
 }
