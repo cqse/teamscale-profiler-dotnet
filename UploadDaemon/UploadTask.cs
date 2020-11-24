@@ -88,7 +88,7 @@ namespace UploadDaemon
         {
             logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
                                 string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
-            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
+            string report = batch.LineCoverage.ToReportString();
 
             string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
 
@@ -145,7 +145,7 @@ namespace UploadDaemon
         {
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", trace.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
-            Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
+            LineCoverageReport lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
             if (timestampOrRevision == null || lineCoverage == null)
             {
                 return;
@@ -153,8 +153,7 @@ namespace UploadDaemon
 
             if (config.ArchiveLineCoverage)
             {
-                archive.ArchiveLineCoverage(Path.GetFileName(trace.FilePath) + ".simple",
-                    LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
+                archive.ArchiveLineCoverage(Path.GetFileName(trace.FilePath) + ".simple", lineCoverage.ToReportString());
             }
 
             if (processConfig.MergeLineCoverage)
@@ -165,7 +164,7 @@ namespace UploadDaemon
             }
 
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
-            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
+            string report = lineCoverage.ToReportString();
             if (RunSync(upload.UploadLineCoverageAsync(trace.FilePath, report, timestampOrRevision)))
             {
                 archive.ArchiveUploadedFile(trace.FilePath);
@@ -197,10 +196,10 @@ namespace UploadDaemon
         /// Tries to read and convert the trace file. Logs and returns null if this fails.
         /// Empty trace files are archived and null is returned as well.
         /// </summary>
-        private Dictionary<string, FileCoverage> ConvertTraceFileToLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig)
+        private LineCoverageReport ConvertTraceFileToLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig)
         {
             ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
-            Dictionary<string, FileCoverage> lineCoverage;
+            LineCoverageReport lineCoverage;
             try
             {
                 lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
@@ -211,7 +210,7 @@ namespace UploadDaemon
                 return null;
             }
 
-            if (lineCoverage == null)
+            if (lineCoverage.IsEmpty)
             {
                 logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
                 archive.ArchiveFileWithoutLineCoverage(trace.FilePath);

@@ -23,7 +23,7 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
 
@@ -33,31 +33,7 @@ namespace UploadDaemon.SymbolAnalysis
                     $" Found no symbols in {symbolDirectory} matching {assemblyPatterns.Describe()}");
             }
 
-            Dictionary<string, FileCoverage> lineCoverage = ConvertToLineCoverage(traceFile, symbolCollection, symbolDirectory, assemblyPatterns);
-            if (lineCoverage.Count == 0 || lineCoverage.Values.All(fileCoverage => fileCoverage.CoveredLineRanges.Count() == 0))
-            {
-                return null;
-            }
-
-            return lineCoverage;
-        }
-
-        /// <summary>
-        /// Converts the given line coverage (covered line ranges per file) into a SIMPLE format report for Teamscale.
-        /// </summary>
-        public static string ConvertToLineCoverageReport(Dictionary<string, FileCoverage> lineCoverage)
-        {
-            StringBuilder report = new StringBuilder();
-            report.AppendLine("# isMethodAccurate=true");
-            foreach (string file in lineCoverage.Keys)
-            {
-                report.AppendLine(file);
-                foreach ((uint startLine, uint endLine) in lineCoverage[file].CoveredLineRanges)
-                {
-                    report.AppendLine($"{startLine}-{endLine}");
-                }
-            }
-            return report.ToString();
+            return ConvertToLineCoverage(traceFile, symbolCollection, symbolDirectory, assemblyPatterns);
         }
 
         private class AssemblyResolutionCount
@@ -78,7 +54,7 @@ namespace UploadDaemon.SymbolAnalysis
         ///
         /// Public for testing.
         /// </summary>
-        public static Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
+        public static LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             logger.Debug("Converting trace {traceFile} to line coverage", traceFile);
@@ -129,7 +105,7 @@ namespace UploadDaemon.SymbolAnalysis
 
             LogResolutionFailures(traceFile, symbolDirectory, assemblyPatterns, resolutionCounts);
 
-            return lineCoverage;
+            return new LineCoverageReport(lineCoverage);
         }
 
         private static void LogResolutionFailures(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)

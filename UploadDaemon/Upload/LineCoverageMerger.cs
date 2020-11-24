@@ -60,7 +60,7 @@ namespace UploadDaemon.Upload
             /// <summary>
             /// The line coverage that should be uploaded.
             /// </summary>
-            public Dictionary<string, FileCoverage> LineCoverage { get; } = new Dictionary<string, FileCoverage>();
+            public LineCoverageReport LineCoverage { get; } = new LineCoverageReport(new Dictionary<string, FileCoverage>());
 
             /// <summary>
             /// The original trace files from which the line coverage was generated.
@@ -81,7 +81,7 @@ namespace UploadDaemon.Upload
         /// given revision/timestamp to the given upload to the merger. The coverage will be merged with
         /// any existing coverage that should be uploaded to the same destination.
         /// </summary>
-        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
+        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp, IUpload upload, LineCoverageReport lineCoverage)
         {
             MergeKey key = new MergeKey
             {
@@ -97,16 +97,7 @@ namespace UploadDaemon.Upload
             }
 
             batch.TraceFilePaths.Add(traceFilePath);
-
-            foreach (string file in lineCoverage.Keys)
-            {
-                if (!batch.LineCoverage.TryGetValue(file, out FileCoverage fileCoverage))
-                {
-                    fileCoverage = new FileCoverage();
-                    batch.LineCoverage[file] = fileCoverage;
-                }
-                fileCoverage.CoveredLineRanges.UnionWith(lineCoverage[file].CoveredLineRanges);
-            }
+            batch.LineCoverage.UnionWith(lineCoverage);
         }
 
         /// <summary>
