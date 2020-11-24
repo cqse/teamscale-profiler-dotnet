@@ -27,8 +27,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public ProfilerIpc(IpcConfig config)
         {
-            this.ipcServer = CreateIpcServer(config);
             Config = config;
+            this.ipcServer = CreateIpcServer(config);
         }
 
         protected virtual IpcServer CreateIpcServer(IpcConfig config)

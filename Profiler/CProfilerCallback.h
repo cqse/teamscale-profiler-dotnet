@@ -97,10 +97,12 @@ private:
 
 	/** The log to write attach and detatch events to */
 	AttachLog attachLog;
+
 #ifdef TIA
 	/** Inter-process connection for TIA communication. null if not in TIA mode. */
-	Ipc* ipc;
+	Ipc* ipc = NULL;
 #endif
+
 	/**
 	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
 	* to. We enable JIT compilation and assembly loads for coverage profiling. In

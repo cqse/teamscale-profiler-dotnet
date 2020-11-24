@@ -5,7 +5,9 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
     public class ZmqIpcServer : IpcServer
     {
-        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler)
+        private NetMQPoller poller;
+
+        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, true)
         {
             // delegate to base class
         }
@@ -15,13 +17,25 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             using (var responseSocket = new ResponseSocket())
             {
                 responseSocket.Bind(this.config.RequestSocket);
-                while (true)
+                using (poller = new NetMQPoller { responseSocket })
                 {
-                    string message = responseSocket.ReceiveFrameString();
-                    string response = this.requestHandler(message);
-                    responseSocket.SendFrame(response);
+                    responseSocket.ReceiveReady += (s, e) =>
+                    {
+                        string message = responseSocket.ReceiveFrameString();
+                        string response = this.requestHandler(message);
+                        responseSocket.SendFrame(response);
+                    };
+
+                    poller.Run();
                 }
             }
+        }
+
+        public override void Dispose()
+        {
+            poller.Stop();
+            NetMQConfig.Cleanup();
+            base.Dispose();
         }
     }
 }

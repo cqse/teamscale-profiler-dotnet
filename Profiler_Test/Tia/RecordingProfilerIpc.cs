@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 {
-    internal class RecordingProfilerIpc : ProfilerIpc
+    public class RecordingProfilerIpc : ProfilerIpc
     {
         private readonly ConcurrentBag<string> receivedRequests = new ConcurrentBag<string>();
 

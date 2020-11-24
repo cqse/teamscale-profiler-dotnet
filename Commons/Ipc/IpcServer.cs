@@ -11,22 +11,41 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         protected readonly RequestHandler requestHandler;
         private readonly Thread requestHandlerThread;
 
-        public IpcServer(IpcConfig config, RequestHandler requestHandler)
+        public IpcServer(IpcConfig config, RequestHandler requestHandler, bool createThread = false)
         {
             this.config = config;
             this.requestHandler = requestHandler;
-            this.requestHandlerThread = new Thread(StartRequestHandler)
+
+            if (createThread)
+            {
+                this.requestHandlerThread = this.StartRequestHandlerThread();
+            }
+            else
+            {
+                this.StartRequestHandler();
+            }         
+
+        }
+
+        private Thread StartRequestHandlerThread()
+        {
+            var thread = new Thread(StartRequestHandler)
             {
                 IsBackground = true
             };
-            this.requestHandlerThread.Start();
+            thread.Start();
+
+            return thread;
         }
 
         protected abstract void StartRequestHandler();
 
-        public void Dispose()
+        public virtual void Dispose()
         {
-            requestHandlerThread.Abort();
+            if (requestHandlerThread?.IsAlive == true)
+            {
+                requestHandlerThread.Abort();
+            }
         }
     }
 }

@@ -15,7 +15,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [SetUp]
         public void StartZmq()
         {
-            profilerIpc = new RecordingProfilerIpc();
+            profilerIpc = CreateProfilerIpc();
+        }
+
+        protected virtual RecordingProfilerIpc CreateProfilerIpc()
+        {
+            return new RecordingProfilerIpc();
         }
 
         [TearDown]
