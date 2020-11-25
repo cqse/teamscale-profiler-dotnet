@@ -21,6 +21,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 else
                 {
                     testName = value;
+                    ipcServer.Publish(testName);
                 }
             }
         }

@@ -23,8 +23,9 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             else
             {
                 this.StartRequestHandler();
-            }         
+            }
 
+            StartPublisher();
         }
 
         private Thread StartRequestHandlerThread()
@@ -39,6 +40,10 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         }
 
         protected abstract void StartRequestHandler();
+
+        protected abstract void StartPublisher();
+
+        public abstract void Publish(string testName);
 
         public virtual void Dispose()
         {

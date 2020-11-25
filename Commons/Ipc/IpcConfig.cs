@@ -17,6 +17,11 @@
         /// </summary>
         public string RequestSocket { get; } = "tcp://127.0.0.1:7146";
 
+        public IpcConfig()
+        {
+            // defaults
+        }
+
         public IpcConfig(string publishSocket, string requestSocket)
         {
             PublishSocket = publishSocket;

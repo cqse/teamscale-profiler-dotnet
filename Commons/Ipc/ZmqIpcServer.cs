@@ -6,6 +6,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     public class ZmqIpcServer : IpcServer
     {
         private NetMQPoller poller;
+        private PublisherSocket publishSocket;
 
         public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, true)
         {
@@ -31,8 +32,20 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             }
         }
 
+        override protected void StartPublisher()
+        {
+            publishSocket = new PublisherSocket();
+            publishSocket.Bind(this.config.PublishSocket);
+        }
+
+        public override void Publish(string testName)
+        {
+            publishSocket.SendFrame(testName);
+        }
+
         public override void Dispose()
         {
+            publishSocket.Dispose();
             poller.Stop();
             NetMQConfig.Cleanup();
             base.Dispose();

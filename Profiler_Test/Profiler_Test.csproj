@@ -55,7 +55,6 @@
     <Compile Include="Tia\NativeRecordingProfilerIpc.cs" />
     <Compile Include="Tia\TiaProfilerTestWithNativeZmq.cs" />
     <Compile Include="Tia\TiaProfilerTest.cs" />
-    <Compile Include="TiaTest.cs" />
     <Compile Include="ProfilerTest.cs" />
     <Compile Include="ProfilerTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

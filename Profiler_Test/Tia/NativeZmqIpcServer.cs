@@ -7,6 +7,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     public class NativeZmqIpcServer : IpcServer
     {
         private readonly ZContext context = new ZContext();
+        private ZSocket publishSocket;
         private bool disposed = false;
 
         public NativeZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, true)
@@ -30,9 +31,24 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             }
         }
 
+        override protected void StartPublisher()
+        {
+            publishSocket = new ZSocket(this.context, ZSocketType.PUB);
+            publishSocket.Bind(this.config.PublishSocket);
+        }
+
+        public override void Publish(string testName)
+        {
+            using (var frame = new ZFrame(testName))
+            {
+                publishSocket.Send(frame);
+            }
+        }
+
         public override void Dispose()
         {
             disposed = true;
+            publishSocket.Dispose();
             base.Dispose();
             this.context.Dispose();
         }
