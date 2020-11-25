@@ -97,10 +97,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             return new Dictionary<string, string>()
             {
                 ["COR_PROFILER_TIA"] = "true",
-                ["COR_PROFILER_EAGERNESS"] = "1", // FIXME for now write profiling calls directly to trace
                 ["COR_PROFILER_TIA_SUBSCRIBE_SOCKET"] = profilerIpc.Config.PublishSocket, // PUB-SUB
                 ["COR_PROFILER_TIA_REQUEST_SOCKET"] = profilerIpc.Config.RequestSocket, // REQ-REP
-            }; ;
+            };
         }
     }
 }

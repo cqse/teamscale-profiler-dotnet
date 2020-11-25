@@ -131,6 +131,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		traceLog.logTestCase(this->ipc->getCurrentTestName());
 	}
 #endif
+
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
 		std::string message = "IIS AppPool: ";
@@ -495,13 +496,18 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 	return writtenChars;
 }
 
+#ifdef TIA
+
 void CProfilerCallback::onTestChanged(std::string testName)
 {
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
+		writeFunctionInfosToLog();
 		traceLog.logTestCase(testName);
 
 		LeaveCriticalSection(&callbackSynchronization);
 	}
 }
+
+#endif

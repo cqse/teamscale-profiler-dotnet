@@ -98,10 +98,10 @@ private:
 	/** The log to write attach and detatch events to */
 	AttachLog attachLog;
 
+#ifdef TIA
 	/** Callback that is being called when a testcase changes. */
 	void onTestChanged(std::string testName);
 
-#ifdef TIA
 	/** Inter-process connection for TIA communication. null if not in TIA mode. */
 	Ipc* ipc = NULL;
 #endif
