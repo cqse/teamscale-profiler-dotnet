@@ -126,7 +126,8 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 #ifdef TIA
 	if (config.isTiaEnabled()) {
 		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
-		this->ipc = new Ipc(&this->config);
+		std::function<void(std::string)> callback = std::bind(&CProfilerCallback::onTestChanged, this, std::placeholders::_1);
+		this->ipc = new Ipc(&this->config, callback);
 		traceLog.logTestCase(this->ipc->getCurrentTestName());
 	}
 #endif
@@ -309,7 +310,7 @@ int CProfilerCallback::registerAssembly(AssemblyID assemblyId) {
 	return assemblyNumber;
 }
 
-void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA *metadata) {
+void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* metadata) {
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;
@@ -492,4 +493,15 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 	delete versionInfo;
 	return writtenChars;
+}
+
+void CProfilerCallback::onTestChanged(std::string testName)
+{
+	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
+		EnterCriticalSection(&callbackSynchronization);
+
+		traceLog.logTestCase(testName);
+
+		LeaveCriticalSection(&callbackSynchronization);
+	}
 }

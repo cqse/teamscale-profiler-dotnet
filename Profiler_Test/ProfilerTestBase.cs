@@ -123,17 +123,31 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// </summary>
         protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
         {
-            DirectoryInfo targetDir = new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
+            ProfilerTestProcess process = StartProfiler(application, arguments, lightMode, bitness, environment);
+            process.Process.StandardOutput.ReadToEnd();
+            process.Process.WaitForExit();
+
+            process.AssertSuccess();
+            return process.GetTraceFiles();
+        }
+
+        /// <summary>
+        /// Starts the test application with the profiler attached.
+        /// </summary>
+        protected ProfilerTestProcess StartProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
+        {
+            DirectoryInfo tracesTargetDir = new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
             ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
             {
                 WorkingDirectory = GetTestDataPath("test-programs"),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
 
-            RegisterProfiler(startInfo, targetDir, lightMode, bitness);
+            RegisterProfiler(startInfo, tracesTargetDir, lightMode, bitness);
 
             if (environment != null)
             {
@@ -143,13 +157,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 }
             }
 
-            Process result = Process.Start(startInfo);
-            startedProcesses.Add(result);
-            result.StandardOutput.ReadToEnd();
-            result.WaitForExit();
-
-            Assert.That(result.ExitCode, Is.EqualTo(0), "Program " + application + " did not execute properly.");
-            return GetTraceFiles(targetDir);
+            Process process = Process.Start(startInfo);
+            startedProcesses.Add(process);
+            return new ProfilerTestProcess(process, tracesTargetDir);
         }
 
         /// <summary>
@@ -205,12 +215,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                         ReadNormalizedTraceContent(actual, assmeblyIds),
                         "The normalized contents of the trace files did not match");
         }
-
-        /// <summary>
-        /// Returns the single trace file in the output directory.
-        /// </summary>
-        private List<FileInfo> GetTraceFiles(DirectoryInfo directory)
-            => directory.EnumerateFiles().Where(file => file.Name.StartsWith("coverage_")).ToList();
 
         /// <summary>
         /// Returns the absolute path to a test data file.
@@ -322,5 +326,38 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             => coverageReport.Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//"))
                 .Select(line => line.Split(new char[] { '=' }, 2))
                 .ToLookup(split => split[0], split => split[0]);
+
+        /// <summary>
+        /// Encapsulates data about the profiler.
+        /// </summary>
+        public class ProfilerTestProcess
+        {
+            private readonly DirectoryInfo tracesTargetDir;
+
+            /// <summary>
+            /// The process of the profiled application.
+            /// </summary>
+            public Process Process { get; }
+
+            public ProfilerTestProcess(Process process, DirectoryInfo tracesTargetDir)
+            {
+                this.Process = process;
+                this.tracesTargetDir = tracesTargetDir;
+            }
+
+            /// <summary>
+            /// Asserts that
+            /// </summary>
+            public void AssertSuccess()
+            {
+                Assert.That(this.Process.ExitCode, Is.EqualTo(0), "Program did not execute properly.");
+            }
+
+            /// <summary>
+            /// Returns the single trace file in the output directory.
+            /// </summary>
+            public List<FileInfo> GetTraceFiles()
+                => this.tracesTargetDir.EnumerateFiles().Where(file => file.Name.StartsWith("coverage_")).ToList();
+        }
     }
 }

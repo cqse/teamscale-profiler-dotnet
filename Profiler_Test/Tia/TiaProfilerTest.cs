@@ -1,6 +1,11 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Timers;
 
 namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 {
@@ -35,14 +40,56 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void TestRequestTestNameOnStart()
         {
-            profilerIpc.TestName = "sample test";
+            profilerIpc.TestName = "startup";
 
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment()));
+            ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
+            Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
+            Assert.That(testProcess.Process.HasExited, Is.False);
+            foreach (string testName in new[] { "A", "B", "C" })
+            {
+                profilerIpc.TestName = testName;
+                Thread.Sleep(TimeSpan.FromMilliseconds(1)); // wait shortly, so the profiler registers the change
+                testProcess.Process.StandardInput.WriteLine(testName);
+                Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
+            }
+
+            testProcess.Process.StandardInput.WriteLine();
+            testProcess.Process.WaitForExit();
+            FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
             string[] lines = File.ReadAllLines(actualTrace.FullName);
-            Assert.That(lines, Has.One.StartsWith($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
+            Assert.That(lines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
+            Assert.That(lines, Has.One.EqualTo("Test=startup"));
+            Assert.That(lines, Has.One.EqualTo("Test=A"));
+            Assert.That(lines, Has.One.EqualTo("Test=B"));
+            Assert.That(lines, Has.One.EqualTo("Test=C"));
             Assert.That(lines, Has.One.StartsWith("Stopped="));
-            Assert.That(lines, Has.One.StartsWith("Test=sample test"));
+            Dictionary<string, List<string>> eventsByTest = GroupEventsByTest(lines);
+            Assert.That(eventsByTest["A"], Has.One.StartsWith("Jitted="));
+            Assert.That(eventsByTest["B"], Has.One.StartsWith("Jitted="));
+            Assert.That(eventsByTest["C"], Has.One.StartsWith("Jitted="));
             Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+        }
+
+        private Dictionary<string, List<string>> GroupEventsByTest(string[] lines)
+        {
+            var eventsByTest = new Dictionary<string, List<string>>();
+            string currentTest = string.Empty;
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("Test="))
+                {
+                    currentTest = line.Substring("Test=".Length);
+                }
+
+                if (!eventsByTest.ContainsKey(currentTest))
+                {
+                    eventsByTest[currentTest] = new List<string>();
+                }
+
+                eventsByTest[currentTest].Add(line);
+            }
+
+            return eventsByTest;
         }
 
         private IDictionary<string, string> CreateTiaEnvironment()
@@ -50,6 +97,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             return new Dictionary<string, string>()
             {
                 ["COR_PROFILER_TIA"] = "true",
+                ["COR_PROFILER_EAGERNESS"] = "1", // FIXME for now write profiling calls directly to trace
                 ["COR_PROFILER_TIA_SUBSCRIBE_SOCKET"] = profilerIpc.Config.PublishSocket, // PUB-SUB
                 ["COR_PROFILER_TIA_REQUEST_SOCKET"] = profilerIpc.Config.RequestSocket, // REQ-REP
             }; ;
