@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UploadDaemon.Report;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -55,6 +57,26 @@ namespace UploadDaemon.SymbolAnalysis
                 }
             }
             return report.ToString();
+        }
+
+        public string ToTestwiseReportString()
+        {
+            return JsonConvert.SerializeObject(new TestwiseCoverageReport()
+            {
+                Tests = new List<TestwiseCoverageReport.Test>()
+                {
+                    new TestwiseCoverageReport.Test()
+                    {
+                        UniformPath = "No Test",
+                        Duration = 42.0,
+                        Result = "PASSED",
+                        CoverageByPath = new List<TestwiseCoverageReport.Test.CoverageForPath>()
+                        {
+                            TestwiseCoverageReport.Test.CoverageForPath.From(this)
+                        }
+                    }
+                }
+            });
         }
 
         /// <summary>

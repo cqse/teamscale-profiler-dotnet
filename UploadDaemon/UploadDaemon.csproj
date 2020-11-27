@@ -106,6 +106,7 @@
     <Compile Include="Archiving\IDateTimeProvider.cs" />
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
+    <Compile Include="Report\TestwiseCoverageReport.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageReport.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
