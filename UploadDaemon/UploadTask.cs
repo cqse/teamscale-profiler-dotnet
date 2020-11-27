@@ -98,7 +98,7 @@ namespace UploadDaemon
                 archive.ArchiveLineCoverage($"merged_{timestamp}.simple", report);
             }
 
-            if (RunSync(batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp)))
+            if (RunSync(batch.Upload.UploadLineCoverageAsync(traceFilePaths, batch.LineCoverage.ToTestwiseReportString(), batch.RevisionOrTimestamp)))
             {
                 foreach (string tracePath in batch.TraceFilePaths)
                 {
