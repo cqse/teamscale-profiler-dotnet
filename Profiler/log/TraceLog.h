@@ -22,6 +22,11 @@ public:
 	/** Write all information about the given inlined functions to the log. */
 	void writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functions);
 
+#ifdef TIA
+	/** Write all information about the given called functions to the log. */
+	void writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* functions);
+#endif
+
 	/**
 	 * Create the log file and add general information.
 	 * Can be called as an alternative for createLogFile method of the base class as first method called on the object.
@@ -64,6 +69,11 @@ protected:
 
 	/** The key to log information about jitted methods. */
 	const char* LOG_KEY_JITTED = "Jitted";
+
+#ifdef TIA
+	/** The key to log information about called methods. */
+	const char* LOG_KEY_CALLED = "Called";
+#endif
 
 	/** The key to log information about test cases. */
 	const char* LOG_KEY_TESTCASE = "Test";

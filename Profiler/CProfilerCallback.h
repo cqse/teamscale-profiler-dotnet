@@ -99,11 +99,29 @@ private:
 	AttachLog attachLog;
 
 #ifdef TIA
+	/** Inter-process connection for TIA communication. null if not in TIA mode. */
+	Ipc* ipc = NULL;
+
 	/** Callback that is being called when a testcase changes. */
 	void onTestChanged(std::string testName);
 
-	/** Inter-process connection for TIA communication. null if not in TIA mode. */
-	Ipc* ipc = NULL;
+	/**
+	 * Keeps track of called methods.
+	 * We use the set to efficiently determine if we already noticed an called method.
+	 */
+	std::set<FunctionID> calledMethodIds;
+
+	/**
+	 * Keeps track of called methods.
+	 * We use the vector to uniquely store the information about called methods.
+	 */
+	std::vector<FunctionInfo> calledMethods;
+
+	/** Callback on function enter. */
+	static void __stdcall onFunctionEnterStatic(FunctionID funcId, UINT_PTR clientData, COR_PRF_FRAME_INFO func, COR_PRF_FUNCTION_ARGUMENT_INFO* argumentInfo);
+	
+	/** Callback on function enter. */
+	void onFunctionEnter(FunctionID funcId);
 #endif
 
 	/**

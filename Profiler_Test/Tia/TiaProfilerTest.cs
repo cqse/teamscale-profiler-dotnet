@@ -38,7 +38,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
         /// </summary>
         [Test]
-        public void TestRequestTestNameOnStart()
+        public void TestThreeMethods()
         {
             profilerIpc.TestName = "startup";
 
@@ -48,7 +48,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             foreach (string testName in new[] { "A", "B", "C" })
             {
                 profilerIpc.TestName = testName;
-                Thread.Sleep(TimeSpan.FromMilliseconds(1)); // wait shortly, so the profiler registers the change
+                Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
                 testProcess.Process.StandardInput.WriteLine(testName);
                 Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
             }
@@ -64,9 +64,37 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(lines, Has.One.EqualTo("Test=C"));
             Assert.That(lines, Has.One.StartsWith("Stopped="));
             Dictionary<string, List<string>> eventsByTest = GroupEventsByTest(lines);
-            Assert.That(eventsByTest["A"], Has.One.StartsWith("Jitted="));
-            Assert.That(eventsByTest["B"], Has.One.StartsWith("Jitted="));
-            Assert.That(eventsByTest["C"], Has.One.StartsWith("Jitted="));
+            Assert.That(eventsByTest["A"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(eventsByTest["B"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(eventsByTest["C"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+        }
+
+        [Test]
+        public void TestSameMethodThreeTimes()
+        {
+            profilerIpc.TestName = "startup";
+
+            ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
+            Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
+            Assert.That(testProcess.Process.HasExited, Is.False);
+            foreach (string testName in new[] { "A", "A", "A" })
+            {
+                profilerIpc.TestName = testName;
+                Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
+                testProcess.Process.StandardInput.WriteLine(testName);
+                Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
+            }
+
+            testProcess.Process.StandardInput.WriteLine();
+            testProcess.Process.WaitForExit();
+            FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
+            string[] lines = File.ReadAllLines(actualTrace.FullName);
+            Assert.That(lines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
+            Assert.That(lines, Has.One.EqualTo("Test=startup"));
+            Assert.That(lines, Has.Exactly(3).EqualTo("Test=A"));
+            Dictionary<string, List<string>> eventsByTest = GroupEventsByTest(lines);
+            Assert.That(eventsByTest["A"], Has.Exactly(3).StartsWith("Called=2"));
             Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
         }
 

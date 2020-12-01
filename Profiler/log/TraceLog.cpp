@@ -21,6 +21,13 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
+#ifdef TIA
+void TraceLog::writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* functions)
+{
+	writeFunctionInfosToLog(LOG_KEY_CALLED, functions);
+}
+#endif
+
 void TraceLog::createLogFile(std::string targetDir) {
 	std::string timeStamp = getFormattedCurrentTime();
 

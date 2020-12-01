@@ -58,6 +58,12 @@ void CProfilerCallback::ShutdownFromDllMainDetach() {
 	getShutdownGuard().shutdownInstance(false);
 }
 
+#ifdef TIA
+// TODO move to instance vars.
+CProfilerCallback* callbackInstance = NULL;
+bool enableFunctionHooks = false;
+#endif
+
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&callbackSynchronization);
@@ -124,8 +130,13 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	}
 
 #ifdef TIA
+	if (callbackInstance == NULL) {
+		callbackInstance = this;
+	}
+
 	if (config.isTiaEnabled()) {
 		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
+		enableFunctionHooks = true;
 		std::function<void(std::string)> callback = std::bind(&CProfilerCallback::onTestChanged, this, std::placeholders::_1);
 		this->ipc = new Ipc(&this->config, callback);
 		traceLog.logTestCase(this->ipc->getCurrentTestName());
@@ -154,8 +165,11 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	DWORD dwEventMask = getEventMask();
 	profilerInfo->SetEventMask(dwEventMask);
-	profilerInfo->SetFunctionIDMapper(functionMapper);
-
+	profilerInfo->SetFunctionIDMapper(&CProfilerCallback::functionMapper);
+#ifdef TIA
+	// TODO use query v3
+	profilerInfo->SetEnterLeaveFunctionHooks2(onFunctionEnterStatic, NULL, NULL);
+#endif
 	traceLog.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
@@ -201,7 +215,9 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 
 	traceLog.shutdown();
 	attachLog.shutdown();
+
 #ifdef TIA
+	callbackInstance = NULL;
 	if (this->ipc != NULL) {
 		delete ipc;
 		ipc = NULL;
@@ -237,13 +253,24 @@ DWORD CProfilerCallback::getEventMask() {
 		dwEventMask |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 	}
 
+#ifdef TIA
+	if (config.isTiaEnabled()) {
+		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+	}
+#endif
+
 	return dwEventMask;
 }
 
 UINT_PTR CProfilerCallback::functionMapper(FunctionID functionId, BOOL* pbHookFunction) {
 	try {
-		// Disable hooking of functions.
-		*pbHookFunction = false;
+		// Disable hooking of functions unless in TIA mode
+#ifdef TIA
+		// FIXME this causes fail: callbackInstance != NULL && callbackInstance->config.isTiaEnabled();
+		* pbHookFunction = enableFunctionHooks;
+#elif
+		* pbHookFunction = false;
+#endif
 
 		// Always return original function id.
 		return functionId;
@@ -429,7 +456,11 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
 	// Must be called from synchronized context
-	return config.getEagerness() > 0 && static_cast<int>(inlinedMethods.size() + jittedMethods.size()) >= config.getEagerness();
+	size_t overallCount = inlinedMethods.size() + jittedMethods.size();
+#if TIA
+	overallCount += calledMethods.size();
+#endif
+	return config.getEagerness() > 0 && static_cast<int>(overallCount) >= config.getEagerness();
 }
 
 void CProfilerCallback::writeFunctionInfosToLog() {
@@ -439,6 +470,11 @@ void CProfilerCallback::writeFunctionInfosToLog() {
 
 	traceLog.writeJittedFunctionInfosToLog(&jittedMethods);
 	jittedMethods.clear();
+
+#if TIA
+	traceLog.writeCalledFunctionInfosToLog(&calledMethods);
+	calledMethods.clear();
+#endif
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
@@ -506,7 +542,36 @@ void CProfilerCallback::onTestChanged(std::string testName)
 		writeFunctionInfosToLog();
 		traceLog.logTestCase(testName);
 
+		calledMethodIds.clear();
+
 		LeaveCriticalSection(&callbackSynchronization);
+	}
+}
+
+void __stdcall CProfilerCallback::onFunctionEnterStatic(FunctionID functionId, UINT_PTR clientData, COR_PRF_FRAME_INFO func, COR_PRF_FUNCTION_ARGUMENT_INFO* argumentInfo)
+{
+	if (callbackInstance != NULL) {
+		callbackInstance->onFunctionEnter(functionId);
+	}
+}
+
+void CProfilerCallback::onFunctionEnter(FunctionID functionId)
+{
+	try {
+		if (!config.isProfilingEnabled()) {
+			return;
+		}
+
+		EnterCriticalSection(&callbackSynchronization);
+
+		if (calledMethodIds.insert(functionId).second == true) {
+			recordFunctionInfo(&calledMethods, functionId);
+		}
+
+		LeaveCriticalSection(&callbackSynchronization);
+	}
+	catch (...) {
+		handleException("onFunctionEnter");
 	}
 }
 
