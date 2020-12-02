@@ -195,7 +195,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Asserts that the provided traces list contains exactly one item and returns that.
         /// </summary>
-        protected FileInfo AssertSingleTrace(List<FileInfo> traces)
+        protected static FileInfo AssertSingleTrace(List<FileInfo> traces)
         {
             Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
             Assert.That(traces, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traces));

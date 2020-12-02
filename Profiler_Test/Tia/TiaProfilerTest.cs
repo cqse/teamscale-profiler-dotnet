@@ -34,68 +34,153 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             profilerIpc.Dispose();
         }
 
-        /// <summary>
-        /// Runs the profiler with command line argument and asserts its content is logged into the trace.
-        /// </summary>
         [Test]
-        public void TestThreeMethods()
+        public void TestStartupWithIpcAndTestCase()
         {
             profilerIpc.TestName = "startup";
+            TiaTestResult testResult = StartTiaTestProcess().Stop();
 
-            ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
-            Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
-            Assert.That(testProcess.Process.HasExited, Is.False);
-            foreach (string testName in new[] { "A", "B", "C" })
-            {
-                profilerIpc.TestName = testName;
-                Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
-                testProcess.Process.StandardInput.WriteLine(testName);
-                Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
-            }
-
-            testProcess.Process.StandardInput.WriteLine();
-            testProcess.Process.WaitForExit();
-            FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
-            string[] lines = File.ReadAllLines(actualTrace.FullName);
-            Assert.That(lines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
-            Assert.That(lines, Has.One.EqualTo("Test=startup"));
-            Assert.That(lines, Has.One.EqualTo("Test=A"));
-            Assert.That(lines, Has.One.EqualTo("Test=B"));
-            Assert.That(lines, Has.One.EqualTo("Test=C"));
-            Assert.That(lines, Has.One.StartsWith("Stopped="));
-            Dictionary<string, List<string>> eventsByTest = GroupEventsByTest(lines);
-            Assert.That(eventsByTest["A"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
-            Assert.That(eventsByTest["B"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
-            Assert.That(eventsByTest["C"], Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
-            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "startup" }));
+            Assert.That(testResult.TestCases[0].TraceLines, Has.None.Matches("^(Inlines|Jitted|Called)"));
+            Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
         }
 
         [Test]
-        public void TestSameMethodThreeTimes()
+        public void TestThreeTestCasesWithDifferentAction()
         {
-            profilerIpc.TestName = "startup";
+            TiaTestResult testResult = StartTiaTestProcess().RunTestCases("A", "B", "C").Stop();
 
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, string.Empty, "A", "B", "C" }));
+            Assert.That(testResult["A"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(testResult["B"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(testResult["C"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+        }
+
+        [Test]
+        public void TestThreeTestCasesWithSameAction()
+        {
+            TiaTestResult testResult = StartTiaTestProcess().RunTestCases("A", "A", "A").Stop();
+
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, string.Empty, "A", "A", "A" }));
+            Assert.That(testResult["A"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(testResult["A"][1].TraceLines, Has.None.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+            Assert.That(testResult["A"][2].TraceLines, Has.None.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
+        }
+
+        private TiaTestProcess StartTiaTestProcess()
+        {
             ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
             Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
             Assert.That(testProcess.Process.HasExited, Is.False);
-            foreach (string testName in new[] { "A", "A", "A" })
+            return new TiaTestProcess(testProcess, profilerIpc);
+        }
+
+        private class TiaTestProcess
+        {
+            private readonly ProfilerTestProcess testProcess;
+            private readonly RecordingProfilerIpc profilerIpc;
+
+            internal TiaTestProcess(ProfilerTestProcess testProcess, RecordingProfilerIpc profilerIpc)
             {
-                profilerIpc.TestName = testName;
-                Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
-                testProcess.Process.StandardInput.WriteLine(testName);
-                Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
+                this.testProcess = testProcess;
+                this.profilerIpc = profilerIpc;
             }
 
-            testProcess.Process.StandardInput.WriteLine();
-            testProcess.Process.WaitForExit();
-            FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
-            string[] lines = File.ReadAllLines(actualTrace.FullName);
-            Assert.That(lines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
-            Assert.That(lines, Has.One.EqualTo("Test=startup"));
-            Assert.That(lines, Has.Exactly(3).EqualTo("Test=A"));
-            Dictionary<string, List<string>> eventsByTest = GroupEventsByTest(lines);
-            Assert.That(eventsByTest["A"], Has.Exactly(3).StartsWith("Called=2"));
-            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+            internal TiaTestResult Stop()
+            {
+                testProcess.Process.StandardInput.WriteLine();
+                testProcess.Process.WaitForExit();
+                FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
+                TiaTestResult testResult = new TiaTestResult(actualTrace);
+                Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
+                Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
+                Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+                return testResult;
+            }
+
+            internal TiaTestProcess Input(string testName)
+            {
+                testProcess.Process.StandardInput.WriteLine(testName);
+                Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo(testName));
+                return this;
+            }
+
+            internal TiaTestProcess RunTestCases(params string[] testNames)
+            {
+                foreach (string testName in testNames)
+                {
+                    profilerIpc.TestName = testName;
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
+                    this.Input(testName);
+                }
+
+                return this;
+            }
+        }
+
+        private class TiaTestResult
+        {
+            public IEnumerable<string> TraceLines { get; }
+            public List<TestCase> TestCases { get; }
+
+            public IEnumerable<string> TestCaseNames => TestCases.Select(t => t.Name);
+
+            public List<TestCase> this[string testName]
+            {
+                get => GetTestCases(testName);
+            }
+
+            public TiaTestResult(FileInfo tracefile)
+            {
+                this.TraceLines = File.ReadAllLines(tracefile.FullName);
+                this.TestCases = TestCase.FromTraceLines(this.TraceLines);
+            }
+
+            internal List<TestCase> GetTestCases(string testName)
+            {
+                return TestCases.Where(testCase => testCase.Name == testName).ToList();
+            }
+
+            internal TestCase GetTestCase(string testName)
+            {
+                IEnumerable<TestCase> testCases = GetTestCases(testName);
+                Assert.That(testCases, Has.Exactly(1).Items);
+                return testCases.First();
+            }
+        }
+
+        private class TestCase
+        {
+            public string Name { get; }
+            public IEnumerable<string> TraceLines { get; }
+
+            public bool IsSynthetic => string.IsNullOrEmpty(this.Name);
+
+            private TestCase(string name, IEnumerable<string> lines)
+            {
+                this.Name = name;
+                this.TraceLines = lines;
+            }
+
+            internal static List<TestCase> FromTraceLines(IEnumerable<string> traceLines)
+            {
+                List<TestCase> testCases = new List<TestCase>();
+                List<string> currentLines = new List<string>();
+                testCases.Add(new TestCase(string.Empty, currentLines));
+                foreach (var line in traceLines)
+                {
+                    if (line.StartsWith("Test="))
+                    {
+                        string currentTest = line.Substring("Test=".Length);
+                        currentLines = new List<string>();
+                        testCases.Add(new TestCase(currentTest, currentLines));
+                    }
+
+                    currentLines.Add(line);
+                }
+
+                return testCases;
+            }
         }
 
         private Dictionary<string, List<string>> GroupEventsByTest(string[] lines)
