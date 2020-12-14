@@ -1,5 +1,6 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
+using System;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
@@ -7,46 +8,44 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     {
         private NetMQPoller poller;
         private PublisherSocket publishSocket;
+        private ResponseSocket responseSocket;
 
-        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, true)
+        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, false)
         {
             // delegate to base class
         }
 
         override protected void StartRequestHandler()
         {
-            using (var responseSocket = new ResponseSocket())
+            this.responseSocket = new ResponseSocket();
+            this.responseSocket.Bind(this.config.RequestSocket);
+            this.responseSocket.ReceiveReady += (s, e) =>
             {
-                responseSocket.Bind(this.config.RequestSocket);
-                using (poller = new NetMQPoller { responseSocket })
-                {
-                    responseSocket.ReceiveReady += (s, e) =>
-                    {
-                        string message = responseSocket.ReceiveFrameString();
-                        string response = this.requestHandler(message);
-                        responseSocket.SendFrame(response);
-                    };
+                string message = responseSocket.ReceiveFrameString();
+                string response = this.requestHandler(message);
+                responseSocket.SendFrame(response);
+            };
 
-                    poller.Run();
-                }
-            }
+            this.poller = new NetMQPoller { responseSocket };
+            poller.RunAsync("Profiler IPC", true);
         }
 
         override protected void StartPublisher()
         {
-            publishSocket = new PublisherSocket();
-            publishSocket.Bind(this.config.PublishSocket);
+            this.publishSocket = new PublisherSocket();
+            this.publishSocket.Bind(this.config.PublishSocket);
         }
 
         public override void Publish(string testName)
         {
-            publishSocket.SendFrame(testName);
+            this.publishSocket.SendFrame(testName);
         }
 
         public override void Dispose()
         {
-            publishSocket?.Dispose();
-            poller?.Stop();
+            this.poller?.Dispose();
+            this.responseSocket?.Dispose();
+            this.publishSocket?.Dispose();
             NetMQConfig.Cleanup();
             base.Dispose();
         }

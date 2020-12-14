@@ -12,12 +12,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 
         public IEnumerable<string> ReceivedRequests => receivedRequests;
 
-        public RecordingProfilerIpc() : this(CreateIpcConfigWithRandomPorts())
-        {
-            // empty, just delegate
-        }
-
-        public RecordingProfilerIpc(IpcConfig config) : base(config)
+        public RecordingProfilerIpc(IpcConfig config = null) : base(config ?? CreateIpcConfigWithRandomPorts())
         {
             // empty, just delegate
         }
