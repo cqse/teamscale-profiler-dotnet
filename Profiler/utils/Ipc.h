@@ -10,15 +10,18 @@ class Ipc
 public:
 	Ipc(Config* config, std::function<void(std::string)> testChangedCallback);
 	~Ipc();
-	char* getCurrentTestName();
+	std::string getCurrentTestName();
 private:
-	void* zmqContext;
-	void* zmqRequestSocket;
-	void* zmqSubscribeSocket;
-	std::thread* handlerThread;
-	std::atomic<bool> shutdown = false;
-	void handlerThreadLoop(Config* config);
-	char* request(const char* message);
+	int zmqTimeout;
+	void* zmqContext = NULL;
+	void* zmqRequestSocket = NULL;
+	void* zmqSubscribeSocket = NULL;
+	Config* config = NULL;
+	std::thread* handlerThread = NULL;
 	std::function<void(std::string)> testChangedCallback;
+	std::atomic<bool> shutdown = false;
+	void handlerThreadLoop();
+	void initRequestSocket();
+	std::string request(std::string message);
 };
 #endif

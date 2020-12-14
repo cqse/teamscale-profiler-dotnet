@@ -45,8 +45,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public override void Dispose()
         {
-            publishSocket.Dispose();
-            poller.Stop();
+            publishSocket?.Dispose();
+            poller?.Stop();
             NetMQConfig.Cleanup();
             base.Dispose();
         }

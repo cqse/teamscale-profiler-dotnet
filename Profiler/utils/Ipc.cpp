@@ -11,13 +11,13 @@
 
 Ipc::Ipc(Config* config, std::function<void(std::string)> testChangedCallback)
 {
+	this->config = config;
 	this->testChangedCallback = testChangedCallback;
+	this->zmqTimeout = IPC_TIMEOUT_MS;
 	this->zmqContext = zmq_ctx_new();
 
-	this->handlerThread = new std::thread(&Ipc::handlerThreadLoop, this, config);
+	this->handlerThread = new std::thread(&Ipc::handlerThreadLoop, this);
 
-	this->zmqRequestSocket = zmq_socket(this->zmqContext, ZMQ_REQ);
-	zmq_connect(this->zmqRequestSocket, config->getTiaRequestSocket().c_str());
 	this->request("profiler_connected");
 }
 
@@ -27,15 +27,17 @@ Ipc::~Ipc()
 	this->handlerThread->join();
 
 	this->request("profiler_disconnected");
-	zmq_close(this->zmqRequestSocket);
+	if (this->zmqRequestSocket != NULL) {
+		zmq_close(this->zmqRequestSocket);
+	}
+
 	zmq_ctx_destroy(this->zmqContext);
 }
 
-void Ipc::handlerThreadLoop(Config* config) {
+void Ipc::handlerThreadLoop() {
 	this->zmqSubscribeSocket = zmq_socket(this->zmqContext, ZMQ_SUB);
-	int timeout = IPC_TIMEOUT_MS;
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "", 0);
-	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
 	zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str());
 	char buffer[IPC_BUFFER_SIZE];
 	while (!this->shutdown) {
@@ -48,21 +50,34 @@ void Ipc::handlerThreadLoop(Config* config) {
 	zmq_close(this->zmqSubscribeSocket);
 }
 
-char* Ipc::getCurrentTestName()
+std::string Ipc::getCurrentTestName()
 {
 	return this->request("get_testname");
 }
 
-char* Ipc::request(const char* message)
+std::string Ipc::request(std::string message)
 {
-	char* buffer = new char[IPC_BUFFER_SIZE];
-	zmq_send(this->zmqRequestSocket, message, strlen(message), 0);
-	int len = zmq_recv(this->zmqRequestSocket, buffer, IPC_BUFFER_SIZE - 1, 0);
+	initRequestSocket();
+
+	char buffer[IPC_BUFFER_SIZE];
+	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
+	int len = zmq_recv(this->zmqRequestSocket, &buffer, IPC_BUFFER_SIZE - 1, 0);
 	if (len < 0) {
-		return NULL;
+		zmq_close(this->zmqRequestSocket);
+		this->zmqRequestSocket = NULL;
+		return "";
 	}
 
 	IPC_TERMINATE_STRING(buffer, len);
 	return buffer;
+}
+
+void Ipc::initRequestSocket() {
+	if (this->zmqRequestSocket == NULL) {
+		this->zmqRequestSocket = zmq_socket(this->zmqContext, ZMQ_REQ);
+		zmq_setsockopt(this->zmqRequestSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
+		zmq_setsockopt(this->zmqRequestSocket, ZMQ_LINGER, &zmqTimeout, sizeof(zmqTimeout));
+		zmq_connect(this->zmqRequestSocket, this->config->getTiaRequestSocket().c_str());
+	}
 }
 #endif

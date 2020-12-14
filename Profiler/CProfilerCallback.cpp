@@ -139,7 +139,10 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		enableFunctionHooks = true;
 		std::function<void(std::string)> callback = std::bind(&CProfilerCallback::onTestChanged, this, std::placeholders::_1);
 		this->ipc = new Ipc(&this->config, callback);
-		traceLog.logTestCase(this->ipc->getCurrentTestName());
+		std::string testName = this->ipc->getCurrentTestName();
+		if (!testName.empty()) {
+			traceLog.logTestCase(testName);
+		}
 	}
 #endif
 

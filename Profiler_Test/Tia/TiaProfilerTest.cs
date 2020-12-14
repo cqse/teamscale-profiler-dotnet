@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -31,11 +31,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [TearDown]
         public void StopZmq()
         {
-            profilerIpc.Dispose();
+            profilerIpc?.Dispose();
         }
 
         [Test]
-        public void TestStartupWithIpcAndTestCase()
+        public void TestCaseDefinedBeforeStartup()
         {
             profilerIpc.TestName = "startup";
             TiaTestResult testResult = StartTiaTestProcess().Stop();
@@ -46,28 +46,51 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         }
 
         [Test]
-        public void TestThreeTestCasesWithDifferentAction()
+        public void TestCaseDefinedAfterStartup()
         {
-            TiaTestResult testResult = StartTiaTestProcess().RunTestCases("A", "B", "C").Stop();
+            TiaTestResult testResult = StartTiaTestProcess().RunTestCase("A").Stop();
 
-            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, string.Empty, "A", "B", "C" }));
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));
+            Assert.That(testResult.TestCases[0].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+            Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+        }
+
+        [Test]
+        public void ThreeTestCasesWithDifferentAction()
+        {
+            TiaTestResult testResult = StartTiaTestProcess().RunTestCase("A", "B", "C").Stop();
+
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A", "B", "C" }));
             Assert.That(testResult["A"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
             Assert.That(testResult["B"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
             Assert.That(testResult["C"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
         }
 
         [Test]
-        public void TestThreeTestCasesWithSameAction()
+        public void ThreeTestCasesWithSameAction()
         {
-            TiaTestResult testResult = StartTiaTestProcess().RunTestCases("A", "A", "A").Stop();
+            TiaTestResult testResult = StartTiaTestProcess().RunTestCase("A", "A", "A").Stop();
 
-            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, string.Empty, "A", "A", "A" }));
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A", "A", "A" }));
             Assert.That(testResult["A"][0].TraceLines, Has.One.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
             Assert.That(testResult["A"][1].TraceLines, Has.None.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
             Assert.That(testResult["A"][2].TraceLines, Has.None.StartsWith("Jitted=2").And.One.StartsWith("Called=2"));
         }
 
-        private TiaTestProcess StartTiaTestProcess()
+        [Test]
+        public void NoIpcRunning()
+        {
+            profilerIpc.TestName = "should not be triggered";
+            profilerIpc.Dispose();
+
+            TiaTestResult testResult = StartTiaTestProcess().Stop(assertReceivedRequests: false);
+
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty }));
+            Assert.That(testResult.TestCases[0].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+            Assert.That(profilerIpc.ReceivedRequests, Is.Empty);
+
+            profilerIpc = null;
+        }
         {
             ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
             Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
@@ -86,15 +109,19 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                 this.profilerIpc = profilerIpc;
             }
 
-            internal TiaTestResult Stop()
+            internal TiaTestResult Stop(bool assertReceivedRequests = true)
             {
                 testProcess.Process.StandardInput.WriteLine();
                 testProcess.Process.WaitForExit();
+                Assert.That(testProcess.Process.ExitCode, Is.Zero);
                 FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
                 TiaTestResult testResult = new TiaTestResult(actualTrace);
                 Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
                 Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
+                if (assertReceivedRequests)
+                {
                 Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+                }
                 return testResult;
             }
 
@@ -105,7 +132,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                 return this;
             }
 
-            internal TiaTestProcess RunTestCases(params string[] testNames)
+            internal TiaTestProcess RunTestCase(params string[] testNames)
             {
                 foreach (string testName in testNames)
                 {
