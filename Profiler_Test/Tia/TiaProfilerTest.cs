@@ -1,3 +1,4 @@
+using Cqse.Teamscale.Profiler.Commons.Ipc;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -12,10 +13,34 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     /// <summary>
     /// Test case for coverage profiler.
     /// </summary>
-    [TestFixture]
+    [TestFixture(Bitness.x64, IpcImplementation.NetMQ)]
+    [TestFixture(Bitness.x86, IpcImplementation.NetMQ)]
+    [TestFixture(Bitness.x64, IpcImplementation.Native)]
+    [TestFixture(Bitness.x86, IpcImplementation.Native)]
     public class TiaProfilerTest : ProfilerTestBase
     {
+        private readonly Bitness bitness;
+        private readonly IpcImplementation ipcImplementation;
         private RecordingProfilerIpc profilerIpc;
+
+        public enum IpcImplementation
+        {
+            /// <summary>
+            /// The default NetMQ based IPC server implementation
+            /// </summary>
+            NetMQ,
+
+            /// <summary>
+            /// Alternate native libzmq based IPC implementation
+            /// </summary>
+            Native,
+        }
+
+        public TiaProfilerTest(Bitness bitness, IpcImplementation ipcImplementation)
+        {
+            this.bitness = bitness;
+            this.ipcImplementation = ipcImplementation;
+        }
 
         [SetUp]
         public void StartZmq()
@@ -23,9 +48,14 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             profilerIpc = CreateProfilerIpc();
         }
 
-        protected virtual RecordingProfilerIpc CreateProfilerIpc()
+        protected virtual RecordingProfilerIpc CreateProfilerIpc(IpcConfig config = null)
         {
-            return new RecordingProfilerIpc();
+            if (this.ipcImplementation == IpcImplementation.Native)
+            {
+                return new NativeRecordingProfilerIpc(config);
+            }
+
+            return new RecordingProfilerIpc(config);
         }
 
         [TearDown]
@@ -91,8 +121,16 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 
             profilerIpc = null;
         }
+
+        private TiaTestProcess StartTiaTestProcess()
         {
-            ProfilerTestProcess testProcess = StartProfiler("ProfilerTestee.exe", arguments: "interactive", lightMode: true, bitness: Bitness.x86, environment: CreateTiaEnvironment());
+            string executable = "ProfilerTestee32.exe";
+            if (this.bitness == Bitness.x64)
+            {
+                executable = "ProfilerTestee64.exe";
+            }
+
+            ProfilerTestProcess testProcess = StartProfiler(executable, arguments: "interactive", lightMode: true, bitness: bitness, environment: CreateTiaEnvironment());
             Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
             Assert.That(testProcess.Process.HasExited, Is.False);
             return new TiaTestProcess(testProcess, profilerIpc);
@@ -120,7 +158,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                 Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
                 if (assertReceivedRequests)
                 {
-                Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+                    Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
                 }
                 return testResult;
             }
