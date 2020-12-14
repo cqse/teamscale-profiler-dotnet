@@ -17,7 +17,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         [Test]
         public void TestCommandLine()
         {
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86));
+            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true));
             string[] lines = File.ReadAllLines(actualTrace.FullName);
             Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
         }
@@ -31,7 +31,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public int TestProcessSelection(string process)
         {
             var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment).Count;
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ match:
 ");
 
             var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment).Count;
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ match:
         public void TestWithAppPool()
         {
             var environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment, bitness: Bitness.x86));
+            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment));
             string[] lines = File.ReadAllLines(actualTrace.FullName);
             Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));
         }
@@ -73,7 +73,7 @@ match:
         [Test]
         public void TestWithoutAppPool()
         {
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86));
+            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true));
             string[] lines = File.ReadAllLines(actualTrace.FullName);
             Assert.That(!lines.Any(line => line.StartsWith("Info=IIS AppPool:")));
         }
@@ -86,7 +86,7 @@ match:
             [Values("none", "all")] string applicationMode,
             [Values(true, false)] bool isLightMode)
         {
-            List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x86);
+            List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode);
             AssertNormalizedTraceFileEqualsReference(traces, new[] { 2 });
         }
 
@@ -106,7 +106,7 @@ match:
         [Test]
         public void TestAttachLog()
         {
-            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true);
             string[] lines = File.ReadAllLines(AttachLog);
             string firstLine = lines[0];
             Assert.That(firstLine.StartsWith("Attach"));
@@ -116,7 +116,7 @@ match:
         [Test]
         public void TestDetatchLog()
         {
-            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
+            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true);
             string[] lines = File.ReadAllLines(AttachLog);
             string secondLine = lines[1];
             Assert.That(secondLine.StartsWith("Detach"));
