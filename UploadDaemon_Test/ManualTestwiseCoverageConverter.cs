@@ -19,10 +19,33 @@ namespace UploadDaemon_Test
         public void ConvertFromTestwiseDirectories()
         {
             var fileSystem = new FileSystem();
-            var manualTestwiseCoverageBaseDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\TracesByTest"; // @"V:\Coverage\TeamScale_TestcasewiseCov_Debug";
-            var pdbDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\PDBs"; // @"V:\Coverage\PDB_SOM8_Pine"
+
+            // Debugging Input
+            /*
+            var manualTestwiseCoverageBaseDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\TracesByTest";
+            var pdbDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\PDBs";
             var revisionFile = @"V:\Coverage\revision.txt";
-            var manualTestwiseCoverageReportBaseDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\Reports"; // @"V:\Coverage\testwise";
+            var manualTestwiseCoverageReportBaseDirectory = @"V:\Coverage\ManualTestwiseCoverage_Test\Reports";
+            */
+
+            // SOM8 -> Syngo POC
+            /*
+            var manualTestwiseCoverageBaseDirectory = @"Z:\Coverage\SOM8_Syngo_POC\TestCoverge_SOM8_Pine";
+            var pdbDirectory = @"Z:\Coverage\SOM8_Syngo_POC\PDBs";
+            var revisionFile = @"Z:\Coverage\revision.txt";
+            var manualTestwiseCoverageReportBaseDirectory = @"Z:\Coverage\SOM8_Syngo_POC\2020-12-07 Reports";
+            */
+
+            var manualTestwiseCoverageBaseDirectory = @"Z:\Coverage\SOM8_Syngo_20201216\TestwiseCoverage_CaSc";
+            var pdbDirectory = @"Z:\Coverage\SOM8_Syngo_20201216\PDBs";
+            var revisionFile = @"Z:\Coverage\revision.txt";
+            var manualTestwiseCoverageReportBaseDirectory = @"Z:\Coverage\SOM8_Syngo_20201216\2020-12-16 Reports CaSc";
+
+            //ConvertEachFolderToASeparateTestwiseReport(fileSystem, manualTestwiseCoverageBaseDirectory, pdbDirectory, revisionFile, manualTestwiseCoverageReportBaseDirectory);
+            MergeIndividualReportsIntoOne(fileSystem, manualTestwiseCoverageReportBaseDirectory);
+
+            manualTestwiseCoverageBaseDirectory = @"Z:\Coverage\SOM8_Syngo_20201216\TestwiseCoverage_TP";
+            manualTestwiseCoverageReportBaseDirectory = @"Z:\Coverage\SOM8_Syngo_20201216\2020-12-16 Reports TP";
 
             //ConvertEachFolderToASeparateTestwiseReport(fileSystem, manualTestwiseCoverageBaseDirectory, pdbDirectory, revisionFile, manualTestwiseCoverageReportBaseDirectory);
             MergeIndividualReportsIntoOne(fileSystem, manualTestwiseCoverageReportBaseDirectory);
