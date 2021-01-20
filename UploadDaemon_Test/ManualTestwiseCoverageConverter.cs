@@ -35,6 +35,7 @@ namespace UploadDaemon_Test
             foreach (string manualTestwiseCoverageDirectory in fileSystem.Directory.GetDirectories(manualTestwiseCoverageBaseDirectory))
             {
                 string testName = Path.GetFileName(manualTestwiseCoverageDirectory);
+                string outputDirectory = Path.Combine(manualTestwiseCoverageReportBaseDirectory, testName);
 
                 var config = new Config(new ConfigParser.YamlConfig()
                 {
@@ -52,24 +53,37 @@ namespace UploadDaemon_Test
                             PdbDirectory = pdbDirectory,
                             MergeLineCoverage = true,
                             RevisionFile = revisionFile,
-                            Directory = Path.Combine(manualTestwiseCoverageReportBaseDirectory, testName),
+                            Directory = outputDirectory,
                         }
                     }
                 }
                 });
 
+                fileSystem.Directory.CreateDirectory(outputDirectory);
                 uploadTask.Run(config);
             }
         }
 
         private static void MergeIndividualReportsIntoOne(FileSystem fileSystem, string manualTestwiseCoverageReportBaseDirectory)
         {
+            IDictionary<string, int> durations = ReadDurationsIfExists(fileSystem, manualTestwiseCoverageReportBaseDirectory);
+            IList<string> testsWithUnknownDuration = new List<string>();
+
             var accumulatedReport = new TestwiseCoverageReport();
             accumulatedReport.Tests = new List<TestwiseCoverageReport.Test>();
 
             foreach (string manualTestwiseCoverageReportDirectory in fileSystem.Directory.GetDirectories(manualTestwiseCoverageReportBaseDirectory))
             {
                 string testName = Path.GetFileName(manualTestwiseCoverageReportDirectory);
+
+                int testNameParameterStartIndex = testName.IndexOf('(');
+                string durationLookupName = testNameParameterStartIndex == -1 ? testName : testName.Substring(0, testNameParameterStartIndex);
+                int testDurationInSeconds = durations.TryGetValue(durationLookupName, out int durationInSeconds) ? durationInSeconds : 1;
+
+                if (testDurationInSeconds == 1)
+                {
+                    testsWithUnknownDuration.Add(testName);
+                }
 
                 foreach (string reportFile in fileSystem.Directory.GetFiles(manualTestwiseCoverageReportDirectory))
                 {
@@ -82,11 +96,46 @@ namespace UploadDaemon_Test
                     TestwiseCoverageReport report = JsonConvert.DeserializeObject<TestwiseCoverageReport>(json);
                     TestwiseCoverageReport.Test test = report.Tests.First();
                     test.UniformPath = testName;
+                    test.Duration = testDurationInSeconds;
                     accumulatedReport.Tests.Add(test);
                 }
             }
 
-            File.WriteAllText(Path.Combine(manualTestwiseCoverageReportBaseDirectory, "report.testwise"), JsonConvert.SerializeObject(accumulatedReport));
+            fileSystem.File.WriteAllText(Path.Combine(manualTestwiseCoverageReportBaseDirectory, "testsWithUnknownDuration.json"), JsonConvert.SerializeObject(testsWithUnknownDuration));
+            fileSystem.File.WriteAllText(Path.Combine(manualTestwiseCoverageReportBaseDirectory, "report.testwise"), JsonConvert.SerializeObject(accumulatedReport));
+        }
+
+        private static IDictionary<string, int> ReadDurationsIfExists(FileSystem fileSystem, string manualTestwiseReportBaseDirectory)
+        {
+            var durations = new Dictionary<string, int>();
+
+            var durationsFile = Path.Combine(manualTestwiseReportBaseDirectory, "durations.csv");
+            if (fileSystem.File.Exists(durationsFile))
+            {
+                using(var reader = new StreamReader(durationsFile))
+                {
+                    reader.ReadLine(); // skip header
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+
+                        if (line.Trim().Length == 0) { continue; }
+
+                        string[] cells = line.Split(',');
+                        string testName = cells[0];
+                        int testDurationInSeconds = int.Parse(cells[1]);
+
+                        if (durations.TryGetValue(testName, out int durationInSeconds) && durationInSeconds != testDurationInSeconds)
+                        {
+                            throw new AssertionException($"multiple durations for test name {cells[0]}");
+                        }
+
+                        durations[testName] = testDurationInSeconds;
+                    }
+                }
+            }
+
+            return durations;
         }
 
         [Test, Ignore("for manual debugging")]
