@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ProfilerGui
+namespace Cqse.Teamscale.Profiler.Commander
 {
     internal class MainWindowVM : INotifyPropertyChanged
     {

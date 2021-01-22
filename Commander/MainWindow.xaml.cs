@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ProfilerGui
+namespace Cqse.Teamscale.Profiler.Commander
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

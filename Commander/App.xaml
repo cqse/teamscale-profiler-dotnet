@@ -1,7 +1,7 @@
-﻿<Application x:Class="ProfilerGui.App"
+﻿<Application x:Class="Cqse.Teamscale.Profiler.Commander.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ProfilerGui"
+             xmlns:local="clr-namespace:Cqse.Teamscale.Profiler.Commander"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
     </Application.Resources>
