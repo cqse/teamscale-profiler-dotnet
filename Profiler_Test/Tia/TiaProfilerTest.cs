@@ -1,4 +1,4 @@
-using Cqse.Teamscale.Profiler.Commons.Ipc;
+﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -122,6 +122,28 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             profilerIpc = null;
         }
 
+        [Ignore("TODO: No idea why this is not working... manual tests have no problem with this.")]
+        [Test]
+        public void IpcStartedAfterStartup()
+        {
+            RecordingProfilerIpc oldProfilerIpc = profilerIpc;
+            oldProfilerIpc.TestName = "should not be triggered";
+            oldProfilerIpc.Dispose();
+
+            TiaTestProcess process = StartTiaTestProcess();
+
+            profilerIpc = CreateProfilerIpc(oldProfilerIpc.Config);
+
+            TiaTestResult testResult = process.RunTestCase("A").Stop(assertReceivedRequests: false);
+
+            Assert.That(oldProfilerIpc.ReceivedRequests, Is.Empty);
+            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected" }));
+
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));
+            Assert.That(testResult.TestCases[0].TraceLines, Has.None.Matches("^(Inlines|Jitted|Called)"));
+            Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+        }
+
         private TiaTestProcess StartTiaTestProcess()
         {
             string executable = "ProfilerTestee32.exe";
@@ -133,15 +155,15 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             ProfilerTestProcess testProcess = StartProfiler(executable, arguments: "interactive", lightMode: true, bitness: bitness, environment: CreateTiaEnvironment());
             Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
             Assert.That(testProcess.Process.HasExited, Is.False);
-            return new TiaTestProcess(testProcess, profilerIpc);
+            return new TiaTestProcess(testProcess, () => profilerIpc);
         }
 
         private class TiaTestProcess
         {
             private readonly ProfilerTestProcess testProcess;
-            private readonly RecordingProfilerIpc profilerIpc;
+            private readonly Func<RecordingProfilerIpc> profilerIpc;
 
-            internal TiaTestProcess(ProfilerTestProcess testProcess, RecordingProfilerIpc profilerIpc)
+            internal TiaTestProcess(ProfilerTestProcess testProcess, Func<RecordingProfilerIpc> profilerIpc)
             {
                 this.testProcess = testProcess;
                 this.profilerIpc = profilerIpc;
@@ -154,11 +176,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                 Assert.That(testProcess.Process.ExitCode, Is.Zero);
                 FileInfo actualTrace = AssertSingleTrace(testProcess.GetTraceFiles());
                 TiaTestResult testResult = new TiaTestResult(actualTrace);
-                Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc.Config.PublishSocket} REQ: {profilerIpc.Config.RequestSocket}"));
+                Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. SUB: {profilerIpc().Config.PublishSocket} REQ: {profilerIpc().Config.RequestSocket}"));
                 Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
                 if (assertReceivedRequests)
                 {
-                    Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+                    Assert.That(profilerIpc().ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
                 }
                 return testResult;
             }
@@ -174,7 +196,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             {
                 foreach (string testName in testNames)
                 {
-                    profilerIpc.TestName = testName;
+                    profilerIpc().TestName = testName;
                     Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
                     this.Input(testName);
                 }
