@@ -14,36 +14,25 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             app = Application.Current as App;
             this.DataContext = viewModel;
-            viewModel.StatusText = "Collecting coverage";
+            viewModel.ButtonText = "Start Test";
+            viewModel.IsStopped = true;
             InitializeComponent();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            if (!viewModel.EnableProfiling)
+            viewModel.IsStopped = !viewModel.IsStopped;
+
+            if (viewModel.IsStopped)
             {
                 app.StopProfiling();
-                viewModel.StatusText = "Stopped collecting coverage";
-            }
-            else if (!viewModel.TestWiseProfiling)
-            {
-                app.StartProfiling();
-                viewModel.StatusText = "Collecting coverage";
+                viewModel.ButtonText = "Start Test";
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(viewModel.TestName))
-                {
-                    viewModel.StatusText = "Please specify a test name";
-                }
-                else
-                {
-                    app.StartProfiling(viewModel.TestName);
-                    viewModel.StatusText = "Collecting coverage for test " + viewModel.TestName;
-                }
+                app.StartProfiling(viewModel.TestName);
+                viewModel.ButtonText = "Stop Test";
             }
-
-            viewModel.NeedsUpdate = false;
         }
     }
 }

@@ -36,6 +36,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>cqse-app-icon-144.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AsyncIO, Version=0.1.69.0, Culture=neutral, PublicKeyToken=44a94435bd6f33f8, processorArchitecture=MSIL">
       <HintPath>..\packages\AsyncIO.0.1.69\lib\net40\AsyncIO.dll</HintPath>
@@ -132,6 +135,9 @@
       <Project>{1da1be8d-9fd4-4f7f-8431-edbedccd533e}</Project>
       <Name>Commons</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="cqse-app-icon-144.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

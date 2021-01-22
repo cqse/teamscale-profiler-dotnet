@@ -8,44 +8,37 @@ namespace Cqse.Teamscale.Profiler.Commander
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private bool enableProfiling = true;
-
-        public bool EnableProfiling
-        {
-            get => enableProfiling;
-            set => SetField(ref enableProfiling, value);
-        }
-
-        private bool testWiseProfiling = false;
-
-        public bool TestWiseProfiling
-        {
-            get => testWiseProfiling;
-            set => SetField(ref testWiseProfiling, value);
-        }
-
         private string testName = null;
 
         public string TestName
         {
             get => testName;
-            set => SetField(ref testName, value);
+            set
+            {
+                SetField(ref testName, value);
+                OnPropertyChanged(nameof(HasTestName));
+            }
         }
 
-        private bool needsUpdate = false;
+        private string buttonText = null;
 
-        public bool NeedsUpdate
+        public string ButtonText
         {
-            get => needsUpdate;
-            set => SetField(ref needsUpdate, value);
+            get => buttonText;
+            set => SetField(ref buttonText, value);
         }
 
-        private string statusText = null;
+        private bool isStopped = false;
 
-        public string StatusText
+        public bool IsStopped
         {
-            get => statusText;
-            set => SetField(ref statusText, value);
+            get => isStopped;
+            set => SetField(ref isStopped, value);
+        }
+
+        public bool HasTestName
+        {
+            get => !string.IsNullOrEmpty(testName);
         }
 
         private void SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
@@ -57,11 +50,6 @@ namespace Cqse.Teamscale.Profiler.Commander
 
             field = value;
             OnPropertyChanged(propertyName);
-
-            if (propertyName != nameof(NeedsUpdate) && propertyName != nameof(StatusText))
-            {
-                NeedsUpdate = true;
-            }
         }
 
         private void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

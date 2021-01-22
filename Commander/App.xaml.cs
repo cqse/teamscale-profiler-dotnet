@@ -23,25 +23,11 @@ namespace Cqse.Teamscale.Profiler.Commander
         internal void StopProfiling()
         {
             profilerIpc.TestName = null;
-            //using (var frame = new ZFrame("profilerStop"))
-            //{
-            //    socket.Send(frame);
-            //}
         }
 
         internal void StartProfiling(string testName = null)
         {
             profilerIpc.TestName = testName;
-            //string message = "profilerStart";
-            //if (!string.IsNullOrWhiteSpace(testName))
-            //{
-            //    message += " " + testName;
-            //}
-
-            //using (var frame = new ZFrame(message))
-            //{
-            //    socket.Send(frame);
-            //}
         }
     }
 }
