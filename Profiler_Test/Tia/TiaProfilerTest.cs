@@ -76,6 +76,15 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         }
 
         [Test]
+        public void TestCaseWithSpecialCharacters()
+        {
+            profilerIpc.TestName = @"Test:Case\\:\:";
+            TiaTestResult testResult = StartTiaTestProcess().Stop();
+
+            Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, @"Test:Case\\:\:" }));
+        }
+
+        [Test]
         public void TestCaseDefinedAfterStartup()
         {
             TiaTestResult testResult = StartTiaTestProcess().RunTestCase("A").Stop();
@@ -259,6 +268,33 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                     if (line.StartsWith("Test=Start:"))
                     {
                         string[] parts = line.Substring("Test=".Length).Split(':');
+                        bool mergeNext = false;
+                        parts = parts.Aggregate(new List<string>(), (acc, part) =>
+                        {
+                            // @"Test = Start:20210126_0105500760:Test\:Case\\\\\:\\\:";
+                            string unescaped = part.Replace("\\\\", "\\");
+                            bool mergeCurrent = mergeNext;
+                            if (part.Reverse().TakeWhile(c => c == '\\').Count() % 2 != 0)
+                            {
+                                unescaped = unescaped.Substring(0, unescaped.Length - 1) + ":";
+                                mergeNext = true;
+                            }
+                            else
+                            {
+                                mergeNext = false;
+                            }
+
+                            if (mergeCurrent)
+                            {
+                                acc[acc.Count - 1] += unescaped;
+                            }
+                            else
+                            {
+                                acc.Add(unescaped);
+                            }
+
+                            return acc;
+                        }).ToArray();
                         currentLines = new List<string>();
                         testCases.Add(new TestCase(parts[2], currentLines));
                     }

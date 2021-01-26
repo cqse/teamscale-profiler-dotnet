@@ -110,8 +110,8 @@ void TraceLog::endTestCase(std::string result, std::string message)
 #endif
 
 inline std::string TraceLog::escape(std::string message) {
-	static std::regex colonEscape(":");
-	return std::regex_replace(message, colonEscape, "\\:");
+	static std::regex colonEscape("(:|\\\\)");
+	return std::regex_replace(message, colonEscape, "\\$1");
 }
 
 void TraceLog::shutdown() {
