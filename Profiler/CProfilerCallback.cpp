@@ -451,6 +451,10 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 	FunctionInfo info;
 	getFunctionInfo(calleeId, &info);
 
+	if (config.isTiaEnabled() && info.assemblyNumber == 1) {
+		return;
+	}
+
 	recordedFunctionInfos->push_back(info);
 
 	if (shouldWriteEagerly()) {
