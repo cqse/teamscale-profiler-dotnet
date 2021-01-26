@@ -55,7 +55,10 @@ public:
 	/** Writes info about a profiled assembly into the log. Should only be called once. */
 	void logAssembly(std::string assembly);
 
-	void logTestCase(std::string testName);
+#ifdef TIA
+	void startTestCase(std::string testName);
+	void endTestCase(std::string result = "", std::string message = "");
+#endif
 
 protected:
 	/** The key to log information about the profiler startup. */
@@ -102,4 +105,7 @@ private:
 
 	/** Write all information about the given function to the log. */
 	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
+
+	/** Escapes the messages by putting a backslash before special characters, e.g. escapes the colon : -> \:. */
+	std::string escape(std::string message);
 };

@@ -256,11 +256,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                 testCases.Add(new TestCase(string.Empty, currentLines));
                 foreach (var line in traceLines)
                 {
-                    if (line.StartsWith("Test="))
+                    if (line.StartsWith("Test=Start:"))
                     {
-                        string currentTest = line.Substring("Test=".Length);
+                        string[] parts = line.Substring("Test=".Length).Split(':');
                         currentLines = new List<string>();
-                        testCases.Add(new TestCase(currentTest, currentLines));
+                        testCases.Add(new TestCase(parts[2], currentLines));
                     }
 
                     currentLines.Add(line);

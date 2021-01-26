@@ -9,10 +9,11 @@
 // ZMQ strings are not zero-terminated, let's terminate these
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
-Ipc::Ipc(Config* config, std::function<void(std::string)> testChangedCallback)
+Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback)
 {
 	this->config = config;
-	this->testChangedCallback = testChangedCallback;
+	this->testStartCallback = testStartCallback;
+	this->testEndCallback = testEndCallback;
 	this->zmqTimeout = IPC_TIMEOUT_MS;
 	this->zmqContext = zmq_ctx_new();
 
@@ -36,18 +37,57 @@ Ipc::~Ipc()
 
 void Ipc::handlerThreadLoop() {
 	this->zmqSubscribeSocket = zmq_socket(this->zmqContext, ZMQ_SUB);
-	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "", 0);
+	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "test:", 0);
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
 	zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str());
-	char buffer[IPC_BUFFER_SIZE];
+
+	/// Alternative way to read messages
+	//char buffer[IPC_BUFFER_SLOTS][IPC_BUFFER_SIZE];
+	//while (!this->shutdown) {
+	//	int len = zmq_recv(this->zmqSubscribeSocket, &buffer[0], IPC_BUFFER_SIZE - 1, 0);
+	//	if (len >= 0) {
+	//		IPC_TERMINATE_STRING(buffer[0], len);
+	//		this->testStartCallback(buffer[0]);
+	//	}
+	//}
+
+	std::vector<std::string> frames;
+	zmq_msg_t message;
 	while (!this->shutdown) {
-		int len = zmq_recv(this->zmqSubscribeSocket, &buffer, IPC_BUFFER_SIZE - 1, 0);
-		if (len >= 0) {
-			IPC_TERMINATE_STRING(buffer, len);
-			this->testChangedCallback(buffer);
+		zmq_msg_init(&message);
+		do {
+			int len = zmq_msg_recv(&message, this->zmqSubscribeSocket, 0);
+			if (len >= 0) {
+				frames.push_back(std::string((char*)zmq_msg_data(&message), zmq_msg_size(&message)));
+			}
+		} while (zmq_msg_more(&message));
+
+		if (!frames.empty()) {
+			handleMessage(frames);
+			frames.clear();
 		}
+		zmq_msg_close(&message);
 	}
 	zmq_close(this->zmqSubscribeSocket);
+}
+
+void Ipc::handleMessage(std::vector<std::string> frames) {
+	if (frames[0] == "test:start" && frames.size() > 1) {
+		this->testStartCallback(frames[1]);
+	}
+	else if (frames[0] == "test:end") {
+		std::string result = "";
+		if (frames.size() > 1) {
+			result = frames[1];
+		}
+
+		std::string message = "";
+		if (frames.size() > 2) {
+			message = frames[2];
+		}
+
+		this->testEndCallback(result, message);
+	}
 }
 
 std::string Ipc::getCurrentTestName()

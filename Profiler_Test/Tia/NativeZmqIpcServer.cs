@@ -1,4 +1,5 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System.Linq;
 using System.Threading;
 using ZeroMQ;
 
@@ -37,11 +38,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             publishSocket.Bind(this.config.PublishSocket);
         }
 
-        public override void Publish(string testName)
+        protected override void Publish(params string[] frames)
         {
-            using (var frame = new ZFrame(testName))
+            using (var msg = new ZMessage(frames.Select(frame => new ZFrame(frame))))
             {
-                publishSocket.Send(frame);
+                publishSocket.Send(msg);
             }
         }
 

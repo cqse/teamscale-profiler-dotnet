@@ -6,6 +6,7 @@
 #include <winuser.h>
 #include "utils/WindowsUtils.h"
 #include <string>
+#include <regex>
 
 TraceLog::~TraceLog() {
 	// Nothing to do here, destructing is handled in FileLogBase
@@ -83,9 +84,34 @@ void TraceLog::logAssembly(std::string assembly)
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
 }
 
-void TraceLog::logTestCase(std::string testName)
+#ifdef TIA
+void TraceLog::startTestCase(std::string testName)
 {
-	writeTupleToFile(LOG_KEY_TESTCASE, testName.c_str());
+	// Line will look like this:
+	// Test=Start:20150601_1220270707:Test Name\: 1:something we do not know yet
+	std::string info = "Start:" + getFormattedCurrentTime() + ":" + escape(testName);
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+}
+
+void TraceLog::endTestCase(std::string result, std::string message)
+{
+	// Line will look like this:
+	// Test=End:20150601_1220280807:PASSED:optional msg
+	std::string info = "End:" + getFormattedCurrentTime();
+	if (!result.empty()) {
+		info += ":" + result;
+		if (!message.empty()) {
+			info += ":" + message;
+		}
+	}
+
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+}
+#endif
+
+inline std::string TraceLog::escape(std::string message) {
+	static std::regex colonEscape(":");
+	return std::regex_replace(message, colonEscape, "\\:");
 }
 
 void TraceLog::shutdown() {

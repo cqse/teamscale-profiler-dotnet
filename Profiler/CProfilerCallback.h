@@ -102,8 +102,11 @@ private:
 	/** Inter-process connection for TIA communication. null if not in TIA mode. */
 	Ipc* ipc = NULL;
 
-	/** Callback that is being called when a testcase changes. */
-	void onTestChanged(std::string testName);
+	/** Callback that is being called when a testcase starts. */
+	void onTestStart(std::string testName);
+
+	/** Callback that is being called when a testcase ends. */
+	void onTestEnd(std::string result = "", std::string message = "");
 
 	/**
 	 * Keeps track of called methods.
@@ -119,7 +122,7 @@ private:
 
 	/** Callback on function enter. */
 	static void __stdcall onFunctionEnterStatic(FunctionID funcId, UINT_PTR clientData, COR_PRF_FRAME_INFO func, COR_PRF_FUNCTION_ARGUMENT_INFO* argumentInfo);
-	
+
 	/** Callback on function enter. */
 	void onFunctionEnter(FunctionID funcId);
 #endif

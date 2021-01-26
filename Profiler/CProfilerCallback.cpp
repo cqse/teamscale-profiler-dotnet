@@ -137,11 +137,12 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	if (config.isTiaEnabled()) {
 		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
 		enableFunctionHooks = true;
-		std::function<void(std::string)> callback = std::bind(&CProfilerCallback::onTestChanged, this, std::placeholders::_1);
-		this->ipc = new Ipc(&this->config, callback);
+		std::function<void(std::string)> testStartCallback = std::bind(&CProfilerCallback::onTestStart, this, std::placeholders::_1);
+		std::function<void(std::string, std::string)> testEndCallback = std::bind(&CProfilerCallback::onTestEnd, this, std::placeholders::_1, std::placeholders::_2);
+		this->ipc = new Ipc(&this->config, testStartCallback, testEndCallback);
 		std::string testName = this->ipc->getCurrentTestName();
 		if (!testName.empty()) {
-			traceLog.logTestCase(testName);
+			traceLog.startTestCase(testName);
 		}
 	}
 #endif
@@ -537,13 +538,27 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 
 #ifdef TIA
 
-void CProfilerCallback::onTestChanged(std::string testName)
+void CProfilerCallback::onTestStart(std::string testName)
 {
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 
 		writeFunctionInfosToLog();
-		traceLog.logTestCase(testName);
+		traceLog.startTestCase(testName);
+
+		calledMethodIds.clear();
+
+		LeaveCriticalSection(&callbackSynchronization);
+	}
+}
+
+void CProfilerCallback::onTestEnd(std::string result, std::string message)
+{
+	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
+		EnterCriticalSection(&callbackSynchronization);
+
+		writeFunctionInfosToLog();
+		traceLog.endTestCase(result, message);
 
 		calledMethodIds.clear();
 
