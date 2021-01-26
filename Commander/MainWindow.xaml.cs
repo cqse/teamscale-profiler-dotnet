@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System.Windows;
 
 namespace Cqse.Teamscale.Profiler.Commander
 {
@@ -19,20 +20,28 @@ namespace Cqse.Teamscale.Profiler.Commander
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void OnStartClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsStopped = !viewModel.IsStopped;
+            viewModel.IsStopped = false;
+            app.StartTest(viewModel.TestName);
+        }
 
-            if (viewModel.IsStopped)
-            {
-                app.StopProfiling();
-                viewModel.ButtonText = "Start Test";
-            }
-            else
-            {
-                app.StartProfiling(viewModel.TestName);
-                viewModel.ButtonText = "Stop Test";
-            }
+        private void OnPassedClicked(object sender, RoutedEventArgs e)
+        {
+            viewModel.IsStopped = true;
+            app.EndTest(ETestExecutionResult.PASSED);
+        }
+
+        private void OnFailureClicked(object sender, RoutedEventArgs e)
+        {
+            viewModel.IsStopped = true;
+            app.EndTest(ETestExecutionResult.FAILURE);
+        }
+
+        private void OnSkippedClicked(object sender, RoutedEventArgs e)
+        {
+            viewModel.IsStopped = true;
+            app.EndTest(ETestExecutionResult.SKIPPED);
         }
     }
 }

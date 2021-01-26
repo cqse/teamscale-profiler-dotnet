@@ -37,7 +37,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             this.publishSocket.Bind(this.config.PublishSocket);
         }
 
-        protected override void Publish(params string[] frames)
+        public override void Publish(params string[] frames)
         {
             this.publishSocket.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(frame))));
         }

@@ -38,7 +38,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             publishSocket.Bind(this.config.PublishSocket);
         }
 
-        protected override void Publish(params string[] frames)
+        public override void Publish(params string[] frames)
         {
             using (var msg = new ZMessage(frames.Select(frame => new ZFrame(frame))))
             {

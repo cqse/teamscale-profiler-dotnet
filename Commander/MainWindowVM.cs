@@ -16,7 +16,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             set
             {
                 SetField(ref testName, value);
-                OnPropertyChanged(nameof(HasTestName));
+                OnPropertyChanged(nameof(CanStart));
             }
         }
 
@@ -33,12 +33,22 @@ namespace Cqse.Teamscale.Profiler.Commander
         public bool IsStopped
         {
             get => isStopped;
-            set => SetField(ref isStopped, value);
+            set
+            {
+                SetField(ref isStopped, value);
+                OnPropertyChanged(nameof(IsRunning));
+                OnPropertyChanged(nameof(CanStart));
+            }
         }
 
-        public bool HasTestName
+        public bool IsRunning
         {
-            get => !string.IsNullOrEmpty(testName);
+            get => !IsStopped;
+        }
+
+        public bool CanStart
+        {
+            get => IsStopped && !string.IsNullOrEmpty(testName);
         }
 
         private void SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

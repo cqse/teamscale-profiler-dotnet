@@ -20,14 +20,14 @@ namespace Cqse.Teamscale.Profiler.Commander
             profilerIpc.Dispose();
         }
 
-        internal void StopProfiling()
+        internal void EndTest(ETestExecutionResult result)
         {
-            profilerIpc.TestName = null;
+            profilerIpc.EndTest(result);
         }
 
-        internal void StartProfiling(string testName = null)
+        internal void StartTest(string testName = null)
         {
-            profilerIpc.TestName = testName;
+            profilerIpc.StartTest(testName);
         }
     }
 }

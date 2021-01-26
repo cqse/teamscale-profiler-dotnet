@@ -5,26 +5,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     public class ProfilerIpc : IDisposable
     {
         private readonly IpcServer ipcServer;
+
         private string testName = string.Empty;
+        public string TestName => testName;
 
         public IpcConfig Config { get; }
-
-        public string TestName
-        {
-            get => testName;
-            set
-            {
-                if (string.IsNullOrEmpty(value))
-                {
-                    testName = string.Empty;
-                }
-                else
-                {
-                    testName = value;
-                    ipcServer.SendTestStart(testName);
-                }
-            }
-        }
 
         public ProfilerIpc(IpcConfig config)
         {
@@ -47,6 +32,18 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 default:
                     return string.Empty;
             }
+        }
+
+        public void StartTest(string testName)
+        {
+            this.testName = testName;
+            ipcServer.Publish("test:start", testName);
+        }
+
+        public void EndTest(ETestExecutionResult result, string message = "")
+        {
+            this.testName = string.Empty;
+            ipcServer.Publish("test:end", Enum.GetName(typeof(ETestExecutionResult), result), message);
         }
 
         public void Dispose()

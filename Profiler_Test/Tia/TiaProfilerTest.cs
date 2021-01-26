@@ -67,7 +67,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void TestCaseDefinedBeforeStartup()
         {
-            profilerIpc.TestName = "startup";
+            profilerIpc.StartTest("startup");
             TiaTestResult testResult = StartTiaTestProcess().Stop();
 
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "startup" }));
@@ -78,7 +78,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void TestCaseWithSpecialCharacters()
         {
-            profilerIpc.TestName = @"Test:Case\\:\:";
+            profilerIpc.StartTest(@"Test:Case\\:\:");
             TiaTestResult testResult = StartTiaTestProcess().Stop();
 
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, @"Test:Case\\:\:" }));
@@ -119,7 +119,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void NoIpcRunning()
         {
-            profilerIpc.TestName = "should not be triggered";
+            profilerIpc.StartTest("should not be triggered");
             profilerIpc.Dispose();
 
             TiaTestResult testResult = StartTiaTestProcess().Stop(assertReceivedRequests: false);
@@ -136,7 +136,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         public void IpcStartedAfterStartup()
         {
             RecordingProfilerIpc oldProfilerIpc = profilerIpc;
-            oldProfilerIpc.TestName = "should not be triggered";
+            oldProfilerIpc.StartTest("should not be triggered");
             oldProfilerIpc.Dispose();
 
             TiaTestProcess process = StartTiaTestProcess();
@@ -205,9 +205,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             {
                 foreach (string testName in testNames)
                 {
-                    profilerIpc().TestName = testName;
+                    profilerIpc().StartTest(testName);
                     Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
                     this.Input(testName);
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
+                    profilerIpc().EndTest(ETestExecutionResult.PASSED);
                 }
 
                 return this;

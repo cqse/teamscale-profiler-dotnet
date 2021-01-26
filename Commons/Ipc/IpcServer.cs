@@ -43,18 +43,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         protected abstract void StartPublisher();
 
-        protected abstract void Publish(params string[] frames);
-
-        public void SendTestStart(string testName)
-        {
-            Publish("test:start", testName);
-        }
-
-        // FIXME result as enum
-        public void SendTestEnd(string result = "", string message = "")
-        {
-            Publish("test:end", result, message);
-        }
+        public abstract void Publish(params string[] frames);
 
         public virtual void Dispose()
         {
