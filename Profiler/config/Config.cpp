@@ -84,8 +84,8 @@ void Config::setOptions()
 	}
 
 	tiaRequestSocket = getOption("tia_request_socket");
-	if (tiaSubscribeSocket.empty()) {
-		tiaSubscribeSocket = "tcp://127.0.0.1:7146";
+	if (tiaRequestSocket.empty()) {
+		tiaRequestSocket = "tcp://127.0.0.1:7146";
 	}
 #endif
 	std::string eagernessValue = getOption("eagerness");
