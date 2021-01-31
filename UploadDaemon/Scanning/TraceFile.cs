@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using NLog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace UploadDaemon.Scanning
@@ -8,8 +11,12 @@ namespace UploadDaemon.Scanning
     /// </summary>
     public class TraceFile
     {
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
+        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
+        private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
@@ -60,6 +67,37 @@ namespace UploadDaemon.Scanning
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// All methods that are reported as covered. A method is identified by the name of its assembly
+        /// (first elment in the tuple) and its ID (second element in the tuple).
+        /// </summary>
+        public List<(string, uint)> FindCoveredMethods()
+        {
+            Dictionary<uint, string> assemblyTokens = Lines.Select(line => AssemblyLineRegex.Match(line))
+                .Where(match => match.Success)
+                .ToDictionary(match => Convert.ToUInt32(match.Groups[2].Value), match => match.Groups[1].Value);
+
+            List<(string, uint)> coveredMethods = new List<(string, uint)>();
+            foreach (string line in Lines)
+            {
+                // Try matching a coverage line first, because this is the most prevalent case.
+                Match coverageMatch = CoverageLineRegex.Match(line);
+                if (coverageMatch.Success)
+                {
+                    uint assemblyId = Convert.ToUInt32(coverageMatch.Groups[1].Value);
+                    if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
+                    {
+                        logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
+                            " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
+                        continue;
+                    }
+                    coveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
+                }
+            }
+
+            return coveredMethods;
         }
 
         /// <summary>

@@ -90,7 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archiving\PurgeArchiveTaskTest.cs" />
-    <Compile Include="SymbolAnalysis\ParsedTraceFileTest.cs" />
+    <Compile Include="Scanning\TraceFileTest.cs" />
     <Compile Include="Configuration\GlobPatternListTest.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolverTest.cs" />

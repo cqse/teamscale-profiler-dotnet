@@ -196,24 +196,23 @@ namespace UploadDaemon
         /// Tries to read and convert the trace file. Logs and returns null if this fails.
         /// Empty trace files are archived and null is returned as well.
         /// </summary>
-        private LineCoverageReport ConvertTraceFileToLineCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig)
+        private LineCoverageReport ConvertTraceFileToLineCoverage(TraceFile traceFile, Archive archive, Config.ConfigForProcess processConfig)
         {
-            ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
             LineCoverageReport lineCoverage;
             try
             {
-                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(traceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", trace.FilePath);
+                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", traceFile.FilePath);
                 return null;
             }
 
             if (lineCoverage.IsEmpty)
             {
-                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", trace.FilePath);
-                archive.ArchiveFileWithoutLineCoverage(trace.FilePath);
+                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", traceFile.FilePath);
+                archive.ArchiveFileWithoutLineCoverage(traceFile.FilePath);
                 return null;
             }
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -23,7 +24,7 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public LineCoverageReport ConvertToLineCoverage(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
 
@@ -54,13 +55,13 @@ namespace UploadDaemon.SymbolAnalysis
         ///
         /// Public for testing.
         /// </summary>
-        public static LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
+        public static LineCoverageReport ConvertToLineCoverage(TraceFile traceFile, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             logger.Debug("Converting trace {traceFile} to line coverage", traceFile);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
             Dictionary<string, FileCoverage> lineCoverage = new Dictionary<string, FileCoverage>();
-            foreach ((string assemblyName, uint methodId) in traceFile.CoveredMethods)
+            foreach ((string assemblyName, uint methodId) in traceFile.FindCoveredMethods())
             {
                 if (!assemblyPatterns.Matches(assemblyName))
                 {
@@ -108,7 +109,7 @@ namespace UploadDaemon.SymbolAnalysis
             return new LineCoverageReport(lineCoverage);
         }
 
-        private static void LogResolutionFailures(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)
+        private static void LogResolutionFailures(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)
         {
             foreach (string assemblyName in resolutionCounts.Keys)
             {
@@ -117,7 +118,7 @@ namespace UploadDaemon.SymbolAnalysis
             }
         }
 
-        private static void LogResolutionFailuresForAssembly(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, string assemblyName, AssemblyResolutionCount count)
+        private static void LogResolutionFailuresForAssembly(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, string assemblyName, AssemblyResolutionCount count)
         {
             if (count.unresolvedMethods > 0)
             {

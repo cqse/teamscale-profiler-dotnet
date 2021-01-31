@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Cqse.ConQAT.Dotnet.Bummer;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -16,10 +17,10 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TestSynthesizing()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
             $"Inlined=2:{ExistingMethodToken}",
-        }, "coverage_12345_1234.txt");
+        });
             string coverageReport = Convert(traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
@@ -31,9 +32,9 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TracesWithoutCoverageShouldResultInEmptyTrace()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
-        }, "coverage_12345_1234.txt");
+        });
 
             LineCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
@@ -43,10 +44,10 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ExcludingAllPdbsShouldResultInException()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
             "Assembly=ProfilerGUI:2 Version:1.0.0.0",
             $"Inlined=2:{ExistingMethodToken}",
-        }, "coverage_12345_1234.txt");
+        });
 
             Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
             {
@@ -59,10 +60,10 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void CompilerHiddenLinesShouldBeIgnored()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[] {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
             "Assembly=Test:2 Version:1.0.0.0",
             "Inlined=2:1234",
-        }, "coverage_12345_1234.txt");
+        });
 
             AssemblyMethodMappings mappings = new AssemblyMethodMappings
             {
@@ -97,7 +98,7 @@ namespace UploadDaemon.SymbolAnalysis
             return text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
 
-        private static string Convert(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
+        private static string Convert(TraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
             return new LineCoverageSynthesizer().ConvertToLineCoverage(traceFile, symbolDirectory, assemlyPatterns).ToReportString();
         }

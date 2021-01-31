@@ -116,7 +116,6 @@
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtils.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizer.cs" />
-    <Compile Include="SymbolAnalysis\ParsedTraceFile.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollection.cs" />
     <Compile Include="UploadTask.cs" />
     <Compile Include="Scanning\TraceFile.cs" />

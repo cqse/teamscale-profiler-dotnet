@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon
 {
@@ -275,7 +276,7 @@ Inlined=1:33555646:100678050" },
             }
 
             /// <inheritdoc/>
-            public LineCoverageReport ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+            public LineCoverageReport ConvertToLineCoverage(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
             {
                 var coverage = new Dictionary<string, FileCoverage>();
                 if (shouldProduceCoverage)
