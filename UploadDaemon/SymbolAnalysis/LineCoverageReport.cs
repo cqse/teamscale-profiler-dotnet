@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UploadDaemon.Report;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -39,44 +36,6 @@ namespace UploadDaemon.SymbolAnalysis
         public FileCoverage this[string fileName]
         {
             get => lineCoverage[fileName];
-        }
-
-        /// <summary>
-        /// Converts the given line coverage (covered line ranges per file) into a SIMPLE format report for Teamscale.
-        /// </summary>
-        public string ToReportString()
-        {
-            StringBuilder report = new StringBuilder();
-            report.AppendLine("# isMethodAccurate=true");
-            foreach (string file in lineCoverage.Keys)
-            {
-                report.AppendLine(file);
-                foreach ((uint startLine, uint endLine) in lineCoverage[file].CoveredLineRanges)
-                {
-                    report.AppendLine($"{startLine}-{endLine}");
-                }
-            }
-            return report.ToString();
-        }
-
-        public string ToTestwiseReportString()
-        {
-            return JsonConvert.SerializeObject(new TestwiseCoverageReport()
-            {
-                Tests = new List<TestwiseCoverageReport.Test>()
-                {
-                    new TestwiseCoverageReport.Test()
-                    {
-                        UniformPath = "No Test",
-                        Duration = 42.0,
-                        Result = "PASSED",
-                        CoverageByPath = new List<TestwiseCoverageReport.Test.CoverageForPath>()
-                        {
-                            TestwiseCoverageReport.Test.CoverageForPath.From(this)
-                        }
-                    }
-                }
-            });
         }
 
         /// <summary>

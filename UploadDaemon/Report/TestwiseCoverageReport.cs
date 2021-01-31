@@ -53,5 +53,23 @@ namespace UploadDaemon.Report
 
         [JsonProperty(PropertyName = "tests")]
         public IList<Test> Tests = new List<Test>();
+
+        public bool IsEmpty => Tests.All(test => test.CoverageByPath.All(coverage => coverage.Files.Count == 0));
+
+        public string FileExtension => "testwise";
+
+        public ICoverageReport UnionWith(ICoverageReport coverageReport)
+        {
+            throw new System.NotImplementedException();
+        }
+
+
+        /// <summary>
+        /// Converts this report into a TESTWISE format report for Teamscale.
+        /// </summary>
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }

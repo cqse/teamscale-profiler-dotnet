@@ -20,12 +20,12 @@ namespace UploadDaemon.SymbolAnalysis
         {
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
-            string coverageReport = Convert(trace, TestUtils.TestDataDirectory,
+            LineCoverageReport report = Convert(trace, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
-            Assert.That(NormalizeNewLines(coverageReport.Trim()), Is.EqualTo(NormalizeNewLines(@"# isMethodAccurate=true
-\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs
-37-39")));
+            string sourceFilePath = @"\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs";
+            Assert.That(report.FileNames, Is.EquivalentTo(new[] { sourceFilePath }));
+            Assert.That(report[sourceFilePath], Is.EqualTo(new FileCoverage((37, 39))));
         }
 
         [Test]
@@ -89,9 +89,9 @@ namespace UploadDaemon.SymbolAnalysis
             return text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
 
-        private static string Convert(Trace trace, string symbolDirectory, GlobPatternList assemlyPatterns)
+        private static LineCoverageReport Convert(Trace trace, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, symbolDirectory, assemlyPatterns).ToReportString();
+            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, symbolDirectory, assemlyPatterns);
         }
     }
 }
