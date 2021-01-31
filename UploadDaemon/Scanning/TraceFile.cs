@@ -17,6 +17,10 @@ namespace UploadDaemon.Scanning
         private static readonly Regex ProcessRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
+        /// <summary>
+        /// The lines of text contained in the trace.
+        /// </summary>
+        private string[] lines;
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
@@ -31,15 +35,10 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public string FilePath { get; private set; }
 
-        /// <summary>
-        /// The lines of text contained in the trace.
-        /// </summary>
-        public string[] Lines { get; private set; }
-
         public TraceFile(string filePath, string[] lines)
         {
             this.FilePath = filePath;
-            this.Lines = lines;
+            this.lines = lines;
         }
 
         /// <summary>
@@ -49,7 +48,7 @@ namespace UploadDaemon.Scanning
         public string FindVersion(string versionAssembly)
         {
             Regex versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
-            Match matchingLine = Lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
+            Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             return matchingLine?.Groups[1]?.Value;
         }
 
@@ -58,7 +57,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public string FindProcessPath()
         {
-            foreach (string line in Lines)
+            foreach (string line in lines)
             {
                 Match match = ProcessRegex.Match(line);
                 if (match.Success)
@@ -75,12 +74,12 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public List<(string, uint)> FindCoveredMethods()
         {
-            Dictionary<uint, string> assemblyTokens = Lines.Select(line => AssemblyLineRegex.Match(line))
+            Dictionary<uint, string> assemblyTokens = lines.Select(line => AssemblyLineRegex.Match(line))
                 .Where(match => match.Success)
                 .ToDictionary(match => Convert.ToUInt32(match.Groups[2].Value), match => match.Groups[1].Value);
 
             List<(string, uint)> coveredMethods = new List<(string, uint)>();
-            foreach (string line in Lines)
+            foreach (string line in lines)
             {
                 // Try matching a coverage line first, because this is the most prevalent case.
                 Match coverageMatch = CoverageLineRegex.Match(line);
@@ -105,7 +104,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public bool IsEmpty()
         {
-            return !Lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
         }
     }
 }
