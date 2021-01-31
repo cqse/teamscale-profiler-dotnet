@@ -73,10 +73,12 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:9876:12345",
             });
+            Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => SomeLineCoverageReport());
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
 
             Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
+            Assert.That(trace.CoveredMethods, Is.EquivalentTo(new[] { ("ProfilerGUI", 12345) }));
         }
 
         [Test]
