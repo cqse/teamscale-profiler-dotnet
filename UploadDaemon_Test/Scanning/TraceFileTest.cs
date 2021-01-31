@@ -37,10 +37,13 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:12345",
             });
+            Trace trace = null;
 
-            Assert.That(traceFile.FindCoveredMethods(), Has.Count.EqualTo(1));
-            Assert.That(traceFile.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
-            Assert.That(traceFile.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
+            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+
+            Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
+            Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
+            Assert.That(trace.CoveredMethods[0].Item2, Is.EqualTo(12345));
         }
 
         [Test]
@@ -50,10 +53,13 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:9876:12345",
             });
+            Trace trace = null;
 
-            Assert.That(traceFile.FindCoveredMethods(), Has.Count.EqualTo(1));
-            Assert.That(traceFile.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
-            Assert.That(traceFile.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
+            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+
+            Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
+            Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
+            Assert.That(trace.CoveredMethods[0].Item2, Is.EqualTo(12345));
         }
 
         [Test]
@@ -62,8 +68,11 @@ namespace UploadDaemon.Scanning
             TraceFile traceFile = new TraceFile(":path:", new string[] {
                 "Inlined=1:12345",
             });
+            Trace trace = null;
 
-            Assert.That(traceFile.FindCoveredMethods(), Is.Empty);
+            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+
+            Assert.That(trace.CoveredMethods, Is.Empty);
         }
 
         [Test]

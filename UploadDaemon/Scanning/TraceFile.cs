@@ -157,37 +157,6 @@ namespace UploadDaemon.Scanning
             return null;
         }
 
-        /// <summary>
-        /// All methods that are reported as covered. A method is identified by the name of its assembly
-        /// (first elment in the tuple) and its ID (second element in the tuple).
-        /// </summary>
-        public List<(string, uint)> FindCoveredMethods()
-        {
-            Dictionary<uint, string> assemblyTokens = lines.Select(line => AssemblyLineRegex.Match(line))
-                .Where(match => match.Success)
-                .ToDictionary(match => Convert.ToUInt32(match.Groups[2].Value), match => match.Groups[1].Value);
-
-            List<(string, uint)> coveredMethods = new List<(string, uint)>();
-            foreach (string line in lines)
-            {
-                // Try matching a coverage line first, because this is the most prevalent case.
-                Match coverageMatch = CoverageLineRegex.Match(line);
-                if (coverageMatch.Success)
-                {
-                    uint assemblyId = Convert.ToUInt32(coverageMatch.Groups[1].Value);
-                    if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
-                    {
-                        logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
-                            " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
-                        continue;
-                    }
-                    coveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
-                }
-            }
-
-            return coveredMethods;
-        }
-
         private DateTime ParseProfilerDateTimeString(string dateTimeString)
         {
             // 20210129_1026440836
