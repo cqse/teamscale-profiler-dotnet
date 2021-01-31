@@ -81,7 +81,7 @@ namespace UploadDaemon.Scanning
             TraceFile traceFile = new TraceFile(":path:", new string[]
             {
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
-                "Inlined=2:9876:12345",
+                "Inlined=2:12345",
             });
             Trace trace = null;
 
@@ -99,7 +99,7 @@ namespace UploadDaemon.Scanning
                 "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Test=Start:20200131_1109420123:TestCase1",
-                "Inlined=2:9876:12345",
+                "Inlined=2:12345",
                 "Test=End:20200131_1109430456:SUCCESS",
             });
 
