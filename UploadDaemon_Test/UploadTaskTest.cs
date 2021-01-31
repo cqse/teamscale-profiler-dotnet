@@ -276,7 +276,7 @@ Inlined=1:33555646:100678050" },
             }
 
             /// <inheritdoc/>
-            public LineCoverageReport ConvertToLineCoverage(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+            public LineCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
             {
                 var coverage = new Dictionary<string, FileCoverage>();
                 if (shouldProduceCoverage)

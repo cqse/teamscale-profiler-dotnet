@@ -1,8 +1,11 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UploadDaemon.Report;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {
@@ -17,6 +20,8 @@ namespace UploadDaemon.Scanning
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
+        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=((?:Start|End)):([^:]+):(.+)");
+
         /// <summary>
         /// The lines of text contained in the trace.
         /// </summary>
@@ -51,6 +56,77 @@ namespace UploadDaemon.Scanning
             Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             return matchingLine?.Groups[1]?.Value;
         }
+
+        public ICoverageReport ToReport(Func<Trace, LineCoverageReport> traceResolver)
+        {
+            Dictionary<uint, string> assemblyTokens = new Dictionary<uint, string>();
+
+            TestwiseCoverageReport report = new TestwiseCoverageReport();
+            string currentTestName = "";
+            DateTime currentTestStart = DateTime.Now;
+            Trace currentTestTrace = null;
+
+            foreach(string line in lines)
+            {
+                string[] keyValuePair = line.Split(new[] { '=' }, count:2);
+                string key = keyValuePair[0];
+                string value = keyValuePair[1];
+
+                switch (key)
+                {
+                    case "Started":
+                        DateTime traceFileStart = ParseProfilerDateTimeString(value);
+                        currentTestStart = traceFileStart;
+                        break;
+                    case "Assembly":
+                        Match assemblyMatch = AssemblyLineRegex.Match(line);
+                        assemblyTokens[Convert.ToUInt32(assemblyMatch.Groups[2].Value)] = assemblyMatch.Groups[1].Value;
+                        break;
+                    case "Test":
+                        Match testCaseMatch = TestCaseLineRegex.Match(line);
+                        string startOrEnd = testCaseMatch.Groups[1].Value;
+                        if (startOrEnd.Equals("Start"))
+                        {
+                            currentTestName = testCaseMatch.Groups[3].Value;
+                            currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
+                            currentTestTrace = new Trace() { OriginTraceFilePath = this.FilePath };
+                        }
+                        else if (startOrEnd.Equals("End"))
+                        {
+                            DateTime currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
+                            string currentTestResult = testCaseMatch.Groups[3].Value;
+                            TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
+                            TestwiseCoverageReport.Test.CoverageForPath coverage = TestwiseCoverageReport.Test.CoverageForPath.From(traceResolver(currentTestTrace));
+                            report.Tests.Add(new TestwiseCoverageReport.Test()
+                            {
+                                UniformPath = currentTestName,
+                                Duration = duration.TotalSeconds,
+                                Result = currentTestResult,
+                                CoverageByPath = new[] { coverage }.ToList()
+                            });
+                            currentTestTrace = null; // todo reset to no-test test case
+                        }
+                        break;
+                    case "Inlined":
+                    case "Jitted":
+                    case "Called":
+                        Match coverageMatch = CoverageLineRegex.Match(line);
+                        uint assemblyId = Convert.ToUInt32(coverageMatch.Groups[1].Value);
+                        if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
+                        {
+                            logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
+                                " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
+                            continue;
+                        }
+                        currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
+                        break;
+                }
+            }
+
+            return report;
+        }
+
+        private bool ContainsTestwiseTraces { get => lines.Any((line) => line.StartsWith("Info=TIA enabled")); }
 
         /// <summary>
         /// Given the lines of text in a trace file, returns the process that was profiled or null if no process can be found.
@@ -97,6 +173,13 @@ namespace UploadDaemon.Scanning
             }
 
             return coveredMethods;
+        }
+
+        private DateTime ParseProfilerDateTimeString(string dateTimeString)
+        {
+            // 20210129_1026440836
+            string format = "yyyyMMdd_HHmmss0fff";
+            return DateTime.ParseExact(dateTimeString, format, CultureInfo.InvariantCulture);
         }
 
         /// <summary>

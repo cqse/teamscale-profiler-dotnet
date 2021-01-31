@@ -1,5 +1,7 @@
 ﻿using NUnit.Framework;
-using UploadDaemon.Scanning;
+using System.Collections.Generic;
+using UploadDaemon.Report;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {
@@ -7,12 +9,32 @@ namespace UploadDaemon.Scanning
     public class TraceFileTest
     {
         [Test]
+        public void DetectsEmptyFile()
+        {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+            });
+
+            Assert.That(traceFile.IsEmpty, Is.True);
+        }
+
+        [Test]
+        public void DetectsNonEmptyFile()
+        {
+            TraceFile traceFile = new TraceFile("coverage_12345_1234.txt", new string[] {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:12345",
+            });
+
+            Assert.That(traceFile.IsEmpty, Is.False);
+        }
+
+        [Test]
         public void SupportsNewStyleMethodReferences()
         {
-            TraceFile trace = new TraceFile(":path:", new string[]
-            {
-            "Assembly=ProfilerGUI:2 Version:1.0.0.0",
-            $"Inlined=2:12345",
+            TraceFile trace = new TraceFile(":path:", new string[] {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:12345",
             });
 
             Assert.That(trace.FindCoveredMethods(), Has.Count.EqualTo(1));
@@ -23,10 +45,9 @@ namespace UploadDaemon.Scanning
         [Test]
         public void SupportsOldStyleMethodReferences()
         {
-            TraceFile trace = new TraceFile(":path:", new string[]
-            {
-            "Assembly=ProfilerGUI:2 Version:1.0.0.0",
-            $"Inlined=2:9876:12345",
+            TraceFile trace = new TraceFile(":path:", new string[] {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:9876:12345",
             });
 
             Assert.That(trace.FindCoveredMethods(), Has.Count.EqualTo(1));
@@ -37,12 +58,30 @@ namespace UploadDaemon.Scanning
         [Test]
         public void IgnoresMethodReferenceFromUnknownAssembly()
         {
-            TraceFile trace = new TraceFile(":path:", new string[]
-            {
-            $"Inlined=1:12345",
+            TraceFile trace = new TraceFile(":path:", new string[] {
+                "Inlined=1:12345",
             });
 
             Assert.That(trace.FindCoveredMethods(), Is.Empty);
+        }
+
+        [Test]
+        public void ConvertsToTestwiseCoverageReport()
+        {
+            TraceFile trace = new TraceFile(":path:", new string[]
+            {
+                "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Test=Start:20200131_1109420123:TestCase1",
+                "Inlined=2:9876:12345",
+                "Test=End:20200131_1109430456:SUCCESS",
+            });
+
+            ICoverageReport report = trace.ToReport((Trace t) => new LineCoverageReport(new Dictionary<string, FileCoverage>()));
+
+            Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
+            TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
+            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
         }
     }
 }

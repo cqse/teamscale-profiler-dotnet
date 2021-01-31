@@ -201,7 +201,7 @@ namespace UploadDaemon
             LineCoverageReport lineCoverage;
             try
             {
-                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(traceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(new Trace() { OriginTraceFilePath = traceFile.FilePath, CoveredMethods = traceFile.FindCoveredMethods() }, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
             }
             catch (Exception e)
             {

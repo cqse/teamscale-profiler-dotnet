@@ -5,7 +5,7 @@ using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Report
 {
-    public class TestwiseCoverageReport
+    public class TestwiseCoverageReport : ICoverageReport
     {
         public class Test
         {
@@ -30,7 +30,7 @@ namespace UploadDaemon.Report
             }
 
             [JsonProperty(PropertyName = "uniformPath")]
-            public string UniformPath { get; set; }
+            public string UniformPath;
 
             [JsonProperty(PropertyName = "duration")]
             public double Duration;
@@ -49,6 +49,6 @@ namespace UploadDaemon.Report
         }
 
         [JsonProperty(PropertyName = "tests")]
-        public IList<Test> Tests { get; set; }
+        public IList<Test> Tests = new List<Test>();
     }
 }
