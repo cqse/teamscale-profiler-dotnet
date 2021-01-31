@@ -61,10 +61,12 @@ namespace UploadDaemon.Scanning
         {
             Dictionary<uint, string> assemblyTokens = new Dictionary<uint, string>();
 
-            TestwiseCoverageReport report = new TestwiseCoverageReport();
+            bool isTestwiseTrace = false;
+            Trace noTestTrace = new Trace();
             string currentTestName = "";
             DateTime currentTestStart = DateTime.Now;
-            Trace currentTestTrace = null;
+            Trace currentTestTrace = noTestTrace;
+            IList<TestwiseCoverageReport.Test> tests = new List<TestwiseCoverageReport.Test>();
 
             foreach(string line in lines)
             {
@@ -77,6 +79,12 @@ namespace UploadDaemon.Scanning
                     case "Started":
                         DateTime traceFileStart = ParseProfilerDateTimeString(value);
                         currentTestStart = traceFileStart;
+                        break;
+                    case "Info":
+                        if (value.StartsWith("TIA enabled"))
+                        {
+                            isTestwiseTrace = true;
+                        }
                         break;
                     case "Assembly":
                         Match assemblyMatch = AssemblyLineRegex.Match(line);
@@ -97,14 +105,14 @@ namespace UploadDaemon.Scanning
                             string currentTestResult = testCaseMatch.Groups[3].Value;
                             TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
                             TestwiseCoverageReport.Test.CoverageForPath coverage = TestwiseCoverageReport.Test.CoverageForPath.From(traceResolver(currentTestTrace));
-                            report.Tests.Add(new TestwiseCoverageReport.Test()
+                            tests.Add(new TestwiseCoverageReport.Test()
                             {
                                 UniformPath = currentTestName,
                                 Duration = duration.TotalSeconds,
                                 Result = currentTestResult,
                                 CoverageByPath = new[] { coverage }.ToList()
                             });
-                            currentTestTrace = null; // todo reset to no-test test case
+                            currentTestTrace = noTestTrace; // todo reset to no-test test case
                         }
                         break;
                     case "Inlined":
@@ -123,10 +131,15 @@ namespace UploadDaemon.Scanning
                 }
             }
 
-            return report;
+            if (isTestwiseTrace)
+            {
+                return new TestwiseCoverageReport() { Tests = tests };
+            }
+            else
+            {
+                return new SimpleCoverageReport(traceResolver(noTestTrace));
+            }
         }
-
-        private bool ContainsTestwiseTraces { get => lines.Any((line) => line.StartsWith("Info=TIA enabled")); }
 
         /// <summary>
         /// Given the lines of text in a trace file, returns the process that was profiled or null if no process can be found.

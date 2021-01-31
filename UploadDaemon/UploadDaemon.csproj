@@ -107,6 +107,7 @@
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
     <Compile Include="Report\ICoverageReport.cs" />
+    <Compile Include="Report\SimpleCoverageReport.cs" />
     <Compile Include="Report\TestwiseCoverageReport.cs" />
     <Compile Include="Scanning\Trace.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageReport.cs" />

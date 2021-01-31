@@ -5,6 +5,9 @@ using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Report
 {
+    /// <summary>
+    /// A Teamscale testwise coverage report.
+    /// </summary>
     public class TestwiseCoverageReport : ICoverageReport
     {
         public class Test

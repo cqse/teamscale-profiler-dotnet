@@ -32,43 +32,57 @@ namespace UploadDaemon.Scanning
         [Test]
         public void SupportsNewStyleMethodReferences()
         {
-            TraceFile trace = new TraceFile(":path:", new string[] {
+            TraceFile traceFile = new TraceFile(":path:", new string[] {
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:12345",
             });
 
-            Assert.That(trace.FindCoveredMethods(), Has.Count.EqualTo(1));
-            Assert.That(trace.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
-            Assert.That(trace.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
+            Assert.That(traceFile.FindCoveredMethods(), Has.Count.EqualTo(1));
+            Assert.That(traceFile.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
+            Assert.That(traceFile.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
         }
 
         [Test]
         public void SupportsOldStyleMethodReferences()
         {
-            TraceFile trace = new TraceFile(":path:", new string[] {
+            TraceFile traceFile = new TraceFile(":path:", new string[] {
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:9876:12345",
             });
 
-            Assert.That(trace.FindCoveredMethods(), Has.Count.EqualTo(1));
-            Assert.That(trace.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
-            Assert.That(trace.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
+            Assert.That(traceFile.FindCoveredMethods(), Has.Count.EqualTo(1));
+            Assert.That(traceFile.FindCoveredMethods()[0].Item1, Is.EqualTo("ProfilerGUI"));
+            Assert.That(traceFile.FindCoveredMethods()[0].Item2, Is.EqualTo(12345));
         }
 
         [Test]
         public void IgnoresMethodReferenceFromUnknownAssembly()
         {
-            TraceFile trace = new TraceFile(":path:", new string[] {
+            TraceFile traceFile = new TraceFile(":path:", new string[] {
                 "Inlined=1:12345",
             });
 
-            Assert.That(trace.FindCoveredMethods(), Is.Empty);
+            Assert.That(traceFile.FindCoveredMethods(), Is.Empty);
+        }
+
+        [Test]
+        public void ConvertsToAggregatedCoverageReport()
+        {
+            TraceFile traceFile = new TraceFile(":path:", new string[]
+            {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:9876:12345",
+            });
+
+            ICoverageReport report = traceFile.ToReport((Trace t) => SomeLineCoverageReport());
+
+            Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
         }
 
         [Test]
         public void ConvertsToTestwiseCoverageReport()
         {
-            TraceFile trace = new TraceFile(":path:", new string[]
+            TraceFile traceFile = new TraceFile(":path:", new string[]
             {
                 "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
@@ -77,11 +91,16 @@ namespace UploadDaemon.Scanning
                 "Test=End:20200131_1109430456:SUCCESS",
             });
 
-            ICoverageReport report = trace.ToReport((Trace t) => new LineCoverageReport(new Dictionary<string, FileCoverage>()));
+            ICoverageReport report = traceFile.ToReport((Trace t) => SomeLineCoverageReport());
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
             Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
+        }
+
+        private LineCoverageReport SomeLineCoverageReport()
+        {
+            return new LineCoverageReport(new Dictionary<string, FileCoverage>());
         }
     }
 }
