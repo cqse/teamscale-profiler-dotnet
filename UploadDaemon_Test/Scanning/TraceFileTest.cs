@@ -7,7 +7,7 @@ namespace UploadDaemon.Scanning
     public class TraceFileTest
     {
         [Test]
-        public void MustSupportNewStyleMethodReferences()
+        public void SupportsNewStyleMethodReferences()
         {
             TraceFile trace = new TraceFile(":path:", new string[]
             {
@@ -21,7 +21,7 @@ namespace UploadDaemon.Scanning
         }
 
         [Test]
-        public void MustSupportOldStyleMethodReferences()
+        public void SupportsOldStyleMethodReferences()
         {
             TraceFile trace = new TraceFile(":path:", new string[]
             {
