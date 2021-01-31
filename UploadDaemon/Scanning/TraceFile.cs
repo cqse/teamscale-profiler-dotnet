@@ -14,7 +14,7 @@ namespace UploadDaemon.Scanning
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
-        private static readonly Regex ProcessRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
+        private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
         /// <summary>
@@ -59,7 +59,7 @@ namespace UploadDaemon.Scanning
         {
             foreach (string line in lines)
             {
-                Match match = ProcessRegex.Match(line);
+                Match match = ProcessLineRegex.Match(line);
                 if (match.Success)
                 {
                     return match.Groups[1].Value;
