@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
 
@@ -93,11 +94,21 @@ namespace UploadDaemon.Scanning
                 "Test=End:20200131_1109430456:SUCCESS",
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => SomeLineCoverageReport());
+            ICoverageReport report = traceFile.ToReport((Trace t) => new LineCoverageReport(new Dictionary<string, FileCoverage>() {
+                { "file1.cs", new FileCoverage((10,20)) }
+            }));
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
             Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests.First().UniformPath, Is.EqualTo("TestCase1"));
+            Assert.That(testwiseReport.Tests.First().Duration, Is.EqualTo(1.333d));
+            Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("SUCCESS"));
+            Assert.That(testwiseReport.Tests.First().CoverageByPath, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Path, Is.EqualTo(string.Empty));
+            Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Files, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Files.First().FileName, Is.EqualTo("file1.cs"));
+            Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Files.First().CoveredLines, Is.EqualTo("10-20"));
         }
 
         private LineCoverageReport SomeLineCoverageReport()

@@ -18,10 +18,10 @@ namespace UploadDaemon.Report
                 {
                     return new CoverageForPath()
                     {
-                        Files = report.FileNames.Select(fileName => new Dictionary<string, string>() {
-                            { "fileName", fileName },
-                            { "coveredLines", report[fileName].CoveredLineRanges.Select((range) =>  $"{range.Item1}-{range.Item2}").Aggregate((a, b) => $"{a},{b}") }
-                        }).ToList<IDictionary<string, string>>()
+                        Files = report.FileNames.Select(fileName => new File() {
+                            FileName = fileName,
+                            CoveredLines = report[fileName].CoveredLineRanges.Select((range) =>  $"{range.Item1}-{range.Item2}").Aggregate((a, b) => $"{a},{b}")
+                        }).ToList()
                     };
                 }
 
@@ -29,7 +29,16 @@ namespace UploadDaemon.Report
                 public readonly string Path = "";
 
                 [JsonProperty(PropertyName = "files")]
-                public IList<IDictionary<string, string>> Files { get; set; }
+                public IList<File> Files { get; set; }
+
+                public class File
+                {
+                    [JsonProperty(PropertyName = "fileName")]
+                    public string FileName;
+
+                    [JsonProperty(PropertyName = "coveredLines")]
+                    public string CoveredLines;
+                }
             }
 
             [JsonProperty(PropertyName = "uniformPath")]
