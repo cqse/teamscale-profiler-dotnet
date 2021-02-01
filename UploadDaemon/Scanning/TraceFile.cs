@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
+using UploadDaemon.Report.Testwise;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
@@ -66,7 +67,7 @@ namespace UploadDaemon.Scanning
             string currentTestName = "";
             DateTime currentTestStart = DateTime.Now;
             Trace currentTestTrace = noTestTrace;
-            IList<TestwiseCoverageReport.Test> tests = new List<TestwiseCoverageReport.Test>();
+            IList<Test> tests = new List<Test>();
 
             foreach(string line in lines)
             {
@@ -104,8 +105,8 @@ namespace UploadDaemon.Scanning
                             DateTime currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
                             string currentTestResult = testCaseMatch.Groups[3].Value;
                             TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
-                            TestwiseCoverageReport.Test.CoverageForPath coverage = TestwiseCoverageReport.Test.CoverageForPath.From(traceResolver(currentTestTrace));
-                            tests.Add(new TestwiseCoverageReport.Test()
+                            CoverageForPath coverage = CoverageForPath.From(traceResolver(currentTestTrace));
+                            tests.Add(new Test()
                             {
                                 UniformPath = currentTestName,
                                 Duration = duration.TotalSeconds,
