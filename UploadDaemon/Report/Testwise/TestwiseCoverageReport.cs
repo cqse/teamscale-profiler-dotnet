@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,7 +25,12 @@ namespace UploadDaemon.Report.Testwise
         /// <inheritDoc/>
         public ICoverageReport Union(ICoverageReport coverageReport)
         {
-            throw new System.NotImplementedException();
+            if (!(coverageReport is TestwiseCoverageReport other))
+            {
+                throw new NotSupportedException();
+            }
+
+            return new TestwiseCoverageReport(new[] { Tests, other.Tests }.SelectMany(tests => tests).ToArray());
         }
 
         /// <summary>
