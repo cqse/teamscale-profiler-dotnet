@@ -9,12 +9,9 @@ namespace UploadDaemon.Report.Testwise
     /// </summary>
     public class CoverageForPath
     {
-        public static CoverageForPath From(SimpleCoverageReport report)
+        public CoverageForPath(params File[] files)
         {
-            return new CoverageForPath()
-            {
-                Files = report.FileNames.Select(fileName => new File(fileName, report[fileName])).ToList()
-            };
+            Files = files.ToList();
         }
 
         [JsonProperty(PropertyName = "path")]

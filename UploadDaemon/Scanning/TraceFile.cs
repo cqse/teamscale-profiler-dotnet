@@ -105,13 +105,10 @@ namespace UploadDaemon.Scanning
                             DateTime currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
                             string currentTestResult = testCaseMatch.Groups[3].Value;
                             TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
-                            CoverageForPath coverage = CoverageForPath.From(traceResolver(currentTestTrace));
-                            tests.Add(new Test()
+                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
-                                UniformPath = currentTestName,
                                 Duration = duration.TotalSeconds,
-                                Result = currentTestResult,
-                                CoverageByPath = new[] { coverage }.ToList()
+                                Result = currentTestResult
                             });
                             currentTestTrace = noTestTrace; // todo reset to no-test test case
                         }

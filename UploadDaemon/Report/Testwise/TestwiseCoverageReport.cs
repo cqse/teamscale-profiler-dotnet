@@ -12,6 +12,11 @@ namespace UploadDaemon.Report.Testwise
         [JsonProperty(PropertyName = "tests")]
         public IList<Test> Tests = new List<Test>();
 
+        public TestwiseCoverageReport(params Test[] tests)
+        {
+            Tests = tests.ToList();
+        }
+
         public bool IsEmpty => Tests.All(test => test.CoverageByPath.All(coverage => coverage.Files.Count == 0));
 
         public string FileExtension => "testwise";

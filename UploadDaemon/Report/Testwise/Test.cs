@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UploadDaemon.Report.Testwise
 {
@@ -25,5 +26,16 @@ namespace UploadDaemon.Report.Testwise
 
         [JsonProperty(PropertyName = "paths")]
         public IList<CoverageForPath> CoverageByPath;
+
+        public Test(string uniformPath, params File[] coverageByFile)
+        {
+            UniformPath = uniformPath;
+            CoverageByPath = new List<CoverageForPath>()
+            {
+                new CoverageForPath(coverageByFile)
+            };
+        }
+
+        public Test(string uniformPath, SimpleCoverageReport report) : this(uniformPath, report.FileNames.Select(fileName => new File(fileName, report[fileName])).ToArray()) { }
     }
 }

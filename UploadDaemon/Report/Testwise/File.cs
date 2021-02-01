@@ -17,6 +17,11 @@ namespace UploadDaemon.Report.Testwise
             this.FileName = fileName;
         }
 
+        public File(string fileName, params (uint, uint)[] coveredLineRanges) : base(coveredLineRanges)
+        {
+            this.FileName = fileName;
+        }
+
         [JsonProperty(PropertyName = "coveredLines")]
         public string CoveredLines
         {
