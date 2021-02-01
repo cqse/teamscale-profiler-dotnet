@@ -98,7 +98,7 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
+            string url = $"{server.Url}/p/{encodedProject}/external-report?format={coverageReport.UploadFormat}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
                 $"&{timestampParameter}={encodedTimestamp}";
 

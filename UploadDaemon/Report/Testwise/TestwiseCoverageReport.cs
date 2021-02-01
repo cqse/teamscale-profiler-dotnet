@@ -18,9 +18,14 @@ namespace UploadDaemon.Report.Testwise
             Tests = tests.ToList();
         }
 
+        /// <inheritDoc/>
         public bool IsEmpty => Tests.All(test => test.CoverageByPath.All(coverage => coverage.Files.Count == 0));
 
+        /// <inheritDoc/>
         public string FileExtension => "testwise";
+
+        /// <inheritDoc/>
+        public string UploadFormat => "TESTWISE_COVERAGE";
 
         /// <inheritDoc/>
         public ICoverageReport Union(ICoverageReport coverageReport)

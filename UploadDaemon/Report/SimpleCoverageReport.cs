@@ -24,6 +24,9 @@ namespace UploadDaemon.Report
         /// <inheritDoc/>
         public string FileExtension => "simple";
 
+        /// <inheritDoc/>
+        public string UploadFormat => "SIMPLE";
+
         /// <summary>
         /// The names of the files for which this report contains coverage data.
         /// </summary>

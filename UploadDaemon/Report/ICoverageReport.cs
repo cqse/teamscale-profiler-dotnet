@@ -11,6 +11,11 @@
         bool IsEmpty { get; }
 
         /// <summary>
+        /// The Teamscale identifier for the format of this report.
+        /// </summary>
+        string UploadFormat { get; }
+
+        /// <summary>
         /// The file extension for this type of report.
         /// </summary>
         string FileExtension { get; }
