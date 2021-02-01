@@ -11,10 +11,10 @@ namespace UploadDaemons.Report
         [Test]
         public void ConvertsToReportFormat()
         {
-            SimpleCoverageReport report = new SimpleCoverageReport(new LineCoverageReport(new Dictionary<string, FileCoverage>() {
+            SimpleCoverageReport report = new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                 { "file1.cs", new FileCoverage((1,5),(7,10))},
                 { "file2.cs", new FileCoverage((3, 20)) }
-            }));
+            });
 
             Assert.That(report.ToString(), Is.EqualTo(@"# isMethodAccurate=true
 file1.cs

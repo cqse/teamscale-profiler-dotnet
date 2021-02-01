@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
-using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Report
 {
@@ -14,7 +13,7 @@ namespace UploadDaemon.Report
         {
             public class CoverageForPath
             {
-                public static CoverageForPath From(LineCoverageReport report)
+                public static CoverageForPath From(SimpleCoverageReport report)
                 {
                     return new CoverageForPath()
                     {
@@ -67,7 +66,7 @@ namespace UploadDaemon.Report
 
         public string FileExtension => "testwise";
 
-        public ICoverageReport UnionWith(ICoverageReport coverageReport)
+        public ICoverageReport Union(ICoverageReport coverageReport)
         {
             throw new System.NotImplementedException();
         }

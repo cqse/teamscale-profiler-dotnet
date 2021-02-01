@@ -18,6 +18,6 @@
         /// <summary>
         /// Returns a new report wth the union of the coverage data of both reports.
         /// </summary>
-        ICoverageReport UnionWith(ICoverageReport coverageReport);
+        ICoverageReport Union(ICoverageReport coverageReport);
     }
 }

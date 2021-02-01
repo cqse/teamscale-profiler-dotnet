@@ -40,7 +40,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
             Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
@@ -56,7 +56,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
             Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
@@ -71,7 +71,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Is.Empty);
         }
@@ -86,7 +86,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeLineCoverageReport(); });
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
             Assert.That(trace.CoveredMethods, Is.EquivalentTo(new[] { ("ProfilerGUI", 12345) }));
@@ -104,7 +104,7 @@ namespace UploadDaemon.Scanning
                 "Test=End:20200131_1109430456:SUCCESS",
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => new LineCoverageReport(new Dictionary<string, FileCoverage>() {
+            ICoverageReport report = traceFile.ToReport((Trace t) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                 { "file1.cs", new FileCoverage((10,20)) }
             }));
 
@@ -139,13 +139,13 @@ namespace UploadDaemon.Scanning
             ICoverageReport report = traceFile.ToReport((Trace t) => {
                 if (t.CoveredMethods.Contains(("ProfilerGUI", 12345)) && t.CoveredMethods.Count == 1)
                 {
-                    return new LineCoverageReport(new Dictionary<string, FileCoverage>() {
+                    return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file1.cs", new FileCoverage((1,2)) }
                     });
                 }
                 else if (t.CoveredMethods.Contains(("ProfilerGUI", 67890)) && t.CoveredMethods.Count == 1)
                 {
-                    return new LineCoverageReport(new Dictionary<string, FileCoverage>() {
+                    return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file2.cs", new FileCoverage((1,2)) }
                     });
                 }
@@ -174,9 +174,9 @@ namespace UploadDaemon.Scanning
 
         }
 
-        private LineCoverageReport SomeLineCoverageReport()
+        private SimpleCoverageReport SomeSimpleCoverageReport()
         {
-            return new LineCoverageReport(new Dictionary<string, FileCoverage>());
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
         }
     }
 }

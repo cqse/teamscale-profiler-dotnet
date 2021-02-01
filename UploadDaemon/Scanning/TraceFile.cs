@@ -57,7 +57,7 @@ namespace UploadDaemon.Scanning
             return matchingLine?.Groups[1]?.Value;
         }
 
-        public ICoverageReport ToReport(Func<Trace, LineCoverageReport> traceResolver)
+        public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver)
         {
             Dictionary<uint, string> assemblyTokens = new Dictionary<uint, string>();
 
@@ -137,7 +137,7 @@ namespace UploadDaemon.Scanning
             }
             else
             {
-                return new SimpleCoverageReport(traceResolver(noTestTrace));
+                return traceResolver(noTestTrace);
             }
         }
 

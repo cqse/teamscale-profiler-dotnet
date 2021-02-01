@@ -99,7 +99,7 @@ namespace UploadDaemon.Upload
             }
             else
             {
-                batch.AggregatedCoverageReport = batch.AggregatedCoverageReport.UnionWith(coverageReport);
+                batch.AggregatedCoverageReport = batch.AggregatedCoverageReport.Union(coverageReport);
             }
 
             batch.TraceFilePaths.Add(traceFilePath);

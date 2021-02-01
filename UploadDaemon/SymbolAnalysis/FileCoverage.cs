@@ -12,7 +12,9 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public HashSet<(uint, uint)> CoveredLineRanges { get; } = new HashSet<(uint, uint)>();
 
-        public FileCoverage(params (uint, uint)[] lineRanges)
+        public FileCoverage(params (uint, uint)[] lineRanges) : this((IEnumerable<(uint, uint)>)lineRanges) {}
+
+        public FileCoverage(IEnumerable<(uint, uint)> lineRanges)
         {
             foreach ((uint, uint) range in lineRanges)
             {

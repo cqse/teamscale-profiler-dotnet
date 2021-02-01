@@ -3,6 +3,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report;
 using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
@@ -22,7 +23,7 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public LineCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
 
@@ -53,12 +54,12 @@ namespace UploadDaemon.SymbolAnalysis
         ///
         /// Public for testing.
         /// </summary>
-        public static LineCoverageReport ConvertToLineCoverage(Trace trace, SymbolCollection symbolCollection,
+        public static SimpleCoverageReport ConvertToLineCoverage(Trace trace, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             logger.Debug("Converting trace {traceFile} to line coverage", trace);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
-            Dictionary<string, FileCoverage> lineCoverage = new Dictionary<string, FileCoverage>();
+            Dictionary<string, FileCoverage> lineCoverageByFile = new Dictionary<string, FileCoverage>();
             foreach ((string assemblyName, uint methodId) in trace.CoveredMethods)
             {
                 if (!assemblyPatterns.Matches(assemblyName))
@@ -99,12 +100,12 @@ namespace UploadDaemon.SymbolAnalysis
                 }
 
                 count.resolvedMethods += 1;
-                AddToLineCoverage(lineCoverage, sourceLocation);
+                AddToLineCoverage(lineCoverageByFile, sourceLocation);
             }
 
             LogResolutionFailures(trace, symbolDirectory, assemblyPatterns, resolutionCounts);
 
-            return new LineCoverageReport(lineCoverage);
+            return new SimpleCoverageReport(lineCoverageByFile);
         }
 
         private static void LogResolutionFailures(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)

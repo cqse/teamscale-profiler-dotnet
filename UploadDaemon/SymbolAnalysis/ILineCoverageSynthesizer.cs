@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report;
 using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
@@ -22,6 +23,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// Returns either the line coverage to upload or null in case the conversion resulted in an
         /// empty report.
         /// </summary>
-        LineCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns);
+        SimpleCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns);
     }
 }
