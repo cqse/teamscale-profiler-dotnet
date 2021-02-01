@@ -16,6 +16,6 @@ namespace UploadDaemon.Scanning
         /// <summary>
         /// The (method id, assembly name) pairs of the methods covered by this trace.
         /// </summary>
-        public List<(string, uint)> CoveredMethods = new List<(string, uint)>();
+        public IList<(string, uint)> CoveredMethods = new List<(string, uint)>();
     }
 }
