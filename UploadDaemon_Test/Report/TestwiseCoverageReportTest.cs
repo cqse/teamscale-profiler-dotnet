@@ -48,5 +48,53 @@ namespace UploadDaemon.Report
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files[0].FileName, Is.EqualTo("file1.cs"));
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files[0].CoveredLineRanges, Has.Count.EqualTo(2));
         }
+
+        [Test]
+        public void ExportsToReportFormat()
+        {
+            TestwiseCoverageReport report = new TestwiseCoverageReport(
+                new Test("Test/NotExecuted()"),
+                new Test("Test/SomeTest()",
+                    new File("Test/Code/File1.cs", (20,24), (26,29)),
+                    new File("Test/Code/Other/File2.cs", (26,28)))
+                {
+                    Duration = 0.025,
+                    Result = "PASSED",
+                    Content = "43d743a8ef4389bc5",
+                    Message = "Awesome!"
+                }
+            );
+
+            Assert.That(report.ToString(), Is.EqualTo(@"{
+  ""tests"": [
+    {
+                ""uniformPath"": ""Test/NotExecuted()"",
+                ""paths"": []
+    },
+    {
+                ""uniformPath"": ""Test/SomeTest()"",
+      ""duration"": 0.025,
+      ""result"": ""PASSED"",
+      ""content"": ""43d743a8ef4389bc5"",
+      ""message"": ""Awesome!"",
+      ""paths"": [
+        {
+          ""path"": """",
+          ""files"": [
+            {
+              ""fileName"": ""Test/Code/File1.cs"",
+              ""coveredLines"": ""20-24,26-29""
+            },
+            {
+              ""fileName"": ""Test/Code/Other/File2.cs"",
+              ""coveredLines"": ""26-28""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}".Replace(" ", "").Replace("\r\n", "")));
+        }
     }
 }

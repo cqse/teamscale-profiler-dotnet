@@ -8,6 +8,7 @@ namespace UploadDaemon.Report.Testwise
     /// <summary>
     /// A Teamscale testwise coverage report.
     /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
     public class TestwiseCoverageReport : ICoverageReport
     {
         [JsonProperty(PropertyName = "tests")]
@@ -56,7 +57,7 @@ namespace UploadDaemon.Report.Testwise
         /// </summary>
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this);
+            return JsonConvert.SerializeObject(this, new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore });
         }
     }
 }

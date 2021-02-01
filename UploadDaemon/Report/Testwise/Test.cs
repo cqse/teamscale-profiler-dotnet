@@ -19,11 +19,11 @@ namespace UploadDaemon.Report.Testwise
         [JsonProperty(PropertyName = "result")]
         public string Result;
 
-        [JsonProperty(PropertyName = "message")]
-        public string Message;
-
         [JsonProperty(PropertyName = "content")]
         public string Content;
+
+        [JsonProperty(PropertyName = "message")]
+        public string Message;
 
         [JsonProperty(PropertyName = "paths")]
         public IList<CoverageForPath> CoverageByPath;
@@ -31,10 +31,17 @@ namespace UploadDaemon.Report.Testwise
         public Test(string uniformPath, params File[] coverageByFile)
         {
             UniformPath = uniformPath;
-            CoverageByPath = new List<CoverageForPath>()
+            if (coverageByFile.Length > 0)
             {
-                new CoverageForPath(coverageByFile)
-            };
+                CoverageByPath = new List<CoverageForPath>()
+                {
+                    new CoverageForPath(coverageByFile)
+                };
+            }
+            else
+            {
+                CoverageByPath = new List<CoverageForPath>();
+            }
         }
 
         public Test(string uniformPath, SimpleCoverageReport report) : this(uniformPath, report.FileNames.Select(fileName => new File(fileName, report[fileName])).ToArray()) { }

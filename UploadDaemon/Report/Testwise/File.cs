@@ -7,6 +7,7 @@ namespace UploadDaemon.Report.Testwise
     /// <summary>
     /// The coverage in a specific file in a <see cref="TestwiseCoverageReport"/>.
     /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
     public class File : FileCoverage
     {
         [JsonProperty(PropertyName = "fileName")]
