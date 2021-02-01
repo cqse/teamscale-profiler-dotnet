@@ -30,7 +30,20 @@ namespace UploadDaemon.Report.Testwise
                 throw new NotSupportedException();
             }
 
-            return new TestwiseCoverageReport(new[] { Tests, other.Tests }.SelectMany(tests => tests).ToArray());
+            IDictionary<string, Test> mergedCoverage = new Dictionary<string, Test>();
+            foreach(Test test in new[] { Tests, other.Tests }.SelectMany(tests => tests))
+            {
+                if (mergedCoverage.ContainsKey(test.UniformPath))
+                {
+                    mergedCoverage[test.UniformPath] = mergedCoverage[test.UniformPath].Union(test);
+                }
+                else
+                {
+                    mergedCoverage[test.UniformPath] = test;
+                }
+            }
+
+            return new TestwiseCoverageReport(mergedCoverage.Values.ToArray());
         }
 
         /// <summary>

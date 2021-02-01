@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Report.Testwise
 {
@@ -37,5 +38,21 @@ namespace UploadDaemon.Report.Testwise
         }
 
         public Test(string uniformPath, SimpleCoverageReport report) : this(uniformPath, report.FileNames.Select(fileName => new File(fileName, report[fileName])).ToArray()) { }
+
+        public Test Union(Test other)
+        {
+            return new Test(UniformPath, (SimpleCoverageReport)ToSimpleCoverageReport().Union(other.ToSimpleCoverageReport()))
+            {
+                Duration = Duration,
+                Result = Result,
+                Message = Message,
+                Content = Content,
+            };
+        }
+
+        public SimpleCoverageReport ToSimpleCoverageReport()
+        {
+            return new SimpleCoverageReport(CoverageByPath.First().Files.ToDictionary(file => file.FileName, file => (FileCoverage)file));
+        }
     }
 }
