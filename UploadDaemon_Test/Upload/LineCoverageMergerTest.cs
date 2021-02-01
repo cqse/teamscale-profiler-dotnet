@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
-using UploadDaemon.Upload;
 
 namespace UploadDaemon.Upload
 {
