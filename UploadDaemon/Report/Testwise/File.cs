@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Linq;
-using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Report.Simple;
 
 namespace UploadDaemon.Report.Testwise
 {

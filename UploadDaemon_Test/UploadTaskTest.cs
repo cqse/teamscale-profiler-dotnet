@@ -1,4 +1,3 @@
-using UploadDaemon;
 using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -7,11 +6,12 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
+using UploadDaemon.Configuration;
+using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
+using UploadDaemon.Scanning;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
-using UploadDaemon.Configuration;
-using UploadDaemon.Scanning;
-using UploadDaemon.Report;
 
 namespace UploadDaemon
 {

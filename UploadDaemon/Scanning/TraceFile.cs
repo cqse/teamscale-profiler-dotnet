@@ -5,8 +5,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
-using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {

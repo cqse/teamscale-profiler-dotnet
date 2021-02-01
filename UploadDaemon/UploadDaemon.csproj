@@ -107,7 +107,7 @@
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
     <Compile Include="Report\ICoverageReport.cs" />
-    <Compile Include="Report\SimpleCoverageReport.cs" />
+    <Compile Include="Report\Simple\SimpleCoverageReport.cs" />
     <Compile Include="Report\Testwise\CoverageForPath.cs" />
     <Compile Include="Report\Testwise\File.cs" />
     <Compile Include="Report\Testwise\Test.cs" />
@@ -116,7 +116,7 @@
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
     <Compile Include="Upload\MessageFormatter.cs" />
-    <Compile Include="SymbolAnalysis\FileCoverage.cs" />
+    <Compile Include="Report\Simple\FileCoverage.cs" />
     <Compile Include="Archiving\PurgeArchiveTask.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtils.cs" />

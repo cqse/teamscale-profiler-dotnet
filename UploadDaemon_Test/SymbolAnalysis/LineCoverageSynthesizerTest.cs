@@ -1,11 +1,11 @@
-﻿using NUnit.Framework;
+﻿using Cqse.ConQAT.Dotnet.Bummer;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Cqse.ConQAT.Dotnet.Bummer;
-using UploadDaemon.Configuration;
-using UploadDaemon.Scanning;
 using System.Linq;
-using UploadDaemon.Report;
+using UploadDaemon.Configuration;
+using UploadDaemon.Report.Simple;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {

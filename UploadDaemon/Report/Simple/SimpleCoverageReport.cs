@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UploadDaemon.SymbolAnalysis;
 
-namespace UploadDaemon.Report
+namespace UploadDaemon.Report.Simple
 {
     /// <summary>
     /// A Teamscale simple coverage report.

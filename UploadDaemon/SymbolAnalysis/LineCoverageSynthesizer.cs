@@ -3,7 +3,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using UploadDaemon.Configuration;
-using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis

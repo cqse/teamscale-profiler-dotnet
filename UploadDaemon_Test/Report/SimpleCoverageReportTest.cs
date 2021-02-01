@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
-using UploadDaemon.Report;
-using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Report.Simple;
 
 namespace UploadDaemons.Report
 {

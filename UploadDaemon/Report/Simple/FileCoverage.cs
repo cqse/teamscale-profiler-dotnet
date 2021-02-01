@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UploadDaemon.SymbolAnalysis
+namespace UploadDaemon.Report.Simple
 {
     /// <summary>
     /// The line coverage collected for one file.
