@@ -85,10 +85,7 @@ namespace UploadDaemon.Scanning
                         traceStart = ParseProfilerDateTimeString(value);
                         break;
                     case "Info":
-                        if (value.StartsWith("TIA enabled"))
-                        {
-                            isTestwiseTrace = true;
-                        }
+                        isTestwiseTrace |= value.StartsWith("TIA enabled");
                         break;
                     case "Assembly":
                         Match assemblyMatch = AssemblyLineRegex.Match(line);
