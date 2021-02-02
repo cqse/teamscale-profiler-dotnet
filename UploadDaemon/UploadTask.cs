@@ -11,6 +11,7 @@ using UploadDaemon.Configuration;
 using UploadDaemon.Scanning;
 using UploadDaemon.Upload;
 using UploadDaemon.Report;
+using UploadDaemon.Report.Testwise;
 
 namespace UploadDaemon
 {
@@ -162,6 +163,18 @@ namespace UploadDaemon
                 logger.Debug("Merging line coverage from {traceFile} into previous line coverage", trace.FilePath);
                 coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, coverageReport);
                 return;
+            }
+
+            if (coverageReport is TestwiseCoverageReport)
+            {
+                var testwiseCoverageReport = coverageReport as TestwiseCoverageReport;
+                string[] missingTests = archive.KnownTestCases.Except(testwiseCoverageReport.Tests.Select(test => test.UniformPath)).ToArray();
+                foreach (string missingTest in missingTests)
+                {
+                    testwiseCoverageReport.Tests.Add(new Test(missingTest));
+                }
+
+                archive.KnownTestCases = testwiseCoverageReport.Tests.Select(test => test.UniformPath).ToArray();
             }
 
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
