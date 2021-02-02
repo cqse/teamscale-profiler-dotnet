@@ -131,6 +131,10 @@ namespace UploadDaemon.Scanning
                         currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
                         break;
                     case "Stopped":
+                        if (currentTestTrace.IsEmpty)
+                        {
+                            break;
+                        }
                         currentTestEnd = ParseProfilerDateTimeString(value);
                         currentTestResult = "SKIPPED";
                         duration = currentTestEnd.Subtract(currentTestStart);

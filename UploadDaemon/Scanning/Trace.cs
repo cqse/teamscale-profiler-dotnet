@@ -17,5 +17,10 @@ namespace UploadDaemon.Scanning
         /// The (method id, assembly name) pairs of the methods covered by this trace.
         /// </summary>
         public IList<(string, uint)> CoveredMethods = new List<(string, uint)>();
+
+        /// <summary>
+        /// Whether this trace is empty.
+        /// </summary>
+        public bool IsEmpty => CoveredMethods.Count == 0;
     }
 }
