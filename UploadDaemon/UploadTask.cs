@@ -97,7 +97,7 @@ namespace UploadDaemon
             if (config.ArchiveLineCoverage)
             {
                 long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                archive.ArchiveLineCoverage($"merged_{timestamp}.{report.FileExtension}", report.ToString());
+                archive.ArchiveCoverageReport($"merged_{timestamp}", report);
             }
 
             if (RunSync(batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp)))
@@ -155,7 +155,7 @@ namespace UploadDaemon
 
             if (config.ArchiveLineCoverage)
             {
-                archive.ArchiveLineCoverage(Path.GetFileName(trace.FilePath) + "." + coverageReport.FileExtension, coverageReport.ToString());
+                archive.ArchiveCoverageReport(Path.GetFileName(trace.FilePath), coverageReport);
             }
 
             if (processConfig.MergeLineCoverage)

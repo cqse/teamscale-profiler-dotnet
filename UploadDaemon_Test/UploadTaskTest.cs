@@ -151,7 +151,7 @@ Inlined=1:33555646:100678050" },
 
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(archiveLineCoverageConfig);
 
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-line-coverage\coverage_1_1.txt.simple");
+            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-coverage\coverage_1_1.txt.simple");
         }
 
         [Test]
