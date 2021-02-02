@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UploadDaemon.Report.Simple;
@@ -8,16 +9,30 @@ namespace UploadDaemon.Report.Testwise
     /// <summary>
     /// A test in a <see cref="TestwiseCoverageReport"/>.
     /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public class Test
     {
         [JsonProperty(PropertyName = "uniformPath")]
         public string UniformPath;
 
+        public DateTime Start;
+
+        public DateTime End;
+
         [JsonProperty(PropertyName = "duration")]
-        public double Duration;
+        public double Duration
+        {
+            get => End.Subtract(Start).TotalSeconds;
+            set
+            {
+                // We cannot reconstruct the timestamps from the report format
+                End = DateTime.Today;
+                Start = End.Subtract(TimeSpan.FromSeconds(value));
+            }
+        }
 
         [JsonProperty(PropertyName = "result")]
-        public string Result;
+        public string Result = "SKIPPED";
 
         [JsonProperty(PropertyName = "content")]
         public string Content;
@@ -50,8 +65,9 @@ namespace UploadDaemon.Report.Testwise
         {
             return new Test(UniformPath, (SimpleCoverageReport)ToSimpleCoverageReport().Union(other.ToSimpleCoverageReport()))
             {
-                Duration = Duration,
-                Result = Result,
+                Start = new DateTime(Math.Min(Start.Ticks, other.Start.Ticks)),
+                End = new DateTime(Math.Max(End.Ticks, other.End.Ticks)),
+                Result = Result.Equals("SKIPPED") ? other.Result : Result,
                 Message = Message,
                 Content = Content,
             };

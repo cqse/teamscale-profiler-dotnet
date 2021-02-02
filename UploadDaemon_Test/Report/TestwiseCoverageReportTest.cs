@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using UploadDaemon.Report.Testwise;
 
 namespace UploadDaemon.Report
@@ -7,7 +8,7 @@ namespace UploadDaemon.Report
     public class TestwiseCoverageReportTest
     {
         [Test]
-        public void MergesReportsWithDifferentTests()
+        public void MergesDifferentTests()
         {
             TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (10,20))));
             TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test("Test2", new File("file1.cs", (10,20))));
@@ -20,7 +21,43 @@ namespace UploadDaemon.Report
         }
 
         [Test]
-        public void MergesReportsWithSameTestsButDifferentFiles()
+        public void MergesSameTestsRuntime()
+        {
+            DateTime now = DateTime.Now;
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(10)), End = now.Subtract(TimeSpan.FromSeconds(5)) });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test("Test1", new File("file2.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(7)), End = now.Subtract(TimeSpan.FromSeconds(1)) });
+
+            TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
+
+            mergedReport = report2.Union(report1) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void MergesSameTestsResult()
+        {
+            DateTime now = DateTime.Now;
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test("Test1", new File("file2.cs", (10, 20))) { Result = "SKIPPED" });
+
+            TestwiseCoverageReport mergedReport = report2.Union(report1) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
+
+            mergedReport = report1.Union(report2) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
+        }
+
+        [Test]
+        public void MergesSameTestsCoverageInDifferentFiles()
         {
             TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (10, 20))));
             TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test("Test1", new File("file2.cs", (10, 20))));
@@ -35,7 +72,7 @@ namespace UploadDaemon.Report
         }
 
         [Test]
-        public void MergesReportsWithSameTestsAndSameFiles()
+        public void MergesSameTestsCoverageInSameFiles()
         {
             TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (10, 20))));
             TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test("Test1", new File("file1.cs", (30, 40))));
@@ -58,43 +95,45 @@ namespace UploadDaemon.Report
                     new File("Test/Code/File1.cs", (20,24), (26,29)),
                     new File("Test/Code/Other/File2.cs", (26,28)))
                 {
-                    Duration = 0.025,
+                    Duration = 5,
                     Result = "PASSED",
                     Content = "43d743a8ef4389bc5",
                     Message = "Awesome!"
                 }
             );
 
-            Assert.That(report.ToString(), Is.EqualTo(@"{
-  ""tests"": [
-    {
-                ""uniformPath"": ""Test/NotExecuted()"",
-                ""paths"": []
-    },
-    {
-                ""uniformPath"": ""Test/SomeTest()"",
-      ""duration"": 0.025,
-      ""result"": ""PASSED"",
-      ""content"": ""43d743a8ef4389bc5"",
-      ""message"": ""Awesome!"",
-      ""paths"": [
-        {
-          ""path"": """",
-          ""files"": [
+            Assert.That(report.ToString(), Is.EqualTo(@"
             {
-              ""fileName"": ""Test/Code/File1.cs"",
-              ""coveredLines"": ""20-24,26-29""
-            },
-            {
-              ""fileName"": ""Test/Code/Other/File2.cs"",
-              ""coveredLines"": ""26-28""
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}".Replace(" ", "").Replace("\r\n", "")));
+                ""tests"": [
+                    {
+                        ""uniformPath"": ""Test/NotExecuted()"",
+                        ""result"": ""SKIPPED"",
+                        ""paths"": []
+                    },
+                    {
+                        ""uniformPath"": ""Test/SomeTest()"",
+                        ""result"": ""PASSED"",
+                        ""content"": ""43d743a8ef4389bc5"",
+                        ""message"": ""Awesome!"",
+                        ""paths"": [
+                            {
+                                ""path"": """",
+                                ""files"": [
+                                    {
+                                        ""fileName"": ""Test/Code/File1.cs"",
+                                        ""coveredLines"": ""20-24,26-29""
+                                    },
+                                    {
+                                        ""fileName"": ""Test/Code/Other/File2.cs"",
+                                        ""coveredLines"": ""26-28""
+                                    }
+                                ]
+                            }
+                        ],
+                        ""duration"": 5.0
+                    }
+                ]
+            }".Replace(" ", "").Replace("\r\n", "")));
         }
     }
 }

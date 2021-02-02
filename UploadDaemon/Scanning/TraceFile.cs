@@ -70,7 +70,6 @@ namespace UploadDaemon.Scanning
             DateTime currentTestStart = default;
             Trace currentTestTrace = noTestTrace;
             DateTime currentTestEnd;
-            TimeSpan duration;
             string currentTestResult;
             IList<Test> tests = new List<Test>();
 
@@ -113,10 +112,10 @@ namespace UploadDaemon.Scanning
 
                             currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
                             currentTestResult = testCaseMatch.Groups[3].Value;
-                            duration = currentTestEnd.Subtract(currentTestStart);
                             tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
-                                Duration = duration.TotalSeconds,
+                                Start = currentTestStart,
+                                End = currentTestEnd,
                                 Result = currentTestResult
                             });
                             currentTestName = noTestName;
@@ -147,10 +146,10 @@ namespace UploadDaemon.Scanning
                         }
                         currentTestEnd = ParseProfilerDateTimeString(value);
                         currentTestResult = "SKIPPED";
-                        duration = currentTestEnd.Subtract(currentTestStart);
                         tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                         {
-                            Duration = duration.TotalSeconds,
+                            Start = currentTestStart,
+                            End = currentTestEnd,
                             Result = currentTestResult
                         });
                         currentTestTrace = noTestTrace;
