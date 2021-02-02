@@ -54,7 +54,7 @@ namespace UploadDaemon.Archiving
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
-            this.lineCoverageDirectory = Path.Combine(traceDirectory, "converted-coverage");
+            this.coverageReportDirectory = Path.Combine(traceDirectory, "converted-coverage");
             this.knownTestCasesFile = Path.Combine(traceDirectory, "knownTestCases.txt");
         }
 
