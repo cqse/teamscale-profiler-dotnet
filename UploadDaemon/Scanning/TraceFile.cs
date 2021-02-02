@@ -65,11 +65,14 @@ namespace UploadDaemon.Scanning
             bool isTestwiseTrace = false;
             Trace noTestTrace = new Trace();
             string currentTestName = "";
-            DateTime currentTestStart = DateTime.Now;
+            DateTime currentTestStart = default;
             Trace currentTestTrace = noTestTrace;
+            DateTime currentTestEnd;
+            TimeSpan duration;
+            string currentTestResult;
             IList<Test> tests = new List<Test>();
 
-            foreach(string line in lines)
+            foreach (string line in lines)
             {
                 string[] keyValuePair = line.Split(new[] { '=' }, count:2);
                 string key = keyValuePair[0];
@@ -103,15 +106,15 @@ namespace UploadDaemon.Scanning
                                 throw new InvalidTraceFileException($"encountered end of test that did not start: {line}");
                             }
 
-                            DateTime currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
-                            string currentTestResult = testCaseMatch.Groups[3].Value;
-                            TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
+                            currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
+                            currentTestResult = testCaseMatch.Groups[3].Value;
+                            duration = currentTestEnd.Subtract(currentTestStart);
                             tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
                                 Duration = duration.TotalSeconds,
                                 Result = currentTestResult
                             });
-                            currentTestTrace = noTestTrace; // todo reset to no-test test case
+                            currentTestTrace = noTestTrace;
                         }
                         break;
                     case "Inlined":
@@ -126,6 +129,17 @@ namespace UploadDaemon.Scanning
                             continue;
                         }
                         currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
+                        break;
+                    case "Stopped":
+                        currentTestEnd = ParseProfilerDateTimeString(value);
+                        currentTestResult = "SKIPPED";
+                        duration = currentTestEnd.Subtract(currentTestStart);
+                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
+                        {
+                            Duration = duration.TotalSeconds,
+                            Result = currentTestResult
+                        });
+                        currentTestTrace = noTestTrace;
                         break;
                 }
             }

@@ -120,6 +120,7 @@ namespace UploadDaemon.Scanning
                 "Test=Start:20200131_1109420123:TestCase1",
                 "Inlined=2:12345",
                 "Test=End:20200131_1109430456:SUCCESS",
+                "Stopped=20200131_1109440000"
             });
 
             ICoverageReport report = traceFile.ToReport((Trace t) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
@@ -152,6 +153,7 @@ namespace UploadDaemon.Scanning
                 "Test=Start:20200131_1109440000:TestCase2",
                 "Inlined=2:67890",
                 "Test=End:20200131_1109460000:FAILURE",
+                "Stopped=20200131_1109440000"
             });
 
             ICoverageReport report = traceFile.ToReport((Trace t) => {
@@ -199,6 +201,7 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Inlined=2:12345",
                 "Test=End:20200131_1109430456:SUCCESS",
+                "Stopped=20200131_1109440000"
             });
 
             Exception exception = Assert.Throws<InvalidTraceFileException>(() =>
@@ -207,6 +210,30 @@ namespace UploadDaemon.Scanning
             });
 
             Assert.That(exception.Message, Contains.Substring("encountered end of test that did not start"));
+        }
+
+        [Test]
+        public void ConsidersTestWithoutEnd()
+        {
+            TraceFile traceFile = new TraceFile(":path:", new string[]
+            {
+                "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Test=Start:20200131_1109420000:TestCase1",
+                "Inlined=2:12345",
+                "Stopped=20200131_1109440000"
+            });
+            Trace trace = null;
+
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+
+            Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
+            TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
+            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests[0].UniformPath, Is.EqualTo("TestCase1"));
+            Assert.That(testwiseReport.Tests[0].Result, Is.EqualTo("SKIPPED"));
+            Assert.That(testwiseReport.Tests[0].Duration, Is.EqualTo(2));
+            Assert.That(trace.CoveredMethods, Contains.Item(("ProfilerGUI", 12345)));
         }
 
         private SimpleCoverageReport SomeSimpleCoverageReport()
