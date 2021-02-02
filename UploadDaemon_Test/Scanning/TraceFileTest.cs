@@ -66,6 +66,23 @@ namespace UploadDaemon.Scanning
         }
 
         [Test]
+        public void SupportsInlinedJittedAndCalledEvents()
+        {
+            TraceFile traceFile = new TraceFile(":path:", new string[] {
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:123",
+                "Jitted=2:456",
+                "Called=2:789",
+            });
+            Trace trace = null;
+
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+
+            Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
+            Assert.That(trace.CoveredMethods.Select(m => m.Item2), Is.EquivalentTo(new[] { 123, 456, 789 }));
+        }
+
+        [Test]
         public void IgnoresMethodReferenceFromUnknownAssembly()
         {
             TraceFile traceFile = new TraceFile(":path:", new string[] {
