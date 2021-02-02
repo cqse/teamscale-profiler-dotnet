@@ -119,7 +119,7 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Test=Start:20200131_1109420123:TestCase1",
                 "Inlined=2:12345",
-                "Test=End:20200131_1109430456:SUCCESS",
+                "Test=End:20200131_1109430456:PASSED",
                 "Stopped=20200131_1109440000"
             });
 
@@ -132,7 +132,7 @@ namespace UploadDaemon.Scanning
             Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
             Assert.That(testwiseReport.Tests.First().UniformPath, Is.EqualTo("TestCase1"));
             Assert.That(testwiseReport.Tests.First().Duration, Is.EqualTo(1.333d));
-            Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("SUCCESS"));
+            Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("PASSED"));
             Assert.That(testwiseReport.Tests.First().CoverageByPath, Has.Count.EqualTo(1));
             Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Path, Is.EqualTo(string.Empty));
             Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Files, Has.Count.EqualTo(1));
@@ -149,7 +149,7 @@ namespace UploadDaemon.Scanning
                 "Assembly=ProfilerGUI:2 Version:1.0.0.0",
                 "Test=Start:20200131_1109420000:TestCase1",
                 "Inlined=2:12345",
-                "Test=End:20200131_1109430000:SUCCESS",
+                "Test=End:20200131_1109430000:PASSED",
                 "Test=Start:20200131_1109440000:TestCase2",
                 "Inlined=2:67890",
                 "Test=End:20200131_1109460000:FAILURE",
@@ -178,7 +178,7 @@ namespace UploadDaemon.Scanning
             Assert.That(testwiseReport.Tests, Has.Count.EqualTo(2));
             Assert.That(testwiseReport.Tests.First().UniformPath, Is.EqualTo("TestCase1"));
             Assert.That(testwiseReport.Tests.First().Duration, Is.EqualTo(1));
-            Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("SUCCESS"));
+            Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("PASSED"));
             Assert.That(testwiseReport.Tests.First().CoverageByPath, Has.Count.EqualTo(1));
             Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Path, Is.EqualTo(string.Empty));
             Assert.That(testwiseReport.Tests.First().CoverageByPath.First().Files, Has.Count.EqualTo(1));
