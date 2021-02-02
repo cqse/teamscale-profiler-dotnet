@@ -5,7 +5,6 @@ using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
-using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {
@@ -189,8 +188,25 @@ namespace UploadDaemon.Scanning
             Assert.That(testwiseReport.Tests[1].CoverageByPath.First().Path, Is.EqualTo(string.Empty));
             Assert.That(testwiseReport.Tests[1].CoverageByPath.First().Files, Has.Count.EqualTo(1));
             Assert.That(testwiseReport.Tests[1].CoverageByPath.First().Files.First().FileName, Is.EqualTo("file2.cs"));
+        }
 
+        [Test]
+        public void ThrowsOnTestWithoutStart()
+        {
+            TraceFile traceFile = new TraceFile(":path:", new string[]
+            {
+                "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
+                "Assembly=ProfilerGUI:2 Version:1.0.0.0",
+                "Inlined=2:12345",
+                "Test=End:20200131_1109430456:SUCCESS",
+            });
 
+            Exception exception = Assert.Throws<InvalidTraceFileException>(() =>
+            {
+                traceFile.ToReport((Trace t) => SomeSimpleCoverageReport());
+            });
+
+            Assert.That(exception.Message, Contains.Substring("encountered end of test that did not start"));
         }
 
         private SimpleCoverageReport SomeSimpleCoverageReport()

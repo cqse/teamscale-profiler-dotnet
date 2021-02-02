@@ -77,10 +77,6 @@ namespace UploadDaemon.Scanning
 
                 switch (key)
                 {
-                    case "Started":
-                        DateTime traceFileStart = ParseProfilerDateTimeString(value);
-                        currentTestStart = traceFileStart;
-                        break;
                     case "Info":
                         if (value.StartsWith("TIA enabled"))
                         {
@@ -102,6 +98,11 @@ namespace UploadDaemon.Scanning
                         }
                         else if (startOrEnd.Equals("End"))
                         {
+                            if (currentTestTrace == noTestTrace)
+                            {
+                                throw new InvalidTraceFileException($"encountered end of test that did not start: {line}");
+                            }
+
                             DateTime currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
                             string currentTestResult = testCaseMatch.Groups[3].Value;
                             TimeSpan duration = currentTestEnd.Subtract(currentTestStart);
