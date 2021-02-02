@@ -236,6 +236,41 @@ namespace UploadDaemon.Scanning
             Assert.That(trace.CoveredMethods, Contains.Item(("ProfilerGUI", 12345)));
         }
 
+        [Test]
+        public void ConsidersNoTestTrace()
+        {
+            TraceFile traceFile = new TraceFile(":path:", new string[]
+            {
+                "Started=20200131_1109400000",
+                "Info=TIA enabled. SUB: tcp://127.0.0.1:7145 REQ: tcp://127.0.0.1:7146",
+                "Assembly=A:2 Version:1.0.0.0",
+                "Inlined=2:123",
+                "Test=Start:20200131_1109420000:TestCase1",
+                "Inlined=2:12345",
+                "Test=End:20200131_1109430000:PASSED",
+                "Inlined=2:456",
+                "Test=Start:20200131_1109440000:TestCase2",
+                "Inlined=2:12345",
+                "Test=End:20200131_1109450000:PASSED",
+                "Inlined=2:789",
+                "Stopped=20200131_1109460000"
+            });
+            Trace trace = null;
+
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+
+            Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
+            TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
+            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(3));
+            Assert.That(testwiseReport.Tests[2].UniformPath, Is.EqualTo("No Test"));
+            Assert.That(testwiseReport.Tests[2].Result, Is.EqualTo("SKIPPED"));
+            Assert.That(testwiseReport.Tests[2].Duration, Is.EqualTo(6));
+            Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
+            Assert.That(trace.CoveredMethods, Contains.Item(("A", 123)));
+            Assert.That(trace.CoveredMethods, Contains.Item(("A", 456)));
+            Assert.That(trace.CoveredMethods, Contains.Item(("A", 789)));
+        }
+
         private SimpleCoverageReport SomeSimpleCoverageReport()
         {
             return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());

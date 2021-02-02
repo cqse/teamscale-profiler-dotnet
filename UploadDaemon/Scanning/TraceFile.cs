@@ -62,9 +62,11 @@ namespace UploadDaemon.Scanning
         {
             Dictionary<uint, string> assemblyTokens = new Dictionary<uint, string>();
 
+            DateTime traceStart = default;
             bool isTestwiseTrace = false;
             Trace noTestTrace = new Trace();
-            string currentTestName = "";
+            string noTestName = "No Test";
+            string currentTestName = noTestName;
             DateTime currentTestStart = default;
             Trace currentTestTrace = noTestTrace;
             DateTime currentTestEnd;
@@ -80,6 +82,9 @@ namespace UploadDaemon.Scanning
 
                 switch (key)
                 {
+                    case "Started":
+                        traceStart = ParseProfilerDateTimeString(value);
+                        break;
                     case "Info":
                         if (value.StartsWith("TIA enabled"))
                         {
@@ -114,6 +119,7 @@ namespace UploadDaemon.Scanning
                                 Duration = duration.TotalSeconds,
                                 Result = currentTestResult
                             });
+                            currentTestName = noTestName;
                             currentTestTrace = noTestTrace;
                         }
                         break;
@@ -134,6 +140,10 @@ namespace UploadDaemon.Scanning
                         if (currentTestTrace.IsEmpty)
                         {
                             break;
+                        }
+                        if (currentTestTrace == noTestTrace)
+                        {
+                            currentTestStart = traceStart;
                         }
                         currentTestEnd = ParseProfilerDateTimeString(value);
                         currentTestResult = "SKIPPED";
