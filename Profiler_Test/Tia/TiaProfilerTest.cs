@@ -208,8 +208,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
                     profilerIpc().StartTest(testName);
                     Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
                     this.Input(testName);
-                    Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
                     profilerIpc().EndTest(ETestExecutionResult.PASSED);
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
                 }
 
                 return this;
