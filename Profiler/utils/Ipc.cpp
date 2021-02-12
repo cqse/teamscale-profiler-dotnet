@@ -9,11 +9,12 @@
 // ZMQ strings are not zero-terminated, let's terminate these
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
-Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback)
+Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
 	this->testStartCallback = testStartCallback;
 	this->testEndCallback = testEndCallback;
+	this->errorCallback = errorCallback;
 	this->zmqTimeout = IPC_TIMEOUT_MS;
 	this->zmqContext = zmq_ctx_new();
 
@@ -25,7 +26,9 @@ Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std
 Ipc::~Ipc()
 {
 	this->shutdown = true;
-	this->handlerThread->join();
+	if (this->handlerThread->joinable()) {
+		this->handlerThread->join();
+	}
 
 	this->request("profiler_disconnected");
 	if (this->zmqRequestSocket != NULL) {
@@ -39,7 +42,12 @@ void Ipc::handlerThreadLoop() {
 	this->zmqSubscribeSocket = zmq_socket(this->zmqContext, ZMQ_SUB);
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "test:", 0);
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
-	zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str());
+	if (!!zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str())) {
+		zmq_close(this->zmqSubscribeSocket);
+		this->zmqSubscribeSocket = NULL;
+		logError("Failed connecting to subscribe socket");
+		return;
+	}
 
 	/// Alternative way to read messages
 	//char buffer[IPC_BUFFER_SLOTS][IPC_BUFFER_SIZE];
@@ -97,7 +105,9 @@ std::string Ipc::getCurrentTestName()
 
 std::string Ipc::request(std::string message)
 {
-	initRequestSocket();
+	if (!initRequestSocket()) {
+		return "";
+	}
 
 	char buffer[IPC_BUFFER_SIZE];
 	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
@@ -112,12 +122,24 @@ std::string Ipc::request(std::string message)
 	return buffer;
 }
 
-void Ipc::initRequestSocket() {
+bool Ipc::initRequestSocket() {
 	if (this->zmqRequestSocket == NULL) {
 		this->zmqRequestSocket = zmq_socket(this->zmqContext, ZMQ_REQ);
 		zmq_setsockopt(this->zmqRequestSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
 		zmq_setsockopt(this->zmqRequestSocket, ZMQ_LINGER, &zmqTimeout, sizeof(zmqTimeout));
-		zmq_connect(this->zmqRequestSocket, this->config->getTiaRequestSocket().c_str());
+		if (!!zmq_connect(this->zmqRequestSocket, this->config->getTiaRequestSocket().c_str())) {
+			zmq_close(this->zmqRequestSocket);
+			this->zmqRequestSocket = NULL;
+			logError("Failed connecting to request socket");
+			return false;
+		}
 	}
+
+	return true;
+}
+
+void Ipc::logError(std::string message) {
+	std::string error = message + " (ZMQ error: " + zmq_strerror(zmq_errno()) + ")";
+	errorCallback(error);
 }
 #endif
