@@ -128,6 +128,11 @@ namespace UploadDaemon.Configuration
             public string VersionPrefix { get; set; }
 
             /// <summary>
+            /// Prefix of the test path in case of testwise coverage.
+            /// </summary>
+            public string TestPathPrefix { get; set; }
+
+            /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
             /// </summary>
             public string PdbDirectory { get; set; }

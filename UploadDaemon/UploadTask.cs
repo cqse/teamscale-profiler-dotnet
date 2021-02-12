@@ -165,9 +165,19 @@ namespace UploadDaemon
                 return;
             }
 
+            string type = "line";
             if (coverageReport is TestwiseCoverageReport)
             {
+                type = "testwise";
                 var testwiseCoverageReport = coverageReport as TestwiseCoverageReport;
+                if (!string.IsNullOrEmpty(processConfig.TestPathPrefix))
+                {
+                    foreach (Test test in testwiseCoverageReport.Tests)
+                    {
+                        test.UniformPath = processConfig.TestPathPrefix + test.UniformPath;
+                    }
+                }
+
                 string[] missingTests = archive.KnownTestCases.Except(testwiseCoverageReport.Tests.Select(test => test.UniformPath)).ToArray();
                 foreach (string missingTest in missingTests)
                 {
@@ -175,16 +185,17 @@ namespace UploadDaemon
                 }
 
                 archive.KnownTestCases = testwiseCoverageReport.Tests.Select(test => test.UniformPath).ToArray();
+
             }
 
-            logger.Debug("Uploading line coverage from {traceFile} to {upload}", trace.FilePath, upload.Describe());
+            logger.Debug("Uploading {type} coverage from {traceFile} to {upload}", type, trace.FilePath, upload.Describe());
             if (RunSync(upload.UploadLineCoverageAsync(trace.FilePath, coverageReport, timestampOrRevision)))
             {
                 archive.ArchiveUploadedFile(trace.FilePath);
             }
             else
             {
-                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", trace.FilePath, upload.Describe());
+                logger.Error("Failed to upload {type} coverage from {traceFile} to {upload}. Will retry later", type, trace.FilePath, upload.Describe());
             }
         }
 
