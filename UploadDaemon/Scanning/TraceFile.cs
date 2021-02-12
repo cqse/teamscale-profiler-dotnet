@@ -192,7 +192,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public bool IsEmpty()
         {
-            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined=") || line.StartsWith("Called="));
         }
     }
 }
