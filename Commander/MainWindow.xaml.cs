@@ -1,4 +1,6 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System.Configuration;
+using System.Text.RegularExpressions;
 using System.Windows;
 
 namespace Cqse.Teamscale.Profiler.Commander
@@ -18,6 +20,12 @@ namespace Cqse.Teamscale.Profiler.Commander
             viewModel.ButtonText = "Start Test";
             viewModel.IsStopped = true;
             InitializeComponent();
+            string pattern = ConfigurationManager.AppSettings["testNamePattern"];
+            if (pattern != null)
+            {
+                viewModel.TestNamePattern = new Regex(pattern);
+                TestName.ToolTip = $"Test name must match: {pattern}";
+            }
         }
 
         private void OnStartClicked(object sender, RoutedEventArgs e)
