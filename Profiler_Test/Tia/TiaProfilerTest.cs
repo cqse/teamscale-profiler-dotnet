@@ -1,5 +1,4 @@
-﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Profiler_Test.Tia;
 using System.Collections.Generic;
 
@@ -16,26 +15,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     {
         public TiaProfilerTest(Bitness bitness, IpcImplementation ipcImplementation) : base(bitness, ipcImplementation) { }
 
-        [SetUp]
-        public void StartZmq()
+        protected override string ExecutableName
         {
-            profilerIpc = CreateProfilerIpc();
-        }
-
-        protected virtual RecordingProfilerIpc CreateProfilerIpc(IpcConfig config = null)
-        {
-            if (this.ipcImplementation == IpcImplementation.Native)
+            get
             {
-                return new NativeRecordingProfilerIpc(config);
+                string executable = "ProfilerTestee32.exe";
+                if (this.bitness == Bitness.x64)
+                {
+                    executable = "ProfilerTestee64.exe";
+                }
+                return executable;
             }
-
-            return new RecordingProfilerIpc(config);
-        }
-
-        [TearDown]
-        public void StopZmq()
-        {
-            profilerIpc?.Dispose();
         }
 
         [Test]

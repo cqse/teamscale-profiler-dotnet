@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Profiler_Test.Tia
 {
-    public class TiaProfilerTestBase : ProfilerTestBase
+    public abstract class TiaProfilerTestBase : ProfilerTestBase
     {
         protected readonly Bitness bitness;
         protected readonly IpcImplementation ipcImplementation;
@@ -35,15 +35,33 @@ namespace Profiler_Test.Tia
             this.ipcImplementation = ipcImplementation;
         }
 
-        protected TiaTestProcess StartTiaTestProcess()
+        protected abstract string ExecutableName { get; }
+
+        [SetUp]
+        public void StartZmq()
         {
-            string executable = "ProfilerTestee32.exe";
-            if (this.bitness == Bitness.x64)
+            profilerIpc = CreateProfilerIpc();
+        }
+
+        protected virtual RecordingProfilerIpc CreateProfilerIpc(IpcConfig config = null)
+        {
+            if (this.ipcImplementation == IpcImplementation.Native)
             {
-                executable = "ProfilerTestee64.exe";
+                return new NativeRecordingProfilerIpc(config);
             }
 
-            ProfilerTestProcess testProcess = StartProfiler(executable, arguments: "interactive", lightMode: true, bitness: bitness, environment: CreateTiaEnvironment());
+            return new RecordingProfilerIpc(config);
+        }
+
+        [TearDown]
+        public void StopZmq()
+        {
+            profilerIpc?.Dispose();
+        }
+
+        protected TiaTestProcess StartTiaTestProcess()
+        {
+            ProfilerTestProcess testProcess = StartProfiler(ExecutableName, arguments: "interactive", lightMode: true, bitness: bitness, environment: CreateTiaEnvironment());
             Assert.That(testProcess.Process.StandardOutput.ReadLine(), Is.EqualTo("interactive"));
             Assert.That(testProcess.Process.HasExited, Is.False);
             return new TiaTestProcess(testProcess, () => profilerIpc);
