@@ -1,4 +1,4 @@
-﻿using Cqse.Teamscale.Profiler.Dotnet.Targets;
+﻿using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using NUnit.Framework;
 using System.IO;
 using System.Linq;
@@ -25,7 +25,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         [Test]
         public void TestCommandLine()
         {
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
 
             string[] lines = profiler.GetSingleTrace();
             Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
@@ -41,7 +41,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             profiler.TargetProcessName = process;
 
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             return profiler.GetTraceFiles().Count;
         }
@@ -65,7 +65,7 @@ match:
 
             profiler.ConfigFilePath = configFile;
             
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             return profiler.GetTraceFiles().Count;
         }
@@ -78,7 +78,7 @@ match:
         {
             profiler.AppPoolId = "MyAppPool";
 
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             string[] lines = profiler.GetSingleTrace();
             Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));
@@ -92,7 +92,7 @@ match:
         {
             profiler.AppPoolId = null;
 
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             string[] lines = profiler.GetSingleTrace();
             Assert.That(!lines.Any(line => line.StartsWith("Info=IIS AppPool:")));
@@ -108,7 +108,7 @@ match:
         {
             profiler.LightMode = isLightMode;
 
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: applicationMode, profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: applicationMode, profiler);
 
             AssertNormalizedTraceFileEqualsReference(profiler.GetSingleTraceFile(), new[] { 2 });
         }
@@ -122,7 +122,7 @@ match:
         [TestCase("GeneratedTest.exe", new int[] { 2, 3, 4 })]
         public void TestProfiling(string application, int[] expectedAssemblyIds)
         {
-            new SimpleTestee(GetTestProgram(application)).Run(profiler: profiler);
+            new Testee(GetTestProgram(application)).Run(profiler: profiler);
 
             AssertNormalizedTraceFileEqualsReference(profiler.GetSingleTraceFile(), expectedAssemblyIds);
         }
@@ -130,7 +130,7 @@ match:
         [Test]
         public void TestAttachLog()
         {
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
 
             string[] lines = profiler.GetAttachLog();
             string firstLine = lines[0];
@@ -141,7 +141,7 @@ match:
         [Test]
         public void TestDetatchLog()
         {
-            new SimpleTestee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
 
             string[] lines = profiler.GetAttachLog();
             string secondLine = lines[1];

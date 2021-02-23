@@ -1,16 +1,11 @@
-
-using Cqse.Teamscale.Profiler.Dotnet.Proxies;
+﻿using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using NUnit.Framework;
 using System.Diagnostics;
 using System.IO;
-using static Cqse.Teamscale.Profiler.Dotnet.ProfilerTestBase;
 
-namespace Cqse.Teamscale.Profiler.Dotnet.Targets
+namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 {
-    /// <summary>
-    /// A process that can be run for testing the profiler.
-    /// </summary>
-    public abstract class Testee<P> where P : TesteeProcess
+    class Testee
     {
         private FileInfo executable;
 
@@ -30,7 +25,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Targets
         /// <summary>
         /// Starts a process running this executable and returns it.
         /// </summary>
-        public virtual P Start(string arguments = null, IProfiler profiler = null)
+        public virtual TesteeProcess Start(string arguments = null, IProfiler profiler = null)
         {
             if (profiler == null)
             {
@@ -50,13 +45,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Targets
             profiler.RegisterOn(startInfo);
 
             Process process = Process.Start(startInfo);
-            return CreateProcess(process);
+            return new TesteeProcess(process);
         }
-
-        /// <summary>
-        /// Creates a TesteeProcess wrapping a Process.
-        /// </summary>
-        protected abstract P CreateProcess(Process process);
     }
 
     /// <summary>
@@ -85,14 +75,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Targets
             Output.ReadToEnd();
             process.WaitForExit();
             Assert.That(process.ExitCode, Is.Zero);
-        }
-
-        /// <summary>
-        /// Asserts that the process terminated with exit code 0.
-        /// </summary>
-        public void AssertSuccess()
-        {
-            Assert.That(process.ExitCode, Is.EqualTo(0), "Program did not execute properly.");
         }
     }
 }

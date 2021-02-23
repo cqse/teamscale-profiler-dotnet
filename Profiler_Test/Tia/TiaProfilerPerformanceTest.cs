@@ -1,10 +1,8 @@
 ﻿using Cqse.Teamscale.Profiler.Dotnet.Proxies;
-using Cqse.Teamscale.Profiler.Dotnet.Targets;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Dotnet.Tia
@@ -19,7 +17,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void RunProfilerTestee32()
         {
-            SimpleTestee testee = new SimpleTestee(GetTestProgram("ProfilerTestee32.exe"));
+            Testee testee = new Testee(GetTestProgram("ProfilerTestee32.exe"));
 
             MeasureAverageRuntimeAndPrintResults(
                 "ProfilerTestee",
@@ -30,7 +28,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void RunProfilerTestee64()
         {
-            SimpleTestee testee = new SimpleTestee(GetTestProgram("ProfilerTestee64.exe"));
+            Testee testee = new Testee(GetTestProgram("ProfilerTestee64.exe"));
 
             MeasureAverageRuntimeAndPrintResults(
                 "ProfilerTestee",
@@ -41,7 +39,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void RunGeneratedTest()
         {
-            SimpleTestee testee = new SimpleTestee(GetTestProgram("GeneratedTest.exe"));
+            Testee testee = new Testee(GetTestProgram("GeneratedTest.exe"));
 
             MeasureAverageRuntimeAndPrintResults(
                 "GeneratedTest",

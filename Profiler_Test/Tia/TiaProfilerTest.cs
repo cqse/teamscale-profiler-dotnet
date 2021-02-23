@@ -1,6 +1,5 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
 using Cqse.Teamscale.Profiler.Dotnet.Proxies;
-using Cqse.Teamscale.Profiler.Dotnet.Targets;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -18,7 +17,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     [TestFixture(Bitness.x86, IpcImplementation.Native)]
     public class TiaProfilerTest : TiaProfilerTestBase
     {
-        private SimpleTestee testee;
+        private Testee testee;
         private Bitness bitness;
 
         public TiaProfilerTest(Bitness bitness, IpcImplementation ipcImplementation) : base(ipcImplementation)
@@ -36,7 +35,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             {
                 executable = "ProfilerTestee64.exe";
             }
-            testee = new SimpleTestee(GetTestProgram(executable));
+            testee = new Testee(GetTestProgram(executable));
         }
 
         [Test]
@@ -154,7 +153,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
         }
 
-        private static TesteeProcess Start(SimpleTestee testee, IProfiler profiler)
+        private static TesteeProcess Start(Testee testee, IProfiler profiler)
         {
             TesteeProcess process = testee.Start(arguments: "interactive", profiler);
             Assert.That(process.Output.ReadLine(), Is.EqualTo("interactive"));
