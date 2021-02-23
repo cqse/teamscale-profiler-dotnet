@@ -1,4 +1,5 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using Cqse.Teamscale.Profiler.Dotnet.Targets;
 using NUnit.Framework;
 using System;
@@ -17,7 +18,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     [TestFixture(Bitness.x86, IpcImplementation.Native)]
     public class TiaProfilerTest : TiaProfilerTestBase
     {
-        private TiaTestee testee;
+        private SimpleTestee testee;
         private Bitness bitness;
 
         public TiaProfilerTest(Bitness bitness, IpcImplementation ipcImplementation) : base(ipcImplementation)
@@ -29,13 +30,19 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         public void SetupProfilerAndTestee()
         {
             profilerUnderTest.Bitness = bitness;
-            testee = new TiaTestee(TestProgramsDirectory, bitness);
+
+            string executable = "ProfilerTestee32.exe";
+            if (bitness == Bitness.x64)
+            {
+                executable = "ProfilerTestee64.exe";
+            }
+            testee = new SimpleTestee(GetTestProgram(executable));
         }
 
         [Test]
         public void ConnectsToAndDisconnectsFromIpc()
         {
-            testee.Start(profiler: profilerUnderTest).Stop();
+            Stop(Start(testee, profilerUnderTest));
 
             Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
         }
@@ -45,7 +52,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         {
             profilerIpc.StartTest("startup");
 
-            testee.Start(profiler: profilerUnderTest).Stop();
+            Stop(Start(testee, profilerUnderTest));
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "startup" }));
@@ -58,7 +65,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         {
             profilerIpc.StartTest(@"Test:Case\\:\:");
 
-            testee.Start(profiler: profilerUnderTest).Stop();
+            Stop(Start(testee, profilerUnderTest));
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, @"Test:Case\\:\:" }));
@@ -67,9 +74,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void TestCaseDefinedAfterStartup()
         {
-            TiaTesteeProcess testeeProcess = testee.Start(profiler: profilerUnderTest);
+            TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
             RunTestCase("A", testeeProcess, profilerIpc);
-            testeeProcess.Stop();
+            Stop(testeeProcess);
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));
@@ -80,11 +87,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void ThreeTestCasesWithDifferentAction()
         {
-            TiaTesteeProcess testeeProcess = testee.Start(profiler: profilerUnderTest);
+            TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
             RunTestCase("A", testeeProcess, profilerIpc);
             RunTestCase("B", testeeProcess, profilerIpc);
             RunTestCase("C", testeeProcess, profilerIpc);
-            testeeProcess.Stop();
+            Stop(testeeProcess);
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A", "B", "C" }));
@@ -96,11 +103,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void ThreeTestCasesWithSameAction()
         {
-            TiaTesteeProcess testeeProcess = testee.Start(profiler: profilerUnderTest);
+            TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
             RunTestCase("A", testeeProcess, profilerIpc);
             RunTestCase("A", testeeProcess, profilerIpc);
             RunTestCase("A", testeeProcess, profilerIpc);
-            testeeProcess.Stop();
+            Stop(testeeProcess);
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A", "A", "A" }));
@@ -115,7 +122,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             profilerIpc.StartTest("should not be triggered");
             profilerIpc.Dispose();
 
-            testee.Start(profiler: profilerUnderTest).Stop();
+            Stop(Start(testee, profilerUnderTest));
 
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty }));
@@ -133,11 +140,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             oldProfilerIpc.StartTest("should not be triggered");
             oldProfilerIpc.Dispose();
 
-            TiaTesteeProcess testeeProcess = testee.Start(profiler: profilerUnderTest);
+            TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
 
             profilerIpc = CreateProfilerIpc(oldProfilerIpc.Config);
             RunTestCase("A", testeeProcess, profilerIpc);
-            testeeProcess.Stop();
+            Stop(testeeProcess);
 
             Assert.That(oldProfilerIpc.ReceivedRequests, Is.Empty);
             Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected" }));
@@ -147,14 +154,32 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
         }
 
-        private static void RunTestCase(string testCaseName, TiaTesteeProcess process, RecordingProfilerIpc profilerIpc)
+        private static TesteeProcess Start(SimpleTestee testee, IProfiler profiler)
+        {
+            TesteeProcess process = testee.Start(arguments: "interactive", profiler);
+            Assert.That(process.Output.ReadLine(), Is.EqualTo("interactive"));
+            Assert.That(process.HasExited, Is.False);
+            return process;
+        }
+
+        private static void RunTestCase(string testCaseName, TesteeProcess process, RecordingProfilerIpc profilerIpc)
         {
             profilerIpc.StartTest(testCaseName);
             Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly, so the profiler registers the change
-            process.RunTestCase(testCaseName);
+
+            process.Input.WriteLine(testCaseName);
+            Assert.That(process.Output.ReadLine(), Is.EqualTo(testCaseName));
             Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
+            
             profilerIpc.EndTest(ETestExecutionResult.PASSED);
             Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
+        }
+
+        private static void Stop(TesteeProcess process)
+        {
+            // process terminates on "empty" input
+            process.Input.WriteLine();
+            process.WaitForExit();
         }
 
         private Dictionary<string, List<string>> GroupEventsByTest(string[] lines)
