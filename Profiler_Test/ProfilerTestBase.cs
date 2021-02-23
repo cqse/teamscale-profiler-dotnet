@@ -64,7 +64,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// The directory containing the testee binaries.
         /// </summary>
-        protected static DirectoryInfo TestProgramsDirectory =>
+        private static DirectoryInfo TestProgramsDirectory =>
             new DirectoryInfo(GetTestDataPath("test-programs"));
         
         /// <summary>
