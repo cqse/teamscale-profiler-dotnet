@@ -5,7 +5,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 {
     public class NoProfiler : IProfiler
     {    
-        public void RegisterOn(ProcessStartInfo processInfo)
+        public void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
         {
             Profiler.ClearProfilerRegistration(processInfo);
         }

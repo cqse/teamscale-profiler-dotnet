@@ -17,7 +17,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [Test]
         public void RunProfilerTestee32()
         {
-            Testee testee = new Testee(GetTestProgram("ProfilerTestee32.exe"));
+            Testee testee = new Testee(GetTestProgram("ProfilerTestee32.exe"), Bitness.x86);
 
             MeasureAverageRuntimeAndPrintResults(
                 "ProfilerTestee",

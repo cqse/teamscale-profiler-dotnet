@@ -18,9 +18,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             this.LightMode = true;
         }
             
-        public override void RegisterOn(ProcessStartInfo processInfo)
+        public override void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
         {
-            base.RegisterOn(processInfo);
+            base.RegisterOn(processInfo, bitness);
             
             processInfo.Environment["COR_PROFILER_TIA"] = "true";
             processInfo.Environment["COR_PROFILER_TIA_SUBSCRIBE_SOCKET"] = ipcConfig.PublishSocket; // PUB-SUB

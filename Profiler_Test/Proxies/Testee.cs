@@ -9,7 +9,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
     {
         private FileInfo executable;
 
-        public Testee(FileInfo exectable)
+        public Bitness? bitness;
+
+        public Testee(FileInfo exectable, Bitness? bitness = null)
         {
             this.executable = exectable;
         }
@@ -42,7 +44,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
                 UseShellExecute = false
             };
 
-            profiler.RegisterOn(startInfo);
+            profiler.RegisterOn(startInfo, bitness);
 
             Process process = Process.Start(startInfo);
             return new TesteeProcess(process);

@@ -61,11 +61,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 
         private readonly DirectoryInfo targetDir;
 
-        /// <summary>
-        /// Bitness of the target process. Defaults to 64 bit.
-        /// </summary>
-        public Bitness Bitness { get; set; } = Bitness.x64;
-
         public bool LightMode { get; set; } = true;
 
         public string TargetProcessName { get; set; } = null;
@@ -87,27 +82,24 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             this.targetDir = targetDir;
         }
 
-        private string ProfilerDll
+        private string GetProfilerDll(Bitness bitness)
         {
-            get
+            string profilerDll = Profiler32Dll;
+            if (bitness == Bitness.x64)
             {
-                string profilerDll = Profiler32Dll;
-                if (Bitness == Bitness.x64)
-                {
-                    profilerDll = Profiler64Dll;
-                }
-
-                return Path.GetFullPath(profilerDll);
+                profilerDll = Profiler64Dll;
             }
+
+            return Path.GetFullPath(profilerDll);
         }
 
         /// <inheritDoc/>
-        public virtual void RegisterOn(ProcessStartInfo processInfo)
+        public virtual void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
         {
             ClearProfilerRegistration(processInfo);
 
             // set environment variables for the profiler
-            processInfo.Environment[PROFILER_PATH_KEY] = ProfilerDll;
+            processInfo.Environment[PROFILER_PATH_KEY] = GetProfilerDll(bitness ?? Bitness.x64);
             processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
             processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
             processInfo.Environment[PROFILER_ENABLE_KEY] = "1";

@@ -28,14 +28,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         [SetUp]
         public void SetupProfilerAndTestee()
         {
-            profilerUnderTest.Bitness = bitness;
-
             string executable = "ProfilerTestee32.exe";
             if (bitness == Bitness.x64)
             {
                 executable = "ProfilerTestee64.exe";
             }
-            testee = new Testee(GetTestProgram(executable));
+            testee = new Testee(GetTestProgram(executable), bitness);
         }
 
         [Test]
