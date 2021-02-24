@@ -37,6 +37,72 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         }
 
         [Test]
+        public void RunPerformanceTesteeManyCalls32()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee32.exe"), Bitness.x86);
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-calls 10000",
+                (profiler) => testee.Run(arguments: "many-calls 10000", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
+        public void RunPerformanceTesteeManyCallsRecursive32()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee32.exe"), Bitness.x86);
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-calls-recursive 10000",
+                (profiler) => testee.Run(arguments: "many-calls 10000", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
+        public void RunPerformanceTesteeManyMethods32()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee32.exe"), Bitness.x86);
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-methods",
+                (profiler) => testee.Run(arguments: "many-methods", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
+        public void RunPerformanceTesteeManyCalls64()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee64.exe"));
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-calls 10000",
+                (profiler) => testee.Run(arguments: "many-calls 10000", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
+        public void RunPerformanceTesteeManyCallsRecursive64()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee64.exe"));
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-calls-recursive 10000",
+                (profiler) => testee.Run(arguments: "many-calls 10000", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
+        public void RunPerformanceTesteeManyMethods64()
+        {
+            Testee testee = new Testee(GetTestProgram("PerformanceTestee64.exe"));
+
+            MeasureAverageRuntimeAndPrintResults(
+                "PerformanceTestee many-methods",
+                (profiler) => testee.Run(arguments: "many-methods", profiler),
+                repetitions: 100);
+        }
+
+        [Test]
         public void RunGeneratedTest()
         {
             Testee testee = new Testee(GetTestProgram("GeneratedTest.exe"));
