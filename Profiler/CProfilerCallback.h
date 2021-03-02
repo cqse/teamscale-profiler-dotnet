@@ -13,6 +13,8 @@
 #include <mutex>
 #include "UploadDaemon.h"
 #ifdef TIA
+#define CorProfileV3
+#define LateCallEval
 #include "utils/Ipc.h"
 #endif
 /**
@@ -64,6 +66,13 @@ private:
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
+#ifdef TIA
+	bool isTestCaseRecording = false;
+#ifdef LateCallEval
+	std::mutex callbackMutex;
+#endif
+#endif
+
 	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
 	/**
@@ -90,7 +99,12 @@ private:
 	std::vector<FunctionInfo> inlinedMethods;
 
 	/** Smart pointer to the .NET framework profiler info. */
+#ifdef CorProfileV3
+	CComQIPtr<ICorProfilerInfo3> profilerInfo;
+#else
 	CComQIPtr<ICorProfilerInfo2> profilerInfo;
+#endif
+
 
 	/** The log to write all results and messages to. */
 	TraceLog traceLog;
@@ -121,8 +135,14 @@ private:
 	std::vector<FunctionInfo> calledMethods;
 
 	/** Callback on function enter. */
+public:
+#ifdef CorProfileV3
+	static void __stdcall onFunctionEnterStatic(FunctionIDOrClientID funcId);
+#else
 	static void __stdcall onFunctionEnterStatic(FunctionID funcId, UINT_PTR clientData, COR_PRF_FRAME_INFO func, COR_PRF_FUNCTION_ARGUMENT_INFO* argumentInfo);
+#endif
 
+private:
 	/** Callback on function enter. */
 	void onFunctionEnter(FunctionID funcId);
 #endif
