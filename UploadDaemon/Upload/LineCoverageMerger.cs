@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
@@ -58,9 +59,9 @@ namespace UploadDaemon.Upload
             public IUpload Upload { get; }
 
             /// <summary>
-            /// The line coverage that should be uploaded.
+            /// The aggregated coverage report in this batch.
             /// </summary>
-            public Dictionary<string, FileCoverage> LineCoverage { get; } = new Dictionary<string, FileCoverage>();
+            public ICoverageReport AggregatedCoverageReport;
 
             /// <summary>
             /// The original trace files from which the line coverage was generated.
@@ -81,7 +82,7 @@ namespace UploadDaemon.Upload
         /// given revision/timestamp to the given upload to the merger. The coverage will be merged with
         /// any existing coverage that should be uploaded to the same destination.
         /// </summary>
-        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
+        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp, IUpload upload, ICoverageReport coverageReport)
         {
             MergeKey key = new MergeKey
             {
@@ -93,20 +94,15 @@ namespace UploadDaemon.Upload
             if (!mergedCoverage.TryGetValue(key, out CoverageBatch batch))
             {
                 batch = new CoverageBatch(upload, key.RevisionOrTimestamp);
+                batch.AggregatedCoverageReport = coverageReport;
                 mergedCoverage[key] = batch;
+            }
+            else
+            {
+                batch.AggregatedCoverageReport = batch.AggregatedCoverageReport.Union(coverageReport);
             }
 
             batch.TraceFilePaths.Add(traceFilePath);
-
-            foreach (string file in lineCoverage.Keys)
-            {
-                if (!batch.LineCoverage.TryGetValue(file, out FileCoverage fileCoverage))
-                {
-                    fileCoverage = new FileCoverage();
-                    batch.LineCoverage[file] = fileCoverage;
-                }
-                fileCoverage.CoveredLineRanges.UnionWith(lineCoverage[file].CoveredLineRanges);
-            }
         }
 
         /// <summary>
