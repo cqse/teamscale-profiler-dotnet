@@ -52,13 +52,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bitness.cs" />
+    <Compile Include="Proxies\IProfiler.cs" />
+    <Compile Include="Proxies\NoProfiler.cs" />
+    <Compile Include="Proxies\Profiler.cs" />
+    <Compile Include="Proxies\TiaProfiler.cs" />
+    <Compile Include="Proxies\Testee.cs" />
     <Compile Include="Tia\NativeRecordingProfilerIpc.cs" />
+    <Compile Include="Tia\TiaProfilerPerformanceTest.cs" />
     <Compile Include="Tia\TiaProfilerTest.cs" />
     <Compile Include="ProfilerTest.cs" />
     <Compile Include="ProfilerTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tia\RecordingProfilerIpc.cs" />
     <Compile Include="Tia\NativeZmqIpcServer.cs" />
+    <Compile Include="Tia\TiaProfilerTestBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

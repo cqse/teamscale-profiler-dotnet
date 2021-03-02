@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report;
 
 namespace UploadDaemon.Upload
 {
@@ -79,7 +80,8 @@ namespace UploadDaemon.Upload
             return server.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             string timestampParameter;
             if (revisionOrTimestamp.IsRevision)
@@ -96,7 +98,7 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
+            string url = $"{server.Url}/p/{encodedProject}/external-report?format={coverageReport.UploadFormat}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
@@ -104,7 +106,7 @@ namespace UploadDaemon.Upload
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
+                byte[] reportBytes = Encoding.UTF8.GetBytes(coverageReport.ToString());
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
                     return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);

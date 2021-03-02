@@ -4,9 +4,20 @@
     <TargetFrameworks>netstandard2.0;net472</TargetFrameworks>
     <RootNamespace>Cqse.Teamscale.Profiler.Commons</RootNamespace>
     <AssemblyName>Cqse.Teamscale.Profiler.Commons</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>CQSE GmbH</Authors>
+    <Company>CQSE GmbH</Company>
+    <Title>Teamscale Ephemeral .NET Profiler Commander</Title>
+    <Description>Commander for sending test start/end signals to Teamscale Ephemeral .NET Profiler instances running it TIA mode.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NetMQ" Version="4.0.1.6" />
+    <PackageReference Include="NLog" Version="4.7.8" />
+    <PackageReference Include="NuGet.Build.Tasks.Pack" Version="5.8.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

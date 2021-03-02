@@ -1,6 +1,5 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
-using System;
 using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc

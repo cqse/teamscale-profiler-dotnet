@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
@@ -22,10 +23,10 @@ namespace UploadDaemon.Upload
         /// Must not throw any exceptions.
         /// </summary>
         /// <param name="originalTraceFilePath">The path to the original trace file (used when logging to allow attribution of log messages to a trace file).</param>
-        /// <param name="lineCoverageReport">The content of the coverage report.</param>
+        /// <param name="coverageReport">The coverage report.</param>
         /// <param name="revisionOrTimestamp">The VCS revision or Teamscale branch+timestamp to which the report should be uploaded.</param>
         /// <returns>Whether the upload succeeded</returns>
-        Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp);
+        Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp);
 
         /// <summary>
         /// Returns a human-readable description of the upload that can be incorporated in log messages.
