@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 {
+    /// <summary>
+    /// A Teamscale Ephemeral profiler in TIA mode.
+    /// </summary>
     public class TiaProfiler : Profiler
     {
         private readonly IpcConfig ipcConfig;
@@ -17,7 +20,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             this.ipcConfig = ipcConfig;
             this.LightMode = true;
         }
-            
+         
+        /// <inheridDoc/>
         public override void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
         {
             base.RegisterOn(processInfo, bitness);
@@ -27,6 +31,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.RequestSocket; // REQ-REP
         }
 
+        /// <summary>
+        /// Loads the testwise-trace result of running this profiler on a process. Asserts this trace is a testwise trace.
+        /// </summary>
         public TiaTestResult Result
         {
                 get
@@ -39,13 +46,29 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
                 }
         }
 
+        /// <summary>
+        /// The result of recording testwise coverage on a process.
+        /// </summary>
         public class TiaTestResult
         {
+            /// <summary>
+            /// The lines from the trace file.
+            /// </summary>
             public IEnumerable<string> TraceLines { get; }
+
+            /// <summary>
+            /// The test cases recorded in the trace file.
+            /// </summary>
             public List<TestCase> TestCases { get; }
 
+            /// <summary>
+            /// The names of the test cases recorded in the trace file.
+            /// </summary>
             public IEnumerable<string> TestCaseNames => TestCases.Select(t => t.Name);
 
+            /// <summary>
+            /// The test case with the given name.
+            /// </summary>
             public List<TestCase> this[string testName]
             {
                 get => GetTestCases(testName);
@@ -61,21 +84,22 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             {
                 return TestCases.Where(testCase => testCase.Name == testName).ToList();
             }
-
-            internal TestCase GetTestCase(string testName)
-            {
-                IEnumerable<TestCase> testCases = GetTestCases(testName);
-                Assert.That(testCases, Has.Exactly(1).Items);
-                return testCases.First();
-            }
         }
 
+        /// <summary>
+        /// A trace for a single test case.
+        /// </summary>
         public class TestCase
         {
+            /// <summary>
+            /// The name of the test case.
+            /// </summary>
             public string Name { get; }
-            public IEnumerable<string> TraceLines { get; }
 
-            public bool IsSynthetic => string.IsNullOrEmpty(this.Name);
+            /// <summary>
+            /// The lines of the trace file recorded for this test case.
+            /// </summary>
+            public IEnumerable<string> TraceLines { get; }
 
             private TestCase(string name, IEnumerable<string> lines)
             {

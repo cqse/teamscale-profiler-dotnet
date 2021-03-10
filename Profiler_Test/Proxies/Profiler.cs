@@ -7,6 +7,9 @@ using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 {
+    /// <summary>
+    /// A Teamscale Ephemeral profiler in TGA mode.
+    /// </summary>
     public class Profiler : IProfiler
     {
         /** The profiler's class ID. */
