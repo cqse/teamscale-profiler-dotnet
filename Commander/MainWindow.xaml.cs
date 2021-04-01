@@ -37,6 +37,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         private void OnPassedClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
+            viewModel.TestName = "";
             app.EndTest(ETestExecutionResult.PASSED);
         }
 

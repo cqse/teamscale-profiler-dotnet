@@ -8,7 +8,7 @@
         Title="Teamscale Profiler Commander" Height="131.755" Width="317" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
     <Grid>
         <Label Content="Test Name" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="69" IsEnabled="False" Height="28" VerticalContentAlignment="Center" />
-        <TextBox x:Name="TestName" Height="28" Margin="84,10,10,0" TextWrapping="Wrap" Text="{Binding Path=TestName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" IsEnabled="{Binding Path=IsStopped}" VerticalContentAlignment="Center" />
+        <ComboBox x:Name="TestName" ItemsSource="{Binding Path=PreviousTests}" Height="28" Margin="84,10,10,0" IsEditable="True" Text="{Binding Path=TestName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" IsEnabled="{Binding Path=IsStopped}" VerticalContentAlignment="Center" />
         <Button Content="Start" Margin="10,54,0,21" Height="28" Click="OnStartClicked" IsEnabled="{Binding CanStart}" HorizontalAlignment="Left" Width="69" />
         <Button Content="Success" Margin="84,54,0,21" Height="28" Click="OnPassedClicked" IsEnabled="{Binding IsRunning}" HorizontalAlignment="Left" Width="69" />
         <Button Content="Failure" Margin="158,54,0,21" Height="28" Click="OnFailureClicked" IsEnabled="{Binding IsRunning}" HorizontalAlignment="Left" Width="69" />

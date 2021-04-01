@@ -11,6 +11,8 @@ namespace Cqse.Teamscale.Profiler.Commander
         public event PropertyChangedEventHandler PropertyChanged;
 
         private string testName = null;
+        private BindingList<string> previousTests = new BindingList<string>();
+        private HashSet<string> previousTestSet = new HashSet<string>();
 
         public string TestName
         {
@@ -20,6 +22,11 @@ namespace Cqse.Teamscale.Profiler.Commander
                 SetField(ref testName, value);
                 OnPropertyChanged(nameof(CanStart));
             }
+        }
+
+        public BindingList<string> PreviousTests
+        {
+            get => previousTests;
         }
 
         private string buttonText = null;
@@ -40,6 +47,28 @@ namespace Cqse.Teamscale.Profiler.Commander
                 SetField(ref isStopped, value);
                 OnPropertyChanged(nameof(IsRunning));
                 OnPropertyChanged(nameof(CanStart));
+
+                // The following Block is inefficient but the list has at most 10 members, so it shouldn't be a problem.
+                if (String.IsNullOrEmpty(TestName))
+                {
+                    return;
+                }
+                if (previousTestSet.Add(TestName))
+                {
+                    previousTests.Insert(0, TestName);
+                    if (previousTests.Count > 10)
+                    {
+                        previousTests.RemoveAt(previousTests.Count - 1);
+                    }
+                }
+                else
+                {
+                    string temp = TestName;
+                    previousTests.Remove(temp);
+                    previousTests.Insert(0, temp);
+                }
+
+                OnPropertyChanged(nameof(previousTests));
             }
         }
 
@@ -55,7 +84,8 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         private bool IsValidTestName()
         {
-            if (TestNamePattern == null) {
+            if (TestNamePattern == null)
+            {
                 return true;
             }
 
@@ -75,6 +105,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             OnPropertyChanged(propertyName);
         }
 
-        private void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        private void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
