@@ -219,6 +219,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CProfilerWorker.cpp" />
     <ClCompile Include="log\AttachLog.cpp" />
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="config\Config.cpp" />
@@ -258,9 +259,11 @@
     <ClCompile Include="lib\yaml-cpp\src\tag.cpp" />
     <ClCompile Include="lib\StackWalker\StackWalker.cpp" />
     <ClCompile Include="UploadDaemon.cpp" />
+    <ClCompile Include="utils\MethodEnter.cpp" />
     <ClCompile Include="utils\Ipc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CProfilerWorker.h" />
     <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="config\Config.h" />
@@ -291,6 +294,7 @@
     <ClInclude Include="lib\yaml-cpp\src\token.h" />
     <ClInclude Include="lib\StackWalker\StackWalker.h" />
     <ClInclude Include="log\TraceLog.h" />
+    <ClInclude Include="utils\MethodEnter.h" />
     <ClInclude Include="utils\Testing.h" />
     <ClInclude Include="utils\StringUtils.h" />
     <ClInclude Include="utils\Debug.h" />
