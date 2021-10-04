@@ -11,8 +11,12 @@ class CProfilerWorker
 {
 public:
 	CProfilerWorker(Config*, TraceLog*, std::unordered_set<FunctionID>*, CRITICAL_SECTION*);
-	~CProfilerWorker();
+	virtual ~CProfilerWorker();
 
+	/**
+	 * Prepares the set of methodIds from called methods for writing, i.e. transfers 
+	 * the content of the vectors that have been used for intermittent storage into the set.
+	 */
 	void prepareMethodIdSetForWriting();
 private:
 	// Variables

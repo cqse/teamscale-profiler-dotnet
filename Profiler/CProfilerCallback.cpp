@@ -97,7 +97,6 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	initializeConfig();
-
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
@@ -109,7 +108,6 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	traceLog.createLogFile(config.getTargetDir());
 	traceLog.info("looking for configuration options in: " + config.getConfigPath());
-
 	for (std::string problem : config.getProblems()) {
 		traceLog.error(problem);
 	}
