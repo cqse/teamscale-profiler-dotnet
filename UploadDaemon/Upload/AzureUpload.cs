@@ -114,7 +114,7 @@ namespace UploadDaemon.Upload
             return $"Azure share {storage.ShareName}, directory {storage.Directory}";
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp)
         {
             try
             {

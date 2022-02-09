@@ -64,6 +64,11 @@ namespace UploadDaemon.Configuration
             public AzureFileStorage AzureFileStorage { get; private set; } = null;
 
             /// <summary>
+            /// 
+            /// </summary>
+            public ArtifactoryServer ArtifactoryServer { get; private set; } = null;
+
+            /// <summary>
             /// Whether the uploader should be enabled for this process.
             /// </summary>
             public bool Enabled { get; private set; } = true;
@@ -118,6 +123,7 @@ namespace UploadDaemon.Configuration
                 Teamscale = section.Teamscale ?? Teamscale;
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
+                ArtifactoryServer = section.Artifactory ?? ArtifactoryServer;
                 Enabled = section.Enabled ?? Enabled;
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
@@ -142,12 +148,13 @@ namespace UploadDaemon.Configuration
             /// </summary>
             public IEnumerable<string> Validate()
             {
-                if (Teamscale == null && Directory == null && AzureFileStorage == null)
+                if (Teamscale == null && Directory == null && AzureFileStorage == null && ArtifactoryServer == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}. You must provide either" +
                         @" a Teamscale server (property ""teamscale"")" +
                         @" or a directory (property ""directory"")" +
                         @" or an Azure File Storage (property ""azureFileStorage"")" +
+                        @" or an Artifactory Server (property ""artifactoryServer"")" +
                         @" to upload coverage files to.";
                 }
                 if (VersionAssembly != null && PdbDirectory != null)

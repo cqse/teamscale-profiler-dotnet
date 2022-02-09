@@ -25,7 +25,7 @@ namespace UploadDaemon.Upload
         /// <param name="lineCoverageReport">The content of the coverage report.</param>
         /// <param name="revisionOrTimestamp">The VCS revision or Teamscale branch+timestamp to which the report should be uploaded.</param>
         /// <returns>Whether the upload succeeded</returns>
-        Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp);
+        Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp);
 
         /// <summary>
         /// Returns a human-readable description of the upload that can be incorporated in log messages.

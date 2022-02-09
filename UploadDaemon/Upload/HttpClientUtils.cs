@@ -50,6 +50,23 @@ namespace UploadDaemon.Upload
         }
 
         /// <summary>
+        /// Changes the given client's authorization to Basic with the credentials configured for the given server.
+        /// </summary>
+        public static void SetUpBasicAuthentication(HttpClient client, ArtifactoryServer server)
+        {
+            byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.Password}");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+        }
+
+        /// <summary>
+        /// Changes the given client's authorization to Artifactory Header with the credentials configured for the given server.
+        /// </summary>
+        public static void SetUpArtifactoryApiHeader(HttpClient client, ArtifactoryServer server)
+        {
+            client.DefaultRequestHeaders.Add(server.ARTIFACTORY_API_HEADER, server.AccessKey);
+        }
+
+        /// <summary>
         /// Uploads the given file in a multi-part request.
         /// </summary>
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
@@ -73,6 +90,14 @@ namespace UploadDaemon.Upload
                 content.Add(new StreamContent(stream), multipartParameterName, fileName);
 
                 return await client.PostAsync(url, content);
+            }
+        }
+
+        public static async Task<HttpResponseMessage> UploadArtifactoryZip(HttpClient client, string url, byte[] stream, string fileName)
+        {
+            using (ByteArrayContent content = new ByteArrayContent(stream))
+            {
+                return await client.PutAsync(url, content);
             }
         }
     }

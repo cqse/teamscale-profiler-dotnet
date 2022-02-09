@@ -79,10 +79,10 @@ namespace UploadDaemon.Upload
             return server.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp)
         {
             string timestampParameter;
-            if (revisionOrTimestamp.IsRevision)
+            if (revisionOrTimestamp.RevisionValue.Length != 0)
             {
                 timestampParameter = "revision";
             }
@@ -94,7 +94,7 @@ namespace UploadDaemon.Upload
             string message = messageFormatter.Format(timestampParameter);
             string encodedMessage = HttpUtility.UrlEncode(message);
             string encodedProject = HttpUtility.UrlEncode(server.Project);
-            string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
+            string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.RevisionValue);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
             string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
@@ -107,7 +107,7 @@ namespace UploadDaemon.Upload
                 byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
+                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.RevisionValue, url, stream);
                 }
             }
             catch (Exception e)

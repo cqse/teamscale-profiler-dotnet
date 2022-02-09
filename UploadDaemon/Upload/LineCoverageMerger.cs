@@ -22,7 +22,7 @@ namespace UploadDaemon.Upload
             /// <summary>
             /// Revision or timestamp to which the coverage should be uploaded.
             /// </summary>
-            public RevisionFileUtils.RevisionOrTimestamp RevisionOrTimestamp;
+            public RevisionFileUtils.RevisionAndTimestamp RevisionOrTimestamp;
 
             /// <summary>
             /// Key provided by the IUploader to group coverage with the same destination.
@@ -50,7 +50,7 @@ namespace UploadDaemon.Upload
             /// <summary>
             /// The revision or timestamp to which the coverage should be uploaded.
             /// </summary>
-            public RevisionFileUtils.RevisionOrTimestamp RevisionOrTimestamp { get; }
+            public RevisionFileUtils.RevisionAndTimestamp RevisionOrTimestamp { get; }
 
             /// <summary>
             /// The upload to use for this batch.
@@ -67,7 +67,7 @@ namespace UploadDaemon.Upload
             /// </summary>
             public List<string> TraceFilePaths { get; } = new List<string>();
 
-            public CoverageBatch(IUpload upload, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+            public CoverageBatch(IUpload upload, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp)
             {
                 this.Upload = upload;
                 this.RevisionOrTimestamp = revisionOrTimestamp;
@@ -81,7 +81,7 @@ namespace UploadDaemon.Upload
         /// given revision/timestamp to the given upload to the merger. The coverage will be merged with
         /// any existing coverage that should be uploaded to the same destination.
         /// </summary>
-        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
+        public void AddLineCoverage(string traceFilePath, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
         {
             MergeKey key = new MergeKey
             {

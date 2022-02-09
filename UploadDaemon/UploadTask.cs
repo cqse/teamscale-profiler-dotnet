@@ -144,7 +144,7 @@ namespace UploadDaemon
         private void ProcessLineCoverage(TraceFile trace, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", trace.FilePath, upload.Describe());
-            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
+            RevisionFileUtils.RevisionAndTimestamp timestampOrRevision = ParseRevisionFile(trace, processConfig);
             Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(trace, archive, processConfig);
             if (timestampOrRevision == null || lineCoverage == null)
             {
@@ -179,7 +179,7 @@ namespace UploadDaemon
         /// <summary>
         /// Tries to read the revision file based on the config. Logs and returns null if this fails.
         /// </summary>
-        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(TraceFile trace, Config.ConfigForProcess processConfig)
+        private RevisionFileUtils.RevisionAndTimestamp ParseRevisionFile(TraceFile trace, Config.ConfigForProcess processConfig)
         {
             try
             {

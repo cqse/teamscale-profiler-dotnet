@@ -254,7 +254,7 @@ Inlined=1:33555646:100678050" },
                 this.uploadMock = new Mock<IUpload>();
                 uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
                     .Returns(Task.FromResult(successfull));
-                uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
+                uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionAndTimestamp>()))
                     .Returns(Task.FromResult(successfull));
             }
 

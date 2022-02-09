@@ -53,7 +53,7 @@ namespace UploadDaemon.Upload
             return $"file system directory {targetDirectory}";
         }
 
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionAndTimestamp revisionOrTimestamp)
         {
             long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.simple");

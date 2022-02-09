@@ -14,24 +14,25 @@ namespace UploadDaemon.SymbolAnalysis
         /// Either a revision or a branch + timestamp in format BRANCH:TIMESTAMP.
         /// Used for uploading line coverage to Teamscale.
         /// </summary>
-        public class RevisionOrTimestamp
+        public class RevisionAndTimestamp
         {
             /// <summary>
-            /// The timestamp or revision.
+            /// The revision.
             /// </summary>
-            public string Value { get; set; }
+            public string RevisionValue { get; set; }
 
             /// <summary>
-            /// True if the value is a revision. False if it's a timestamp.
+            /// The timestamp.
             /// </summary>
-            public bool IsRevision { get; set; }
+            public string TimestampValue { get; set; }
+
+            public string BranchName { get; set; }
 
             public override bool Equals(object other) =>
-                other is RevisionOrTimestamp revision && revision.Value.Equals(Value) &&
-                revision.IsRevision.Equals(IsRevision);
+                other is RevisionAndTimestamp revision && revision.RevisionValue.Equals(RevisionValue) && revision.TimestampValue.Equals(TimestampValue) && revision.BranchName.Equals(BranchName);
 
             public override int GetHashCode() =>
-                (Value, IsRevision).GetHashCode();
+                (RevisionValue, TimestampValue).GetHashCode();
 
             /// <summary>
             /// Returns the contents of a revision file that represents the same revision or timestamp
@@ -39,23 +40,37 @@ namespace UploadDaemon.SymbolAnalysis
             /// </summary>
             public string ToRevisionFileContent()
             {
-                if (IsRevision)
+                string result = "";
+                if (RevisionValue.Length != 0)
                 {
-                    return $"revision: {Value}";
+                    result += $"revision: {RevisionValue}";
                 }
-                else
+                if (TimestampValue.Length != 0)
                 {
-                    return $"timestamp: {Value}";
+                    if (result.Length > 0)
+                    {
+                        result += "\n";
+                    }
+                    result += $"timestamp: {TimestampValue}";
                 }
+                if (TimestampValue.Length != 0)
+                {
+                    if (result.Length > 0)
+                    {
+                        result += "\n";
+                    }
+                    result += $"branch: {BranchName}";
+                }
+                return result;
             }
         }
 
-        private static readonly Regex FileContentRegex = new Regex(@"^\s*(timestamp|revision):(.*)$", RegexOptions.IgnoreCase);
+        private static readonly Regex FileContentRegex = new Regex(@"^\s*(timestamp|revision|branch):(.*)$", RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parses the given revision file lines. May throw exceptions if the file is malformed or cannot be read.
         /// </summary>
-        public static RevisionOrTimestamp Parse(string[] revisionFileLines, string filePath)
+        public static RevisionAndTimestamp Parse(string[] revisionFileLines, string filePath)
         {
             IEnumerable<(string, string)> matches = revisionFileLines.Select(line => FileContentRegex.Match(line))
                 .Where(match => match.Success)
@@ -66,28 +81,33 @@ namespace UploadDaemon.SymbolAnalysis
                     " found neither a timestamp nor a revision entry." +
                     " Examples: 'timestamp: 1234567890' or 'revision: 123456'");
             }
-
-            (string type, string value) = matches.First();
-            switch (type.ToLower())
+            string RevisionValue = "";
+            string TimestampValue = "";
+            string BranchName = "";
+            foreach ((string type, string value) in matches)
             {
-                case "timestamp":
-                    return new RevisionOrTimestamp
-                    {
-                        Value = value,
-                        IsRevision = false,
-                    };
-
-                case "revision":
-                    return new RevisionOrTimestamp
-                    {
-                        Value = value,
-                        IsRevision = true,
-                    };
-
-                default:
-                    throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
-                        $" unknown type '{type}'");
+                switch (type.ToLower())
+                {
+                    case "timestamp":
+                        TimestampValue = value;
+                        break;
+                    case "revision":
+                        RevisionValue = value;
+                        break;
+                    case "branch":
+                        BranchName = value;
+                        break;
+                    default:
+                        throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
+                            $" unknown type '{type}'");
+                }
             }
+            return new RevisionAndTimestamp
+            {
+                RevisionValue = RevisionValue,
+                TimestampValue = TimestampValue,
+                BranchName = BranchName
+            };
         }
 
         private class InvalidRevisionFileException : Exception
