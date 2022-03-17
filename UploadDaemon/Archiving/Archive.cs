@@ -21,29 +21,6 @@ namespace UploadDaemon.Archiving
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
         private readonly string coverageReportDirectory;
-        private readonly string knownTestCasesFile;
-
-        public string[] KnownTestCases
-        {
-            get
-            {
-                if (!File.Exists(knownTestCasesFile))
-                {
-                    return Array.Empty<string>();
-                }
-
-                return File.ReadAllLines(knownTestCasesFile);
-            }
-            set
-            {
-                if (!EnsureDirectoryExists(Directory.GetParent(knownTestCasesFile).FullName))
-                {
-                    return;
-                }
-
-                File.WriteAllLines(knownTestCasesFile, value);
-            }
-        }
 
         public Archive(string traceDirectory, IFileSystem fileSystem, IDateTimeProvider dateTimeProvider)
         {
@@ -55,7 +32,6 @@ namespace UploadDaemon.Archiving
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
             this.coverageReportDirectory = Path.Combine(traceDirectory, "converted-coverage");
-            this.knownTestCasesFile = Path.Combine(traceDirectory, "knownTestCases.txt");
         }
 
         /// <inheritdoc/>

@@ -92,11 +92,6 @@ namespace UploadDaemon
                                 string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
             ICoverageReport report = batch.AggregatedCoverageReport;
 
-            if (report is TestwiseCoverageReport testwiseReport)
-            {
-                AddKnownTestCases(archive, testwiseReport);
-            }
-
             string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
 
             if (config.ArchiveLineCoverage)
@@ -168,12 +163,6 @@ namespace UploadDaemon
             {
                 type = "testwise";
                 PrefixTestPaths(processConfig, testwiseCoverageReport);
-
-                if (!processConfig.MergeLineCoverage)
-                {
-                    // for merged reports we have to add the known test cases in UploadCoverageBatch
-                    AddKnownTestCases(archive, testwiseCoverageReport);
-                }
             }
 
             if (processConfig.MergeLineCoverage)
@@ -203,20 +192,6 @@ namespace UploadDaemon
                     test.UniformPath = processConfig.TestPathPrefix + test.UniformPath;
                 }
             }
-        }
-
-        private static void AddKnownTestCases(Archive archive, TestwiseCoverageReport testwiseCoverageReport)
-        {
-            string[] missingTests = archive.KnownTestCases.Except(testwiseCoverageReport.Tests.Select(test => test.UniformPath)).ToArray();
-            foreach (string missingTest in missingTests)
-            {
-                var test = new Test(missingTest);
-                // we need to set the result to null in order for Teamscale to "keep" the existing test
-                test.Result = null;
-                testwiseCoverageReport.Tests.Add(test);
-            }
-
-            archive.KnownTestCases = testwiseCoverageReport.Tests.Select(test => test.UniformPath).ToArray();
         }
 
         /// <summary>
