@@ -11,11 +11,17 @@ namespace UploadDaemon.Report.Testwise
     [JsonObject(MemberSerialization.OptIn)]
     public class TestwiseCoverageReport : ICoverageReport
     {
-        [JsonProperty(PropertyName = "tests")]
-        public IList<Test> Tests = new List<Test>();
+        [JsonProperty("partial")]
+        public bool Partial { get; }
 
-        public TestwiseCoverageReport(params Test[] tests)
+        [JsonProperty("tests")]
+        public List<Test> Tests { get; }
+
+        public TestwiseCoverageReport(params Test[] tests) : this(false, tests) {}
+
+        public TestwiseCoverageReport(bool partial, params Test[] tests)
         {
+            Partial = partial;
             Tests = tests.ToList();
         }
 
@@ -49,7 +55,7 @@ namespace UploadDaemon.Report.Testwise
                 }
             }
 
-            return new TestwiseCoverageReport(mergedCoverage.Values.ToArray());
+            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray());
         }
 
         /// <summary>

@@ -163,6 +163,10 @@ namespace UploadDaemon
             {
                 type = "testwise";
                 PrefixTestPaths(processConfig, testwiseCoverageReport);
+                if (processConfig.PartialCoverageReport)
+                {
+                    coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests.ToArray());
+                }
             }
 
             if (processConfig.MergeLineCoverage)
