@@ -28,37 +28,59 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             x64
         }
 
-        /** Environment variable name to enable the profiler. */
+        /// <summary>
+        /// Environment variable name to enable the profiler.
+        /// </summary>
         private const string PROFILER_ENABLE_KEY = "COR_ENABLE_PROFILING";
 
-        /** Environment variable name to enable the upload daemon. */
+        /// <summary>
+        /// Environment variable name to enable the upload daemon.
+        /// </summary>
         private const string PROFILER_UPLOAD_DAEMON_KEY = "PROFILER_UPLOAD_DAEMON";
 
-        /** Environment variable name for the profiler's class ID. */
+        /// <summary>
+        /// Environment variable name for the profiler's class ID.
+        /// </summary>
         private const string PROFILER_CLASS_ID_KEY = "COR_PROFILER";
 
-        /** Environment variable name for the directory to store profiler traces. */
+        /// <summary>
+        /// Environment variable name for the directory to store profiler traces.
+        /// </summary>
         private const string PROFILER_TARGETDIR_KEY = "COR_PROFILER_TARGETDIR";
 
-        /** Environment variable name for the path to the profiler DLL. */
+        /// <summary>
+        /// Environment variable name for the path to the profiler DLL.
+        /// </summary>
         private const string PROFILER_PATH_KEY = "COR_PROFILER_PATH";
 
-        /** Environment variable name to enable the profiler's light mode. */
+        /// <summary>
+        /// Environment variable name to enable the profiler's light mode.
+        /// </summary>
         private const string PROFILER_LIGHT_MODE_KEY = "COR_PROFILER_LIGHT_MODE";
 
-        /** The profiler's class ID. */
+        /// <summary>
+        /// The profiler's class ID.
+        /// </summary>
         private const string PROFILER_CLASS_ID = "{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}";
 
-        /** Label with which jitted methods are prefixed */
+        /// <summary>
+        /// Label with which jitted methods are prefixed
+        /// </summary>
         public const string LABEL_JITTED = "Jitted";
 
-        /** Label with which inlined methods are prefixed */
+        /// <summary>
+        /// Label with which inlined methods are prefixed
+        /// </summary>
         public const string LABEL_INLINED = "Inlined";
 
-        /** Label with which loaded assemblies are prefixed */
+        /// <summary>
+        /// Label with which loaded assemblies are prefixed
+        /// </summary>
         public const string LABEL_ASSEMBLY = "Assembly";
 
-        /** Separator used to concatenate method keys */
+        /// <summary>
+        /// Separator used to concatenate method keys
+        /// </summary>
         public const char KEY_SEPARATOR = ':';
 
         /// <summary>
