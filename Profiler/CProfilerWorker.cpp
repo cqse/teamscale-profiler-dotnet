@@ -3,10 +3,10 @@
 
 CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, std::unordered_set<FunctionID>* calledMethodIds, CRITICAL_SECTION* methodSetSynchronization) {
 	this->traceLog = traceLog;
-	this->workerThread = new std::thread(&CProfilerWorker::methodIdThreadLoop, this);
 	this->calledMethodIds = calledMethodIds;
 	this->methodSetSynchronization = methodSetSynchronization;
 	setMethodIdVector(this->vector1);
+	this->workerThread = new std::thread(&CProfilerWorker::methodIdThreadLoop, this);
 }
 
 CProfilerWorker::~CProfilerWorker() {
@@ -27,12 +27,14 @@ void CProfilerWorker::methodIdThreadLoop() {
 		if (vectorToggle) {
 			EnterCriticalSection(methodSetSynchronization);
 			setMethodIdVector(this->vector2);
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			transferMethodIds(this->vector1);
 			LeaveCriticalSection(methodSetSynchronization);
 		}
 		else {
 			EnterCriticalSection(methodSetSynchronization);
 			setMethodIdVector(this->vector1);
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			transferMethodIds(this->vector2);
 			LeaveCriticalSection(methodSetSynchronization);
 		}

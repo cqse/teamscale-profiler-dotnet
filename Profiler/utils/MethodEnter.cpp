@@ -4,13 +4,12 @@
 
 namespace {
 	concurrency::concurrent_vector<FunctionID>* vectorInUse;
-	bool isTestCaseRecording;
-	bool isProfilingEnabled;
+	bool isTestCaseRecording = false;
 }
 
 extern "C" void _stdcall EnterCpp(
 	FunctionIDOrClientID funcId) {
-	if (isProfilingEnabled && isTestCaseRecording) {
+	if (isTestCaseRecording) {
 		vectorInUse->push_back(funcId.functionID);
 	}
 }
@@ -21,10 +20,6 @@ void setMethodIdVector(concurrency::concurrent_vector<FunctionID>& vectorToUse) 
 
 void setTestCaseRecording(bool testCaseRecording) {
 	isTestCaseRecording = testCaseRecording;
-}
-
-void setProfilingEnabled(bool profilingEnabled) {
-	isProfilingEnabled = profilingEnabled;
 }
 
 

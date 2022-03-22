@@ -380,9 +380,9 @@ HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID funct
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
 	if (config.isProfilingEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
-
+		EnterCriticalSection(&methodSetSynchronization);
 		recordFunctionInfo(&jittedMethods, functionId);
-
+		LeaveCriticalSection(&methodSetSynchronization);
 		LeaveCriticalSection(&callbackSynchronization);
 	}
 	return S_OK;
