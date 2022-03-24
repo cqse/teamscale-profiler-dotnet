@@ -20,7 +20,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             profilerIpc.Dispose();
         }
 
-        internal void EndTest(ETestExecutionResult result)
+        internal void EndTest(TestExecutionResult result)
         {
             profilerIpc.EndTest(result);
         }

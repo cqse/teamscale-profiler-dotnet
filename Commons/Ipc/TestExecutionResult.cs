@@ -1,34 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Cqse.Teamscale.Profiler.Commons.Ipc
+﻿namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
-    public enum ETestExecutionResult
+    public enum TestExecutionResult
     {
         /// <summary>
         /// Test execution was successful.
         /// </summary>
-        PASSED,
+        Passed,
 
         /// <summary>
         /// The test is currently marked as "do not execute" (e.g. JUnit @Ignore).
         /// </summary>
-        IGNORED,
+        Ignored,
 
         /// <summary>
         /// Caused by a failing assumption.
         /// </summary>
-        SKIPPED,
+        Skipped,
 
         /// <summary>
         ///  Caused by a failing assertion.
         /// </summary>
-        FAILURE,
+        Failure,
 
         /// <summary>
         /// Caused by an error during test execution (e.g. exception thrown).
         /// </summary>
-        ERROR
+        Error
     }
 }

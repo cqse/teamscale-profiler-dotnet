@@ -168,7 +168,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(process.Output.ReadLine(), Is.EqualTo(testCaseName));
             Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
             
-            profilerIpc.EndTest(ETestExecutionResult.PASSED);
+            profilerIpc.EndTest(TestExecutionResult.Passed);
             Thread.Sleep(TimeSpan.FromMilliseconds(10)); // wait shortly
         }
 

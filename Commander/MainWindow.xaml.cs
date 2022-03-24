@@ -37,19 +37,19 @@ namespace Cqse.Teamscale.Profiler.Commander
         private void OnPassedClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(ETestExecutionResult.PASSED);
+            app.EndTest(TestExecutionResult.Passed);
         }
 
         private void OnFailureClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(ETestExecutionResult.FAILURE);
+            app.EndTest(TestExecutionResult.Failure);
         }
 
         private void OnSkippedClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(ETestExecutionResult.SKIPPED);
+            app.EndTest(TestExecutionResult.Skipped);
         }
     }
 }
