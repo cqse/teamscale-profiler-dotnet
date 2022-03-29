@@ -11,6 +11,10 @@ using System.Text;
 
 namespace UploadDaemon.Upload
 {
+
+    /// <summary>
+    /// Uploads trace files to an Artifactory File Storage.
+    /// </summary>
     class ArtifactoryUpload : IUpload
     {
 
