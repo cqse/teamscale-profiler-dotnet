@@ -15,14 +15,14 @@ namespace UploadDaemon.Report.Testwise
         public bool Partial { get; }
 
         [JsonProperty("tests")]
-        public List<Test> Tests { get; }
+        public Test[] Tests { get; }
 
         public TestwiseCoverageReport(params Test[] tests) : this(false, tests) {}
 
         public TestwiseCoverageReport(bool partial, params Test[] tests)
         {
             Partial = partial;
-            Tests = tests.ToList();
+            Tests = tests;
         }
 
         /// <inheritDoc/>
@@ -43,7 +43,7 @@ namespace UploadDaemon.Report.Testwise
             }
 
             IDictionary<string, Test> mergedCoverage = new Dictionary<string, Test>();
-            foreach(Test test in new[] { Tests, other.Tests }.SelectMany(tests => tests))
+            foreach (Test test in this.Tests.Concat(other.Tests))
             {
                 if (mergedCoverage.ContainsKey(test.UniformPath))
                 {

@@ -165,7 +165,7 @@ namespace UploadDaemon
                 PrefixTestPaths(processConfig, testwiseCoverageReport);
                 if (processConfig.PartialCoverageReport)
                 {
-                    coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests.ToArray());
+                    coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests);
                 }
             }
 
@@ -272,7 +272,7 @@ namespace UploadDaemon
         /// forgetting awaits all over the place. Therefore, we explicitly wait for uploads now here and there's no
         /// need to await anything further up the call stack.
         /// </summary>
-        static T RunSync<T>(Task<T> task)
+        private static T RunSync<T>(Task<T> task)
         {
             task.Wait();
             return task.Result;
