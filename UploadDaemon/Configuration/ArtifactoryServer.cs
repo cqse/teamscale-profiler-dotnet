@@ -42,6 +42,10 @@ namespace UploadDaemon.Configuration
         /// Partition within the Teamscale project to which to upload.
         /// </summary>
         public string ZipPath { get; set; }
+        public override string ToString()
+        {
+            return $"Artifactory {Url} project {Project} with user {Username} and zip path {ZipPath}";
+        }
 
         /// <summary>
         /// Returns all error messages from a validation of this object.
