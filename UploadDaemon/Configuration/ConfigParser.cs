@@ -113,6 +113,11 @@ namespace UploadDaemon.Configuration
             public AzureFileStorage AzureFileStorage { get; set; }
 
             /// <summary>
+            /// The Artifactory to upload to.
+            /// </summary>
+            public Artifactory Artifactory { get; set; }
+
+            /// <summary>
             /// Whether the uploader should be enabled.
             /// </summary>
             public bool? Enabled { get; set; }

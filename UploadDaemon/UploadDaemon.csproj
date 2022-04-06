@@ -106,6 +106,7 @@
     <Compile Include="Archiving\IDateTimeProvider.cs" />
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
+    <Compile Include="Configuration\Artifactory.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
     <Compile Include="Upload\MessageFormatter.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Upload\HttpClientUtils.cs" />
     <Compile Include="Upload\IUploadFactory.cs" />
     <Compile Include="Configuration\TeamscaleServer.cs" />
+    <Compile Include="Upload\ArtifactoryUpload.cs" />
     <Compile Include="Upload\UploadFactory.cs" />
     <Compile Include="Upload\IUpload.cs" />
     <Compile Include="Upload\FileSystemUpload.cs" />
