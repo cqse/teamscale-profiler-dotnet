@@ -1,5 +1,6 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 using System.Web;
 
 namespace Cqse.Teamscale.Profiler.Commander.Server
@@ -22,7 +23,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         }
 
         [HttpPost("start/{testName}")]
-        public void startTest(string testName)
+        public void StartTest(string testName)
         {
             if (string.IsNullOrEmpty(testName))
             {
@@ -33,9 +34,25 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         }
 
         [HttpPost("stop/{result}")]
-        public void stopTest(TestExecutionResult result)
+        public void StopTest(TestExecutionResult result)
         {
             profilerIpc.EndTest(result);
+        }
+
+        /// <summary>
+        /// Legacy end test to match the JaCoCo API.
+        /// </summary>
+        [HttpPost("end/{name}")]
+        public void EndTest(string name, [FromBody] TestResultDto result)
+        {
+            profilerIpc.EndTest(result.Result);
+        }
+
+        public class TestResultDto
+        {
+            [JsonConverter(typeof(JsonStringEnumConverter))]
+            public TestExecutionResult Result { get; set; }
+            public string? Message { get; set; }
         }
     }
 }

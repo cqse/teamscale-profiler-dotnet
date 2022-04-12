@@ -33,7 +33,19 @@ function Controls() {
         setTestName(e.target.value);
     }
 
+    function onKeyPress(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            startTest();
+            return true;
+        }
+    }
+
     async function startTest() {
+        if (!testName) {
+            return;
+        }
+
         setRunning(true);
         const response = await fetch("test/start/" + encodeURIComponent(testName), { method: 'POST' });
         if (!response.ok) {
@@ -74,7 +86,7 @@ function Controls() {
     return html`
         <form class="mb-4">
             <div class="form-floating mb-4">
-                <input type="text" class="form-control" id="testName" placeholder="Test Name" autofocus value=${testName} onInput=${onTestNameChanged} disabled=${running}/>
+                <input type="text" class="form-control" id="testName" placeholder="Test Name" autofocus value=${testName} onInput=${onTestNameChanged} onKeyPress=${onKeyPress} disabled=${running}/>
                 <label for="testName">Test Name</label>
             </div>
             <button type="button" class="w-100 btn btn-lg btn-primary" onClick=${startTest} hidden=${running} disabled=${!testName}>Start</button>
