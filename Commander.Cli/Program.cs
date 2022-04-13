@@ -35,8 +35,7 @@ bool ExecuteCommand(Command command, string? arg)
 
             if (arg.Length > 1)
             {
-                arg = char.ToUpper(arg[0]) + arg.Substring(1).ToLower();
-                if (Enum.TryParse(arg, out TestExecutionResult result))
+                if (Enum.TryParse(arg, ignoreCase: true, out TestExecutionResult result))
                 {
                     profilerIpc.EndTest(result);
                     PrintUnlessQuiet($"Stopped test with result {arg}");
