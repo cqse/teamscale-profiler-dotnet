@@ -9,8 +9,10 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         private readonly IpcServer ipcServer;
 
-        // TODO (MP) We need to define a contract for test names. Is empty allowed? May it be null?
-        public string TestName { get; private set; } = string.Empty;
+        /// <summary>
+        /// The name of the current test, empty string if no test is running.
+        /// </summary>
+        public string TestName { get; private set; } = String.Empty;
 
         public IpcConfig Config { get; }
 
@@ -41,6 +43,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public void StartTest(string testName)
         {
+            if (string.IsNullOrEmpty(testName))
+            {
+                throw new ArgumentException("Test name may not be empty or null");
+            }
+
             logger.Info("Broadcasting start of test {testName}", testName);
             this.TestName = testName;
             ipcServer.Publish("test:start", testName);

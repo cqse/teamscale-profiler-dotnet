@@ -57,6 +57,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
         }
 
+        [TestCase(null)]
+        [TestCase("")]
+        public void TestCaseMayNotBeNullOrEmpty(string testName)
+        {
+            Assert.Throws<ArgumentException>(() => profilerIpc.StartTest(testName));
+        }
+
         [Test]
         public void TestCaseWithSpecialCharacters()
         {
