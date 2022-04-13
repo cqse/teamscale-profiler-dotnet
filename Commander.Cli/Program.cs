@@ -3,6 +3,8 @@ using System.Reflection;
 
 var profilerIpc = new ProfilerIpc(new IpcConfig());
 
+bool quiet = args.Contains("-q") || args.Contains("--quiet");
+
 while(true)
 {
     Command nextCommand = Command.Start;
@@ -24,7 +26,7 @@ bool ExecuteCommand(Command command, string? arg)
     {
         case Command.Start:
             profilerIpc.StartTest(arg);
-            Help($"Started test {arg}");
+            PrintUnlessQuiet($"Started test {arg}");
             return false;
         case Command.Stop:
             if (arg?.Length > 1)
@@ -33,12 +35,12 @@ bool ExecuteCommand(Command command, string? arg)
                 if (Enum.TryParse(arg, out TestExecutionResult result))
                 {
                     profilerIpc.EndTest(result);
-                    Help($"Stopped test with result {arg}");
+                    PrintUnlessQuiet($"Stopped test with result {arg}");
                 }
 
                 return false;
             }
-            Help($"Unknown test result {arg}, use one of these values: {CommandAttribute.ValidResultValues}");
+            PrintUnlessQuiet($"Unknown test result {arg}, use one of these values: {CommandAttribute.ValidResultValues}");
             return false;
         case Command.Exit:
             return true;
@@ -50,15 +52,15 @@ bool ExecuteCommand(Command command, string? arg)
 (Command, string?) WaitForCommand(params Command[] commands)
 {
     Dictionary<string, Command> availableCommands = commands.Append(Command.Exit).ToDictionary(command => command.ToString().ToLower(), command => command);
-    Help("Available commands:");
+    PrintUnlessQuiet("Available commands:");
     
     foreach(Command command in availableCommands.Values) {
         CommandAttribute attribute = CommandAttribute.GetAttribute(command);
         string synopsis = string.Join(" ", command.ToString().ToLower(), attribute.Argument);
-        Help($" * {synopsis}: {attribute.Description}");
+        PrintUnlessQuiet($" * {synopsis}: {attribute.Description}");
     }
 
-    Help(string.Empty);
+    PrintUnlessQuiet(string.Empty);
 
     while(true) {
         string[]? input = Console.ReadLine()?.Split(" ", 2);
@@ -67,7 +69,7 @@ bool ExecuteCommand(Command command, string? arg)
             continue;
         }
 
-        Help(string.Empty);
+        PrintUnlessQuiet(string.Empty);
 
         if (availableCommands.TryGetValue(input[0].ToLower(), out Command command)) {
             string? arg = null;
@@ -78,13 +80,16 @@ bool ExecuteCommand(Command command, string? arg)
             return (command, arg);
         }
 
-        Help($"Unknown command: {input[0]}");
+        PrintUnlessQuiet($"Unknown command: {input[0]}");
     }
 }
 
-void Help(string message)
+void PrintUnlessQuiet(string message)
 {
-    Console.WriteLine(message);
+    if (!quiet)
+    {
+        Console.WriteLine(message);
+    }
 }
 
 class CommandAttribute : Attribute
