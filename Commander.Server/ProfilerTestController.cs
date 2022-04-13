@@ -10,10 +10,12 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
     public class ProfilerTestController : ControllerBase
     {
         private readonly ProfilerIpc profilerIpc;
+        private readonly ILogger logger;
 
-        public ProfilerTestController(ProfilerIpc profilerIpc)
+        public ProfilerTestController(ProfilerIpc profilerIpc, ILogger<ProfilerTestController> logger)
         {
             this.profilerIpc = profilerIpc;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -30,12 +32,14 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
                 throw new BadHttpRequestException("Test name may not be empty");
             }
 
+            logger.LogInformation("Starting test: {}", testName);
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
         }
 
         [HttpPost("stop/{result}")]
         public void StopTest(TestExecutionResult result)
         {
+            logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
             profilerIpc.EndTest(result);
         }
 
@@ -45,6 +49,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         [HttpPost("end/{name}")]
         public void EndTest(string name, [FromBody] TestResultDto result)
         {
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
             profilerIpc.EndTest(result.Result);
         }
 
