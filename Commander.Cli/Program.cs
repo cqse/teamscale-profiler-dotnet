@@ -25,11 +25,15 @@ bool ExecuteCommand(Command command, string? arg)
     switch(command)
     {
         case Command.Start:
+            ArgumentNullException.ThrowIfNull(arg, nameof(arg));
+
             profilerIpc.StartTest(arg);
             PrintUnlessQuiet($"Started test {arg}");
             return false;
         case Command.Stop:
-            if (arg?.Length > 1)
+            ArgumentNullException.ThrowIfNull(arg, nameof(arg));
+
+            if (arg.Length > 1)
             {
                 arg = char.ToUpper(arg[0]) + arg.Substring(1).ToLower();
                 if (Enum.TryParse(arg, out TestExecutionResult result))
