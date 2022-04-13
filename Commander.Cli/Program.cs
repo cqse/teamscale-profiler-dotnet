@@ -112,7 +112,7 @@ class CommandAttribute : Attribute
     public static CommandAttribute GetAttribute(Command command)
     {
         MemberInfo memberInfo = typeof(Command).GetMember(command.ToString()).First();
-        return memberInfo.GetCustomAttribute<CommandAttribute>();
+        return memberInfo.GetCustomAttribute<CommandAttribute>()!;
     }
 
 }
