@@ -39,11 +39,10 @@ bool ExecuteCommand(Command command, string? arg)
                 {
                     profilerIpc.EndTest(result);
                     PrintUnlessQuiet($"Stopped test with result {arg}");
+                    return false;
                 }
-
-                return false;
             }
-            PrintUnlessQuiet($"Unknown test result {arg}, use one of these values: {CommandAttribute.ValidResultValues}");
+            Console.Error.WriteLine($"Unknown test result: {arg}");
             return false;
         case Command.Exit:
             return true;
@@ -83,7 +82,7 @@ bool ExecuteCommand(Command command, string? arg)
             return (command, arg);
         }
 
-        PrintUnlessQuiet($"Unknown command: {input[0]}");
+        Console.Error.WriteLine($"Unknown command: {input[0]}");
     }
 }
 
