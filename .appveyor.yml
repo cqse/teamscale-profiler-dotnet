@@ -68,7 +68,7 @@ artifacts:
 deploy:
   - provider: GitHub
     auth_token:
-      secure: zewFCJVMsIobb85iuyXSs0UbTgh53yZzNJK8KNOl+3W+MfkaUoe4BGOLE+fuQ9WJ
+      secure: KurN/LHodBkHCIQv91aLEVThkT5ceI3B6Dl+4xRAQTbkVQ2hByHzxeOX2yAn5Mmp
     release: $(APPVEYOR_REPO_TAG_NAME)
     artifact: $(release_zip)
     description: Release v$(appveyor_build_version)
