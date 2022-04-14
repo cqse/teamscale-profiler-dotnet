@@ -5,7 +5,7 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-# Next Release
+# v22.4.0
 - [feature] Caching symbols for better performance when converting many trace files to line coverage.
 - [fix] Upload Daemon could be started multiple times
 
