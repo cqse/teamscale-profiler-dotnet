@@ -10,11 +10,14 @@
     <Title>Teamscale Ephemeral .NET Profiler Commander</Title>
     <Description>Commander for sending test start/end signals to Teamscale Ephemeral .NET Profiler instances running it TIA mode.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<LangVersion>8.0</LangVersion>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NetMQ" Version="4.0.1.6" />
     <PackageReference Include="NLog" Version="4.7.8" />
+	<PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="all" /> <!-- Required as long we target netstandard2.0/net472 -->
     <PackageReference Include="NuGet.Build.Tasks.Pack" Version="5.8.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
