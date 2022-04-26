@@ -22,8 +22,8 @@
     <ProjectGuid>{CC51C2F0-D0F2-41D9-B1D2-5108C1D3B8E6}</ProjectGuid>
     <RootNamespace>Profiler</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <PlatformToolset>v141</PlatformToolset>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -112,6 +112,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;Ws2_32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -319,7 +320,7 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\libzmq_vc141.4.3.2\build\native\libzmq_vc141.targets" Condition="Exists('..\packages\libzmq_vc141.4.3.2\build\native\libzmq_vc141.targets')" />
+    <Import Project="..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets" Condition="Exists('..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets')" />
   </ImportGroup>
   <Target Name="Build64" AfterTargets="Build">
     <MSBuild Condition="'$(Platform)'=='Win32'" Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
@@ -334,6 +335,6 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\libzmq_vc141.4.3.2\build\native\libzmq_vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\libzmq_vc141.4.3.2\build\native\libzmq_vc141.targets'))" />
+    <Error Condition="!Exists('..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets'))" />
   </Target>
 </Project>
