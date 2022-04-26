@@ -12,9 +12,7 @@
 #include <unordered_set>
 #include "CProfilerWorker.h"
 #include "UploadDaemon.h"
-#ifdef TIA
 #include "utils/Ipc.h"
-#endif
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
  * coverage.
@@ -66,11 +64,8 @@ private:
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
-#ifdef TIA
 	bool isTestCaseRecording = false;
 	CProfilerCallback* callbackInstance = NULL;
-	bool enableFunctionHooks = false;
-#endif
 
 	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
@@ -98,7 +93,7 @@ private:
 	std::vector<FunctionInfo> inlinedMethods;
 
 	/** Smart pointer to the .NET framework profiler info. */
-	CComQIPtr<ICorProfilerInfo3> profilerInfo;
+	CComQIPtr<ICorProfilerInfo8> profilerInfo;
 
 	/** The log to write all results and messages to. */
 	TraceLog traceLog;
@@ -106,7 +101,6 @@ private:
 	/** The log to write attach and detatch events to */
 	AttachLog attachLog;
 
-#ifdef TIA
 	/** Inter-process connection for TIA communication. null if not in TIA mode. */
 	Ipc* ipc = NULL;
 
@@ -129,7 +123,6 @@ private:
 	 * We use the vector to uniquely store the information about called methods.
 	 */
 	std::vector<FunctionInfo> calledMethods;
-#endif
 private:
 
 	/**
@@ -138,7 +131,7 @@ private:
 	* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
 	* code, in order to make coverage information independent of pre-jitted code.
 	*/
-	DWORD getEventMask();
+	void adjustEventMask();
 
 	/** Dumps all environment variables to the log file. */
 	void dumpEnvironment();

@@ -14,7 +14,7 @@ public:
 	virtual ~CProfilerWorker();
 
 	/**
-	 * Prepares the set of methodIds from called methods for writing, i.e. transfers 
+	 * Prepares the set of methodIds from called methods for writing, i.e. transfers
 	 * the content of the vectors that have been used for intermittent storage into the set.
 	 */
 	void prepareMethodIdSetForWriting();
@@ -29,11 +29,8 @@ private:
 
 	CRITICAL_SECTION* methodSetSynchronization;
 
-
 	// Methods
 	void methodIdThreadLoop();
 	void logError(std::string);
 	void transferMethodIds(concurrency::concurrent_vector<FunctionID>&);
-
 };
-

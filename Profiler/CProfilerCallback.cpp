@@ -59,8 +59,6 @@ void CProfilerCallback::ShutdownFromDllMainDetach() {
 	getShutdownGuard().shutdownInstance(false);
 }
 
-
-
 CProfilerCallback::CProfilerCallback() {
 	try {
 		InitializeCriticalSection(&methodSetSynchronization);
@@ -126,11 +124,8 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		createDaemon().launch(traceLog);
 	}
 
-#ifdef TIA
-
 	if (config.isTiaEnabled()) {
 		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
-		enableFunctionHooks = true;
 		std::function<void(std::string)> testStartCallback = std::bind(&CProfilerCallback::onTestStart, this, std::placeholders::_1);
 		std::function<void(std::string, std::string)> testEndCallback = std::bind(&CProfilerCallback::onTestEnd, this, std::placeholders::_1, std::placeholders::_2);
 		std::function<void(std::string)> errorCallback = std::bind(&TraceLog::error, this->traceLog, std::placeholders::_1);
@@ -143,7 +138,6 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 			traceLog.startTestCase(testName);
 		}
 	}
-#endif
 
 	char appPool[BUFFER_SIZE];
 	if (GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool))) {
@@ -165,12 +159,10 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		return E_INVALIDARG;
 	}
 
-	//TODO can we change event mask during running profiler?
-	DWORD dwEventMask = getEventMask();
-	profilerInfo->SetEventMask(dwEventMask);
-#ifdef TIA
-	profilerInfo->SetEnterLeaveFunctionHooks3((FunctionEnter3*)&FnEnterCallback, NULL, NULL);
-#endif
+	adjustEventMask();
+	if (config.isTiaEnabled()) {
+		profilerInfo->SetEnterLeaveFunctionHooks3((FunctionEnter3*)&FnEnterCallback, NULL, NULL);
+	}
 	traceLog.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
@@ -219,19 +211,20 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	traceLog.shutdown();
 	attachLog.shutdown();
 
-#ifdef TIA
 	if (this->ipc != NULL) {
 		delete ipc;
 		ipc = NULL;
 	}
-#endif
+	if (this->worker != NULL) {
+		delete worker;
+		worker = NULL;
+	}
 	if (config.shouldStartUploadDaemon()) {
 		createDaemon().notifyShutdown();
 	}
 	if (clrIsAvailable) {
 		profilerInfo->ForceGC();
 	}
-
 }
 
 HRESULT CProfilerCallback::Shutdown() {
@@ -244,23 +237,25 @@ HRESULT CProfilerCallback::Shutdown() {
 	return S_OK;
 }
 
-DWORD CProfilerCallback::getEventMask() {
-	DWORD dwEventMask = 0;
-	dwEventMask |= COR_PRF_MONITOR_JIT_COMPILATION;
-	dwEventMask |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
+void CProfilerCallback::adjustEventMask() {
+	DWORD dwEventMaskLow;
+	DWORD dwEventMaskHigh;
+	profilerInfo->GetEventMask2(&dwEventMaskLow, &dwEventMaskHigh);
+	dwEventMaskLow |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
-	// disable force re-jitting for the light variant
-	if (!config.shouldUseLightMode()) {
-		dwEventMask |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
+	if (config.isTgaEnabled()) {
+		dwEventMaskLow |= COR_PRF_MONITOR_JIT_COMPILATION;
+		// disable force re-jitting for the light variant
+		if (!config.shouldUseLightMode()) {
+			dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
+		}
 	}
 
-#ifdef TIA
 	if (config.isTiaEnabled()) {
-		dwEventMask |= COR_PRF_MONITOR_ENTERLEAVE;
+		dwEventMaskLow |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
-#endif
 
-	return dwEventMask;
+	profilerInfo->SetEventMask2(dwEventMaskLow, dwEventMaskHigh);
 }
 
 HRESULT CProfilerCallback::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus) {
@@ -277,6 +272,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
 	}
+	EnterCriticalSection(&callbackSynchronization);
 
 	int assemblyNumber = registerAssembly(assemblyId);
 
@@ -287,6 +283,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	WCHAR assemblyPath[BUFFER_SIZE];
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
+
+	LeaveCriticalSection(&callbackSynchronization);
 
 	// Log assembly load.
 	writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, "%S:%i",
@@ -378,7 +376,7 @@ void CProfilerCallback::handleException(std::string context) {
 
 HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
 	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (config.isProfilingEnabled()) {
+	if (config.isProfilingEnabled() && config.isTgaEnabled()) {
 		EnterCriticalSection(&callbackSynchronization);
 		EnterCriticalSection(&methodSetSynchronization);
 		recordFunctionInfo(&jittedMethods, functionId);
@@ -401,18 +399,17 @@ HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
 
 HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, FunctionID calleeId,
 	BOOL* pfShouldInline) {
-	if (config.isProfilingEnabled()) {
-			// Save information about inlined method (if not already seen)
+	if (config.isProfilingEnabled() && config.isTgaEnabled()) {
+		// Save information about inlined method (if not already seen)
 
-			// TODO (MP) Better late call eval here as well.
-			if (inlinedMethodIds.find(calleeId) == inlinedMethodIds.end()) {
-				EnterCriticalSection(&callbackSynchronization);
-				if (inlinedMethodIds.insert(calleeId).second == true) {
-					recordFunctionInfo(&inlinedMethods, calleeId);
-				}
-				LeaveCriticalSection(&callbackSynchronization);
+		// TODO (MP) Better late call eval here as well.
+		if (inlinedMethodIds.find(calleeId) == inlinedMethodIds.end()) {
+			EnterCriticalSection(&callbackSynchronization);
+			if (inlinedMethodIds.insert(calleeId).second == true) {
+				recordFunctionInfo(&inlinedMethods, calleeId);
 			}
-
+			LeaveCriticalSection(&callbackSynchronization);
+		}
 	}
 
 	// Always allow inlining.
@@ -441,30 +438,30 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 inline bool CProfilerCallback::shouldWriteEagerly() {
 	// Must be called from synchronized context
 	size_t overallCount = inlinedMethods.size() + jittedMethods.size();
-#if TIA
 	overallCount += calledMethods.size();
-#endif
 	return config.getEagerness() > 0 && static_cast<int>(overallCount) >= config.getEagerness();
 }
 
 void CProfilerCallback::writeFunctionInfosToLog() {
 	// Must be called from synchronized context
-	traceLog.writeInlinedFunctionInfosToLog(&inlinedMethods);
-	inlinedMethods.clear();
+	if (config.isTgaEnabled()) {
+		traceLog.writeInlinedFunctionInfosToLog(&inlinedMethods);
+		inlinedMethods.clear();
 
-	traceLog.writeJittedFunctionInfosToLog(&jittedMethods);
-	jittedMethods.clear();
-
-#if TIA
-	worker->prepareMethodIdSetForWriting();
-	for (FunctionID functionId : calledMethodIds) {
-		recordFunctionInfo(&calledMethods, functionId);
+		traceLog.writeJittedFunctionInfosToLog(&jittedMethods);
+		jittedMethods.clear();
 	}
 
-	calledMethodIds.clear();
-	traceLog.writeCalledFunctionInfosToLog(&calledMethods);
-	calledMethods.clear();
-#endif
+	if (config.isTiaEnabled()) {
+		worker->prepareMethodIdSetForWriting();
+		for (FunctionID functionId : calledMethodIds) {
+			recordFunctionInfo(&calledMethods, functionId);
+		}
+
+		calledMethodIds.clear();
+		traceLog.writeCalledFunctionInfosToLog(&calledMethods);
+		calledMethods.clear();
+	}
 }
 
 HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
@@ -522,8 +519,6 @@ int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, 
 	return writtenChars;
 }
 
-#ifdef TIA
-
 void CProfilerCallback::onTestStart(std::string testName)
 {
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
@@ -551,5 +546,3 @@ void CProfilerCallback::onTestEnd(std::string result, std::string message)
 		LeaveCriticalSection(&methodSetSynchronization);
 	}
 }
-
-#endif

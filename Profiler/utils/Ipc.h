@@ -4,6 +4,7 @@
 
 #include <thread>
 #include <atomic>
+#include <functional>
 
 class Ipc
 {

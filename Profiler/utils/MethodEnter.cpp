@@ -22,7 +22,6 @@ void setTestCaseRecording(bool testCaseRecording) {
 	isTestCaseRecording = testCaseRecording;
 }
 
-
 #ifdef _WIN64
 
 void __fastcall FnEnterCallback(FunctionIDOrClientID funcId) {

@@ -1,6 +1,5 @@
 #include "CProfilerWorker.h"
 
-
 CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, std::unordered_set<FunctionID>* calledMethodIds, CRITICAL_SECTION* methodSetSynchronization) {
 	this->traceLog = traceLog;
 	this->calledMethodIds = calledMethodIds;

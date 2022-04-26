@@ -1,7 +1,5 @@
 #pragma once
-#ifdef TIA
 #define _WINSOCKAPI_ // has to be defined for zmq before including windows.h
-#endif
 #include <windows.h>
 #include <stdio.h>
 #include <cor.h>
@@ -24,12 +22,12 @@ public:
 	// IUnknown interface implementation
 	STDMETHOD_(ULONG, AddRef)();
 	STDMETHOD_(ULONG, Release)();
-	STDMETHOD(QueryInterface)(REFIID riid, void **ppInterface);
+	STDMETHOD(QueryInterface)(REFIID riid, void** ppInterface);
 	// End of IUnknown interface implementation
 
 	// ICorProfilerCallback interface implementation
 		// STARTUP/SHUTDOWN EVENTS
-	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
+	STDMETHOD(Initialize)(IUnknown* pICorProfilerInfoUnk);
 	STDMETHOD(Shutdown)();
 	// APPLICATION DOMAIN EVENTS
 	STDMETHOD(AppDomainCreationStarted)(AppDomainID appDomainID);
@@ -56,10 +54,10 @@ public:
 	// JIT EVENTS
 	STDMETHOD(JITCompilationStarted)(FunctionID functionID, BOOL fIsSafeToBlock);
 	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
-	STDMETHOD(JITCachedFunctionSearchStarted)(FunctionID functionID, BOOL *pbUseCachedFunction);
+	STDMETHOD(JITCachedFunctionSearchStarted)(FunctionID functionID, BOOL* pbUseCachedFunction);
 	STDMETHOD(JITCachedFunctionSearchFinished)(FunctionID functionID, COR_PRF_JIT_CACHE result);
 	STDMETHOD(JITFunctionPitched)(FunctionID functionID);
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 	// THREAD EVENTS
 	STDMETHOD(ThreadCreated)(ThreadID threadID);
 	STDMETHOD(ThreadDestroyed)(ThreadID threadID);
@@ -67,14 +65,14 @@ public:
 	// REMOTING EVENTS
 	// Client-side events
 	STDMETHOD(RemotingClientInvocationStarted)();
-	STDMETHOD(RemotingClientSendingMessage)(GUID *pCookie, BOOL fIsAsync);
-	STDMETHOD(RemotingClientReceivingReply)(GUID *pCookie, BOOL fIsAsync);
+	STDMETHOD(RemotingClientSendingMessage)(GUID* pCookie, BOOL fIsAsync);
+	STDMETHOD(RemotingClientReceivingReply)(GUID* pCookie, BOOL fIsAsync);
 	STDMETHOD(RemotingClientInvocationFinished)();
 	// Server-side events
-	STDMETHOD(RemotingServerReceivingMessage)(GUID *pCookie, BOOL fIsAsync);
+	STDMETHOD(RemotingServerReceivingMessage)(GUID* pCookie, BOOL fIsAsync);
 	STDMETHOD(RemotingServerInvocationStarted)();
 	STDMETHOD(RemotingServerInvocationReturned)();
-	STDMETHOD(RemotingServerSendingReply)(GUID *pCookie, BOOL fIsAsync);
+	STDMETHOD(RemotingServerSendingReply)(GUID* pCookie, BOOL fIsAsync);
 	// CONTEXT EVENTS
 	STDMETHOD(UnmanagedToManagedTransition)(FunctionID functionID, COR_PRF_TRANSITION_REASON reason);
 	STDMETHOD(ManagedToUnmanagedTransition)(FunctionID functionID, COR_PRF_TRANSITION_REASON reason);
@@ -113,8 +111,8 @@ public:
 	STDMETHOD(ExceptionCatcherEnter)(FunctionID functionID, ObjectID objectID);
 	STDMETHOD(ExceptionCatcherLeave)();
 	// COM CLASSIC VTable
-	STDMETHOD(COMClassicVTableCreated)(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable, ULONG cSlots);
-	STDMETHOD(COMClassicVTableDestroyed)(ClassID wrappedClassID, REFGUID implementedIID, void *pVTable);
+	STDMETHOD(COMClassicVTableCreated)(ClassID wrappedClassID, REFGUID implementedIID, void* pVTable, ULONG cSlots);
+	STDMETHOD(COMClassicVTableDestroyed)(ClassID wrappedClassID, REFGUID implementedIID, void* pVTable);
 	// End of ICorProfilerCallback interface implementation
 
 	// ICorProfilerCallback2 interface implementation
@@ -129,7 +127,7 @@ public:
 	// End of ICorProfilerCallback2 interface implementation
 
 	// ICorProfilerCallback3 interface implementation
-	STDMETHOD(InitializeForAttach)(IUnknown * pCorProfilerInfoUnk, void * pvClientData, UINT cbClientData);
+	STDMETHOD(InitializeForAttach)(IUnknown* pCorProfilerInfoUnk, void* pvClientData, UINT cbClientData);
 	STDMETHOD(ProfilerAttachComplete)();
 	STDMETHOD(ProfilerDetachSucceeded)();
 	// End of ICorProfilerCallback3 interface implementation
