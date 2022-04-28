@@ -156,7 +156,7 @@ namespace UploadDaemon.Scanning
 
             if (isTestwiseTrace)
             {
-                return new TestwiseCoverageReport() { Tests = tests };
+                return new TestwiseCoverageReport(tests.ToArray());
             }
             else
             {

@@ -135,5 +135,22 @@ namespace UploadDaemon.Report
                 ]
             }".Replace(" ", "").Replace("\r\n", "")));
         }
+
+        [Test]
+        public void PartialReport()
+        {
+            TestwiseCoverageReport report = new TestwiseCoverageReport(true, new Test("Test/Method()"));
+            Assert.That(report.ToString(), Is.EqualTo(@"
+            {
+                ""partial"": true,
+                ""tests"": [
+                    {
+                        ""uniformPath"": ""Test/Method()"",
+                        ""result"": ""SKIPPED"",
+                        ""paths"": []
+                    }
+                ]
+            }".Replace(" ", "").Replace("\r\n", "")));
+        }
     }
 }
