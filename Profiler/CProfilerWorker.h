@@ -23,8 +23,8 @@ private:
 	std::thread* workerThread = NULL;
 	TraceLog* traceLog = NULL;
 	bool shutdown = false;
-	concurrency::concurrent_vector<FunctionID>* vector1 = new concurrency::concurrent_vector<FunctionID>();
-	concurrency::concurrent_vector<FunctionID>* vector2 = new concurrency::concurrent_vector<FunctionID>();
+	concurrency::concurrent_vector<FunctionID>* backing = new concurrency::concurrent_vector<FunctionID>();
+	concurrency::concurrent_vector<FunctionID>* primary = new concurrency::concurrent_vector<FunctionID>();
 	std::unordered_set<FunctionID>* calledMethodIds;
 
 	CRITICAL_SECTION* methodSetSynchronization;

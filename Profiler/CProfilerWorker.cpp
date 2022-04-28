@@ -4,7 +4,7 @@ CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, std::unorde
 	this->traceLog = traceLog;
 	this->calledMethodIds = calledMethodIds;
 	this->methodSetSynchronization = methodSetSynchronization;
-	setMethodIdVector(this->vector1);
+	setMethodIdVector(this->primary);
 	this->workerThread = new std::thread(&CProfilerWorker::methodIdThreadLoop, this);
 }
 
@@ -13,28 +13,24 @@ CProfilerWorker::~CProfilerWorker() {
 	if (this->workerThread->joinable()) {
 		this->workerThread->join();
 	}
-	delete vector1;
-	delete vector2;
+	delete backing;
+	delete primary;
 }
 
 void CProfilerWorker::methodIdThreadLoop() {
 	while (!this->shutdown) {
-		if (vector1->empty() && vector2->empty()) {
+		if (backing->empty() && primary->empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
 		}
 		EnterCriticalSection(methodSetSynchronization);
 		swapVectors();
-		setMethodIdVector(this->vector2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		transferMethodIds(this->vector1);
 		LeaveCriticalSection(methodSetSynchronization);
 	}
 }
 
 void CProfilerWorker::prepareMethodIdSetForWriting() {
 	swapVectors();
-	transferMethodIds(this->vector2);
 }
 
 void CProfilerWorker::transferMethodIds(concurrency::concurrent_vector<UINT_PTR>* methodIds) {
@@ -54,7 +50,13 @@ void CProfilerWorker::logError(std::string message) {
 }
 
 void CProfilerWorker::swapVectors() {
-	concurrency::concurrent_vector<FunctionID>* temp = vector1;
-	vector1 = vector2;
-	vector2 = temp;
+	// Must be called from synchronized context
+	concurrency::concurrent_vector<FunctionID>* temp = backing;
+	backing = primary;
+	primary = temp;
+	setMethodIdVector(this->primary);
+	// Since the reassignment is technically not thread safe, we wait a little bit
+	// to be sure that everyone is done with writing to the now backing vector.
+	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	transferMethodIds(this->backing);
 }
