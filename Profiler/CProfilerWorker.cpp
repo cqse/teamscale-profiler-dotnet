@@ -13,51 +13,48 @@ CProfilerWorker::~CProfilerWorker() {
 	if (this->workerThread->joinable()) {
 		this->workerThread->join();
 	}
+	delete vector1;
+	delete vector2;
 }
 
 void CProfilerWorker::methodIdThreadLoop() {
-	// Toggle which vector to use
-	bool vectorToggle = true;
 	while (!this->shutdown) {
-		if (vector1.empty() && vector2.empty()) {
+		if (vector1->empty() && vector2->empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
 		}
-		if (vectorToggle) {
-			EnterCriticalSection(methodSetSynchronization);
-			setMethodIdVector(this->vector2);
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
-			transferMethodIds(this->vector1);
-			LeaveCriticalSection(methodSetSynchronization);
-		}
-		else {
-			EnterCriticalSection(methodSetSynchronization);
-			setMethodIdVector(this->vector1);
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
-			transferMethodIds(this->vector2);
-			LeaveCriticalSection(methodSetSynchronization);
-		}
-		vectorToggle = !vectorToggle;
+		EnterCriticalSection(methodSetSynchronization);
+		swapVectors();
+		setMethodIdVector(this->vector2);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		transferMethodIds(this->vector1);
+		LeaveCriticalSection(methodSetSynchronization);
 	}
 }
 
 void CProfilerWorker::prepareMethodIdSetForWriting() {
-	transferMethodIds(this->vector1);
+	swapVectors();
 	transferMethodIds(this->vector2);
 }
 
-void CProfilerWorker::transferMethodIds(concurrency::concurrent_vector<UINT_PTR>& methodIds) {
-	size_t size = methodIds.size();
+void CProfilerWorker::transferMethodIds(concurrency::concurrent_vector<UINT_PTR>* methodIds) {
+	size_t size = methodIds->size();
 	for (unsigned int i = 0; i < size; i++) {
-		this->calledMethodIds->insert(methodIds[i]);
+		this->calledMethodIds->insert((*methodIds)[i]);
 	}
-	methodIds.clear();
-	if (methodIds.capacity() > 2'000'000) {
-		methodIds.shrink_to_fit();
+	methodIds->clear();
+	if (methodIds->capacity() > 2'000'000) {
+		methodIds->shrink_to_fit();
 	}
 }
 
 void CProfilerWorker::logError(std::string message) {
 	std::string error = message;
 	traceLog->info(error);
+}
+
+void CProfilerWorker::swapVectors() {
+	concurrency::concurrent_vector<FunctionID>* temp = vector1;
+	vector1 = vector2;
+	vector2 = temp;
 }

@@ -23,8 +23,8 @@ private:
 	std::thread* workerThread = NULL;
 	TraceLog* traceLog = NULL;
 	bool shutdown = false;
-	concurrency::concurrent_vector<FunctionID> vector1;
-	concurrency::concurrent_vector<FunctionID> vector2;
+	concurrency::concurrent_vector<FunctionID>* vector1 = new concurrency::concurrent_vector<FunctionID>();
+	concurrency::concurrent_vector<FunctionID>* vector2 = new concurrency::concurrent_vector<FunctionID>();
 	std::unordered_set<FunctionID>* calledMethodIds;
 
 	CRITICAL_SECTION* methodSetSynchronization;
@@ -32,5 +32,6 @@ private:
 	// Methods
 	void methodIdThreadLoop();
 	void logError(std::string);
-	void transferMethodIds(concurrency::concurrent_vector<FunctionID>&);
+	void transferMethodIds(concurrency::concurrent_vector<FunctionID>*);
+	void swapVectors();
 };

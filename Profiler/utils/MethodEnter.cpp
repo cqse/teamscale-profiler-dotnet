@@ -14,8 +14,8 @@ extern "C" void _stdcall EnterCpp(
 	}
 }
 
-void setMethodIdVector(concurrency::concurrent_vector<FunctionID>& vectorToUse) {
-	vectorInUse = &vectorToUse;
+void setMethodIdVector(concurrency::concurrent_vector<FunctionID>* vectorToUse) {
+	vectorInUse = vectorToUse;
 }
 
 void setTestCaseRecording(bool testCaseRecording) {

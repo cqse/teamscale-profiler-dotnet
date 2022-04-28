@@ -9,7 +9,7 @@
 /**
  * Sets the vector to be filled with methodIds from called methods at this time.
  */
-void setMethodIdVector(concurrency::concurrent_vector<FunctionID>&);
+void setMethodIdVector(concurrency::concurrent_vector<FunctionID>*);
 
 /**
  * Sets the state of test case recording i.e. whether a test case is currently in progress or not.
