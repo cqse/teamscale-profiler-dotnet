@@ -361,6 +361,41 @@ match:
         partition: Manual Tests
 ```
 
+## Example: Artifactory Upload with username and password
+
+**Profiler.yml:**
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      artifactory:
+        url: https://yourinstance.jfrog.io/artifactory/some/generic/path
+        username: someuser
+        password: somepassword
+        partition: Manual Tests
+```
+
+## Example: Artifactory Upload with api key
+
+**Profiler.yml:**
+
+```yaml
+match:
+  - executableName: foo.exe
+    profiler:
+      targetdir: C:\output
+    uploader:
+      versionAssembly: YourAssembly
+      artifactory:
+        url: https://yourinstance.jfrog.io/artifactory/some/generic/path
+        apiKey: somekey
+        partition: Manual Tests
+```
+
 ## Example: Move to network share
 
 **Profiler.yml:**
