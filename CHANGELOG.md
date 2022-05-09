@@ -5,7 +5,7 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-# v22.5.0
+# Next Release
 - [feature] Upload Daemon sends distinct user agent header for Teamscale uploads
 
 # v22.4.0
