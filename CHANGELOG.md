@@ -1,4 +1,4 @@
-Please prefix each entry with one of:
+Please prefix each entry with one of: 
 
 - [breaking change]
 - [feature]
