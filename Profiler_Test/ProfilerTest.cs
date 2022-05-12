@@ -1,4 +1,6 @@
-﻿using Cqse.Teamscale.Profiler.Dotnet.Proxies;
+﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using Cqse.Teamscale.Profiler.Dotnet.Proxies;
+using Cqse.Teamscale.Profiler.Dotnet.Tia;
 using NUnit.Framework;
 using System.IO;
 using System.Linq;
@@ -64,10 +66,63 @@ match:
 ");
 
             profiler.ConfigFilePath = configFile;
-            
+
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             return profiler.GetTraceFiles().Count;
+        }
+
+        /// <summary>
+        /// Makes sure that when tga mode is active, we only get regular coverage.
+        /// </summary>
+        [Test]
+        public void TestTgaConfig()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: true
+      tga: true
+");
+
+            RecordingProfilerIpc profilerIpc = new RecordingProfilerIpc(null);
+            profilerIpc.StartTest("Test1");
+
+            profiler.ConfigFilePath = configFile;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.Some.Matches("^(Inlines|Jitted)"));
+            Assert.That(lines, Has.None.Matches("^(Called)"));
+        }
+
+        /// <summary>
+        /// Makes sure that when tia mode is active, we only get testwise coverage.
+        /// </summary>
+        [Test]
+        public void TestTiaConfig()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            RecordingProfilerIpc profilerIpc = new RecordingProfilerIpc(null);
+            profilerIpc.StartTest("Test1");
+
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: true
+      tga: false
+      tia: true
+      tia_request_socket: {profilerIpc.Config.RequestSocket}
+      tia_subscribe_socket: {profilerIpc.Config.PublishSocket}
+");
+
+            profiler.ConfigFilePath = configFile;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.None.Matches("^(Inlines|Jitted)"));
+            Assert.That(lines, Has.Some.Matches("^(Called)"));
         }
 
         /// <summary>
