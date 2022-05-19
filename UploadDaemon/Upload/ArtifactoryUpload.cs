@@ -57,7 +57,7 @@ namespace UploadDaemon.Upload
         {
             byte[] compressedBytes = CreateZipFile(lineCoverageReport);
 
-            uploadPath = String.Join("/", artifactoryServer.Project, revisionAndTimestamp.BranchName, revisionAndTimestamp.TimestampValue + "-" + revisionAndTimestamp.RevisionValue, "tga", "coverage.zip");
+            uploadPath = String.Join("/", artifactoryServer.Project, "reports", revisionAndTimestamp.BranchName, revisionAndTimestamp.TimestampValue + "-" + revisionAndTimestamp.RevisionValue, "TGA","SIMPLE", $"{revisionAndTimestamp.Identifier}-coverage.zip");
             string url = $"{artifactoryServer.Url}/artifactory/{uploadPath}";
             logger.Info("Uploading line coverage from {uploadPath} to {artifactory} ({url})", uploadPath, artifactoryServer.ToString(), url);
 

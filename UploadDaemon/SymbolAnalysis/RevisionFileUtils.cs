@@ -28,11 +28,13 @@ namespace UploadDaemon.SymbolAnalysis
 
             public string BranchName { get; set; }
 
+            public string Identifier { get; set; }
+
             public override bool Equals(object other) =>
-                other is RevisionAndTimestamp revision && revision.RevisionValue.Equals(RevisionValue) && revision.TimestampValue.Equals(TimestampValue) && revision.BranchName.Equals(BranchName);
+                other is RevisionAndTimestamp revision && revision.RevisionValue.Equals(RevisionValue) && revision.TimestampValue.Equals(TimestampValue) && revision.BranchName.Equals(BranchName) && revision.Identifier.Equals(Identifier);
 
             public override int GetHashCode() =>
-                (RevisionValue, TimestampValue).GetHashCode();
+                (RevisionValue, TimestampValue, BranchName, Identifier).GetHashCode();
 
             /// <summary>
             /// Returns the contents of a revision file that represents the same revision or timestamp
@@ -53,7 +55,7 @@ namespace UploadDaemon.SymbolAnalysis
                     }
                     result += $"timestamp: {TimestampValue}";
                 }
-                if (TimestampValue.Length != 0)
+                if (BranchName.Length != 0)
                 {
                     if (result.Length > 0)
                     {
@@ -61,11 +63,19 @@ namespace UploadDaemon.SymbolAnalysis
                     }
                     result += $"branch: {BranchName}";
                 }
+                if (Identifier.Length != 0)
+                {
+                    if (result.Length > 0)
+                    {
+                        result += "\n";
+                    }
+                    result += $"identifier: {Identifier}";
+                }
                 return result;
             }
         }
 
-        private static readonly Regex FileContentRegex = new Regex(@"^\s*(timestamp|revision|branch):(.*)$", RegexOptions.IgnoreCase);
+        private static readonly Regex FileContentRegex = new Regex(@"^\s*(timestamp|revision|branch|identifier):(.*)$", RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parses the given revision file lines. May throw exceptions if the file is malformed or cannot be read.
@@ -84,6 +94,7 @@ namespace UploadDaemon.SymbolAnalysis
             string RevisionValue = "";
             string TimestampValue = "";
             string BranchName = "";
+            string Identifier = "";
             foreach ((string type, string value) in matches)
             {
                 switch (type.ToLower())
@@ -97,6 +108,9 @@ namespace UploadDaemon.SymbolAnalysis
                     case "branch":
                         BranchName = value;
                         break;
+                    case "identifier":
+                        Identifier = value;
+                        break;
                     default:
                         throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
                             $" unknown type '{type}'");
@@ -106,7 +120,8 @@ namespace UploadDaemon.SymbolAnalysis
             {
                 RevisionValue = RevisionValue,
                 TimestampValue = TimestampValue,
-                BranchName = BranchName
+                BranchName = BranchName,
+                Identifier = Identifier
             };
         }
 
