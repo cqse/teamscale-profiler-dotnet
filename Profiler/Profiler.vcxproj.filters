@@ -284,6 +284,18 @@
     <ClInclude Include="CProfilerWorker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\atomic_queue\atomic_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\atomic_queue\defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\robin_hood\robin_hood.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\functionID_set\functionId_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Profiler.def">

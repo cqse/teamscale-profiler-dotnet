@@ -155,8 +155,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <OmitFramePointers>true</OmitFramePointers>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
       <PreprocessorDefinitions>TIA;WIN32;NDEBUG;_WINDOWS;_USRDLL;GCPROFILER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -169,6 +169,9 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>corguids.lib;version.lib;Ws2_32.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -265,6 +268,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerWorker.h" />
+    <ClInclude Include="utils\functionID_set\functionId_set.h" />
     <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="config\Config.h" />
@@ -295,7 +299,10 @@
     <ClInclude Include="lib\yaml-cpp\src\token.h" />
     <ClInclude Include="lib\StackWalker\StackWalker.h" />
     <ClInclude Include="log\TraceLog.h" />
+    <ClInclude Include="utils\atomic_queue\atomic_queue.h" />
+    <ClInclude Include="utils\atomic_queue\defs.h" />
     <ClInclude Include="utils\MethodEnter.h" />
+    <ClInclude Include="utils\robin_hood\robin_hood.h" />
     <ClInclude Include="utils\Testing.h" />
     <ClInclude Include="utils\StringUtils.h" />
     <ClInclude Include="utils\Debug.h" />

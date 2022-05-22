@@ -3,19 +3,28 @@
 #include "Debug.h"
 
 namespace {
-	concurrency::concurrent_vector<FunctionID>* vectorInUse;
+	functionID_set* calledFunctionSet;
 	bool isTestCaseRecording = false;
+	CRITICAL_SECTION* methodSetSynchronization;
+	Queue* methodQueue;
 }
 
-extern "C" void _stdcall EnterCpp(
-	FunctionIDOrClientID funcId) {
-	if (isTestCaseRecording) {
-		vectorInUse->push_back(funcId.functionID);
+extern "C" void _stdcall EnterCpp(FunctionIDOrClientID funcId) {
+	if (isTestCaseRecording && !calledFunctionSet->contains(funcId.functionID)) {
+		methodQueue->push(funcId.functionID);
 	}
 }
 
-void setMethodIdVector(concurrency::concurrent_vector<FunctionID>* vectorToUse) {
-	vectorInUse = vectorToUse;
+void setCalledMethodsSet(functionID_set* setToUse) {
+	calledFunctionSet = setToUse;
+}
+
+void setCriticalSection(CRITICAL_SECTION* methodSetSync) {
+	methodSetSynchronization = methodSetSync;
+}
+
+void setMethodIdQueue(Queue* methodIdQueue) {
+	methodQueue = methodIdQueue;
 }
 
 void setTestCaseRecording(bool testCaseRecording) {

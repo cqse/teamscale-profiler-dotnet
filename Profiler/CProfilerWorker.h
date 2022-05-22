@@ -4,34 +4,29 @@
 #include "log/TraceLog.h"
 #include <chrono>
 #include "utils/MethodEnter.h"
-#include <concurrent_vector.h>
-#include <unordered_set>
+#include <utils/functionID_set/functionId_set.h>
+#include <utils/atomic_queue/atomic_queue.h>
 
 class CProfilerWorker
 {
 public:
-	CProfilerWorker(Config*, TraceLog*, std::unordered_set<FunctionID>*, CRITICAL_SECTION*);
+	CProfilerWorker(Config*, TraceLog*, functionID_set*, CRITICAL_SECTION*);
 	virtual ~CProfilerWorker();
-
-	/**
-	 * Prepares the set of methodIds from called methods for writing, i.e. transfers
-	 * the content of the vectors that have been used for intermittent storage into the set.
-	 */
-	void prepareMethodIdSetForWriting();
 private:
+    
 	// Variables
 	std::thread* workerThread = NULL;
 	TraceLog* traceLog = NULL;
 	bool shutdown = false;
-	concurrency::concurrent_vector<FunctionID>* backing = new concurrency::concurrent_vector<FunctionID>();
-	concurrency::concurrent_vector<FunctionID>* primary = new concurrency::concurrent_vector<FunctionID>();
-	std::unordered_set<FunctionID>* calledMethodIds;
+
+#pragma warning( disable : 4316)
+	functionID_set* calledMethodIds;
+	Queue* methodIdQueue = new Queue(65'536);
 
 	CRITICAL_SECTION* methodSetSynchronization;
 
 	// Methods
 	void methodIdThreadLoop();
 	void logError(std::string);
-	void transferMethodIds(concurrency::concurrent_vector<FunctionID>*);
-	void swapVectors();
+	void transferMethodIds();
 };

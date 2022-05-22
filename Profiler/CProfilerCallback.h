@@ -9,7 +9,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <unordered_set>
+#include <utils/robin_hood/robin_hood.h>
+#include <utils/functionID_set/functionID_set.h>
 #include "CProfilerWorker.h"
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
@@ -84,7 +85,7 @@ private:
 	 * Keeps track of inlined methods.
 	 * We use the set to efficiently determine if we already noticed an inlined method.
 	 */
-	std::unordered_set<FunctionID> inlinedMethodIds;
+	robin_hood::unordered_flat_set<FunctionID> inlinedMethodIds;
 
 	/**
 	 * Keeps track of inlined methods.
@@ -114,7 +115,7 @@ private:
 	 * Keeps track of called methods.
 	 * We use the set to efficiently determine if we already noticed an called method.
 	 */
-	std::unordered_set<FunctionID> calledMethodIds;
+	functionID_set calledMethodIds;
 
 	CProfilerWorker* worker = NULL;
 

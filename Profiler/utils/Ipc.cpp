@@ -1,4 +1,3 @@
-#ifdef TIA
 #include "Ipc.h"
 
 #include <zmq.h>
@@ -30,7 +29,7 @@ Ipc::~Ipc()
 		this->handlerThread->join();
 	}
 
-	this->request("profiler_disconnected");
+	this->sendDisconnect();
 	if (this->zmqRequestSocket != NULL) {
 		zmq_close(this->zmqRequestSocket);
 	}
@@ -48,16 +47,6 @@ void Ipc::handlerThreadLoop() {
 		logError("Failed connecting to subscribe socket");
 		return;
 	}
-
-	/// Alternative way to read messages
-	//char buffer[IPC_BUFFER_SLOTS][IPC_BUFFER_SIZE];
-	//while (!this->shutdown) {
-	//	int len = zmq_recv(this->zmqSubscribeSocket, &buffer[0], IPC_BUFFER_SIZE - 1, 0);
-	//	if (len >= 0) {
-	//		IPC_TERMINATE_STRING(buffer[0], len);
-	//		this->testStartCallback(buffer[0]);
-	//	}
-	//}
 
 	std::vector<std::string> frames;
 	zmq_msg_t message;
@@ -103,6 +92,11 @@ std::string Ipc::getCurrentTestName()
 	return this->request("get_testname");
 }
 
+void Ipc::sendDisconnect() {
+	std::string message = "profiler_disconnected";
+	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
+}
+
 std::string Ipc::request(std::string message)
 {
 	if (!initRequestSocket()) {
@@ -134,7 +128,6 @@ bool Ipc::initRequestSocket() {
 			return false;
 		}
 	}
-
 	return true;
 }
 
@@ -142,4 +135,3 @@ void Ipc::logError(std::string message) {
 	std::string error = message + " (ZMQ error: " + zmq_strerror(zmq_errno()) + ")";
 	errorCallback(error);
 }
-#endif

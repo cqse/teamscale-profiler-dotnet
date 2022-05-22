@@ -453,9 +453,11 @@ void CProfilerCallback::writeFunctionInfosToLog() {
 	}
 
 	if (config.isTiaEnabled()) {
-		worker->prepareMethodIdSetForWriting();
-		for (FunctionID functionId : calledMethodIds) {
-			recordFunctionInfo(&calledMethods, functionId);
+		for (unsigned int i = 0; i < calledMethodIds.size(); i++) {
+			FunctionID value = calledMethodIds.at(i);
+			if (value != 0) {
+				recordFunctionInfo(&calledMethods, value);
+			}
 		}
 
 		calledMethodIds.clear();
