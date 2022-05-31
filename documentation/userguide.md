@@ -5,7 +5,11 @@ Test Gap analysis is a tool, which brings more transparency to the testing proce
 * the source code at the current revision
 * execution information, which is collected via the .NET Profiler
 
-The profiler writes method coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the builtin .NET profiling interface and therefore can be used with any .NET application.
+The profiler writes method-accurate coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the builtin .NET profiling interface and therefore can be used with any .NET application.
+
+Please note that the profiler cannot create line-accurate coverage, but only method-accurate coverage.
+Hence, the generated coverage information does not map to specific line numbers, but to methods.
+Method-accurate coverage is sufficient for Test Gap Analysis as Test Gap Analysis operates upon methods rather than single line numbers.
 
 The trace file is created immediately after the first call of a .NET method. However, it remains mostly empty as long as the process runs. This avoids an unnecessary performance overhead due to file accesses. As soon as the process ends gracefully, the report is finished and all collected information is written to the trace file.
 
@@ -305,9 +309,6 @@ uploader and in Teamscale. Patterns are glob patterns: `*` matches any number of
     assemblyPatterns:
       include: [ "*YourAssembly*" ]
       exclude: [ "*DoNotProfileThisAssembly*" ]
-
-Please note that the profiler cannot create line-accurate coverage, but only method-accurate coverage.
-The generated coverage will therefore not map to specific line numbers, but to methods.
 
 ## Uploading traces as-is
 
