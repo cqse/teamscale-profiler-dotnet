@@ -5,7 +5,11 @@ Test Gap analysis is a tool, which brings more transparency to the testing proce
 * the source code at the current revision
 * execution information, which is collected via the .NET Profiler
 
-The profiler writes method coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the builtin .NET profiling interface and therefore can be used with any .NET application.
+The profiler writes method-accurate coverage information of a .NET application into a report file (a.k.a. *trace file*). It uses the builtin .NET profiling interface and therefore can be used with any .NET application.
+
+Please note that the profiler cannot create line-accurate coverage, but only method-accurate coverage.
+Hence, the generated coverage information does not map to specific line numbers, but to methods.
+Method-accurate coverage is sufficient for Test Gap Analysis as Test Gap Analysis operates upon methods rather than single line numbers.
 
 The trace file is created immediately after the first call of a .NET method. However, it remains mostly empty as long as the process runs. This avoids an unnecessary performance overhead due to file accesses. As soon as the process ends gracefully, the report is finished and all collected information is written to the trace file.
 
@@ -270,8 +274,8 @@ To configure this
 
 You have two options for configuring the upload
 
-1. convert the trace to line coverage locally with your application's PDB files and then upload to Teamscale
-2. upload the trace to Teamscale as-is and let Teamscale do the resolution to line coverage
+1. convert the trace to method-accurate coverage locally with your application's PDB files and then upload to Teamscale
+2. upload the trace to Teamscale as-is and let Teamscale do the resolution to method-accurate coverage
 
 The first option is highly recommended.
 
@@ -284,10 +288,10 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 Please check the log files for errors and warnings after configuring the uploader and
 producing your first traces.
 
-## Locally converting to line coverage and then uploading
+## Locally converting to method-accurate coverage and then uploading
 
 You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
-The uploader will read these files and use them to convert the trace files to line coverage.
+The uploader will read these files and use them to convert the trace files to method-accurate coverage.
 
 Since the generated coverage must be matched to the correct code revision (otherwise you get
 incorrect coverage results),
@@ -314,13 +318,13 @@ upload the first trace file.
 In the profiler config file you must specify an assembly from which to read the program version via
 the `versionAssembly` YAML config option.
 This will be used to select the correct PDB files to map the trace file contents
-back to source lines in the original code.
+back to their methods in the original source code.
 
 Futher config options for the uploader in this mode:
 
 - `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
 
-## Example: Teamscale upload with local line coverage conversion
+## Example: Teamscale upload with local method-accurate coverage conversion
 
 **Profiler.yml:**
 
@@ -342,7 +346,7 @@ match:
         partition: Manual Tests
 ```
 
-## Example: Teamscale upload without local line coverage conversion
+## Example: Teamscale upload without local method-accurate coverage conversion
 
 **Profiler.yml:**
 
@@ -411,7 +415,7 @@ Set the option in the config file to `0` to disable scheduled uploads. The uploa
 
 ## Trace-File Merging
 
-By default, the upload daemon merges all line coverage that will be uploaded to the same
+By default, the upload daemon merges all coverage that will be uploaded to the same
 destination into a single file, to save disk space and reduce the number of uploads. Set the option `mergeLineCoverage` in the config file to `false`, to disable trace-file merging.
 
 ## Archiving Trace Files
@@ -427,7 +431,7 @@ archivePurgingThresholdsInDays:
   incompleteTraces: 3
 ```
 
-When the uploader is instructed to convert the traces locally to line coverage before uploading to Teamscale, the created line coverage is normally not stored on disk.
+When the uploader is instructed to convert the traces locally to method-accurate coverage before uploading to Teamscale, the created coverage is normally not stored on disk.
 For debugging, it can be helpful to dump it to disk. To do so, declare `archiveLineCoverage: true` at the top of your YAML file. These files will never be pruned.
 
 # Build Process
