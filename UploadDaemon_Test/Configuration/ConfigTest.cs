@@ -34,6 +34,8 @@ namespace UploadDaemon.Configuration
             {
                 Assert.That(fooConfig.Enabled, Is.True);
                 Assert.That(fooConfig.MergeLineCoverage, Is.True);
+                Assert.That(fooConfig.PartialCoverageReport, Is.False);
+                Assert.That(fooConfig.TestPathPrefix, Is.Empty);
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
                 Assert.That(fooConfig.VersionPrefix, Is.Empty);
@@ -310,6 +312,27 @@ namespace UploadDaemon.Configuration
             ").CreateConfigForProcess("foo.exe").Validate();
 
             Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
+        }
+
+
+        [Test]
+        public void TestPartialCoverageAndTestPrefix()
+        {
+            Config.ConfigForProcess config = Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        directory: C:\target
+                        pdbDirectory: C:\pdbs
+                        revisionFile: C:\revision
+                        partialCoverageReport: true
+                        testPathPrefix: MT
+
+            ").CreateConfigForProcess("foo.exe");
+
+            Assert.That(config.PartialCoverageReport, Is.True);
+            Assert.That(config.TestPathPrefix, Is.EqualTo("MT"));
         }
 
         [Test]

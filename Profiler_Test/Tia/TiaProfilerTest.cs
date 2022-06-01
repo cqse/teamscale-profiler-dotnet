@@ -1,4 +1,4 @@
-﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using Cqse.Teamscale.Profiler.Commons.Ipc;
 using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using NUnit.Framework;
 using System;
@@ -55,6 +55,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "startup" }));
             Assert.That(testResult.TestCases[0].TraceLines, Has.None.Matches("^(Inlines|Jitted|Called)"));
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void TestCaseMayNotBeNullOrEmpty(string testName)
+        {
+            Assert.Throws<ArgumentException>(() => profilerIpc.StartTest(testName));
         }
 
         [Test]

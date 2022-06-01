@@ -11,12 +11,18 @@ namespace UploadDaemon.Report.Testwise
     [JsonObject(MemberSerialization.OptIn)]
     public class TestwiseCoverageReport : ICoverageReport
     {
-        [JsonProperty(PropertyName = "tests")]
-        public IList<Test> Tests = new List<Test>();
+        [JsonProperty("partial")]
+        public bool Partial { get; }
 
-        public TestwiseCoverageReport(params Test[] tests)
+        [JsonProperty("tests")]
+        public Test[] Tests { get; }
+
+        public TestwiseCoverageReport(params Test[] tests) : this(false, tests) {}
+
+        public TestwiseCoverageReport(bool partial, params Test[] tests)
         {
-            Tests = tests.ToList();
+            Partial = partial;
+            Tests = tests;
         }
 
         /// <inheritDoc/>
@@ -37,7 +43,7 @@ namespace UploadDaemon.Report.Testwise
             }
 
             IDictionary<string, Test> mergedCoverage = new Dictionary<string, Test>();
-            foreach(Test test in new[] { Tests, other.Tests }.SelectMany(tests => tests))
+            foreach (Test test in this.Tests.Concat(other.Tests))
             {
                 if (mergedCoverage.ContainsKey(test.UniformPath))
                 {
@@ -49,7 +55,7 @@ namespace UploadDaemon.Report.Testwise
                 }
             }
 
-            return new TestwiseCoverageReport(mergedCoverage.Values.ToArray());
+            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray());
         }
 
         /// <summary>

@@ -9,8 +9,10 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         private readonly IpcServer ipcServer;
 
-        private string testName = string.Empty;
-        public string TestName => testName;
+        /// <summary>
+        /// The name of the current test, empty string if no test is running.
+        /// </summary>
+        public string TestName { get; private set; } = String.Empty;
 
         public IpcConfig Config { get; }
 
@@ -31,8 +33,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             switch (message)
             {
                 case "get_testname":
-                    logger.Info("Received request get_testname. Response {testName}", testName);
-                    return testName;
+                    logger.Info("Received request get_testname. Response {testName}", TestName);
+                    return TestName;
                 default:
                     logger.Info("Received request: {request}.", message);
                     return string.Empty;
@@ -41,16 +43,21 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public void StartTest(string testName)
         {
+            if (string.IsNullOrEmpty(testName))
+            {
+                throw new ArgumentException("Test name may not be empty or null");
+            }
+
             logger.Info("Broadcasting start of test {testName}", testName);
-            this.testName = testName;
+            this.TestName = testName;
             ipcServer.Publish("test:start", testName);
         }
 
-        public void EndTest(ETestExecutionResult result, string message = "")
+        public void EndTest(TestExecutionResult result, string message = "")
         {
-            logger.Info("Broadcasting end of test {testName} with result {result}", testName, result);
-            this.testName = string.Empty;
-            ipcServer.Publish("test:end", Enum.GetName(typeof(ETestExecutionResult), result), message);
+            logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
+            this.TestName = string.Empty;
+            ipcServer.Publish("test:end", Enum.GetName(typeof(TestExecutionResult), result).ToUpper(), message);
         }
 
         public void Dispose()

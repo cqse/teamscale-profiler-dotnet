@@ -12,7 +12,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         protected readonly IpcConfig config;
         protected readonly RequestHandler requestHandler;
-        private readonly Thread requestHandlerThread;
+        private readonly Thread? requestHandlerThread;
 
         public IpcServer(IpcConfig config, RequestHandler requestHandler, bool createThread = false)
         {

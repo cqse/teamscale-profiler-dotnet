@@ -75,7 +75,12 @@ namespace UploadDaemon.Report.Testwise
 
         public SimpleCoverageReport ToSimpleCoverageReport()
         {
-            return new SimpleCoverageReport(CoverageByPath.First().Files.ToDictionary(file => file.FileName, file => (FileCoverage)file));
+            IDictionary<string, FileCoverage> lineCoverageByPath = new Dictionary<string, FileCoverage>();
+            if (CoverageByPath.Any())
+            {
+                lineCoverageByPath = CoverageByPath.First().Files.ToDictionary(file => file.FileName, file => (FileCoverage)file);
+            }
+            return new SimpleCoverageReport(lineCoverageByPath);
         }
     }
 }

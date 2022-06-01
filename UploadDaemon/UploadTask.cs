@@ -158,34 +158,22 @@ namespace UploadDaemon
                 archive.ArchiveCoverageReport(Path.GetFileName(trace.FilePath), coverageReport);
             }
 
+            string type = "line";
+            if (coverageReport is TestwiseCoverageReport testwiseCoverageReport)
+            {
+                type = "testwise";
+                PrefixTestPaths(processConfig, testwiseCoverageReport);
+                if (processConfig.PartialCoverageReport)
+                {
+                    coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests);
+                }
+            }
+
             if (processConfig.MergeLineCoverage)
             {
                 logger.Debug("Merging line coverage from {traceFile} into previous line coverage", trace.FilePath);
                 coverageMerger.AddLineCoverage(trace.FilePath, timestampOrRevision, upload, coverageReport);
                 return;
-            }
-
-            string type = "line";
-            if (coverageReport is TestwiseCoverageReport)
-            {
-                type = "testwise";
-                var testwiseCoverageReport = coverageReport as TestwiseCoverageReport;
-                if (!string.IsNullOrEmpty(processConfig.TestPathPrefix))
-                {
-                    foreach (Test test in testwiseCoverageReport.Tests)
-                    {
-                        test.UniformPath = processConfig.TestPathPrefix + test.UniformPath;
-                    }
-                }
-
-                string[] missingTests = archive.KnownTestCases.Except(testwiseCoverageReport.Tests.Select(test => test.UniformPath)).ToArray();
-                foreach (string missingTest in missingTests)
-                {
-                    testwiseCoverageReport.Tests.Add(new Test(missingTest));
-                }
-
-                archive.KnownTestCases = testwiseCoverageReport.Tests.Select(test => test.UniformPath).ToArray();
-
             }
 
             logger.Debug("Uploading {type} coverage from {traceFile} to {upload}", type, trace.FilePath, upload.Describe());
@@ -196,6 +184,17 @@ namespace UploadDaemon
             else
             {
                 logger.Error("Failed to upload {type} coverage from {traceFile} to {upload}. Will retry later", type, trace.FilePath, upload.Describe());
+            }
+        }
+
+        private static void PrefixTestPaths(Config.ConfigForProcess processConfig, TestwiseCoverageReport testwiseCoverageReport)
+        {
+            if (!string.IsNullOrEmpty(processConfig.TestPathPrefix))
+            {
+                foreach (Test test in testwiseCoverageReport.Tests)
+                {
+                    test.UniformPath = processConfig.TestPathPrefix + test.UniformPath;
+                }
             }
         }
 
@@ -273,7 +272,7 @@ namespace UploadDaemon
         /// forgetting awaits all over the place. Therefore, we explicitly wait for uploads now here and there's no
         /// need to await anything further up the call stack.
         /// </summary>
-        static T RunSync<T>(Task<T> task)
+        private static T RunSync<T>(Task<T> task)
         {
             task.Wait();
             return task.Result;

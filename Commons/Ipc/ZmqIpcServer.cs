@@ -6,9 +6,9 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
     public class ZmqIpcServer : IpcServer
     {
-        private NetMQPoller poller;
-        private PublisherSocket publishSocket;
-        private ResponseSocket responseSocket;
+        private NetMQPoller? poller;
+        private PublisherSocket? publishSocket;
+        private ResponseSocket? responseSocket;
 
         public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, false)
         {
@@ -38,7 +38,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public override void Publish(params string[] frames)
         {
-            this.publishSocket.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(frame))));
+            this.publishSocket?.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(frame))));
         }
 
         public override void Dispose()
