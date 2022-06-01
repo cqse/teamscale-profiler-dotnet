@@ -34,7 +34,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                     logger.Info("Received request get_testname. Response {testName}", testName);
                     return testName;
                 default:
-                    logger.Info("Received request: {request}", message);
+                    logger.Info("Received request: {request}.", message);
                     return string.Empty;
             }
         }

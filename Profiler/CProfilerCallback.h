@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <utils/robin_hood/robin_hood.h>
 #include <utils/functionID_set/functionID_set.h>
 #include "CProfilerWorker.h"
 #include "UploadDaemon.h"
@@ -85,7 +84,7 @@ private:
 	 * Keeps track of inlined methods.
 	 * We use the set to efficiently determine if we already noticed an inlined method.
 	 */
-	robin_hood::unordered_flat_set<FunctionID> inlinedMethodIds;
+	functionID_set inlinedMethodIds;
 
 	/**
 	 * Keeps track of inlined methods.

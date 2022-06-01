@@ -403,11 +403,10 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 		// Save information about inlined method (if not already seen)
 
 		// TODO (MP) Better late call eval here as well.
-		if (inlinedMethodIds.find(calleeId) == inlinedMethodIds.end()) {
+		if (!inlinedMethodIds.contains(calleeId)) {
 			EnterCriticalSection(&callbackSynchronization);
-			if (inlinedMethodIds.insert(calleeId).second == true) {
-				recordFunctionInfo(&inlinedMethods, calleeId);
-			}
+			inlinedMethodIds.insert(calleeId);
+			recordFunctionInfo(&inlinedMethods, calleeId);
 			LeaveCriticalSection(&callbackSynchronization);
 		}
 	}

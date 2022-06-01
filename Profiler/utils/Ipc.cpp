@@ -29,7 +29,6 @@ Ipc::~Ipc()
 		this->handlerThread->join();
 	}
 
-	this->sendDisconnect();
 	if (this->zmqRequestSocket != NULL) {
 		zmq_close(this->zmqRequestSocket);
 	}
@@ -90,11 +89,6 @@ void Ipc::handleMessage(std::vector<std::string> frames) {
 std::string Ipc::getCurrentTestName()
 {
 	return this->request("get_testname");
-}
-
-void Ipc::sendDisconnect() {
-	std::string message = "profiler_disconnected";
-	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
 }
 
 std::string Ipc::request(std::string message)

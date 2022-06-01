@@ -7,7 +7,6 @@
 #include <utils/functionID_set/functionID_set.h>
 #include <utils/atomic_queue/atomic_queue.h>
 
-
 FunctionID constexpr NIL = static_cast<FunctionID>(-1);
 using Queue = atomic_queue::AtomicQueueB<FunctionID, std::allocator<FunctionID>, NIL>;
 

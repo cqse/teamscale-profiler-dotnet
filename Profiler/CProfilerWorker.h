@@ -13,7 +13,7 @@ public:
 	CProfilerWorker(Config*, TraceLog*, functionID_set*, CRITICAL_SECTION*);
 	virtual ~CProfilerWorker();
 private:
-    
+
 	// Variables
 	std::thread* workerThread = NULL;
 	TraceLog* traceLog = NULL;
