@@ -19,9 +19,10 @@ private:
 	TraceLog* traceLog = NULL;
 	bool shutdown = false;
 
+	// Warning from the use of alignas in the Atomic Queue.
 #pragma warning( disable : 4316)
 	functionID_set* calledMethodIds;
-	Queue* methodIdQueue = new Queue(65'536);
+	Queue methodIdQueue = Queue(65'536);
 
 	CRITICAL_SECTION* methodSetSynchronization;
 

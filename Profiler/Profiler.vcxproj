@@ -325,6 +325,9 @@
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="utils\atomic_queue\LICENSE" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets" Condition="Exists('..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets')" />

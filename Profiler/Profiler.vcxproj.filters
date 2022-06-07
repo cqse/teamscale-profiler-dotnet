@@ -309,4 +309,7 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="utils\atomic_queue\LICENSE" />
+  </ItemGroup>
 </Project>

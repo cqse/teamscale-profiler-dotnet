@@ -6,7 +6,7 @@ CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, functionID_
 	this->methodSetSynchronization = methodSetSynchronization;
 	setCriticalSection(methodSetSynchronization);
 	setCalledMethodsSet(calledMethodIds);
-	setMethodIdQueue(methodIdQueue);
+	setMethodIdQueue(&methodIdQueue);
 	this->workerThread = new std::thread(&CProfilerWorker::methodIdThreadLoop, this);
 }
 
@@ -15,12 +15,11 @@ CProfilerWorker::~CProfilerWorker() {
 	if (this->workerThread->joinable()) {
 		this->workerThread->join();
 	}
-	delete methodIdQueue;
 }
 
 void CProfilerWorker::methodIdThreadLoop() {
 	while (!this->shutdown) {
-		if (methodIdQueue->was_empty()) {
+		if (methodIdQueue.was_empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 		EnterCriticalSection(methodSetSynchronization);
@@ -31,7 +30,7 @@ void CProfilerWorker::methodIdThreadLoop() {
 
 void CProfilerWorker::transferMethodIds() {
 	FunctionID i;
-	while (methodIdQueue->try_pop(i)) {
+	while (methodIdQueue.try_pop(i)) {
 		calledMethodIds->insert(i);
 	}
 }
