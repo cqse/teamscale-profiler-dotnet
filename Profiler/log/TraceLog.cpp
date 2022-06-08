@@ -22,12 +22,10 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
-#ifdef TIA
 void TraceLog::writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* functions)
 {
 	writeFunctionInfosToLog(LOG_KEY_CALLED, functions);
 }
-#endif
 
 void TraceLog::createLogFile(std::string targetDir) {
 	std::string timeStamp = getFormattedCurrentTime();
@@ -84,7 +82,6 @@ void TraceLog::logAssembly(std::string assembly)
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
 }
 
-#ifdef TIA
 void TraceLog::startTestCase(std::string testName)
 {
 	// Line will look like this:
@@ -107,7 +104,6 @@ void TraceLog::endTestCase(std::string result, std::string message)
 
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
 }
-#endif
 
 inline std::string TraceLog::escape(std::string message) {
 	static std::regex colonEscape("(:|\\\\)");

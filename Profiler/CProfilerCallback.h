@@ -9,14 +9,10 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
-#include <mutex>
+#include <utils/functionID_set/functionID_set.h>
+#include "CProfilerWorker.h"
 #include "UploadDaemon.h"
-#ifdef TIA
-#define CorProfileV3
-#define LateCallEval
 #include "utils/Ipc.h"
-#endif
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
  * coverage.
@@ -60,18 +56,16 @@ private:
 	/** Synchronizes profiling callbacks. */
 	CRITICAL_SECTION callbackSynchronization;
 
+	CRITICAL_SECTION methodSetSynchronization;
+
 	/** Default size for arrays. */
 	static const int BUFFER_SIZE = 2048;
 
 	/** Counts the number of assemblies loaded. */
 	int assemblyCounter = 1;
 
-#ifdef TIA
 	bool isTestCaseRecording = false;
-#ifdef LateCallEval
-	std::mutex callbackMutex;
-#endif
-#endif
+	CProfilerCallback* callbackInstance = NULL;
 
 	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
@@ -90,7 +84,7 @@ private:
 	 * Keeps track of inlined methods.
 	 * We use the set to efficiently determine if we already noticed an inlined method.
 	 */
-	std::set<FunctionID> inlinedMethodIds;
+	functionID_set inlinedMethodIds;
 
 	/**
 	 * Keeps track of inlined methods.
@@ -99,12 +93,7 @@ private:
 	std::vector<FunctionInfo> inlinedMethods;
 
 	/** Smart pointer to the .NET framework profiler info. */
-#ifdef CorProfileV3
-	CComQIPtr<ICorProfilerInfo3> profilerInfo;
-#else
-	CComQIPtr<ICorProfilerInfo2> profilerInfo;
-#endif
-
+	CComQIPtr<ICorProfilerInfo8> profilerInfo;
 
 	/** The log to write all results and messages to. */
 	TraceLog traceLog;
@@ -112,7 +101,6 @@ private:
 	/** The log to write attach and detatch events to */
 	AttachLog attachLog;
 
-#ifdef TIA
 	/** Inter-process connection for TIA communication. null if not in TIA mode. */
 	Ipc* ipc = NULL;
 
@@ -126,26 +114,16 @@ private:
 	 * Keeps track of called methods.
 	 * We use the set to efficiently determine if we already noticed an called method.
 	 */
-	std::set<FunctionID> calledMethodIds;
+	functionID_set calledMethodIds;
+
+	CProfilerWorker* worker = NULL;
 
 	/**
 	 * Keeps track of called methods.
 	 * We use the vector to uniquely store the information about called methods.
 	 */
 	std::vector<FunctionInfo> calledMethods;
-
-	/** Callback on function enter. */
-public:
-#ifdef CorProfileV3
-	static void __stdcall onFunctionEnterStatic(FunctionIDOrClientID funcId);
-#else
-	static void __stdcall onFunctionEnterStatic(FunctionID funcId, UINT_PTR clientData, COR_PRF_FRAME_INFO func, COR_PRF_FUNCTION_ARGUMENT_INFO* argumentInfo);
-#endif
-
 private:
-	/** Callback on function enter. */
-	void onFunctionEnter(FunctionID funcId);
-#endif
 
 	/**
 	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
@@ -153,21 +131,7 @@ private:
 	* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
 	* code, in order to make coverage information independent of pre-jitted code.
 	*/
-	DWORD getEventMask();
-
-	/**
-	* Defines whether the given function should trigger a callback everytime it is executed.
-	*
-	* We do not register a single function callback in order to not affect
-	* performance. In effect, we disable this feature here. It has been tested via
-	* a performance benchmark, that this implementation does not impact call
-	* performance.
-	*
-	* For coverage profiling, we do not need this callback. However, the event is
-	* enabled in the event mask in order to force JIT-events for each first call to
-	* a function, independent of whether a pre-jitted version exists.)
-	*/
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL* pbHookFunction) throw(...);
+	void adjustEventMask();
 
 	/** Dumps all environment variables to the log file. */
 	void dumpEnvironment();

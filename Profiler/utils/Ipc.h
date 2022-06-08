@@ -1,9 +1,9 @@
 #pragma once
-#ifdef TIA
 #include "config/Config.h"
 
 #include <thread>
 #include <atomic>
+#include <functional>
 
 class Ipc
 {
@@ -22,10 +22,10 @@ private:
 	std::function<void(std::string, std::string)> testEndCallback;
 	std::function<void(std::string)> errorCallback;
 	std::atomic<bool> shutdown = false;
+	void sendDisconnect();
 	void handlerThreadLoop();
 	void handleMessage(std::vector<std::string> frames);
 	bool initRequestSocket();
 	void logError(std::string message);
 	std::string request(std::string message);
 };
-#endif
