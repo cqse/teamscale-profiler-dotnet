@@ -10,7 +10,7 @@ class functionID_set
 {
 private:
 	const unsigned int default_size = 2'097'152;
-	static const unsigned int rotation_mask = (-1) & (CHAR_BIT * sizeof(default_size) - 1);
+	static const FunctionID rotation_mask = (-1) & (CHAR_BIT * sizeof(FunctionID) - 1);
 
 	unsigned int current_size = default_size;
 	unsigned int num_elements = 0;
@@ -18,9 +18,15 @@ private:
 	unsigned int modulo_mask = current_size - 1;
 	FunctionID* set = new FunctionID[default_size]{ 0 };
 
+	bool resizing = false;
+
 
 	// Predetermined values for xor operation to place in different spots
-	unsigned int xor_values[10] = { 2134038170, 2362107340, 3229546752, 1302939050, 200405764, 79516981, 2052331209, 3415124361, 940592490, 430981309 };
+#ifdef _WIN64
+	FunctionID xor_values[10] = { 14653048717414601650, 10827059576848633699, 18275351206681430557, 15388157215360276699, 5625538261940547542, 17184451615065543950, 12483508915876842786, 7009288139810362683, 8675975670288616007, 11886397353506492918 };
+#else
+	FunctionID xor_values[10] = { 987205454, 278240680, 4130902882, 445831414, 3235577889, 1789497761, 205336377, 2382455698, 1977849072, 966072234 };
+#endif
 	const unsigned int num_xor_values = sizeof(xor_values) / sizeof(FunctionID);
 
 	/// <summary>
@@ -30,6 +36,7 @@ private:
 		max_elements = current_size;
 		current_size *= 2;
 		modulo_mask = current_size - 1;
+		num_elements = 0;
 		FunctionID* old_set = set;
 		set = new FunctionID[current_size]{ 0 };
 		for (unsigned int i = 0; i < max_elements; i++) {
@@ -43,8 +50,8 @@ private:
 	/// <summary>
 	/// Circular Shift/Rotate integer by one to the right.
 	/// </summary>
-	static inline FunctionID rotr(FunctionID n) {
-		return (n >> 1) | (n << rotation_mask);
+	static inline FunctionID rotr(FunctionID f) {
+		return (f >> 1) | (f << rotation_mask);
 	}
 
 	inline bool tryInsert(unsigned int position, const FunctionID f) {
@@ -52,6 +59,11 @@ private:
 			return true;
 		}
 		if (set[position] == 0) {
+			num_elements++;
+			if (num_elements > max_elements) {
+				adjust_size();
+			}
+
 			set[position] = f;
 			return true;
 		}
@@ -130,25 +142,20 @@ public:
 	/// Inserts FunctionID f into the set.
 	/// </summary>
 	void insert(FunctionID f) {
-		num_elements++;
-		if (num_elements > max_elements) {
-			adjust_size();
-		}
+		// Try insertion at the number modulo the size of the set first
 		unsigned int position = f & modulo_mask;
 		if (tryInsert(position, f)) return;
 
+		// Then rotate bits and xor to try and find a new position
 		for (unsigned int i = 0; i < num_xor_values; i++) {
 			position = (rotr(f) ^ xor_values[i]) & modulo_mask;
 			if (tryInsert(position, f)) return;
 		}
 
+		// If no position was found, just go to the next position with +1
 		position = (f + 1) & modulo_mask;
-		while (set[position] != 0) {
-			if (set[position] == f) {
-				return;
-			}
+		while (!tryInsert(position, f)) {
 			position = (position + 1) & modulo_mask;
 		}
-		set[position] = f;
 	}
 };
