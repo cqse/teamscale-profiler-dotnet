@@ -7,6 +7,7 @@ Please prefix each entry with one of:
 
 # Next Release
 - [feature] Upload Daemon sends distinct user agent header for Teamscale uploads
+- [fix] Updated Newtonsoft.JSON to version 13.0.1
 
 # v22.4.0
 - [feature] Caching symbols for better performance when converting many trace files to line coverage.
