@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	<RootNamespace>Cqse.Teamscale.Profiler.Commander.Server</RootNamespace>
+	<BaseOutputPath>..\Profiler\bin\Release\Commander\Server</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
