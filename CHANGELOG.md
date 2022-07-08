@@ -5,7 +5,7 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-# Next Release
+# v22.7.0
 - [feature] Upload Daemon sends distinct user agent header for Teamscale uploads
 - [fix] Updated Newtonsoft.JSON to version 13.0.1
 
