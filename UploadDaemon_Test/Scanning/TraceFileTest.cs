@@ -129,7 +129,7 @@ namespace UploadDaemon.Scanning
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
-            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests, Has.Length.EqualTo(1));
             Assert.That(testwiseReport.Tests.First().UniformPath, Is.EqualTo("TestCase1"));
             Assert.That(testwiseReport.Tests.First().Duration, Is.EqualTo(1.333d));
             Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("PASSED"));
@@ -175,7 +175,7 @@ namespace UploadDaemon.Scanning
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
-            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(2));
+            Assert.That(testwiseReport.Tests, Has.Length.EqualTo(2));
             Assert.That(testwiseReport.Tests.First().UniformPath, Is.EqualTo("TestCase1"));
             Assert.That(testwiseReport.Tests.First().Duration, Is.EqualTo(1));
             Assert.That(testwiseReport.Tests.First().Result, Is.EqualTo("PASSED"));
@@ -229,7 +229,7 @@ namespace UploadDaemon.Scanning
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
-            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(testwiseReport.Tests, Has.Length.EqualTo(1));
             Assert.That(testwiseReport.Tests[0].UniformPath, Is.EqualTo("TestCase1"));
             Assert.That(testwiseReport.Tests[0].Result, Is.EqualTo("SKIPPED"));
             Assert.That(testwiseReport.Tests[0].Duration, Is.EqualTo(2));
@@ -261,7 +261,7 @@ namespace UploadDaemon.Scanning
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
-            Assert.That(testwiseReport.Tests, Has.Count.EqualTo(3));
+            Assert.That(testwiseReport.Tests, Has.Length.EqualTo(3));
             Assert.That(testwiseReport.Tests[2].UniformPath, Is.EqualTo("No Test"));
             Assert.That(testwiseReport.Tests[2].Result, Is.EqualTo("SKIPPED"));
             Assert.That(testwiseReport.Tests[2].Duration, Is.EqualTo(6));
