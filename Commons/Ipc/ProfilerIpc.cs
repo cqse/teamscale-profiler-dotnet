@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Collections.Generic;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
@@ -13,6 +14,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// The name of the current test, empty string if no test is running.
         /// </summary>
         public string TestName { get; private set; } = String.Empty;
+        public Dictionary<string, TestExecutionResult> TestResults { get; private set; } = new Dictionary<string, TestExecutionResult>();
 
         public IpcConfig Config { get; }
 
