@@ -1,6 +1,5 @@
 #include "Ipc.h"
-
-#include <zmq.h>
+#include "zmq.h"
 
 #define IPC_TIMEOUT_MS 250
 #define IPC_BUFFER_SIZE 255
@@ -32,14 +31,16 @@ Ipc::~Ipc()
 	if (this->zmqRequestSocket != NULL) {
 		zmq_close(this->zmqRequestSocket);
 	}
-
-	zmq_ctx_destroy(this->zmqContext);
+	zmq_ctx_shutdown(this->zmqContext);
+	zmq_ctx_term(this->zmqContext);
 }
 
 void Ipc::handlerThreadLoop() {
 	this->zmqSubscribeSocket = zmq_socket(this->zmqContext, ZMQ_SUB);
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "test:", 0);
 	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
+	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_LINGER, &zmqTimeout, sizeof(zmqTimeout));
+
 	if (!!zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str())) {
 		zmq_close(this->zmqSubscribeSocket);
 		this->zmqSubscribeSocket = NULL;
