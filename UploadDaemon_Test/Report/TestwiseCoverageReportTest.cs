@@ -15,7 +15,7 @@ namespace UploadDaemon.Report
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(2));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(2));
             Assert.That(mergedReport.Tests[0].UniformPath, Is.EqualTo("Test1"));
             Assert.That(mergedReport.Tests[1].UniformPath, Is.EqualTo("Test2"));
         }
@@ -29,12 +29,12 @@ namespace UploadDaemon.Report
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
 
             mergedReport = report2.Union(report1) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
         }
 
@@ -47,12 +47,12 @@ namespace UploadDaemon.Report
 
             TestwiseCoverageReport mergedReport = report2.Union(report1) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
 
             mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
         }
 
@@ -64,7 +64,7 @@ namespace UploadDaemon.Report
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].UniformPath, Is.EqualTo("Test1"));
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files, Has.Count.EqualTo(2));
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files[0].FileName, Is.EqualTo("file1.cs"));
@@ -79,7 +79,7 @@ namespace UploadDaemon.Report
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
-            Assert.That(mergedReport.Tests, Has.Count.EqualTo(1));
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].UniformPath, Is.EqualTo("Test1"));
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files, Has.Count.EqualTo(1));
             Assert.That(mergedReport.Tests[0].CoverageByPath[0].Files[0].FileName, Is.EqualTo("file1.cs"));
