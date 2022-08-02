@@ -36,10 +36,13 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
         }
 
+        /// <summary>
+        /// Azure Devops requires an update endpoint for manual testing.
+        /// </summary>
         [HttpPost("update/{testName}")]
         public void UpdateTest(string testName, [FromQuery(Name = "result")] TestResultDto result, [FromQuery(Name = "extended-name")] string extendedName)
         {
-            logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
+            logger.LogInformation("Stopping test: {}; Result: {}", testName, result);
             profilerIpc.TestResults[testName] = result.Result;
         }
 
@@ -57,9 +60,12 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         public void EndTest(string testName, [FromBody] TestResultDto result)
         {
             TestExecutionResult testResult = result.Result;
-            if (result == null)
+            if (result == null || profilerIpc.TestResults.ContainsKey(testName))
             {
-                testResult = profilerIpc.TestResults[testName];
+                logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", testName, profilerIpc.TestResults[testName]);
+                profilerIpc.EndTest(profilerIpc.TestResults[testName]);
+                profilerIpc.TestResults.Remove(testName);
+                return;
             }
             logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", testName, testResult);
             profilerIpc.EndTest(testResult);
