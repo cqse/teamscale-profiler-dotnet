@@ -5,7 +5,7 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-# next release
+# v22.8.0
 - [feature] support for .NET core PDBs
 
 # v22.7.0
