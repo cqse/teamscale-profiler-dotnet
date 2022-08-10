@@ -40,10 +40,10 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         /// Azure Devops requires an update endpoint for manual testing.
         /// </summary>
         [HttpPost("update/{testName}")]
-        public void UpdateTest(string testName, [FromQuery(Name = "result")] TestResultDto result, [FromQuery(Name = "extended-name")] string extendedName)
+        public void UpdateTest(string testName, [FromQuery(Name = "result")] TestExecutionResult result, [FromQuery(Name = "extended-name")] string extendedName)
         {
-            logger.LogInformation("Stopping test: {}; Result: {}", testName, result);
-            profilerIpc.TestResults[testName] = result.Result;
+            logger.LogInformation("Updating test: {}; Result: {}", testName, result);
+            profilerIpc.TestResults[testName] = result;
         }
 
         [HttpPost("stop/{result}")]
