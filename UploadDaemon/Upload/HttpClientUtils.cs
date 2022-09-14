@@ -13,6 +13,9 @@ namespace UploadDaemon.Upload
     /// </summary>
     public class HttpClientUtils
     {
+
+        private const String UserAgent = "Teamscale .NET Profiler";
+
         /// <summary>
         /// Sets common options for all HTTP requests.
         /// </summary>
@@ -47,6 +50,7 @@ namespace UploadDaemon.Upload
         {
             byte[] byteArray = Encoding.ASCII.GetBytes($"{server.Username}:{server.AccessKey}");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
         }
 
         /// <summary>
