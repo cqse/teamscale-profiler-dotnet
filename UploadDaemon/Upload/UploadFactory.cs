@@ -18,6 +18,10 @@ namespace UploadDaemon.Upload
             {
                 return new AzureUpload(config.AzureFileStorage);
             }
+            if (config.Artifactory != null)
+            {
+                return new ArtifactoryUpload(config.Artifactory);
+            }
             return new FileSystemUpload(config.Directory, fileSystem);
         }
     }

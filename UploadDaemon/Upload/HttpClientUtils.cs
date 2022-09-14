@@ -54,6 +54,21 @@ namespace UploadDaemon.Upload
         }
 
         /// <summary>
+        /// Changes the given client's authorization with the credentials configured for the given artifactory.
+        /// </summary>
+        public static void SetUpArtifactoryAuthentication(HttpClient client, Artifactory artifactory)
+        {
+            if (artifactory.ApiKey != null)
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("X-JFrog-Art-Api", artifactory.ApiKey);
+            }
+            else {
+                byte[] byteArray = Encoding.ASCII.GetBytes($"{artifactory.Username}:{artifactory.Password}");
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
+        }
+
+        /// <summary>
         /// Uploads the given file in a multi-part request.
         /// </summary>
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
@@ -77,6 +92,22 @@ namespace UploadDaemon.Upload
                 content.Add(new StreamContent(stream), multipartParameterName, fileName);
 
                 return await client.PostAsync(url, content);
+            }
+        }
+
+        /// <summary>
+        /// Uploads the given file in a multi-part request.
+        /// </summary>
+        /// <returns>The HTTP response. The caller must dispose of it.</returns>
+        /// <exception cref="IOException">In case there are network or file system errors.</exception>
+        /// <exception cref="HttpRequestException">In case there are network errors.</exception>
+        public static async Task<HttpResponseMessage> UploadMultiPartPut(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
+        {
+            using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
+            {
+                content.Add(new StreamContent(stream), multipartParameterName, fileName);
+
+                return await client.PutAsync(url, content);
             }
         }
     }
