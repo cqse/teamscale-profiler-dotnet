@@ -38,7 +38,12 @@ public:
 	void shutdownInstance(bool clrIsAvailable) {
 		EnterCriticalSection(&section);
 		if (instance != NULL) {
-			instance->ShutdownOnce(clrIsAvailable);
+			try {
+				instance->ShutdownOnce(clrIsAvailable);
+			}
+			catch (...) {
+				Debug::getInstance().logErrorWithStracktrace("Shutdown was interrupted. Likely due to an exception in zeromq. This is expected in some cases.");
+			}
 			instance = NULL;
 		}
 		LeaveCriticalSection(&section);

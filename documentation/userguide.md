@@ -149,7 +149,9 @@ The profiler has several configuration options that can either be set as environ
 | COR_PROFILER_PROCESS              | String (optional)                        | A (case-insensitive) suffix of the path to the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. This option is deprecated. It is recommended that you use the mechanisms of the configuration file instead. |
 | COR_PROFILER_DUMP_ENVIRONMENT     | `1` or `0`, default `0`                  | Print all environment variables of the profiled process in the trace file. |
 | COR_PROFILER_IGNORE_EXCEPTIONS    | `1` or `0`, default `0`                  | Causes all exceptions in the profiler code to be swallowed. For debugging only. |
-
+| COR_PROFILER_TGA                  | `1` or `0`, default `1`                  | Activates regular test coverage collection. This means, method coverage will be collected at all times. |
+| COR_PROFILER_TIA                  | `1` or `0`, default `0`                  | Activates TIA coverage mode which means coverage can be collected per test case. |
+| COR_PROFILER_TIA_SUBSCRIBE_SOCKET | Address, default `tcp://127.0.0.1:7145`  | Socket address used for communicating test events to the profiler. |
 Please note that the profiler is **also** configured with variables starting with the `COR_PROFILER_` prefix in case of .NET Core applications.
 
 ## Configuration file
@@ -247,6 +249,43 @@ to debug profiler crashes with WinDbg. To enable mini dumps, run the following a
 
 A `.dmp` file will be generated in `C:\Users\Public`. You can set `DumpType` to `2` to get a full dump instead.
 This may, however, be a rather large file since the entire program's heap will be dumped.
+
+# Generating Testwise Coverage in TIA Mode
+
+Besides the regular coverage collection that is active by default and set by the `TGA` Parameter, the profiler also supports per test coverage collection.
+This can be activated with the parameter `TIA`. Per test coverage can be useful for getting additional information on individual test cases but it can also be used for additional analyses in Teamscale such as Test Impact Analysis or Pareto Testing.
+
+## Starting and Ending Test Cases
+
+For Testwise Coverage to work, the Profiler needs to know when a test case is started and ended. The profiler comes with multiple options to achieve this.
+The different options can be found in the Commander directory. Each of them provides a different way of starting and ending test cases.
+
+### GUI
+
+This is a simple gui application that allows a user to start and stop test cases. The primary use case of this is manual testing. It requires no further setup and test can easily be triggered with the according buttons.
+
+### CLI
+
+The command line client is intended for use with for example a CI build to automatically start and stop test cases. It provides an interactive interface that expects test start and stops interchanging.
+The available Commands are:
+
+| Command          | Description                                                                                                                     |   |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------|---|
+| start {testName} | Starts profiling for the test with the given name.                                                                              |   |
+| stop {result}    | Stops profiling for the active test with the given result. Possible result values are passed, ignored, skipped, failure, error. |   |
+| exit             | stops the CLI                                                                                                                   |   |
+
+### Server
+
+The server is a simple web server that accepts HTTP Requests and forwards the commands to the profiler accordingly.
+It provides the following endpoints:
+
+| Endpoint              | Method | Description                                                                                                                                                                                |
+|-----------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| test                  | GET    | Gets the currently active test                                                                                                                                                             |
+| test/start/{testName} | POST   | Starts the test with the given name                                                                                                                                                        |
+| test/stop/{result}    | POST   | Stops the currently active test with the given result. Possible values are Passed, Ignored, Skipped, Failure, Error                                                                        |
+| test/end/{testName}   | POST   | Stops the test with the given name if it is currently active. This is a legacy endpoint and the test/stop endpoint should be preferred. Expects a test result in the body with key Result. |
 
 
 # Automatic Trace Upload
