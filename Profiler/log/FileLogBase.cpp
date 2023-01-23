@@ -13,7 +13,7 @@ FileLogBase::~FileLogBase()
 	DeleteCriticalSection(&criticalSection);
 }
 
-void FileLogBase::createLogFile(std::string directory, std::string name, bool overwriteIfExists) {
+void FileLogBase::createLogFile(std::string directory, std::string name, bool overwriteIfExists, bool testCoverage) {
 	if (directory.empty()) {
 		// c:\users\public is usually writable for everyone
 		// we must use backslashes here or the WinAPI path manipulation functions will fail
@@ -27,22 +27,39 @@ void FileLogBase::createLogFile(std::string directory, std::string name, bool ov
 	if (overwriteIfExists) {
 		creationPolicy = CREATE_ALWAYS;
 	}
-
-	logFile = CreateFile(logFilePath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
-		NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (testCoverage) {
+		testLogFile = CreateFile(logFilePath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
+			NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
+	}
+	else {
+		assemblyLogFile = CreateFile(logFilePath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
+			NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
+	}
+	
 }
 
 void FileLogBase::shutdown()
 {
 	EnterCriticalSection(&criticalSection);
-	if (logFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(logFile);
+	if (assemblyLogFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(assemblyLogFile);
+	}
+	if (testLogFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(testLogFile);
 	}
 	LeaveCriticalSection(&criticalSection);
 }
 
+int FileLogBase::writeToAssemblyFile(const char* string) {
+	return writeToFile(string, assemblyLogFile);
+}
 
-int FileLogBase::writeToFile(const char* string) {
+int FileLogBase::writeToTestFile(const char* string) {
+	return writeToFile(string, testLogFile);
+}
+
+
+int FileLogBase::writeToFile(const char* string, HANDLE logFile) {
 	int retVal = 0;
 	DWORD dwWritten = 0;
 
@@ -61,10 +78,16 @@ int FileLogBase::writeToFile(const char* string) {
 	return retVal;
 }
 
-void FileLogBase::writeTupleToFile(const char* key, const char* value) {
+void FileLogBase::writeTupleToFile(const char* key, const char* value, bool writeToCurrentTestFile) {
 	char buffer[BUFFER_SIZE];
 	sprintf_s(buffer, "%s=%s\r\n", key, value);
-	writeToFile(buffer);
+	if (writeToCurrentTestFile) {
+		writeToTestFile(buffer);
+	}
+	else {
+		writeToAssemblyFile(buffer);
+	}
+	
 }
 
 std::string FileLogBase::getFormattedCurrentTime() {

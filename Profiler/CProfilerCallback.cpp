@@ -109,7 +109,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	attachLog.createLogFile(configPath);
 	attachLog.logAttach();
 
-	traceLog.createLogFile(config.getTargetDir());
+	traceLog.createAssemblyLogFile(config.getTargetDir());
 	traceLog.info("looking for configuration options in: " + config.getConfigPath());
 	for (std::string problem : config.getProblems()) {
 		traceLog.error(problem);
@@ -140,7 +140,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		worker = new CProfilerWorker(&config, &traceLog, &calledMethodIds, &methodSetSynchronization);
 		if (!testName.empty()) {
 			setTestCaseRecording(true);
-			traceLog.startTestCase(testName);
+			traceLog.startTestCase(config.getTargetDir(), testName);
 		}
 	}
 
@@ -531,7 +531,7 @@ void CProfilerCallback::onTestStart(std::string testName)
 		EnterCriticalSection(&methodSetSynchronization);
 		writeFunctionInfosToLog();
 
-		traceLog.startTestCase(testName);
+		traceLog.startTestCase(config.getTargetDir(), testName);
 		if (!testName.empty()) {
 			setTestCaseRecording(true);
 		}

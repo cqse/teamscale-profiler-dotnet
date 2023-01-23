@@ -30,7 +30,9 @@ public:
 	 * Can be called as an alternative for createLogFile method of the base class as first method called on the object.
 	 * This method is not thread-safe or reentrant.
 	 */
-	void createLogFile(std::string targetDir);
+	void createAssemblyLogFile(std::string targetDir);
+
+	void createTestLogFile(std::string targetDir, std::string testDir);
 
 	/** Writes a closing log entry to the file and closes the log file. Further calls to logging methods will be ignored. */
 	void shutdown();
@@ -53,7 +55,7 @@ public:
 	/** Writes info about a profiled assembly into the log. Should only be called once. */
 	void logAssembly(std::string assembly);
 
-	void startTestCase(std::string testName);
+	void startTestCase(std::string targetDir, std::string testName);
 	void endTestCase(std::string result = "", std::string message = "");
 
 protected:

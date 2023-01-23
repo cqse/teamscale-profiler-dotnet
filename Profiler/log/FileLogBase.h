@@ -22,19 +22,26 @@ protected:
 	CRITICAL_SECTION criticalSection;
 
 	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
-	HANDLE logFile = INVALID_HANDLE_VALUE;
+	HANDLE assemblyLogFile = INVALID_HANDLE_VALUE;
+
+	/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */
+	HANDLE testLogFile = INVALID_HANDLE_VALUE;
 
 	/**
 	 * Create the log file. Must be the first method called on this object.
 	 * This method is not thread-safe or reentrant.
 	 */
-	void createLogFile(std::string directory, std::string name, bool overwriteIfExists);
+	void createLogFile(std::string directory, std::string name, bool overwriteIfExists, bool testCoverage);
+
+	int writeToAssemblyFile(const char* string);
+
+	int writeToTestFile(const char* string);
 
 	/** Writes the given string to the log file. */
-	int writeToFile(const char* string);
+	int writeToFile(const char* string, HANDLE logFile);
 
 	/** Writes the given name-value pair to the log file. */
-	void writeTupleToFile(const char* key, const char* value);
+	void writeTupleToFile(const char* key, const char* value, bool writeToCurrentTestFile);
 
 	/** Fills the given buffer with a string representing the current time. */
 	std::string getFormattedCurrentTime();

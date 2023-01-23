@@ -27,16 +27,28 @@ void TraceLog::writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* function
 	writeFunctionInfosToLog(LOG_KEY_CALLED, functions);
 }
 
-void TraceLog::createLogFile(std::string targetDir) {
+void TraceLog::createAssemblyLogFile(std::string targetDir) {
 	std::string timeStamp = getFormattedCurrentTime();
 
 	std::string fileName = "";
 	fileName = fileName + "coverage_" + timeStamp + ".txt";
 
-	FileLogBase::createLogFile(targetDir, fileName, true);
+	FileLogBase::createLogFile(targetDir, fileName, true, false);
 
-	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION);
-	writeTupleToFile(LOG_KEY_STARTED, timeStamp.c_str());
+	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION, false);
+	writeTupleToFile(LOG_KEY_STARTED, timeStamp.c_str(), false);
+}
+
+void TraceLog::createTestLogFile(std::string targetDir, std::string testName) {
+	std::string timeStamp = getFormattedCurrentTime();
+
+	std::string fileName = "";
+	fileName = fileName + "coverage_" + timeStamp + "_" + testName + ".txt";
+
+	FileLogBase::createLogFile(targetDir, fileName, true, true);
+
+	writeTupleToFile(LOG_KEY_INFO, VERSION_DESCRIPTION, true);
+	writeTupleToFile(LOG_KEY_STARTED, timeStamp.c_str(), true);
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
@@ -50,44 +62,45 @@ void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info)
 	signature[0] = '\0';
 	sprintf_s(signature, "%i:%i", info.assemblyNumber,
 		info.functionToken);
-	writeTupleToFile(key, signature);
+	writeTupleToFile(key, signature, true);
 }
 
 void TraceLog::info(std::string message) {
-	writeTupleToFile(LOG_KEY_INFO, message.c_str());
+	writeTupleToFile(LOG_KEY_INFO, message.c_str(), false);
 }
 
 void TraceLog::warn(std::string message)
 {
-	writeTupleToFile(LOG_KEY_WARN, message.c_str());
+	writeTupleToFile(LOG_KEY_WARN, message.c_str(), false);
 }
 
 void TraceLog::error(std::string message)
 {
-	writeTupleToFile(LOG_KEY_ERROR, message.c_str());
+	writeTupleToFile(LOG_KEY_ERROR, message.c_str(), false);
 }
 
 void TraceLog::logEnvironmentVariable(std::string variable)
 {
-	writeTupleToFile(LOG_KEY_ENVIRONMENT, variable.c_str());
+	writeTupleToFile(LOG_KEY_ENVIRONMENT, variable.c_str(), false);
 }
 
 void TraceLog::logProcess(std::string process)
 {
-	writeTupleToFile(LOG_KEY_PROCESS, process.c_str());
+	writeTupleToFile(LOG_KEY_PROCESS, process.c_str(), false);
 }
 
 void TraceLog::logAssembly(std::string assembly)
 {
-	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str(), false);
 }
 
-void TraceLog::startTestCase(std::string testName)
+void TraceLog::startTestCase(std::string targetDir, std::string testName)
 {
 	// Line will look like this:
 	// Test=Start:20150601_1220270707:Test Name\: 1:something we do not know yet
 	std::string info = "Start:" + getFormattedCurrentTime() + ":" + escape(testName);
-	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+	createTestLogFile(targetDir, testName);
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str(), true);
 }
 
 void TraceLog::endTestCase(std::string result, std::string message)
@@ -102,7 +115,7 @@ void TraceLog::endTestCase(std::string result, std::string message)
 		}
 	}
 
-	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str(), true);
 }
 
 inline std::string TraceLog::escape(std::string message) {
@@ -112,9 +125,9 @@ inline std::string TraceLog::escape(std::string message) {
 
 void TraceLog::shutdown() {
 	std::string timeStamp = getFormattedCurrentTime();
-	writeTupleToFile(LOG_KEY_STOPPED, timeStamp.c_str());
+	writeTupleToFile(LOG_KEY_STOPPED, timeStamp.c_str(), false);
 
-	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler");
+	writeTupleToFile(LOG_KEY_INFO, "Shutting down coverage profiler", false);
 
 	FileLogBase::shutdown();
 }
