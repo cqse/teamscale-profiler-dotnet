@@ -1,73 +1,87 @@
-# Whether SSL validation should be globally disabled.
-disableSslValidation: true
-# Upload finished trace files every N minutes. Defaults to 5 minutes.
-# Set to 0 to disable scheduled uploads. This will cause the UploadDaemon to
-# upload once and shut down afterwards.
-uploadIntervalInMinutes: 5
-# Duration after which trace files can be purged from the UploadDaemon's
-# archives (in days). Remove this section to disable purging. Set thresholds
-# to 0 to purge immediately after upload.
-archivePurgingThresholdsInDays:
-  uploadedTraces: 7
-  emptyTraces: 3
-  incompleteTraces: 3
-
-match:
-  # This section matches all processes.
-  # We configure shared options here but disable the profiler.
-  # The later match sections will enable the profiler for specific processes.
-  - profiler:
-      enabled: false
-      # Trace files will be stored and archived here
-      targetdir: C:\Users\Public\Traces
-      # Light mode is recommended and enabled by default.
-      # Turn it off if you use ngen.exe for your assemblies
-      light_mode: true
-      # Enable eager writing of traces after the specified amount
-      # of method calls (i.e. write to disk immediately).
-      # This is useful to get coverage in cases where the
-      # .NET runtime is killed instead of gracefully shut down
-      # as it's the case in some Azure environments.
-      # It should only be used in conjunction with light mode.
-      eagerness: 0
-      # Enable upload to Teamscale
-      upload_daemon: true
-    uploader:
-      # Upload to this Teamscale instance
-      teamscale:
-        url: http://localhost:8080
-        username: build
-        # Obtain the access key from Admin > Users
-        accessKey: u7a9abc32r45r2uiig3vvv
-        # The ID or the alias of the project
-        project: your_project
-        # This identifier will show up in the Teamscale UI
-        # as the source of your coverage
-        partition: Manual Tests
-      # This directory must contain all the PDBs for your deployed
-      # application code
-      pdbDirectory: C:\Pdbs
-      # This file must contain the revision of your application code
-      # that was checked out (e.g. Git SHA1, TFS changeset ID, ...)
-      # in the format:
-      #
-      #     revision: REVISION
-      revisionFile: C:\Pdbs\revision.txt
-      # Glob patterns that identify the assemblies for which you'd like
-      # to obtain coverage. You must have PDB files for each of these
-      # in the pdbDirectory.
-      assemblyPatterns:
-        include:
-          - MyProduct*
-          - MyCompany.*
-          - MyOtherAssembly
-  # These sections turn on the profiler for specific executables.
-  - executableName: MyProduct.exe
-    profiler:
-      enabled: true
-  - executableName: MyProduct2.exe
-    profiler:
-      enabled: true
-
-
+{
+    # Whether SSL validation should be globally disabled.
+    disableSslValidation: true,
+    # Upload finished trace files every N minutes. Defaults to 5 minutes.
+    # Set to 0 to disable scheduled uploads. This will cause the UploadDaemon to
+    # upload once and shut down afterwards.
+    uploadIntervalInMinutes: 5,
+    # Duration after which trace files can be purged from the UploadDaemon's
+    # archives (in days). Remove this section to disable purging. Set thresholds
+    # to 0 to purge immediately after upload.
+    archivePurgingThresholdsInDays: {
+        uploadedTraces: 7,
+        emptyTraces: 3,
+        incompleteTraces: 3
+    },
+    match: [
+        {
+        # This section matches all processes.
+        # We configure shared options here but disable the profiler.
+        # The later match sections will enable the profiler for specific processes.
+            profiler: {
+                enabled: false,
+                # Trace files will be stored and archived here
+                targetdir: "C:\\Users\\Public\\Traces",
+                # Light mode is recommended and enabled by default.
+                # Turn it off if you use ngen.exe for your assemblies
+                light_mode: true,
+                # Enable eager writing of traces after the specified amount
+                # of method calls (i.e. write to disk immediately).
+                # This is useful to get coverage in cases where the
+                # .NET runtime is killed instead of gracefully shut down
+                # as it's the case in some Azure environments.
+                # It should only be used in conjunction with light mode.
+                eagerness: 0,
+                # Enable upload to Teamscale
+                upload_daemon: true
+            },
+            uploader: { 
+                # Upload to this Teamscale instance
+                teamscale: {
+                    url: "http://localhost:8080",
+                    username: "build",
+                    # Obtain the access key from Admin > Users
+                    accessKey: "u7a9abc32r45r2uiig3vvv",
+                    # The ID or the alias of the project
+                    project: "your_project",
+                    # This identifier will show up in the Teamscale UI
+                    # as the source of your coverage
+                    partition: "Manual Tests"
+                },
+                # This directory must contain all the PDBs for your deployed
+                # application code
+                pdbDirectory: "C:\\Pdbs",
+                # This file must contain the revision of your application code
+                # that was checked out (e.g. Git SHA1, TFS changeset ID, ...)
+                # in the format:
+                #
+                #     revision: REVISION
+                revisionFile: "C:\\Pdbs\\revision.txt",
+                # Glob patterns that identify the assemblies for which you'd like
+                # to obtain coverage. You must have PDB files for each of these
+                # in the pdbDirectory.
+                assemblyPatterns: {
+                    include: [
+                        "MyProduct*",
+                        "MyCompany.*",
+                        "MyOtherAssembly"
+                    ]
+                }
+            }
+        },
+        # These sections turn on the profiler for specific executables.
+        {
+            executableName: "MyProduct.exe",
+            profiler: {
+                enabled: true
+            }
+        },
+        {
+            executableName: "MyProduct2.exe",
+            profiler: {
+                enabled: true
+            }
+        }
+    ]
+}
 

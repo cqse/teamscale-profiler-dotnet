@@ -75,13 +75,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public int TestConfigFile(string regex)
         {
             var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
-            File.WriteAllText(configFile, $@"
-match:
-  - profiler:
-      enabled: false
-  - executablePathRegex: {regex}
-    profiler:
-      enabled: true
+            File.WriteAllText(configFile, $@" 
+match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: {regex}     , profiler: {{enabled: true}}}}]
 ");
 
             var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
