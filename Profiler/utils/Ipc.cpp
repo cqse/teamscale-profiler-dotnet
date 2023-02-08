@@ -5,6 +5,7 @@
 #define IPC_BUFFER_SIZE 255
 
 // ZMQ strings are not zero-terminated, let's terminate these
+// TODO: Profiler_disconnected is missing!
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
 Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
@@ -27,7 +28,7 @@ Ipc::~Ipc()
 	if (this->handlerThread->joinable()) {
 		this->handlerThread->join();
 	}
-
+	this->request("profiler_disconnected");
 	if (this->zmqRequestSocket != NULL) {
 		zmq_close(this->zmqRequestSocket);
 	}

@@ -39,7 +39,14 @@ namespace UploadDaemon
             {
                 // Writing to console on purpose, to explain to users why the exe terminates immediately.
                 Console.WriteLine("Another instance is already running. Sending notification to trigger upload.");
-                NotifyRunningDaemon();
+                logger.Info("Another instance is already running. Sending notification to trigger upload.");
+                try
+                {
+                    NotifyRunningDaemon();
+                }
+                catch (TimeoutException e) {
+                    logger.Error(e, "Could not send notification trigger");
+                }
                 return;
             }
 
@@ -64,7 +71,6 @@ namespace UploadDaemon
             {
                 return false;
             }
-
             return Process.GetProcessesByName(current.ProcessName).Where(process => process.Id != current.Id).Any();
         }
 
@@ -143,7 +149,7 @@ namespace UploadDaemon
         {
             using (var pipeClientStream = new NamedPipeClientStream(".", DaemonControlPipeName, PipeDirection.Out, PipeOptions.Asynchronous))
             {
-                pipeClientStream.Connect();
+                pipeClientStream.Connect(1000);
 
                 using (var pipeStream = new StreamWriter(pipeClientStream))
                 {

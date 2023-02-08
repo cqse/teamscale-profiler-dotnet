@@ -58,8 +58,8 @@
     <Reference Include="Mono.Cecil.Rocks, Version=0.10.1.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\Mono.Cecil.0.10.1\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.5.11\lib\net45\NLog.dll</HintPath>
@@ -130,6 +130,7 @@
     <Compile Include="Report\Testwise\TestwiseCoverageReport.cs" />
     <Compile Include="Scanning\InvalidTraceFileException.cs" />
     <Compile Include="Scanning\Trace.cs" />
+    <Compile Include="Configuration\Artifactory.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
     <Compile Include="Upload\MessageFormatter.cs" />
@@ -147,6 +148,7 @@
     <Compile Include="Upload\HttpClientUtils.cs" />
     <Compile Include="Upload\IUploadFactory.cs" />
     <Compile Include="Configuration\TeamscaleServer.cs" />
+    <Compile Include="Upload\ArtifactoryUpload.cs" />
     <Compile Include="Upload\UploadFactory.cs" />
     <Compile Include="Upload\IUpload.cs" />
     <Compile Include="Upload\FileSystemUpload.cs" />

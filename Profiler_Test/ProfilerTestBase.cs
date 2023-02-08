@@ -15,13 +15,19 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /** Label with which jitted methods are prefixed */
         public const string LABEL_JITTED = "Jitted";
 
-        /** Label with which inlined methods are prefixed */
+        /// <summary>
+        /// Label with which inlined methods are prefixed
+        /// </summary>
         public const string LABEL_INLINED = "Inlined";
 
-        /** Label with which loaded assemblies are prefixed */
+        /// <summary>
+        /// Label with which loaded assemblies are prefixed
+        /// </summary>
         public const string LABEL_ASSEMBLY = "Assembly";
 
-        /** Separator used to concatenate method keys */
+        /// <summary>
+        /// Separator used to concatenate method keys
+        /// </summary>
         public const char KEY_SEPARATOR = ':';
 
         private List<Process> startedProcesses = new List<Process>();

@@ -1,6 +1,6 @@
 image: Visual Studio 2017
 
-version: 19.6.1.{build}
+version: 22.8.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -14,9 +14,6 @@ assembly_info:
   file: AssemblyInfo.cs
   assembly_version: $(appveyor_build_version)
   assembly_file_version: $(appveyor_build_version)
-
-environment:
-  release_zip: teamscale-profiler-dotnet_v$(appveyor_build_version).zip
 
 before_build:
   - cmd: nuget restore
@@ -71,7 +68,7 @@ artifacts:
 deploy:
   - provider: GitHub
     auth_token:
-      secure: zewFCJVMsIobb85iuyXSs0UbTgh53yZzNJK8KNOl+3W+MfkaUoe4BGOLE+fuQ9WJ
+      secure: KurN/LHodBkHCIQv91aLEVThkT5ceI3B6Dl+4xRAQTbkVQ2hByHzxeOX2yAn5Mmp
     release: $(APPVEYOR_REPO_TAG_NAME)
     artifact: $(release_zip)
     description: Release v$(appveyor_build_version)
@@ -83,7 +80,7 @@ deploy:
 
 # Enable RDP
 init:
-  - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
+  - ps: if ($env:RDP -eq "true") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))};if ($env:APPVEYOR_REPO_TAG -eq "true") {Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_TAG_NAME.TrimStart("v")).$($env:APPVEYOR_BUILD_NUMBER)"} else {Update-AppveyorBuild -Version "$(Get-Date -format yy.M).0.$($env:APPVEYOR_BUILD_NUMBER)-$($env:APPVEYOR_BUILD_ID)"};Set-AppveyorBuildVariable "release_zip" "teamscale-profiler-dotnet_v$($env:APPVEYOR_BUILD_VERSION).zip"
 on_finish:
   - ps: if ($env:RDP -eq "true") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
 

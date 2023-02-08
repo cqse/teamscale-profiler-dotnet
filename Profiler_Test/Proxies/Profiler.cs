@@ -107,6 +107,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
             processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
             processInfo.Environment[PROFILER_UPLOAD_DAEMON_KEY] = "0";
+            processInfo.Environment["COR_PROFILER_TGA"] = "1";
 
             if (LightMode)
             {

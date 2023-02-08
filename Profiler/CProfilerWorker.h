@@ -12,6 +12,7 @@ class CProfilerWorker
 public:
 	CProfilerWorker(Config*, TraceLog*, functionID_set*, CRITICAL_SECTION*);
 	virtual ~CProfilerWorker();
+	void transferMethodIds();
 private:
 
 	// Variables
@@ -29,5 +30,4 @@ private:
 	// Methods
 	void methodIdThreadLoop();
 	void logError(std::string);
-	void transferMethodIds();
 };

@@ -208,6 +208,9 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	}
 	EnterCriticalSection(&callbackSynchronization);
 	EnterCriticalSection(&methodSetSynchronization);
+	if (config.isTiaEnabled()) {
+		worker->transferMethodIds();
+	}
 	writeFunctionInfosToLog();
 	LeaveCriticalSection(&methodSetSynchronization);
 	LeaveCriticalSection(&callbackSynchronization);
@@ -545,6 +548,7 @@ void CProfilerCallback::onTestEnd(std::string result, std::string message)
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
 		EnterCriticalSection(&methodSetSynchronization);
 		setTestCaseRecording(false);
+		worker->transferMethodIds();
 		writeFunctionInfosToLog();
 
 		traceLog.endTestCase(result, message);
