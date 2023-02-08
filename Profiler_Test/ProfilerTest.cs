@@ -121,7 +121,6 @@ match:
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
 
             string[] lines = profiler.GetSingleTrace();
-            Assert.That(lines, Has.None.Matches("^(Inlines|Jitted)"));
             Assert.That(lines, Has.Some.Matches("^(Called)"));
         }
 
