@@ -1,4 +1,3 @@
-using UploadDaemon;
 using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -7,9 +6,12 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
+using UploadDaemon.Configuration;
+using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
+using UploadDaemon.Scanning;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
-using UploadDaemon.Configuration;
 
 namespace UploadDaemon
 {
@@ -149,7 +151,7 @@ Inlined=1:33555646:100678050" },
 
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(archiveLineCoverageConfig);
 
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-line-coverage\coverage_1_1.txt.simple");
+            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-coverage\coverage_1_1.txt.simple");
         }
 
         [Test]
@@ -254,7 +256,7 @@ Inlined=1:33555646:100678050" },
                 this.uploadMock = new Mock<IUpload>();
                 uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
                     .Returns(Task.FromResult(successfull));
-                uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
+                uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<ICoverageReport>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
                     .Returns(Task.FromResult(successfull));
             }
 
@@ -275,20 +277,17 @@ Inlined=1:33555646:100678050" },
             }
 
             /// <inheritdoc/>
-            public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+            public SimpleCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
             {
-                if (!shouldProduceCoverage)
+                var coverage = new Dictionary<string, FileCoverage>();
+
+                if (shouldProduceCoverage)
                 {
-                    return null;
+                    // Return some arbitrary coverage
+                    coverage["file1.cs"] = new FileCoverage((12, 33));
                 }
 
-                // Return some arbitrary coverage
-                FileCoverage fileCoverage = new FileCoverage();
-                fileCoverage.CoveredLineRanges.Add((12, 33));
-                return new Dictionary<string, FileCoverage>()
-            {
-                { "file1.cs", fileCoverage }
-            };
+                return new SimpleCoverageReport(coverage);
             }
         }
 

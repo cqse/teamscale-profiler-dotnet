@@ -1,7 +1,8 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.IO;
 using System.IO.Abstractions;
+using UploadDaemon.Report;
 
 namespace UploadDaemon.Archiving
 {
@@ -19,7 +20,7 @@ namespace UploadDaemon.Archiving
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
-        private readonly string lineCoverageDirectory;
+        private readonly string coverageReportDirectory;
 
         public Archive(string traceDirectory, IFileSystem fileSystem, IDateTimeProvider dateTimeProvider)
         {
@@ -30,23 +31,23 @@ namespace UploadDaemon.Archiving
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
-            this.lineCoverageDirectory = Path.Combine(traceDirectory, "converted-line-coverage");
+            this.coverageReportDirectory = Path.Combine(traceDirectory, "converted-coverage");
         }
 
         /// <inheritdoc/>
-        public void ArchiveLineCoverage(string fileName, string lineCoverageReport)
+        public void ArchiveCoverageReport(string baseName, ICoverageReport report)
         {
-            if (!EnsureDirectoryExists(lineCoverageDirectory))
+            if (!EnsureDirectoryExists(coverageReportDirectory))
             {
                 return;
             }
 
             // Remove path components from file name.
-            string sanitizedFileName = Path.GetFileName(fileName);
-            string targetPath = Path.Combine(lineCoverageDirectory, sanitizedFileName);
+            string sanitizedFileName = Path.GetFileName(baseName) + $".{report.FileExtension}";
+            string targetPath = Path.Combine(coverageReportDirectory, sanitizedFileName);
             try
             {
-                fileSystem.File.WriteAllText(targetPath, lineCoverageReport);
+                fileSystem.File.WriteAllText(targetPath, report.ToString());
             }
             catch (Exception e)
             {

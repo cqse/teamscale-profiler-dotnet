@@ -1,4 +1,5 @@
 ﻿using System;
+using UploadDaemon.Report;
 
 namespace UploadDaemon.Archiving
 {
@@ -33,9 +34,9 @@ namespace UploadDaemon.Archiving
         void ArchiveFileWithoutProcess(string tracePath);
 
         /// <summary>
-        /// Archives a line coverage report for debugging.
+        /// Archives a coverage report for debugging.
         /// </summary>
-        void ArchiveLineCoverage(string fileName, string lineCoverageReport);
+        void ArchiveCoverageReport(string baseName, ICoverageReport report);
 
         /// <summary>
         /// Deletes all files without a profiled process that are older than the given maximum age from the archive.

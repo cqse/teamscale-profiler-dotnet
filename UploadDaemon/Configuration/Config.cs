@@ -79,11 +79,22 @@ namespace UploadDaemon.Configuration
             public bool MergeLineCoverage { get; private set; } = true;
 
             /// <summary>
+            /// Whether testwise coverage reports should be marked as partial.
+            /// This means existing coverage on the Teamscale server in the same partition is not deleted.
+            /// </summary>
+            public bool PartialCoverageReport { get; private set; } = false;
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// Defaults to the empty string in case no prefix should be prepended.
             /// This property is never null.
             /// </summary>
             public string VersionPrefix { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Prefix of the test path in case of testwise coverage.
+            /// </summary>
+            public string TestPathPrefix { get; set; } = string.Empty;
 
             /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
@@ -126,9 +137,11 @@ namespace UploadDaemon.Configuration
                 Artifactory = section.Artifactory ?? Artifactory;
                 Enabled = section.Enabled ?? Enabled;
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
+                TestPathPrefix = section.TestPathPrefix ?? TestPathPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
+                PartialCoverageReport = section.PartialCoverageReport ?? PartialCoverageReport;
 
                 if (section.AssemblyPatterns != null)
                 {

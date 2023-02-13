@@ -6,6 +6,7 @@
 #include <winuser.h>
 #include "utils/WindowsUtils.h"
 #include <string>
+#include <regex>
 
 TraceLog::~TraceLog() {
 	// Nothing to do here, destructing is handled in FileLogBase
@@ -21,8 +22,12 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
-void TraceLog::createLogFile(std::string targetDir) {
+void TraceLog::writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* functions)
+{
+	writeFunctionInfosToLog(LOG_KEY_CALLED, functions);
+}
 
+void TraceLog::createLogFile(std::string targetDir) {
 	std::string timeStamp = getFormattedCurrentTime();
 
 	std::string fileName = "";
@@ -75,6 +80,34 @@ void TraceLog::logProcess(std::string process)
 void TraceLog::logAssembly(std::string assembly)
 {
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+}
+
+void TraceLog::startTestCase(std::string testName)
+{
+	// Line will look like this:
+	// Test=Start:20150601_1220270707:Test Name\: 1:something we do not know yet
+	std::string info = "Start:" + getFormattedCurrentTime() + ":" + escape(testName);
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+}
+
+void TraceLog::endTestCase(std::string result, std::string message)
+{
+	// Line will look like this:
+	// Test=End:20150601_1220280807:PASSED:optional msg
+	std::string info = "End:" + getFormattedCurrentTime();
+	if (!result.empty()) {
+		info += ":" + result;
+		if (!message.empty()) {
+			info += ":" + message;
+		}
+	}
+
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+}
+
+inline std::string TraceLog::escape(std::string message) {
+	static std::regex colonEscape("(:|\\\\)");
+	return std::regex_replace(message, colonEscape, "\\$1");
 }
 
 void TraceLog::shutdown() {

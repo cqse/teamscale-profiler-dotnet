@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report;
 
 namespace UploadDaemon.Upload
 {
@@ -45,7 +46,7 @@ namespace UploadDaemon.Upload
             return artifactory.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             if (revisionOrTimestamp.IsRevision)
             {
@@ -66,7 +67,7 @@ namespace UploadDaemon.Upload
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
+                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport.ToString());
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
                     return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream);

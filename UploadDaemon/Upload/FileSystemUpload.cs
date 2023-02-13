@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
 using NLog;
+using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
@@ -53,15 +54,16 @@ namespace UploadDaemon.Upload
             return $"file system directory {targetDirectory}";
         }
 
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.simple");
+            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.{coverageReport.FileExtension}");
             string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}.metadata");
 
             try
             {
-                fileSystem.File.WriteAllText(filePath, lineCoverageReport);
+                fileSystem.File.WriteAllText(filePath, coverageReport.ToString());
                 fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
                 return Task.FromResult(true);
             }
