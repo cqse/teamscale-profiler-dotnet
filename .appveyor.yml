@@ -48,6 +48,9 @@ after_test:
   - cmd: robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
   # copy example config
   - cmd: robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
+  # copy install script
+  - cmd: robocopy .\Profiler install.cmd install.cmd & exit 0
+  - cmd: robocopy .\Profiler install.example.cfg install.example.cfg & exit 0
   # copy UploadDaemon
   - cmd: robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
   - cmd: mkdir teamscale_dotnet_profiler\UploadDaemon\service
