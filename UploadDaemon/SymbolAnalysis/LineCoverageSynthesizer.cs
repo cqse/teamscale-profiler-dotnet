@@ -25,7 +25,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <inheritdoc/>
         public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
+            SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(traceFile, symbolDirectory, assemblyPatterns);
 
             if (symbolCollection.IsEmpty)
             {
