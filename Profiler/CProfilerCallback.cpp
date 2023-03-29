@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <winuser.h>
 #include <utils/MethodEnter.h>
+#include "instrumentation/Instruction.h"
+#include <corhlpr.h>
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -165,9 +167,6 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	}
 
 	adjustEventMask();
-	if (config.isTiaEnabled()) {
-		profilerInfo->SetEnterLeaveFunctionHooks3((FunctionEnter3*)&FnEnterCallback, NULL, NULL);
-	}
 	traceLog.logProcess(WindowsUtils::getPathOfThisProcess());
 
 	return S_OK;
@@ -257,10 +256,6 @@ void CProfilerCallback::adjustEventMask() {
 		if (!config.shouldUseLightMode()) {
 			dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 		}
-	}
-
-	if (config.isTiaEnabled()) {
-		dwEventMaskLow |= COR_PRF_MONITOR_ENTERLEAVE;
 	}
 
 	profilerInfo->SetEventMask2(dwEventMaskLow, dwEventMaskHigh);
@@ -362,6 +357,101 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyNa
 
 	pMetaDataAssemblyImport->GetAssemblyProps(ptkAssembly, NULL, NULL, NULL,
 		NULL, 0, NULL, metadata, NULL);
+}
+
+typedef void(__fastcall* ipv)(FunctionID);
+ipv GetFunctionVisited() {
+	return &FnEnterCallback;
+}
+
+
+HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock) {
+	// Fill value MethodID
+	ModuleID moduleId;
+	mdToken functionToken;
+	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
+
+	// Get pmsig
+	static COR_SIGNATURE unmanagedCallSignature[] =
+	{
+		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
+		0x01,                                   // Parameter count
+		ELEMENT_TYPE_VOID,                      // Return type
+		ELEMENT_TYPE_I4                         // Parameter type (I4)
+	};
+	CComPtr<IMetaDataEmit> metaDataEmit;
+	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
+	mdSignature pmsig;
+	metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
+
+	// Get Function Pointer
+	auto pt = GetFunctionVisited();
+
+	// Add instructions to InstructionList
+	InstructionList instructions;
+	Instruction* firstInstruction = new Instruction(CEE_LDC_I4, functionId); // functionID: Size 4
+	instructions.push_back(firstInstruction);
+#ifdef _WIN64
+	instructions.push_back(new Instruction(CEE_LDC_I8, (ULONGLONG)pt)); // pt: Size 8
+#else
+	instructions.push_back(new Instruction(CEE_LDC_I4, (ULONG)pt)); // pt: Size 4
+#endif
+	instructions.push_back(new Instruction(CEE_CALLI, pmsig)); // pmsig: Size 4
+
+	// Get Method Content in Intermediate Language
+	IMAGE_COR_ILMETHOD* pMethodHeader = nullptr;
+	ULONG iMethodSize = 0;
+
+	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&pMethodHeader, &iMethodSize);
+
+	CComPtr<IMethodMalloc> methodMalloc;
+	profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
+	auto pNewMethodBody = static_cast<IMAGE_COR_ILMETHOD*>(methodMalloc->Alloc(iMethodSize + 3 + 16));
+
+	IMAGE_COR_ILMETHOD_FAT m_header;
+	auto fatImage = static_cast<COR_ILMETHOD_FAT*>(&pNewMethodBody->Fat);
+	m_header.Flags &= ~CorILMethod_MoreSects;
+
+	// Copy the header back into the newMethodBody
+	memcpy(fatImage, &m_header, m_header.Size * sizeof(DWORD));
+
+	BYTE* pCode;
+	// Set the pointer after the header and add our own instructions
+	pCode = fatImage->GetCode();
+
+	*(BYTE*)(pCode) = 0x20;
+	pCode += 1;
+	*(ULONG*)(pCode) = (ULONG) instructions[0]->m_operand;
+	pCode += 4;
+
+	*(BYTE*)(pCode) = 0x21;
+	pCode += 1;
+	*(ULONGLONG*)(pCode) = instructions[1]->m_operand;
+	pCode += 8;
+
+	*(BYTE*)(pCode) = 0x29;
+	pCode += 1;
+	*(ULONG*)(pCode) = (ULONG) instructions[2]->m_operand;
+	pCode += 4;
+
+	// Copy the original instructions
+	memcpy(pCode, pMethodHeader, m_header.Size * sizeof(DWORD));
+
+
+	/*profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)pNewMethodBody);*/
+
+	//memcpy(pNewMethodBody + m_header.Size, pCode-19, 19);
+
+
+	return S_OK;
+}
+
+
+
+void CProfilerCallback::instrumentMethod(ModuleID moduleId, FunctionID functionId) {
+
+
+
 }
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,

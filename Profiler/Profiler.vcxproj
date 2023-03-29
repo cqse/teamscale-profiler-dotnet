@@ -223,6 +223,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="instrumentation\Instruction.cpp" />
     <ClCompile Include="CProfilerWorker.cpp" />
     <ClCompile Include="log\AttachLog.cpp" />
     <ClCompile Include="CClassFactory.cpp" />
@@ -267,6 +268,8 @@
     <ClCompile Include="utils\Ipc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="instrumentation\CanonicalNames.h" />
+    <ClInclude Include="instrumentation\Instruction.h" />
     <ClInclude Include="CProfilerWorker.h" />
     <ClInclude Include="utils\functionID_set\functionId_set.h" />
     <ClInclude Include="log\AttachLog.h" />

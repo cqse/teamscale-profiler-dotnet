@@ -13,6 +13,8 @@
 #include "CProfilerWorker.h"
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
+#include "instrumentation/CanonicalNames.h"
+
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
  * coverage.
@@ -34,6 +36,8 @@ public:
 
 	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
+
+	STDMETHOD(JITCompilationStarted)(FunctionID functionId, BOOL fIsSafeToBlock);
 
 	/** Store information about jitted method. */
 	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
@@ -109,6 +113,8 @@ private:
 
 	/** Callback that is being called when a testcase ends. */
 	void onTestEnd(std::string result = "", std::string message = "");
+
+	void instrumentMethod(ModuleID moduleId, FunctionID functionId);
 
 	/**
 	 * Keeps track of called methods.

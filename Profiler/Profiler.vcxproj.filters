@@ -159,6 +159,9 @@
     <ClCompile Include="CProfilerWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="instrumentation\Instruction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -294,6 +297,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\functionID_set\functionId_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="instrumentation\Instruction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="instrumentation\CanonicalNames.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

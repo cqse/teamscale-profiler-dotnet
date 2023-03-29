@@ -9,9 +9,9 @@ namespace {
 	Queue* methodQueue;
 }
 
-extern "C" void _stdcall EnterCpp(FunctionIDOrClientID funcId) {
-	if (isTestCaseRecording && !calledFunctionSet->contains(funcId.functionID)) {
-		methodQueue->push(funcId.functionID);
+extern "C" void _stdcall EnterCpp(FunctionID funcId) {
+	if (isTestCaseRecording && !calledFunctionSet->contains(funcId)) {
+		methodQueue->push(funcId);
 	}
 }
 
@@ -33,13 +33,13 @@ void setTestCaseRecording(bool testCaseRecording) {
 
 #ifdef _WIN64
 
-void __fastcall FnEnterCallback(FunctionIDOrClientID funcId) {
+void __fastcall FnEnterCallback(FunctionID funcId) {
 	EnterCpp(funcId);
 }
 
 #else
 
-void __declspec(naked) FnEnterCallback(FunctionIDOrClientID funcId) {
+void __declspec(naked) FnEnterCallback(FunctionID funcId) {
 	__asm {
 		PUSH EAX
 		PUSH ECX

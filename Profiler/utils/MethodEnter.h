@@ -28,7 +28,7 @@ void setTestCaseRecording(bool);
  * The callback function that is run on a method enter event.
  */
 #ifdef _WIN64
-EXTERN_C void FnEnterCallback(FunctionIDOrClientID);
+EXTERN_C void FnEnterCallback(FunctionID);
 #else
-void FnEnterCallback(FunctionIDOrClientID);
+void FnEnterCallback(FunctionID);
 #endif
