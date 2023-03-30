@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -254,12 +255,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Creates the configuration that should be applied to the given profiled process.
         /// </summary>
-        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath)
+        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, ParsedTraceFile traceFile = null)
         {
             ConfigForProcess config = new ConfigForProcess(profiledProcessPath);
             foreach (ConfigParser.ProcessSection section in Sections)
             {
-                if (SectionApplies(section, profiledProcessPath))
+                if (SectionApplies(section, profiledProcessPath, traceFile))
                 {
                     config.ApplySection(section.Uploader);
                 }
@@ -305,19 +306,58 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Returns true if the given section applies to the given profiled process.
         /// </summary>
-        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath)
+        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, ParsedTraceFile traceFile = null)
         {
-            if (section.ExecutablePathRegex != null)
+            bool?[] checks = new[] {
+                MatchesExecutableName(section, profiledProcessPath),
+                MatchesExecutablePathRegex(section, profiledProcessPath),
+                MatchesLoadedAssemblyPathRegex(section, traceFile),
+            };
+
+
+            // The section applies if at least one of the check criteriy is set (!= null) and all these are true.
+            return checks.Where(check => check != null).All(check => check == true);
+        }
+
+        /// <summary>
+        /// If executable name is set, the executable's name must match case-insensitive
+        /// </summary>
+        private static bool? MatchesExecutableName(ConfigParser.ProcessSection section, string profiledProcessPath)
             {
-                Match match = Regex.Match(profiledProcessPath, $"^{section.ExecutablePathRegex}$");
-                if (!match.Success)
-                {
-                    return false;
-                }
+            if (section.ExecutableName == null)
+            {
+                return null;
             }
 
             string profiledProcessName = Path.GetFileName(profiledProcessPath);
-            return section.ExecutableName == null || section.ExecutableName.Equals(profiledProcessName, StringComparison.OrdinalIgnoreCase);
+            return section.ExecutableName.Equals(profiledProcessName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// If executable path regex is set, the process must match
+        /// </summary>
+        private static bool? MatchesExecutablePathRegex(ConfigParser.ProcessSection section, string profiledProcessPath)
+            {
+            if (section.ExecutablePathRegex == null)
+                {
+                return null;
+                }
+
+            return Regex.IsMatch(profiledProcessPath, $"^{section.ExecutablePathRegex}$");
+            }
+
+        /// <summary>
+        /// If loaded assembly path regex is set, at least one of the loaded assembly's path must match
+        /// </summary>
+        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section,  ParsedTraceFile traceFile = null)
+            {
+            if (section.LoadedAssemblyPathRegex == null || traceFile == null)
+                {
+                return null;
+            }
+
+            Regex regex = new Regex($"^{section.LoadedAssemblyPathRegex}$");
+            return traceFile.LoadedAssemblies.Any(assembly => regex.IsMatch(assembly.path));
         }
 
         /// <summary>
