@@ -384,36 +384,53 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	mdSignature pmsig;
 	metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
 
-	// Get Function Pointer
-	auto pt = GetFunctionVisited();
-
-	// Add instructions to InstructionList
-	InstructionList instructions;
-	Instruction* firstInstruction = new Instruction(CEE_LDC_I4, functionId); // functionID: Size 4
-	instructions.push_back(firstInstruction);
-#ifdef _WIN64
-	instructions.push_back(new Instruction(CEE_LDC_I8, (ULONGLONG)pt)); // pt: Size 8
-#else
-	instructions.push_back(new Instruction(CEE_LDC_I4, (ULONG)pt)); // pt: Size 4
-#endif
-	instructions.push_back(new Instruction(CEE_CALLI, pmsig)); // pmsig: Size 4
-
 	// Get Method Content in Intermediate Language
 	IMAGE_COR_ILMETHOD* pMethodHeader = nullptr;
 	ULONG iMethodSize = 0;
 
 	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&pMethodHeader, &iMethodSize);
 
+	traceLog.info("Old Method:");
+	char* str = (char*) malloc(iMethodSize + 1);
+	memcpy(str, pMethodHeader, iMethodSize);
+	str[iMethodSize] = 0; // Null termination.
+	traceLog.info(str);
+
+	// Based on read method and constructor of OpenCover
+	IMAGE_COR_ILMETHOD_FAT m_header;
+	memset(&m_header, 0, 3 * sizeof(DWORD));
+	m_header.Size = 3;
+	m_header.Flags = CorILMethod_FatFormat;
+	m_header.Flags &= ~CorILMethod_MoreSects;
+	m_header.MaxStack = 8;
+	m_header.CodeSize = iMethodSize + 16;
+	auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&pMethodHeader->Fat);
+	if (!oldFatImage->IsFat())
+	{
+		ATLTRACE(_T("TINY"));
+		auto tinyImage = static_cast<COR_ILMETHOD_TINY*>(&pMethodHeader->Tiny);
+		m_header.CodeSize = tinyImage->GetCodeSize();
+		ATLTRACE(_T("TINY(%X) => (%d + 1) : %d"), m_header.CodeSize, m_header.CodeSize, m_header.MaxStack);
+	}
+	else
+	{
+		memcpy(&m_header, pMethodHeader, oldFatImage->Size * sizeof(DWORD));
+		ATLTRACE(_T("FAT(%X) => (%d + 12) : %d"), m_header.CodeSize, m_header.CodeSize, m_header.MaxStack);
+	}
+
+
+	// Build new Method Header and Content
 	CComPtr<IMethodMalloc> methodMalloc;
 	profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
+
 	auto pNewMethodBody = static_cast<IMAGE_COR_ILMETHOD*>(methodMalloc->Alloc(iMethodSize + 3 + 16));
-
-	IMAGE_COR_ILMETHOD_FAT m_header;
 	auto fatImage = static_cast<COR_ILMETHOD_FAT*>(&pNewMethodBody->Fat);
-	m_header.Flags &= ~CorILMethod_MoreSects;
-
 	// Copy the header back into the newMethodBody
 	memcpy(fatImage, &m_header, m_header.Size * sizeof(DWORD));
+
+
+	// Get Function Pointer
+	auto pt = GetFunctionVisited();
 
 	BYTE* pCode;
 	// Set the pointer after the header and add our own instructions
@@ -421,37 +438,24 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 
 	*(BYTE*)(pCode) = 0x20;
 	pCode += 1;
-	*(ULONG*)(pCode) = (ULONG) instructions[0]->m_operand;
+	*(ULONG*)(pCode) = (ULONG) functionId;
 	pCode += 4;
 
 	*(BYTE*)(pCode) = 0x21;
 	pCode += 1;
-	*(ULONGLONG*)(pCode) = instructions[1]->m_operand;
+	*(ULONGLONG*)(pCode) = (ULONGLONG)pt;
 	pCode += 8;
 
 	*(BYTE*)(pCode) = 0x29;
 	pCode += 1;
-	*(ULONG*)(pCode) = (ULONG) instructions[2]->m_operand;
+	*(ULONG*)(pCode) = pmsig;
 	pCode += 4;
-
 	// Copy the original instructions
-	memcpy(pCode, pMethodHeader, m_header.Size * sizeof(DWORD));
+	memcpy(pCode, pMethodHeader, m_header.CodeSize);
 
-
-	/*profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)pNewMethodBody);*/
-
-	//memcpy(pNewMethodBody + m_header.Size, pCode-19, 19);
-
+	profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)pNewMethodBody);
 
 	return S_OK;
-}
-
-
-
-void CProfilerCallback::instrumentMethod(ModuleID moduleId, FunctionID functionId) {
-
-
-
 }
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
