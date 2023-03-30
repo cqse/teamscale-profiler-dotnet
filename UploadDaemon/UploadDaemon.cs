@@ -19,6 +19,11 @@ namespace UploadDaemon
     /// </summary>
     public class UploadDaemon
     {
+        /// <summary>
+        /// Path to the config file. It's located one directory above the uploader's DLLs.
+        /// </summary>
+        private static string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
+
         private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
 
         private const string DaemonControlCommandRunNow = "run";
@@ -35,6 +40,8 @@ namespace UploadDaemon
         /// </summary>
         public static void Main(string[] args)
         {
+            ParseCommandline(args);
+
             if (IsAlreadyRunning())
             {
                 // Writing to console on purpose, to explain to users why the exe terminates immediately.
@@ -44,7 +51,8 @@ namespace UploadDaemon
                 {
                     NotifyRunningDaemon();
                 }
-                catch (TimeoutException e) {
+                catch (TimeoutException e)
+                {
                     logger.Error(e, "Could not send notification trigger");
                 }
                 return;
@@ -52,13 +60,32 @@ namespace UploadDaemon
 
             logger.Info("Starting upload daemon v{uploaderVersion}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             var uploader = new UploadDaemon();
-            uploader.RunOnce();
+            Config config = uploader.RunOnce();
 
-            Config config = ReadConfig();
-            if (config.UploadInterval > TimeSpan.Zero)
+            if (config != null && config.UploadInterval > TimeSpan.Zero)
             {
                 uploader.ScheduleRegularRuns(config.UploadInterval);
                 uploader.WaitForNotifications();
+            }
+        }
+
+        private static void ParseCommandline(string[] args)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "--config":
+                        if (i + 1 < args.Length)
+                        {
+                            ConfigFilePath = args[i + 1];
+                            i++;
+                        }
+                        break;
+                    case "--config-from-env":
+                        ConfigFilePath = Environment.GetEnvironmentVariable("COR_PROFILER_CONFIG");
+                        break;
+                }
             }
         }
 
@@ -76,8 +103,8 @@ namespace UploadDaemon
 
         private static Config ReadConfig()
         {
-            logger.Debug("Reading config from {configFile}", Config.ConfigFilePath);
-            Config config = Config.ReadFromCentralConfigFile();
+            logger.Debug("Reading config from {configFile}", ConfigFilePath);
+            Config config = Config.ReadConfigFile(ConfigFilePath);
             HttpClientUtils.ConfigureHttpStack(config.DisableSslValidation);
             return config;
         }
@@ -85,15 +112,18 @@ namespace UploadDaemon
         /// <summary>
         /// Runs the daemon tasks once, synchronously.
         /// </summary>
-        public void RunOnce()
+        public Config RunOnce()
         {
             try
             {
-                RunOnce(ReadConfig());
+                Config config = ReadConfig();
+                RunOnce(config);
+                return config;
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to read config file {configPath}", Config.ConfigFilePath);
+                logger.Error(e, "Failed to read config file {configPath}", ConfigFilePath);
+                return null;
             }
         }
 
