@@ -89,8 +89,8 @@ bool WindowsUtils::ensureDirectoryExists(std::string directory) {
 		return true;
 	}
 
-	std::size_t indexOfSeparator = directory.find_last_of("\\/");
-	if (directory.find_last_of("\\/") != std::wstring::npos) {
+	std::size_t indexOfSeparator = directory.find_last_of(separators);
+	if (indexOfSeparator != std::wstring::npos) {
 		if (!ensureDirectoryExists(directory.substr(0, indexOfSeparator))) {
 			return false;
 		}

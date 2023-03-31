@@ -51,6 +51,11 @@ namespace UploadDaemon.Upload
 
         private void EnsureTargetDirectoryExists(string targetDirectory)
         {
+            if (File.Exists(targetDirectory))
+            {
+                throw new IOException($"{targetDirectory} exists, but is a file");
+            }
+
             if (!Directory.Exists(targetDirectory))
             {
                 logger.Debug("Creating target directory: {targetDirectory}", targetDirectory);
