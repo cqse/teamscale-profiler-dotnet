@@ -30,7 +30,7 @@ public:
 	virtual ~CProfilerCallback();
 
 	/** Initializer. Called at profiler startup. */
-	STDMETHOD(Initialize)(IUnknown *pICorProfilerInfoUnk);
+	STDMETHOD(Initialize)(IUnknown* pICorProfilerInfoUnk);
 
 	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
@@ -42,7 +42,7 @@ public:
 	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
 
 	/** Record inlining of method, but generally allow it. */
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
+	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 
 	/**
 	 * Implements the actual shutdown procedure. Must only be called once.
@@ -116,7 +116,7 @@ private:
 	* enabled in the event mask in order to force JIT-events for each first call to
 	* a function, independent of whether a pre-jitted version exists.)
 	*/
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL *pbHookFunction) throw(...);
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL* pbHookFunction) throw(...);
 
 	/** Dumps all environment variables to the log file. */
 	void dumpEnvironment();
@@ -133,7 +133,7 @@ private:
 	int registerAssembly(AssemblyID assemblyId);
 
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
-	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA* moduleId);
+	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* moduleId);
 
 	/** Triggers eagerly writing of function infos to log. */
 	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
@@ -147,10 +147,13 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
+	/** Writes an Event Log error about the YAML file errors. If the application is not running in an application pool, then also pops up a message box with the error. */
+	void reportYamlConfigLoadError();
+
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
-	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL *pfShouldInline);
-	HRESULT InitializeImplementation(IUnknown *pICorProfilerInfoUnk);
+	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
+	HRESULT InitializeImplementation(IUnknown* pICorProfilerInfoUnk);
 
 	/** Logs a stack trace. May rethrow the caught exception. */
 	void handleException(std::string context);
