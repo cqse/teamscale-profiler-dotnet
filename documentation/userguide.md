@@ -231,6 +231,7 @@ The .NET runtime will create an error message to the event log if loading the pr
 
 Things to check if no trace files are written:
 
+* Are there any related errors in the Event Log?
 * Are the environment variables set correctly (see the table above)?
 * Are the environment variables set for the right user?
 * Does the application process have read rights on the profiler DLLs and read/write rights on the trace folder?
