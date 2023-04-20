@@ -26,4 +26,7 @@ public:
 
 	/** Returns true only if the given pathe exists and is a file. */
 	static bool isFile(std::string path);
+
+	/** Returns true if the directory and parent directories exist or could be created. False otherwise. */
+	static bool ensureDirectoryExists(std::string directory);
 };
