@@ -294,6 +294,11 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 Please check the log files for errors and warnings after configuring the uploader and
 producing your first traces.
 
+Note: The upload daemon can also be installed as Windows service or invoked manually.
+In that case it accepts two command line flags:
+- `--config-from-env` will use the profiler config file as specified in the `COR_PROFILER_CONFIG` environment variable
+- `--config path/to/config.yml` will use the specified config file
+
 ## Locally converting to method-accurate coverage and then uploading
 
 You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
