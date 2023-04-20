@@ -41,6 +41,7 @@ namespace UploadDaemon
         public static void Main(string[] args)
         {
             ParseCommandline(args);
+            logger.Info("Using config file from {configFilePath}", ConfigFilePath);
 
             if (IsAlreadyRunning())
             {

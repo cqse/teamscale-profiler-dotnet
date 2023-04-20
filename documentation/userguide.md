@@ -291,9 +291,9 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 Please check the log files for errors and warnings after configuring the uploader and
 producing your first traces.
 
-Note: The upload daemon can also be installed as windows service or invoked manually.
+Note: The upload daemon can also be installed as Windows service or invoked manually.
 In that case it accepts two command line flags:
-- `--config-from-env` will use the profiler config file as specified in `COR_PROFILER_CONFIG`
+- `--config-from-env` will use the profiler config file as specified in the `COR_PROFILER_CONFIG` environment variable
 - `--config path/to/config.yml` will use the specified config file
 
 ## Locally converting to method-accurate coverage and then uploading
