@@ -19,9 +19,6 @@ CProfilerWorker::~CProfilerWorker() {
 
 void CProfilerWorker::methodIdThreadLoop() {
 	while (!this->shutdown) {
-		if (methodIdQueue.was_empty()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		}
 		EnterCriticalSection(methodSetSynchronization);
 		transferMethodIds();
 		LeaveCriticalSection(methodSetSynchronization);
