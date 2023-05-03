@@ -378,25 +378,22 @@ void printMethod(TraceLog traceLog, ULONG iMethodSize, byte* pMethodHeader) {
 
 
 HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock) {
+	// TODOs
+	// Handle DWORD alignment (Exceptions)
+	// Handle 32 bit apps
+	// Check if inline events are relevant
+	// Exclude Modules
+	// Make it beautiful
+	// Check if newMethodBody can be freed (and for other possible memory leaks)
+	// Non light mode might cause issues (perhaps resolved by proper exception alignment handling)
+
+
 	// Fill value MethodID
 	ModuleID moduleId;
 	mdToken functionToken;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
 
 	int extraSize = 23;
-
-	// Get pmsig
-	static COR_SIGNATURE unmanagedCallSignature[] =
-	{
-		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
-		0x01,                                   // Parameter count
-		ELEMENT_TYPE_VOID,                      // Return type
-		ELEMENT_TYPE_I4                         // Parameter type (I4)
-	};
-	CComPtr<IMetaDataEmit> metaDataEmit;
-	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
-	mdSignature pmsig;
-	metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
 
 	// Get Method Content in Intermediate Language
 	IMAGE_COR_ILMETHOD* pMethodHeader = nullptr;
@@ -453,6 +450,18 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	memcpy(fatImage, &m_header, m_header.Size * sizeof(DWORD));
 	printMethod(traceLog, m_header.Size * sizeof(DWORD), (byte*)fatImage);
 
+	// Get pmsig
+	static COR_SIGNATURE unmanagedCallSignature[] =
+	{
+		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
+		0x01,                                   // Parameter count
+		ELEMENT_TYPE_VOID,                      // Return type
+		ELEMENT_TYPE_I8                        // Parameter type (I8) needs to be adjusted for 32 bit
+	};
+	CComPtr<IMetaDataEmit> metaDataEmit;
+	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
+	mdSignature pmsig;
+	metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
 
 	// Get Function Pointer
 	auto pt = GetFunctionVisited();
@@ -461,10 +470,10 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	// Set the pointer after the header and add our own instructions
 	pCode = fatImage->GetCode();
 
-	std::cerr << "JitInstrumentation WUBWUB " << functionId;
-	*(BYTE*)(pCode) = 0x20;
+	std::cerr << "JitInstrumentation WUBWUB " << functionId << "\n";
+	*(BYTE*)(pCode) = 0x21;
 	pCode += 1;
-	*(ULONGLONG*)(pCode) = (ULONGLONG) functionId;
+	*(FunctionID*)(pCode) = (FunctionID)functionId;
 	pCode += 8;
 
 	*(BYTE*)(pCode) = 0x21;
