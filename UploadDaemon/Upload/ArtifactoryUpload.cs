@@ -55,13 +55,26 @@ namespace UploadDaemon.Upload
             }
             string[] branchAndTimestamp = revisionOrTimestamp.Value.Split(':');
             string url = $"{artifactory.Url}/uploads/{branchAndTimestamp[0]}/{branchAndTimestamp[1]}";
-            url = $"{url}/{artifactory.Partition}/simple";
+            if (lineCoverageReport.UploadFormat == "SIMPLE")
+            {
+                url = $"{url}/{artifactory.Partition}/simple";
+            } else
+            {
+                url = $"{url}/{artifactory.Partition}/testwise";
+            }
             if (artifactory.PathSuffix != null)
             {
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-            url = $"{url}/report.simple";
+
+            if (lineCoverageReport.UploadFormat == "SIMPLE")
+            {
+                url = $"{url}/report.simple";
+            } else
+            {
+                url = $"{url}/report.testwise";
+            }
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
 
