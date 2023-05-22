@@ -9,6 +9,7 @@ Please prefix each entry with one of:
 # Next Release
 - [feature] Support for uploading to artifactory with the Teamscale default artifact storage schema.
 - [feature] Display error window and add Event Log error entry when the Profiler.yml could not be loaded
+- [fix] Upload Daemon failed to upload when Teamscale URL was provided with trailing slash
 
 # v22.8.0
 - [feature] support for .NET core PDBs
