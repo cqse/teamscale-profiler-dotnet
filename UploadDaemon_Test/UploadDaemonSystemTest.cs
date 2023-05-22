@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
+using static UploadDaemon.Configuration.Config;
 
 namespace UploadDaemon
 {
@@ -30,6 +31,37 @@ namespace UploadDaemon
             testDir.Create();
             new DirectoryInfo(TargetDir).Create();
             new DirectoryInfo(UploadDir).Create();
+        }
+
+        [Test]
+        public void TestTrailingSlashInUrl()
+        {
+            ConfigForProcess configWithTrailingSlash = Config.Read($@"
+                match:
+                  - profiler:
+                      targetdir: {TargetDir}
+                    uploader:
+                      versionAssembly: VersionAssembly
+                      directory: {UploadDir}
+                      teamscale:
+                        url: http://localhost:8080/
+            ").CreateConfigForProcess("test.exe");
+
+            Assert.That(configWithTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));
+
+            ConfigForProcess configWithoutTrailingSlash = Config.Read($@"
+                match:
+                  - profiler:
+                      targetdir: {TargetDir}
+                    uploader:
+                      versionAssembly: VersionAssembly
+                      directory: {UploadDir}
+                      teamscale:
+                        url: http://localhost:8080
+            ").CreateConfigForProcess("test.exe");
+
+            Assert.That(configWithoutTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));
+
         }
 
         [Test]
