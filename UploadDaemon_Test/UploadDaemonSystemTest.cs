@@ -61,7 +61,6 @@ namespace UploadDaemon
             ").CreateConfigForProcess("test.exe");
 
             Assert.That(configWithoutTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));
-
         }
 
         [Test]
