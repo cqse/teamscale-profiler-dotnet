@@ -211,7 +211,7 @@ void CProfilerCallback::initializeConfig() {
 }
 
 UploadDaemon CProfilerCallback::createDaemon() {
-	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getConfigValueFromEnvironment("PATH"));
+	std::string profilerPath = StringUtils::removeLastPartOfPath(WindowsUtils::getPathOfProfiler());
 	return UploadDaemon(profilerPath);
 }
 

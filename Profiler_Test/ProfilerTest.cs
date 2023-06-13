@@ -1,8 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 
 namespace Cqse.Teamscale.Profiler.Dotnet
 {
@@ -12,8 +12,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
-
-        private static readonly string AttachLog = $"{SolutionRoot}/Profiler/bin/{Configuration}/attach.log";
+        private static readonly string AttachLog = ProfilerDirectory + "/attach.log";
 
         [OneTimeSetUp]
         public static void SetUpFixture()
@@ -38,11 +37,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             }
         }
 
-		[TearDown]
-		public void TearDown()
-		{
-			File.Delete(AttachLog);
-		}
+        [TearDown]
+        public void TearDown()
+        {
+            File.Delete(AttachLog);
+        }
 
         /// <summary>
         /// Runs the profiler with command line argument and asserts its content is logged into the trace.
@@ -88,7 +87,38 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
         }
 
-         /// <summary>
+        /// <summary>
+        /// Makes sure that the default Profiler.yml configuration is used, if the environment variable is not set.
+        /// </summary>
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
+        public int TestConfigFileInProfilerDllDirectory(string regex)
+        {
+            var configFile = Path.Combine(ProfilerDirectory, "profiler.yml");
+            try
+            {
+                File.WriteAllText(configFile, $@"
+          match:
+            - profiler:
+                enabled: false
+            - executablePathRegex: {regex}
+              profiler:
+                enabled: true
+                targetdir: {Path.Combine(TestTempDirectory, "traces")}
+          ");
+
+                return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, setTargetDirAsEnvVariable: false).Count;
+            }
+            finally
+            {
+                if (File.Exists(configFile))
+                {
+                    File.Delete(configFile);
+                }
+            }
+        }
+
+        /// <summary>
         /// Makes sure that processes not matching the given process name are not profiled.
         /// This is the same test as #TestConfigFile but uses the YAML flow style to check that we can properly understand it.
         /// </summary>
@@ -164,11 +194,11 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         }
 
         [Test]
-        public void TestDetatchLog()
+        public void TestDetachLog()
         {
             RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
             string[] lines = File.ReadAllLines(AttachLog);
-			string secondLine = lines[1];
+            string secondLine = lines[1];
             Assert.That(secondLine.StartsWith("Detach"));
             Assert.That(secondLine.Contains("ProfilerTestee.exe"));
         }

@@ -52,6 +52,25 @@ std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
 	return variables;
 }
 
+std::string WindowsUtils::getPathOfProfiler() {
+	char profilerPath[_MAX_PATH];
+
+	HMODULE hm = NULL;
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPCSTR)&getPathOfProfiler, &hm) != 0)
+	{
+		size_t length = GetModuleFileName(hm, profilerPath, _MAX_PATH);
+		if (length != 0)
+		{
+			return std::string(profilerPath, length);
+		}
+	}
+
+	// Failed to retrieve module path, try to retrieve it from the environment variable instead
+	return getConfigValueFromEnvironment("PATH");
+}
+
 std::string WindowsUtils::getPathOfThisProcess() {
 	char appPath[_MAX_PATH];
 	appPath[0] = 0;
