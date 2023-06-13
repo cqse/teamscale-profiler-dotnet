@@ -102,6 +102,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         protected static readonly string Configuration = "Release";
 #endif
 
+        /// <summary>
+        /// The directory containing the profiler DLLs
+        /// </summary>
         protected static readonly string ProfilerDirectory = $"{SolutionRoot}/Profiler/bin/{Configuration}";
 
         public static readonly string Profiler32Dll = ProfilerDirectory + "/Profiler32.dll";
