@@ -359,7 +359,7 @@ match: [{
 ```
 
 This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
-If this is not the case, simply replace by absoule paths.
+If this is not the case, simply replace by absolute paths.
 
 ## Example: Teamscale upload without local method-accurate coverage conversion
 

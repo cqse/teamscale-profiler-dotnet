@@ -193,7 +193,7 @@ namespace UploadDaemon
                 string revisionFile = Config.ResolveAssemblyRelativePath(processConfig.RevisionFile, path);
                 if (File.Exists(revisionFile))
                 {
-                    logger.Error("Using revision file {revisionFile} while processing {traceFile}.", revisionFile, parsedTraceFile.FilePath);
+                    logger.Info("Using revision file {revisionFile} while processing {traceFile}.", revisionFile, parsedTraceFile.FilePath);
                     return ParseRevisionFile(revisionFile, parsedTraceFile.FilePath);
                 }
             }

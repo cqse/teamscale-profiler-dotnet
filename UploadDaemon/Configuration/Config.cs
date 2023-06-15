@@ -192,7 +192,7 @@ namespace UploadDaemon.Configuration
         }
 
         /// <summary>
-        /// Returns true if the path should be interpreted relatively to an assmebly, e.g. starts with (case insensitive) @AssemblyDir.
+        /// Returns true if the path should be interpreted relatively to an assembly, e.g. starts with (case insensitive) @AssemblyDir.
         /// </summary>
         public static bool IsAssemblyRelativePath(string path)
         {
@@ -200,7 +200,7 @@ namespace UploadDaemon.Configuration
         }
 
         /// <summary>
-        /// Resolves a path relatively to an assmebly if it starts with (case insensitive) @AssemblyDir. Returns null otherwise.
+        /// Resolves a path relatively to an assembly if it starts with (case insensitive) @AssemblyDir. Returns null otherwise.
         /// </summary>
         public static string ResolveAssemblyRelativePath(string path, string assemblyPath)
         {
