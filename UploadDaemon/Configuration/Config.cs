@@ -315,7 +315,7 @@ namespace UploadDaemon.Configuration
             };
 
 
-            // The section applies if at least one of the check criteriy is set (!= null) and all these are true.
+            // The section applies if at least one of the check criteria is set (!= null) and all of these are true.
             return checks.Where(check => check != null).All(check => check == true);
         }
 
@@ -323,7 +323,7 @@ namespace UploadDaemon.Configuration
         /// If executable name is set, the executable's name must match case-insensitive
         /// </summary>
         private static bool? MatchesExecutableName(ConfigParser.ProcessSection section, string profiledProcessPath)
-            {
+        {
             if (section.ExecutableName == null)
             {
                 return null;
@@ -337,22 +337,22 @@ namespace UploadDaemon.Configuration
         /// If executable path regex is set, the process must match
         /// </summary>
         private static bool? MatchesExecutablePathRegex(ConfigParser.ProcessSection section, string profiledProcessPath)
-            {
+        {
             if (section.ExecutablePathRegex == null)
-                {
+            {
                 return null;
-                }
+            }
 
             return Regex.IsMatch(profiledProcessPath, $"^{section.ExecutablePathRegex}$");
-            }
+        }
 
         /// <summary>
         /// If loaded assembly path regex is set, at least one of the loaded assembly's path must match
         /// </summary>
-        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section,  ParsedTraceFile traceFile = null)
-            {
+        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, ParsedTraceFile traceFile = null)
+        {
             if (section.LoadedAssemblyPathRegex == null || traceFile == null)
-                {
+            {
                 return null;
             }
 

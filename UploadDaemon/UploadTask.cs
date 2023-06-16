@@ -10,6 +10,7 @@ using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Scanning;
 using UploadDaemon.Upload;
+using System.Diagnostics;
 
 namespace UploadDaemon
 {
@@ -51,6 +52,7 @@ namespace UploadDaemon
             LineCoverageMerger coverageMerger = new LineCoverageMerger();
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
+            List<string> errorTraceFilePaths = new List<string>();
             foreach (TraceFile trace in traces)
             {
                 try
@@ -59,8 +61,13 @@ namespace UploadDaemon
                 }
                 catch (Exception e)
                 {
-                    logger.Error(e, "Failed to process trace file {trace}. Will retry later", trace.FilePath);
+                    logger.Debug(e, "Failed to process trace file {trace}. Will retry later", trace.FilePath);
+                    errorTraceFilePaths.Add(trace.FilePath);
                 }
+            }
+            if (errorTraceFilePaths.Count > 0)
+            {
+                logger.Error("Failed to process trace files {traces}. Will retry later", String.Join(", ", errorTraceFilePaths));
             }
 
             UploadMergedCoverage(archive, coverageMerger, config);
@@ -187,7 +194,7 @@ namespace UploadDaemon
             {
                 return ParseRevisionFile(processConfig.RevisionFile, parsedTraceFile.FilePath);
             }
-            
+
             foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
             {
                 string revisionFile = Config.ResolveAssemblyRelativePath(processConfig.RevisionFile, path);
