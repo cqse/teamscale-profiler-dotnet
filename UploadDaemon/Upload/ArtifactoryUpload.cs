@@ -67,14 +67,15 @@ namespace UploadDaemon.Upload
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-
+            String reportName = "";
             if (lineCoverageReport.UploadFormat == "SIMPLE")
             {
-                url = $"{url}/report.simple";
+                reportName = "report.simple";
             } else
             {
-                url = $"{url}/report.testwise";
+                reportName = "report.testwise";
             }
+            url = $"{url}/{reportName}";
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
 
@@ -83,7 +84,7 @@ namespace UploadDaemon.Upload
                 byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport.ToString());
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream);
+                    return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream, reportName);
                 }
             }
             catch (Exception e)
@@ -94,9 +95,9 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, MemoryStream stream)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, MemoryStream stream, String reportName)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartPut(client, url, "report", stream, "report.simple"))
+            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartPut(client, url, "report", stream, reportName))
             {
                 if (response.IsSuccessStatusCode)
                 {
