@@ -205,7 +205,7 @@ require special care when trying to use backlashes since these are used as an es
 circumstances.
 
 There is a third selector `loadedAssemblyPathRegex` that is currently only used for configuring trace upload based on the assemblies that are loaded.
-[See example](## Example: Profile and upload multiple applications that are started from the same process) regarding "multiple applications that are started from the same process" at the end of the documentation for details.
+See example regarding "multiple applications that are started from the same process" at the end of the documentation for details.
 
 If any `executableName`, `executablePathRegex` or `loadedAssemblyPathRegex` are specified in a section, all must match for the section to be
 applied.
