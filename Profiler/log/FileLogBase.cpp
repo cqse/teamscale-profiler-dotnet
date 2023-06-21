@@ -1,4 +1,6 @@
 #include "FileLogBase.h"
+#include "utils/WindowsUtils.h"
+#include "utils/Debug.h"
 #include <winuser.h>
 #include "version.h"
 
@@ -14,11 +16,17 @@ FileLogBase::~FileLogBase()
 }
 
 void FileLogBase::createLogFile(std::string directory, std::string name, bool overwriteIfExists) {
+	const std::string fallbackDirectory = "c:\\users\\public\\";
 	if (directory.empty()) {
 		// c:\users\public is usually writable for everyone
 		// we must use backslashes here or the WinAPI path manipulation functions will fail
 		// to split the path correctly
-		directory = "c:\\users\\public\\";
+		directory = fallbackDirectory;
+	}
+
+	if (!WindowsUtils::ensureDirectoryExists(directory)) {
+		Debug::getInstance().log("Cannot create directory '" + directory + "', falling back to: " + fallbackDirectory);
+		directory = fallbackDirectory;
 	}
 
 	std::string logFilePath = directory + "\\" + name;

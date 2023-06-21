@@ -12,11 +12,6 @@ namespace UploadDaemon.Configuration
     public class Config
     {
         /// <summary>
-        /// Path to the config file. It's located one directory above the uploader's DLLs.
-        /// </summary>
-        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
-
-        /// <summary>
         /// Thrown if the config for a process is invalid.
         /// </summary>
         public class InvalidConfigException : Exception
@@ -260,10 +255,18 @@ namespace UploadDaemon.Configuration
         /// </summary>
         /// <exception cref="System.Exception">The underlying YAML library may throw any number of unknown
         /// exceptions in case of invalid input or when the given file is not readable.</exception>
-        public static Config ReadFromCentralConfigFile()
+        public static Config ReadConfigFile(string configFilePath)
         {
-            string yaml = File.ReadAllText(ConfigFilePath);
-            return Read(yaml);
+            try
+            {
+                return Read(File.ReadAllText(configFilePath));
+            }
+            catch (InvalidConfigException e)
+            {
+                throw new InvalidConfigException($"{e.Message}: The uploader will only watch for trace files in the targetdir" +
+                    $" directories configured in {configFilePath}");
+            }
+
         }
 
         /// <summary>
@@ -275,13 +278,12 @@ namespace UploadDaemon.Configuration
         {
             ConfigParser.YamlConfig yamlConfig = ConfigParser.Parse(yaml);
             Config config = new Config(yamlConfig);
-            if (config.TraceDirectoriesToWatch.Count() == 0)
+            if (config.TraceDirectoriesToWatch.Any())
             {
-                throw new InvalidConfigException($"You must configure at least one targetdir profiler option in" +
-                    $" the YAML config file. The uploader will only watch for trace files in the targetdir" +
-                    $" directories configured in {ConfigFilePath}");
+                return config;
             }
-            return config;
+
+            throw new InvalidConfigException("You must configure at least one targetdir profiler option in the YAML config file");
         }
 
         /// <summary>

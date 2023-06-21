@@ -1,4 +1,5 @@
 #include "WindowsUtils.h"
+#include "Debug.h"
 #include <Windows.h>
 #include <vector>
 #include <algorithm>
@@ -71,4 +72,30 @@ bool WindowsUtils::isFile(std::string path)
 	DWORD dwAttrib = GetFileAttributes(path.c_str());
 	// check if it's a valid path and not a directory
 	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool WindowsUtils::ensureDirectoryExists(std::string directory) {
+	static const std::string separators("\\/");
+
+	DWORD dwAttrib = GetFileAttributes(directory.c_str());
+
+	if (isFile(directory)) {
+		return false;
+	}
+
+
+	if (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY || dwAttrib & FILE_ATTRIBUTE_REPARSE_POINT)) {
+		// directory or junction exists
+		return true;
+	}
+
+	std::size_t indexOfSeparator = directory.find_last_of(separators);
+	if (indexOfSeparator != std::wstring::npos) {
+		if (!ensureDirectoryExists(directory.substr(0, indexOfSeparator))) {
+			return false;
+		}
+	}
+
+	Debug::getInstance().log("Create: " + directory);
+	return CreateDirectory(directory.c_str(), NULL) == TRUE;
 }

@@ -57,6 +57,8 @@ The profiler can be installed into any directory on the target machine, but we r
 | COR_PROFILER         | `{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}` | Required. The GUID of the DLL file       |
 | COR_PROFILER_PATH    | Path                                     | Required. Path to the 32 or 64 bit DLL file, `C:\Program Files\Coverage Profiler\Profiler32.dll` |
 
+Please note that the environment variables do not have to be quoted.
+
 ## .NET Core
 
 .NET core is fully supported but requires different environment variables to be set. Most importantly the profiler is registered with variables having a `CORECLR_` prefix instead of the `COR_` prefix. Second, you do not have to know beforehand if the application is running in 32 or 64 bit mode, as the different profiler versions can be registered simultaneously with two environment variables.
@@ -165,29 +167,32 @@ By default, the profiler will look for a YAML configuration file called `Profile
 Example:
 
 ```yaml
-match:
+match: [{
   # no executablePathRegex: or executableName: keys means match all processes
-  - profiler:
-      targetdir: "C:/users/public/traces"
-      enabled: false
-  # matches any foo.exe (case-insensitively)
-  - profiler:
-      executableName: foo.exe
-      targetdir: "C:/users/public/traces"
-      enabled: false
+  profiler: {
+    targetdir: "C:/users/public/traces",
+    enabled: false
+      # matches any foo.exe (case-insensitively)
+  }},{ 
+  profiler: {
+    executableName: "foo.exe",
+    targetdir: "C:/users/public/traces",
+    enabled: false
+  }
+  }, {
   # without quotes, the backlash need not be escaped
-  - executablePathRegex: .*\\program\.exe
-    profiler:
+  executablePathRegex: .*\\program\.exe,
+  profiler: {
+    enabled: true
+  }
+  },
+  {
+    # with quotes, you must escape backlashes
+    executablePathRegex: ".*\\\\other_program\\.exe",
+    profiler: {
       enabled: true
-  # with quotes, you must escape backlashes
-  - executablePathRegex: ".*\\\\other_program\\.exe"
-    profiler:
-      enabled: true
-  # with a folded block scalar, the backslash need not be escaped
-  - executablePathRegex: >
-      .*\\third_program\.exe
-    profiler:
-      enabled: true
+    } 
+  }]
 ```
 
 You can have any number of sections under `match`. For each, the profiler will check if it matches the
@@ -230,6 +235,7 @@ The .NET runtime will create an error message to the event log if loading the pr
 
 Things to check if no trace files are written:
 
+* Are there any related errors in the Event Log?
 * Are the environment variables set correctly (see the table above)?
 * Are the environment variables set for the right user?
 * Does the application process have read rights on the profiler DLLs and read/write rights on the trace folder?
@@ -327,6 +333,11 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 Please check the log files for errors and warnings after configuring the uploader and
 producing your first traces.
 
+Note: The upload daemon can also be installed as Windows service or invoked manually.
+In that case it accepts two command line flags:
+- `--config-from-env` will use the profiler config file as specified in the `COR_PROFILER_CONFIG` environment variable
+- `--config path/to/config.yml` will use the specified config file
+
 ## Locally converting to method-accurate coverage and then uploading
 
 You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
@@ -368,21 +379,26 @@ Futher config options for the uploader in this mode:
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      pdbDirectory: C:\pdbs
-      revisionFile: C:\pdbs\revision.txt
-      assemblyPatterns:
-        include: [ "MyCompany.*" ]
-      teamscale:
-        url: http://localhost:8080
-        username: build
-        accessKey: u7a9abc32r45r2uiig3vvv
-        project: your_project
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    pdbDirectory: C:\pdbs,
+    revisionFile: C:\pdbs\revision.txt,
+    assemblyPatterns: {
+      include: [ "MyCompany.*" ]
+    },
+      teamscale: {
+        url: http://localhost:8080,
+        username: build,
+        accessKey: u7a9abc32r45r2uiig3vvv,
+        project: your_project,
         partition: Manual Tests
+      }
+  }
+}
 ```
 
 ## Example: Teamscale upload without local method-accurate coverage conversion
@@ -390,18 +406,22 @@ match:
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      teamscale:
-        url: http://localhost:8080
-        username: build
-        accessKey: u7a9abc32r45r2uiig3vvv
-        project: your_project
-        partition: Manual Tests
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    versionAssembly: YourAssembly,
+    teamscale: {
+      url: http://localhost:8080,
+      username: build,
+      accessKey: u7a9abc32r45r2uiig3vvv,
+      project: your_project,
+      partition: Manual Tests
+    }
+  }
+}
 ```
 
 ## Example: Artifactory Upload with username and password
@@ -409,17 +429,21 @@ match:
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      artifactory:
-        url: https://yourinstance.jfrog.io/artifactory/some/generic/path
-        username: someuser
-        password: somepassword
-        partition: Manual Tests
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    versionAssembly: YourAssembly,
+    artifactory: {
+      url: https://yourinstance.jfrog.io/artifactory/some/generic/path,
+      username: someuser,
+      password: somepassword,
+      partition: Manual Tests
+    }
+  }
+}
 ```
 
 ## Example: Artifactory Upload with api key
@@ -427,16 +451,20 @@ match:
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      artifactory:
-        url: https://yourinstance.jfrog.io/artifactory/some/generic/path
-        apiKey: somekey
-        partition: Manual Tests
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    versionAssembly: YourAssembly,
+    artifactory: {
+      url: https://yourinstance.jfrog.io/artifactory/some/generic/path,
+      apiKey: somekey,
+      partition: Manual Tests
+    }
+  }
+}
 ```
 
 ## Example: Move to network share
@@ -444,13 +472,16 @@ match:
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      directory: \\yourserver.localdomain\some\directory
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    versionAssembly: YourAssembly,
+    directory: \\yourserver.localdomain\some\directory
+    }
+}
 ```
 
 ## Example: Azure File Storage
@@ -460,16 +491,20 @@ To upload traces to an Azure File Storage first obtain the [connection string][a
 **Profiler.yml:**
 
 ```yaml
-match:
-  - executableName: foo.exe
-    profiler:
-      targetdir: C:\output
-    uploader:
-      versionAssembly: YourAssembly
-      azureFileStorage:
-        connectionString: DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;
-        shareName: my-share
-        directory: log/file/path
+match: {
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    versionAssembly: YourAssembly,
+    azureFileStorage: {
+      connectionString: "DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;",
+      shareName: my-share,
+      directory: log/file/path
+    }
+  }
+}
 ```
 
 ## Proxy
@@ -499,10 +534,11 @@ The uploader archives processed trace files in subdirectories of the respective 
 By default, the uploader leaves trace files in these archives indefinitely. To change this, add the following section to the config file, to specify the number of days the different types of files should be kept. Note that a value of 0 leads to the files being purged immediately after processing.
 
 ```yaml
-archivePurgingThresholdsInDays:
-  uploadedTraces: 7
-  emptyTraces: 3
+archivePurgingThresholdsInDays: {
+  uploadedTraces: 7,
+  emptyTraces: 3,
   incompleteTraces: 3
+}
 ```
 
 When the uploader is instructed to convert the traces locally to method-accurate coverage before uploading to Teamscale, the created coverage is normally not stored on disk.

@@ -57,12 +57,29 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         {
             var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
             File.WriteAllText(configFile, $@"
-match:
-  - profiler:
-      enabled: false
-  - executablePathRegex: {regex}
-    profiler:
-      enabled: true
+          match:
+            - profiler:
+                enabled: false
+            - executablePathRegex: {regex}
+              profiler:
+                enabled: true
+          ");
+
+            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
+            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+        }
+
+         /// <summary>
+        /// Makes sure that processes not matching the given process name are not profiled.
+        /// This is the same test as #TestConfigFile but uses the YAML flow style to check that we can properly understand it.
+        /// </summary>
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
+        public int TestConfigFileYamlFlow(string regex)
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, $@"
+match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: {regex}     , profiler: {{enabled: true}}}}]
 ");
 
             profiler.ConfigFilePath = configFile;

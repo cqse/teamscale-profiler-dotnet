@@ -131,6 +131,21 @@ private:
 	* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
 	* code, in order to make coverage information independent of pre-jitted code.
 	*/
+	DWORD getEventMask();
+
+	/**
+	* Defines whether the given function should trigger a callback everytime it is executed.
+	*
+	* We do not register a single function callback in order to not affect
+	* performance. In effect, we disable this feature here. It has been tested via
+	* a performance benchmark, that this implementation does not impact call
+	* performance.
+	*
+	* For coverage profiling, we do not need this callback. However, the event is
+	* enabled in the event mask in order to force JIT-events for each first call to
+	* a function, independent of whether a pre-jitted version exists.)
+	*/
+	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL* pbHookFunction) throw(...);
 	void adjustEventMask();
 
 	/** Dumps all environment variables to the log file. */
@@ -161,6 +176,9 @@ private:
 
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+
+	/** Writes an Event Log error about the YAML file errors. If the application is not running in an application pool, then also pops up a message box with the error. */
+	void reportYamlConfigLoadError();
 
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
