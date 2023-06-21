@@ -250,12 +250,10 @@ void CProfilerCallback::adjustEventMask() {
 	profilerInfo->GetEventMask2(&dwEventMaskLow, &dwEventMaskHigh);
 	dwEventMaskLow |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
-	if (config.isTgaEnabled()) {
-		dwEventMaskLow |= COR_PRF_MONITOR_JIT_COMPILATION;
-		// disable force re-jitting for the light variant
-		if (!config.shouldUseLightMode()) {
-			dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
-		}
+	dwEventMaskLow |= COR_PRF_MONITOR_JIT_COMPILATION;
+	// disable force re-jitting for the light variant
+	if (!config.shouldUseLightMode()) {
+		dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 	}
 
 	profilerInfo->SetEventMask2(dwEventMaskLow, dwEventMaskHigh);
@@ -393,7 +391,7 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	mdToken functionToken;
 	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
 
-	int extraSize = 23;
+	int extraSize = 24;
 
 	// Get Method Content in Intermediate Language
 	IMAGE_COR_ILMETHOD* pMethodHeader = nullptr;
@@ -410,6 +408,7 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	m_header.Size = 3;
 	m_header.Flags = CorILMethod_FatFormat;
 	m_header.Flags &= ~CorILMethod_MoreSects;
+
 	m_header.MaxStack = 8;
 	auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&pMethodHeader->Fat);
 	BYTE* oldCode;
@@ -435,8 +434,23 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 		traceLog.info("m_header claims that our codesize + size is " + std::to_string(oldMethodSize));
 		m_header.CodeSize = oldFatImage->CodeSize + extraSize;
 	}
-	
 
+	if ((m_header.Flags & CorILMethod_MoreSects) == CorILMethod_MoreSects)
+	{
+		// TODO:
+		// Find Sections
+		// Get Size of Sections
+		// Update Section Offset value
+		// Copy Over Sections
+		
+		BYTE flags = 0;
+		long dwordSize = sizeof(DWORD) - 1;
+		long oldCodeSizeDwordAligned = (oldCodeSize + dwordSize) & ~(dwordSize);
+		BYTE* oldCodePos = oldCode + oldCodeSizeDwordAligned;
+		while ((flags & CorILMethod_Sect_MoreSects) == CorILMethod_Sect_MoreSects) {
+
+		}
+	}
 
 	// Build new Method Header and Content
 	CComPtr<IMethodMalloc> methodMalloc;
@@ -456,7 +470,7 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
 		0x01,                                   // Parameter count
 		ELEMENT_TYPE_VOID,                      // Return type
-		ELEMENT_TYPE_I8                        // Parameter type (I8) needs to be adjusted for 32 bit
+		ELEMENT_TYPE_I8                         // Parameter type (I8) needs to be adjusted for 32 bit
 	};
 	CComPtr<IMetaDataEmit> metaDataEmit;
 	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
@@ -470,7 +484,6 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	// Set the pointer after the header and add our own instructions
 	pCode = fatImage->GetCode();
 
-	std::cerr << "JitInstrumentation WUBWUB " << functionId << "\n";
 	*(BYTE*)(pCode) = 0x21;
 	pCode += 1;
 	*(FunctionID*)(pCode) = (FunctionID)functionId;
@@ -485,6 +498,10 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	pCode += 1;
 	*(ULONG*)(pCode) = pmsig;
 	pCode += 4;
+
+	*(BYTE*)(pCode) = 0x00;
+	pCode += 1;
+
 	// Copy the original instructions
 	printMethod(traceLog, m_header.Size * sizeof(DWORD) + extraSize, (byte*)fatImage);
 	memcpy(pCode, oldCode, oldCodeSize);
