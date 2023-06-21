@@ -7,6 +7,19 @@
 #include <fstream>
 #include <algorithm>
 #include <winuser.h>
+#include <windows.h>
+#include <chrono>
+#include <thread>
+#include <iostream>
+
+/** Closes error window after 10 seconds, in case the profiled application is running in an automated environment where user interaction is not possible. */
+void CloseErrorWindow() {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+	HWND hWnd = FindWindow(NULL, "Error when loading configuration file");
+	if (hWnd) {
+		PostMessage(hWnd, WM_CLOSE, 0, 0);
+	}
+}
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -90,6 +103,21 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 	}
 }
 
+void CProfilerCallback::reportYamlConfigLoadError() {
+	LPCTSTR errorMessage = "Couldn't load Profiler.yml configuration for the Teamscale .NET Profiler! See related errors in the standard error stream or in the log file.";
+
+	HANDLE h_event_log = RegisterEventSource(0, ".NET Runtime");
+	ReportEvent(h_event_log, EVENTLOG_ERROR_TYPE, 0, 0x3E8, 0, 1, 0, &errorMessage, 0);
+
+	char appPool[BUFFER_SIZE];
+	bool isRunningInAppPool = GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool));
+	if (!isRunningInAppPool) {
+		std::thread error_window_closing_thread(CloseErrorWindow);
+		error_window_closing_thread.detach();
+		MessageBox(NULL, errorMessage, "Error when loading configuration file", MB_OK | MB_ICONERROR);
+	}
+}
+
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
 	initializeConfig();
 
@@ -107,6 +135,12 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 
 	for (std::string problem : config.getProblems()) {
 		traceLog.error(problem);
+		std::cerr << problem;
+	}
+	if (!config.getProblems().empty()) {
+		reportYamlConfigLoadError();
+		// If configuration was incorrect, make it visible to the user by closing the application
+		exit(-1);
 	}
 
 	if (config.shouldUseLightMode()) {
@@ -119,7 +153,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	traceLog.info("Eagerness: " + std::to_string(config.getEagerness()));
 
 	if (config.shouldStartUploadDaemon()) {
-		traceLog.info("Starting upload deamon");
+		traceLog.info("Starting upload daemon");
 		createDaemon().launch(traceLog);
 	}
 
@@ -295,7 +329,7 @@ int CProfilerCallback::registerAssembly(AssemblyID assemblyId) {
 	return assemblyNumber;
 }
 
-void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR *assemblyName, WCHAR *assemblyPath, ASSEMBLYMETADATA *metadata) {
+void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* metadata) {
 	ULONG assemblyNameSize = 0;
 	AppDomainID appDomainId = 0;
 	ModuleID moduleId = 0;

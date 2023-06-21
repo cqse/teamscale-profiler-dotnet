@@ -57,6 +57,8 @@ The profiler can be installed into any directory on the target machine, but we r
 | COR_PROFILER         | `{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}` | Required. The GUID of the DLL file       |
 | COR_PROFILER_PATH    | Path                                     | Required. Path to the 32 or 64 bit DLL file, `C:\Program Files\Coverage Profiler\Profiler32.dll` |
 
+Please note that the environment variables do not have to be quoted.
+
 ## .NET Core
 
 .NET core is fully supported but requires different environment variables to be set. Most importantly the profiler is registered with variables having a `CORECLR_` prefix instead of the `COR_` prefix. Second, you do not have to know beforehand if the application is running in 32 or 64 bit mode, as the different profiler versions can be registered simultaneously with two environment variables.
@@ -234,6 +236,7 @@ The .NET runtime will create an error message to the event log if loading the pr
 
 Things to check if no trace files are written:
 
+* Are there any related errors in the Event Log?
 * Are the environment variables set correctly (see the table above)?
 * Are the environment variables set for the right user?
 * Does the application process have read rights on the profiler DLLs and read/write rights on the trace folder?
@@ -292,6 +295,11 @@ directory that contains the `UploadDaemon.exe`. To configure logging, you can ed
 
 Please check the log files for errors and warnings after configuring the uploader and
 producing your first traces.
+
+Note: The upload daemon can also be installed as Windows service or invoked manually.
+In that case it accepts two command line flags:
+- `--config-from-env` will use the profiler config file as specified in the `COR_PROFILER_CONFIG` environment variable
+- `--config path/to/config.yml` will use the specified config file
 
 ## Locally converting to method-accurate coverage and then uploading
 
@@ -362,7 +370,7 @@ match: [{
 ```
 
 This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
-If this is not the case, simply replace by absoule paths.
+If this is not the case, simply replace by absolute paths.
 
 ## Example: Teamscale upload without local method-accurate coverage conversion
 

@@ -7,10 +7,16 @@ namespace UploadDaemon.Configuration
     /// </summary>
     public class TeamscaleServer
     {
+        private string url;
+
         /// <summary>
         /// URL of the Teamscale server.
         /// </summary>
-        public string Url { get; set; }
+        public string Url
+        {
+            get { return url; }
+            set { url = value.Trim('/'); }
+        }
 
         /// <summary>
         /// Teamscale project to which to upload.

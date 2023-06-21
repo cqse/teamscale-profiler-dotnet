@@ -545,7 +545,7 @@ namespace UploadDaemon.Configuration
         }
 
         [Test]
-        public void TestIsAssmeblyRelativePath()
+        public void TestIsAssemblyRelativePath()
         {
             Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir"), Is.True);
             Assert.That(Config.IsAssemblyRelativePath("@assemblydir"), Is.True);
@@ -555,7 +555,7 @@ namespace UploadDaemon.Configuration
         }
 
         [Test]
-        public void TestResolveAssmeblyRelativePath()
+        public void TestResolveAssemblyRelativePath()
         {
             string assemblyPath = "c:\\path\\assembly.dll";
             Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir", assemblyPath), Is.EqualTo("c:\\path"));

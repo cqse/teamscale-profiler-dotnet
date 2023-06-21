@@ -31,13 +31,14 @@ namespace UploadDaemon.Upload
         /// <returns>Whether the upload was successful.</returns>
         public Task<bool> UploadAsync(string filePath, string version)
         {
-            logger.Debug("Uploading {tracePath} to {targetDirectory}", filePath, targetDirectory);
-
             string fileName = Path.GetFileName(filePath);
             string targetPath = Path.Combine(targetDirectory, fileName);
 
             try
             {
+                EnsureTargetDirectoryExists(targetDirectory);
+
+                logger.Debug("Copying {tracePath} to {targetDirectory}", filePath, targetDirectory);
                 fileSystem.File.Copy(filePath, targetPath);
                 return Task.FromResult(true);
             }
@@ -45,6 +46,20 @@ namespace UploadDaemon.Upload
             {
                 logger.Error(e, "Failed to upload {tracePath} to {targetDirectory}. Will retry later", filePath, targetDirectory);
                 return Task.FromResult(false);
+            }
+        }
+
+        private void EnsureTargetDirectoryExists(string targetDirectory)
+        {
+            if (File.Exists(targetDirectory))
+            {
+                throw new IOException($"{targetDirectory} exists, but is a file");
+            }
+
+            if (!Directory.Exists(targetDirectory))
+            {
+                logger.Debug("Creating target directory: {targetDirectory}", targetDirectory);
+                Directory.CreateDirectory(targetDirectory);
             }
         }
 
@@ -61,6 +76,8 @@ namespace UploadDaemon.Upload
 
             try
             {
+                EnsureTargetDirectoryExists(targetDirectory);
+
                 fileSystem.File.WriteAllText(filePath, lineCoverageReport);
                 fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
                 return Task.FromResult(true);
