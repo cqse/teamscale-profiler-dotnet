@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
@@ -12,6 +12,16 @@ namespace UploadDaemon.Configuration
     public class Config
     {
         /// <summary>
+        /// Path to the config file. It's located one directory above the uploader's DLLs.
+        /// </summary>
+        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
+
+        /// <summary>
+        /// Special directory name that denotes the assembly directory e.g. for resolving PDBs. */
+        /// </summary>
+        private const string AssemblyDirectory = "@AssemblyDir";
+
+        /// <summary>
         /// Thrown if the config for a process is invalid.
         /// </summary>
         public class InvalidConfigException : Exception
@@ -23,6 +33,11 @@ namespace UploadDaemon.Configuration
 
             public InvalidConfigException(string message)
                 : base(message)
+            {
+            }
+
+            public InvalidConfigException(string message, Exception e)
+                : base(message, e)
             {
             }
         }
@@ -174,6 +189,27 @@ namespace UploadDaemon.Configuration
                         @" was built (e.g. for TFS: the changeset number, for Git: the SHA1) in the format `revision: COMMIT_ID`.";
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns true if the path should be interpreted relatively to an assembly, e.g. starts with (case insensitive) @AssemblyDir.
+        /// </summary>
+        public static bool IsAssemblyRelativePath(string path)
+        {
+            return path.StartsWith(AssemblyDirectory, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Resolves a path relatively to an assembly if it starts with (case insensitive) @AssemblyDir. Returns null otherwise.
+        /// </summary>
+        public static string ResolveAssemblyRelativePath(string path, string assemblyPath)
+        {
+            if (!IsAssemblyRelativePath(path))
+            {
+                return null;
+            }
+
+            return Path.GetDirectoryName(assemblyPath) + path.Substring(AssemblyDirectory.Length);
         }
 
         private readonly List<ConfigParser.ProcessSection> Sections;

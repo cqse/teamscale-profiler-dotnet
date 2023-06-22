@@ -150,7 +150,7 @@ The profiler has several configuration options that can either be set as environ
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
 | COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `1`                  | Enable ultra-light mode by disabling re-jitting of assemblies. Light mode must be disabled if you use the Native Image Cache. |
 | COR_PROFILER_ASSEMBLY_FILEVERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
-| COR_PROFILER_ASSEMBLY_PATHS       | `1` or `0`, default `0`                  | Print the path to loaded assemblies in the trace file. |
+| COR_PROFILER_ASSEMBLY_PATHS       | `1` or `0`, default `1`                  | Print the path to loaded assemblies in the trace file (required to use `@AssemblyDir`, hence enabled by default). |
 | COR_PROFILER_EAGERNESS            | Number, default `0`                      | Enable eager writing of traces after the specified amount of method calls (i.e. write to disk immediately). This is useful to get coverage in cases where the .NET runtime is killed instead of gracefully shut down as it's the case in some Azure environments. It should only be used in conjunction with light mode. |
 | COR_PROFILER_PROCESS              | String (optional)                        | A (case-insensitive) suffix of the path to the executable that should be profiled, e.g. `w3wp.exe`. All other executables will be ignored. This option is deprecated. It is recommended that you use the mechanisms of the configuration file instead. |
 | COR_PROFILER_DUMP_ENVIRONMENT     | `1` or `0`, default `0`                  | Print all environment variables of the profiled process in the trace file. |
@@ -275,13 +275,12 @@ To configure this
    or the corresponding YAML config file option
 2.  configure the uploader process via the YAML config file.
 3. __You must also specify the `targetdir` option of the profiler in the YAML config file.
-   Otherwise, the upload daemon will
-   not know where to find your trace files and nothing will be uploaded.__
+   Otherwise, the upload daemon will not know where to find your trace files and nothing will be uploaded.__
 
-You have two options for configuring the upload
+You have two options for configuring the upload:
 
-1. convert the trace to method-accurate coverage locally with your application's PDB files and then upload to Teamscale
-2. upload the trace to Teamscale as-is and let Teamscale do the resolution to method-accurate coverage
+1. Convert the trace to method-accurate coverage locally with your application's PDB files and then upload to Teamscale
+2. Upload the trace to Teamscale as-is and let Teamscale do the resolution to method-accurate coverage
 
 The first option is highly recommended.
 
@@ -303,6 +302,9 @@ In that case it accepts two command line flags:
 
 You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
 The uploader will read these files and use them to convert the trace files to method-accurate coverage.
+In most cases the PDB files are deployed in the same folder as the application assemblies.
+In this case the configuration can be simplified as `pdbDirectory: '@AssemblyDir'`.
+This approach also works if assemblies are spread in multiple directories.
 
 Since the generated coverage must be matched to the correct code revision (otherwise you get
 incorrect coverage results),
@@ -311,6 +313,8 @@ you must furthermore configure a `revisionFile`, which contains
     revision: REVISION
 
 where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
+Similarly to the PDB directory, you can specify the revision file relative to the loaded assemblies like `pdbDirectory: '@AssemblyDir\revision.txt'`.
+This will scan the assembly directories in the order of loading for the first found revision file.
 
 Finally, please configure sensible `assemblyPatterns` in order to only include your application's
 assemblies in the coverage analysis. This prevents lots of useless error log entries both in the
@@ -340,27 +344,30 @@ Futher config options for the uploader in this mode:
 **Profiler.yml:**
 
 ```yaml
-match: {
+match: [{
   executableName: foo.exe,
   profiler: {
     targetdir: C:\output
   },
   uploader: {
-    pdbDirectory: C:\pdbs,
-    revisionFile: C:\pdbs\revision.txt,
+    pdbDirectory: '@AssemblyDir',
+    revisionFile: '@AssemblyDir\revision.txt',
     assemblyPatterns: {
       include: [ "MyCompany.*" ]
     },
-      teamscale: {
-        url: http://localhost:8080,
-        username: build,
-        accessKey: u7a9abc32r45r2uiig3vvv,
-        project: your_project,
-        partition: Manual Tests
-      }
+    teamscale: {
+      url: http://localhost:8080,
+      username: build,
+      accessKey: u7a9abc32r45r2uiig3vvv,
+      project: your_project,
+      partition: Manual Tests
+    }
   }
-}
+}]
 ```
+
+This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
+If this is not the case, simply replace by absolute paths.
 
 ## Example: Teamscale upload without local method-accurate coverage conversion
 

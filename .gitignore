@@ -1,4 +1,5 @@
-/.vs/
+.vs/
+*.csproj.user
 documentation/*.pdf
 bin/
 obj/

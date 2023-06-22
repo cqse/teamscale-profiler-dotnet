@@ -17,7 +17,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// All assembly names mentioned in the trace file.
         /// </summary>
-        public List<string> AssemblyNames { get; } = new List<string>();
+        public List<(string name, string path)> LoadedAssemblies { get; } = new List<(string name, string path)>();
 
         /// <summary>
         /// Path to this trace file.
@@ -30,30 +30,33 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public List<(string, uint)> CoveredMethods { get; } = new List<(string, uint)>();
 
-        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
+        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
         public ParsedTraceFile(string[] lines, string filePath)
         {
             this.FilePath = filePath;
 
-            Dictionary<uint, string> assemblyTokens = lines.Select(line => AssemblyLineRegex.Match(line))
+            Dictionary<uint, (string name, string path)> assemblyTokens = lines.Select(line => AssemblyLineRegex.Match(line))
                 .Where(match => match.Success)
-                .ToDictionary(match => Convert.ToUInt32(match.Groups[2].Value), match => match.Groups[1].Value);
-            this.AssemblyNames = assemblyTokens.Values.ToList();
+                .ToDictionary(
+                    match => Convert.ToUInt32(match.Groups["id"].Value),
+                    match => (name: match.Groups["name"].Value, path: match.Groups["path"].Value)
+                );
+            this.LoadedAssemblies = assemblyTokens.Values.ToList();
 
             IEnumerable<Match> coverageMatches = lines.Select(line => CoverageLineRegex.Match(line))
                             .Where(match => match.Success);
             foreach (Match match in coverageMatches)
             {
                 uint assemblyId = Convert.ToUInt32(match.Groups[1].Value);
-                if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
+                if (!assemblyTokens.TryGetValue(assemblyId, out (string name, string path) assembly))
                 {
                     logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                         " Please report it to CQSE. Coverage for this assembly will be ignored.", filePath, assemblyId);
                     continue;
                 }
-                CoveredMethods.Add((assemblyName, Convert.ToUInt32(match.Groups[2].Value)));
+                CoveredMethods.Add((assembly.name, Convert.ToUInt32(match.Groups[2].Value)));
             }
         }
     }

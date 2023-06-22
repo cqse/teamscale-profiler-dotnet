@@ -459,5 +459,26 @@ namespace UploadDaemon.Configuration
             Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
             Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
         }
+
+        [Test]
+        public void TestIsAssemblyRelativePath()
+        {
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@assemblydir"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir\\foo"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir/foo"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("Foo/@AssemblyDir"), Is.False);
+        }
+
+        [Test]
+        public void TestResolveAssemblyRelativePath()
+        {
+            string assemblyPath = "c:\\path\\assembly.dll";
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir", assemblyPath), Is.EqualTo("c:\\path"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@assemblydir", assemblyPath), Is.EqualTo("c:\\path"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir\\foo", assemblyPath), Is.EqualTo("c:\\path\\foo"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir/foo", assemblyPath), Is.EqualTo("c:\\path/foo"));
+            Assert.That(Config.ResolveAssemblyRelativePath("Foo/@AssemblyDir", assemblyPath), Is.Null);
+        }
     }
 }

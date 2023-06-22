@@ -35,7 +35,7 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ConsidersSymbolFileIncludes()
         {
-            SymbolCollection collection = resolver.ResolveFrom(TestSymbolDirectory,
+            SymbolCollection collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
                    new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> {}));
 
             Assert.That(collection.IsEmpty, Is.True);
@@ -44,7 +44,7 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ConsidersSymbolFileExcludes()
         {
-            SymbolCollection collection = resolver.ResolveFrom(TestSymbolDirectory,
+            SymbolCollection collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
                    new GlobPatternList(new List<string> { "*" }, new List<string> { "So*" }));
 
             Assert.That(collection.IsEmpty, Is.True);
@@ -57,7 +57,7 @@ namespace UploadDaemon.SymbolAnalysis
             Directory.CreateDirectory(testSubSymbolDirectory);
             File.Move(TestSymbolFilePath, $"{testSubSymbolDirectory}\\Some.pdb");
 
-            SymbolCollection collection = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection.IsEmpty, Is.False);
         }
@@ -65,8 +65,8 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void CachesCollection()
         {
-            SymbolCollection collection1 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
-            SymbolCollection collection2 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection1, Is.SameAs(collection2));
         }
@@ -74,11 +74,11 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void InvalidatesCacheIfSymbolFileIsAdded()
         {
-            SymbolCollection collection1 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             File.Copy(TestSymbolFilePath, $"{TestSymbolDirectory}\\SomeNew.pdb");
 
-            SymbolCollection collection2 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection1, Is.Not.SameAs(collection2));
         }
@@ -86,11 +86,11 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void InvalidatesCacheIfSymbolFileChanges()
         {
-            SymbolCollection collection1 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             SimulateSymbolFileChange(collection1.SymbolFilePaths.First());
 
-            SymbolCollection collection2 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection1, Is.Not.SameAs(collection2));
         }
@@ -98,11 +98,11 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void InvalidatesCacheIfSymbolFileIsDeleted()
         {
-            SymbolCollection collection1 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             File.Delete(TestSymbolFilePath);
 
-            SymbolCollection collection2 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection1, Is.Not.SameAs(collection2));
         }
@@ -110,12 +110,12 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void CachesCollectionAgainAfterInvalidation()
         {
-            SymbolCollection collection1 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             SimulateSymbolFileChange(collection1.SymbolFilePaths.First());
 
-            SymbolCollection collection2 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
-            SymbolCollection collection3 = resolver.ResolveFrom(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
+            SymbolCollection collection3 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection2, Is.SameAs(collection3));
         }

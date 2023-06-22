@@ -37,9 +37,13 @@ namespace UploadDaemon.SymbolAnalysis
 
         private readonly Dictionary<string, Dictionary<uint, SourceLocation>> mappings = new Dictionary<string, Dictionary<uint, SourceLocation>>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// The paths of the PDB symbol files considered in this collection.
+        /// </summary>
+        public HashSet<string> SymbolFilePaths { get; private set; }
+
         public SymbolCollection(List<AssemblyMethodMappings> mappings)
         {
-            logger.Debug("Creating symbol collection from mappings");
             WarnInCaseOfDuplicateMappings(mappings);
 
             SymbolFilePaths = new HashSet<string>(mappings.Select(mapping => mapping.SymbolFileName));
@@ -70,11 +74,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// Returns true if no mappings are contained in this collection.
         /// </summary>
         public bool IsEmpty => mappings.Count() == 0 || mappings.Values.All(mapping => mapping.Count() == 0);
-
-        /// <summary>
-        /// The paths of the PDB symbol files considered in this collection.
-        /// </summary>
-        public HashSet<string> SymbolFilePaths { get; private set; }
 
         private void WarnInCaseOfDuplicateMappings(List<AssemblyMethodMappings> mappings)
         {
@@ -126,6 +125,38 @@ namespace UploadDaemon.SymbolAnalysis
                 }
             }
             return new SymbolCollection(mappings);
+        }
+
+        /// <summary>
+        /// Merges all passed symbol collections into a single one.
+        /// </summary>
+        public static SymbolCollection Merge(List<SymbolCollection> collections)
+        {
+            SymbolCollection mergedCollection = new SymbolCollection(new List<AssemblyMethodMappings>());
+            foreach (SymbolCollection collection in collections)
+            {
+                foreach (string path in collection.SymbolFilePaths)
+                {
+                    mergedCollection.SymbolFilePaths.Add(path);
+                }
+
+                foreach(KeyValuePair<string, Dictionary<uint, SourceLocation>> entry in collection.mappings)
+                {
+                    // in case of duplicate mappings we merge the mappings by reusing the existing dictionary here
+                    if (!mergedCollection.mappings.TryGetValue(entry.Key, out Dictionary<uint, SourceLocation> assemblyMap))
+                    {
+                        assemblyMap = new Dictionary<uint, SourceLocation>();
+                        mergedCollection.mappings[entry.Key] = assemblyMap;
+                    }
+
+                    foreach (KeyValuePair<uint, SourceLocation> methodMapping in entry.Value)
+                    {
+                        assemblyMap[methodMapping.Key] = methodMapping.Value;
+                    }
+                }
+            }
+
+            return mergedCollection;
         }
     }
 }
