@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -133,6 +134,89 @@ namespace UploadDaemon.Configuration
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+        }
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWithMatch()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+
+            ParsedTraceFile traceFile = new ParsedTraceFile(new [] {
+                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
+
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Assert.That(fooConfig, Is.Not.Null);
+            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+        }
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWithNoMatch()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+
+            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
+                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
+
+            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile));
+        }
+
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWillPickLastMatchingSection()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+                  - loadedAssemblyPathRegex: .*\\bar.dll
+                    uploader:
+                      directory: C:\upload\bar
+                      versionAssembly: bar
+            ");
+
+            ParsedTraceFile traceFile1 = new ParsedTraceFile(new[] {
+                @"Assembly=foo:1 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Assembly=bar:2 Version:1.0.0.0 Path:C:\bla\bar.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
+
+            ParsedTraceFile traceFile2 = new ParsedTraceFile(new[] {
+                @"Assembly=bar:1 Version:1.0.0.0 Path:C:\bla\bar.dll",
+                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
+
+            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile1);
+            Assert.That(config1, Is.Not.Null);
+            Assert.That(config1.VersionAssembly, Is.EqualTo("bar"));
+
+            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile2);
+            Assert.That(config2, Is.Not.Null);
+            Assert.That(config2.VersionAssembly, Is.EqualTo("bar"));
         }
 
         [Test]

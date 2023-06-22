@@ -206,7 +206,10 @@ property is given for a section, the section applies to all processes. Please no
 require special care when trying to use backlashes since these are used as an escape character by YAML under certain
 circumstances.
 
-If both `executableName` and `executablePathRegex` are specified in a section, both must match for the section to be
+There is a third selector `loadedAssemblyPathRegex` that is currently only used for configuring trace upload based on the assemblies that are loaded.
+See example regarding "multiple applications that are started from the same process" at the end of the documentation for details.
+
+If any `executableName`, `executablePathRegex` or `loadedAssemblyPathRegex` are specified in a section, all must match for the section to be
 applied.
 
 The options under the `profiler` key are the same ones from the environment, except the `COR_PROFILER_` prefix must be omitted.
@@ -475,6 +478,44 @@ match: {
 }
 ```
 
+
+## Example: Profile and upload multiple applications that are started from the same process
+
+Some applications have a plugin-like architecture, this means that you have one host process that dynamically starts an application.
+Examples are IIS, Windows or COM+ services.
+Distinguishing traces solely on the host process is not possible as it is the same.
+To mitigate this uploading may be configured using `loadedAssemblyPathRegex`, e.g. by uploading all coverage that stems from traces that loaded assemblies matching `C:\webapp-1\.*` to one project and loaded assemblies matching `C:\webapp-2\.*` to another project.
+
+Please note that the profiler will still profile those assemblies that do not match any of the `loadedAssemblyPathRegex` patterns defined.
+
+```yaml
+match:
+  - profiler:
+      targetdir: C:\\profiler\\traces
+      enabled: true
+  - loadedAssemblyPathRegex: 'C:\\webapp-1\\.*'
+    profiler:
+      targetdir: C:\Users\mpdeimos\cqse\git\teamscale-profiler-dotnet\Examples\test
+    uploader:
+      revisionFile: '@AssemblyDir\\revision.txt'
+      pdbDirectory: '@AssemblyDir'
+      teamscale:
+        url: http://localhost:8080,
+        username: build,
+        accessKey: u7a9abc32r45r2uiig3vvv,
+        project: webapp-1,
+        partition: Unit Tests
+  - loadedAssemblyPathRegex: 'C:\\webapp-2\\.*'
+    uploader:
+      revisionFile: '@AssemblyDir\\revision.txt'
+      pdbDirectory: '@AssemblyDir'
+      teamscale: 
+        url: http://localhost:8080,
+        username: build,
+        accessKey: u7a9abc32r45r2uiig3vvv,
+        project: webapp-2,
+        partition: Unit Tests
+```
 ## Proxy
 
 By default, the upload daemon will use the system-wide proxy settings. However, you can override this
