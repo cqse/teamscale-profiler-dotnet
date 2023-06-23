@@ -2,6 +2,7 @@
 using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using Cqse.Teamscale.Profiler.Dotnet.Tia;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -66,7 +67,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
           ");
 
             var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            return profiler.GetTraceFiles().Count;
         }
 
          /// <summary>
