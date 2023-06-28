@@ -25,12 +25,28 @@ std::string WindowsUtils::getLastErrorAsString()
 	return message;
 }
 
+std::string WindowsUtils::getPathConfigValueFromEnvironment() {
+	std::string value;
+	value = getConfigValueFromEnvironment("PATH");
+	if (value != "") {
+		return value;
+	}
+	value = getConfigValueFromEnvironment("PATH_32");
+	if (value != "") {
+		return value;
+	}
+	value = getConfigValueFromEnvironment("PATH_64");
+	return value;
+}
+
 std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
 	std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::toupper);
 
 	char value[MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE];
-	std::string name = "COR_PROFILER_" + suffix;
-	if (!GetEnvironmentVariable(name.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
+	std::string nameForFramework = "COR_PROFILER_" + suffix;
+	std::string nameForCore = "CORECLR_PROFILER_" + suffix;
+	if (!GetEnvironmentVariable(nameForFramework.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)
+		&& !GetEnvironmentVariable(nameForCore.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
 		return "";
 	}
 	return value;
@@ -68,7 +84,7 @@ std::string WindowsUtils::getPathOfProfiler() {
 	}
 
 	// Failed to retrieve module path, try to retrieve it from the environment variable instead
-	return getConfigValueFromEnvironment("PATH");
+	return getPathConfigValueFromEnvironment();
 }
 
 std::string WindowsUtils::getPathOfThisProcess() {
@@ -101,7 +117,6 @@ bool WindowsUtils::ensureDirectoryExists(std::string directory) {
 	if (isFile(directory)) {
 		return false;
 	}
-
 
 	if (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY || dwAttrib & FILE_ATTRIBUTE_REPARSE_POINT)) {
 		// directory or junction exists
