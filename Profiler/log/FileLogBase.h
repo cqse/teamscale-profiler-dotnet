@@ -2,8 +2,6 @@
 #include <string>
 #include <atlbase.h>
 
-static const int BUFFER_SIZE = 2048;
-
 /**
  * Manages a log file on the file system.
  * Unless mentioned otherwise, all methods in this class are thread-safe and perform their own synchronization.

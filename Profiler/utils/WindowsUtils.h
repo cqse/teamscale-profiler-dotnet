@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vector>
+#include <Windows.h>
+
+static const int BUFFER_SIZE = 2048;
 
 class WindowsUtils {
 public:
@@ -35,4 +38,7 @@ public:
 
 	/** Returns true if the directory and parent directories exist or could be created. False otherwise. */
 	static bool ensureDirectoryExists(std::string directory);
+
+	/** Writes an Event Log error about the errors. If the application is not running in an application pool, then also pops up a message box with the error. */
+	static void reportError(LPCTSTR errorTitle, LPCTSTR errorMessage);
 };
