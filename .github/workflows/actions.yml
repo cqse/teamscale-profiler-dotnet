@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: '**'
+    tags: 'v*'
+  pull_request:
+    branches: '**'
+
+env:
+  BUILD_VERSION: 23.6.0.${{ github.run_number }}
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Restore NuGet packages
+        run: nuget restore
+
+      - name: Patch C++ Version Info
+        shell: pwsh
+        run: |
+          (Get-Content Profiler/version.h) |
+          ForEach-Object {
+            $_.Replace("1.0.0.0", "${{ env.BUILD_VERSION }}").Replace("1,0,0,0", "${{ env.BUILD_VERSION.Replace('.', ',').Split('-')[0] }}")
+          } |
+          Set-Content Profiler/version.h
+
+      - name: Build
+        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32
+
+      - name: Test
+        shell: pwsh
+        run: |
+          vstest.console /parallel
+          Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
+          Profiler_Test/bin/Release/Profiler_Test.dll
+          UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
+
+      - name: Install markdown-pdf
+        run: npm install markdown-pdf
+
+      - name: Convert documentation
+        run: node_modules/.bin/markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
+
+      - name: Create release zip
+        run: |
+          mkdir teamscale_dotnet_profiler\UploadDaemon
+          mkdir teamscale_dotnet_profiler\Documentation
+          mkdir teamscale_dotnet_profiler\Licenses
+          mkdir teamscale_dotnet_profiler\Tools
+
+          robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb || exit 0
+          robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml || exit 0
+          robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb || exit 0
+          mkdir teamscale_dotnet_profiler\UploadDaemon\service
+          robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* || exit 0
+          robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb || exit 0
+          robocopy . teamscale_dotnet_profiler LICENSE || exit 0
+          robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s || exit 0
+          robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf || exit 0
+          7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
+          
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          asset_name: teamscale-profiler-dotnet_v${{env.BUILD_VERSION}}.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: 'teamscale-profiler-dotnet.zip'
+          overwrite: true
