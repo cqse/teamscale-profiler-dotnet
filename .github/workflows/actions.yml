@@ -51,22 +51,27 @@ jobs:
         run: node_modules/.bin/markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
 
       - name: Create release zip
-        run: |
-          mkdir teamscale_dotnet_profiler\UploadDaemon
-          mkdir teamscale_dotnet_profiler\Documentation
-          mkdir teamscale_dotnet_profiler\Licenses
-          mkdir teamscale_dotnet_profiler\Tools
 
-          robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb || exit 0
-          robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml || exit 0
-          robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb || exit 0
-          mkdir teamscale_dotnet_profiler\UploadDaemon\service
-          robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* || exit 0
-          robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb || exit 0
-          robocopy . teamscale_dotnet_profiler LICENSE || exit 0
-          robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s || exit 0
-          robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf || exit 0
-          7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
+        # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
+        # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
+        # we achieve this by following up the robocopy commands with "exit 0"
+        #
+        # copy Profiler dlls and pdbs
+        run: |
+            mkdir teamscale_dotnet_profiler\UploadDaemon
+            mkdir teamscale_dotnet_profiler\Documentation
+            mkdir teamscale_dotnet_profiler\Licenses
+            mkdir teamscale_dotnet_profiler\Tools
+            robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
+            robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
+            robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+            mkdir teamscale_dotnet_profiler\UploadDaemon\service
+            robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* & exit 0
+            robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb & exit 0
+            robocopy . teamscale_dotnet_profiler LICENSE & exit 0
+            robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
+            robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
+            7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
           
       - name: Upload Release Assets
         if: startsWith(github.ref, 'refs/tags/v')
