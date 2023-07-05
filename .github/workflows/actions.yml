@@ -12,11 +12,20 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v3
-      
+
+      - uses: ChristopheLav/windows-sdk-install@v1
+        with:
+          version-sdk: 17763
+          features: 'OptionId.UWPCPP,OptionId.DesktopCPParm64'
+
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 4.6.x
+
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v1
 
