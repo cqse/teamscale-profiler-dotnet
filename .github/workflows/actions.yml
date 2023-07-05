@@ -38,7 +38,7 @@ jobs:
         run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
 
       - name: Test
-        run: |
+        run: >
           vstest.console.exe /parallel
           Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
           Profiler_Test/bin/Release/Profiler_Test.dll
