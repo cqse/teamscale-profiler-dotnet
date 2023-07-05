@@ -35,12 +35,14 @@ jobs:
         run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
 
       - name: Test
-        shell: pwsh
-        run: |
-          vstest.console /parallel
-          Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
-          Profiler_Test/bin/Release/Profiler_Test.dll
-          UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
+        uses: microsoft-approved-actions/vstest@1
+        with:
+          testAssembly: |
+            Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
+            Profiler_Test/bin/Release/Profiler_Test.dll
+            UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
+          searchFolder: .
+          runInParallel: true
 
       - name: Install markdown-pdf
         run: npm install markdown-pdf
