@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup VSTest Path
+        uses: darenm/Setup-VSTest@v1.2
+
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v1
 
@@ -35,14 +38,11 @@ jobs:
         run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
 
       - name: Test
-        uses: microsoft-approved-actions/vstest@1
-        with:
-          testAssembly: |
-            Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
-            Profiler_Test/bin/Release/Profiler_Test.dll
-            UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
-          searchFolder: .
-          runInParallel: true
+        run: |
+          vstest.console.exe /parallel
+          Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
+          Profiler_Test/bin/Release/Profiler_Test.dll
+          UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
 
       - name: Install markdown-pdf
         run: npm install markdown-pdf
