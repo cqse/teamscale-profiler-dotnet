@@ -32,7 +32,7 @@ jobs:
           $newContent | Set-Content Profiler/version.h
 
       - name: Build
-        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32
+        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
 
       - name: Test
         shell: pwsh
