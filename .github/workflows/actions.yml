@@ -24,11 +24,10 @@ jobs:
       - name: Patch C++ Version Info
         shell: pwsh
         run: |
-          (Get-Content Profiler/version.h) |
-          ForEach-Object {
-            $_.Replace("1.0.0.0", "${{ env.BUILD_VERSION }}").Replace("1,0,0,0", "${{ env.BUILD_VERSION.Replace('.', ',').Split('-')[0] }}")
-          } |
-          Set-Content Profiler/version.h
+          $content = Get-Content Profiler/version.h
+          $newContent = $content -replace '1\.0\.0\.0', "${env:BUILD_VERSION}"
+          $newContent = $newContent -replace '1,0,0,0', "${env:BUILD_VERSION.Replace('.', ',').Split('-')[0]}"
+          $newContent | Set-Content Profiler/version.h
 
       - name: Build
         run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32
