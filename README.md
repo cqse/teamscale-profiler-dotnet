@@ -42,14 +42,13 @@ The release process is automated with GitHub Releases and Appveyor:
 
 We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
 
-1. Edit `.github/workflows/actions.yml` and adjust the `BUILD_VERSION` property.
-2. Edit `CHANGELOG.md` and create a new release section with all changes in the release.
-2. Commit these changes to master directly.
-2. Go to [GitHub Releases](https://github.com/cqse/teamscale-profiler-dotnet/releases) and draft a new release.
-3. Enter the tag name and release name. Give both the same name, e.g. `v18.2.0`.
-4. Copy-paste the `CHANGELOG.md` content of this release into the description.
-5. Publish the release.
-6. THe GitHub action will then take care of attaching the release binary. Ensure this is done properly.
+1. Edit `CHANGELOG.md` and create a new release section with all changes in the release.
+2. Commit the changes to master directly.
+3. Go to [GitHub Releases](https://github.com/cqse/teamscale-profiler-dotnet/releases) and draft a new release.
+4. Enter the tag name and release name. Give both the same name, e.g. `v18.2.0`.
+5. Copy-paste the `CHANGELOG.md` content of this release into the description.
+6. Publish the release.
+7. THe GitHub action will then take care of attaching the release binary. Ensure this is done properly.
 
 [codemaid]: http://www.codemaid.net/
 

@@ -8,13 +8,30 @@ on:
     branches: '**'
 
 env:
-  BUILD_VERSION: 23.6.0.${{ github.run_number }}
+  BUILD_VERSION: ${{ github.ref_name }}.${{ github.run_number }}
 
 jobs:
   build-and-test:
     runs-on: windows-2022
 
     steps:
+      - name: Cut v from release tag and set version string
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          if (-not ($env:BUILD_VERSION -match "^v((\d+).(\d+).(\d+).(\d+))$")) {
+            Write-Host "Invalid version number: $env:BUILD_VERSION"
+            exit 1
+          }
+
+          echo "BUILD_VERSION=$($matches[1])" >> $env:GITHUB_ENV
+
+      - name: Set version string to 1.0.0.0 for non-release
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        shell: pwsh
+        run: |
+          echo "BUILD_VERSION=1.0.0.0" >> $env:GITHUB_ENV
+
       - uses: actions/checkout@v3
 
       - name: Setup VSTest Path
@@ -31,11 +48,19 @@ jobs:
         run: |
           $content = Get-Content Profiler/version.h
           $newContent = $content -replace '1\.0\.0\.0', "${env:BUILD_VERSION}"
-          $newContent = $newContent -replace '1,0,0,0', "${env:BUILD_VERSION.Replace('.', ',').Split('-')[0]}"
+          $newContent = $newContent -replace '1,0,0,0', $env:BUILD_VERSION.Replace('.', ',').Split('-')[0]
           $newContent | Set-Content Profiler/version.h
 
-      - name: Build
+      - name: Set version in AssemblyInfo.cs files
+        uses: secondbounce/assemblyinfo-update@v2
+        with:
+          version: ${{ env.BUILD_VERSION }}
+
+      - name: Build x86
         run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
+
+      - name: Build x64
+        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 -property:Configuration=Release
 
       - name: Test
         run: >
