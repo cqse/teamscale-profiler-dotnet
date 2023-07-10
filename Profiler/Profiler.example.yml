@@ -50,13 +50,15 @@
                 },
                 # This directory must contain all the PDBs for your deployed
                 # application code
-                pdbDirectory: "C:\\Pdbs",
+                # Can be a full path or @AssemblyDir (the location of the assembly)
+                pdbDirectory: "@AssemblyDir",
                 # This file must contain the revision of your application code
                 # that was checked out (e.g. Git SHA1, TFS changeset ID, ...)
                 # in the format:
                 #
                 #     revision: REVISION
-                revisionFile: "C:\\Pdbs\\revision.txt",
+                # Can be a full path or @AssemblyDir (the location of the assembly)
+                revisionFile: "@AssemblyDir\\revision.txt",
                 # Glob patterns that identify the assemblies for which you'd like
                 # to obtain coverage. You must have PDB files for each of these
                 # in the pdbDirectory.

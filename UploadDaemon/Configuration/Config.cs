@@ -1,8 +1,9 @@
-﻿using System.IO;
+using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -11,6 +12,16 @@ namespace UploadDaemon.Configuration
     /// </summary>
     public class Config
     {
+        /// <summary>
+        /// Path to the config file. It's located one directory above the uploader's DLLs.
+        /// </summary>
+        public static readonly string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
+
+        /// <summary>
+        /// Special directory name that denotes the assembly directory e.g. for resolving PDBs. */
+        /// </summary>
+        private const string AssemblyDirectory = "@AssemblyDir";
+
         /// <summary>
         /// Thrown if the config for a process is invalid.
         /// </summary>
@@ -23,6 +34,11 @@ namespace UploadDaemon.Configuration
 
             public InvalidConfigException(string message)
                 : base(message)
+            {
+            }
+
+            public InvalidConfigException(string message, Exception e)
+                : base(message, e)
             {
             }
         }
@@ -176,6 +192,27 @@ namespace UploadDaemon.Configuration
             }
         }
 
+        /// <summary>
+        /// Returns true if the path should be interpreted relatively to an assembly, e.g. starts with (case insensitive) @AssemblyDir.
+        /// </summary>
+        public static bool IsAssemblyRelativePath(string path)
+        {
+            return path.StartsWith(AssemblyDirectory, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Resolves a path relatively to an assembly if it starts with (case insensitive) @AssemblyDir. Returns null otherwise.
+        /// </summary>
+        public static string ResolveAssemblyRelativePath(string path, string assemblyPath)
+        {
+            if (!IsAssemblyRelativePath(path))
+            {
+                return null;
+            }
+
+            return Path.GetDirectoryName(assemblyPath) + path.Substring(AssemblyDirectory.Length);
+        }
+
         private readonly List<ConfigParser.ProcessSection> Sections;
 
         /// <summary>
@@ -218,12 +255,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Creates the configuration that should be applied to the given profiled process.
         /// </summary>
-        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath)
+        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, ParsedTraceFile traceFile = null)
         {
             ConfigForProcess config = new ConfigForProcess(profiledProcessPath);
             foreach (ConfigParser.ProcessSection section in Sections)
             {
-                if (SectionApplies(section, profiledProcessPath))
+                if (SectionApplies(section, profiledProcessPath, traceFile))
                 {
                     config.ApplySection(section.Uploader);
                 }
@@ -276,19 +313,58 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Returns true if the given section applies to the given profiled process.
         /// </summary>
-        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath)
+        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, ParsedTraceFile traceFile = null)
         {
-            if (section.ExecutablePathRegex != null)
+            bool?[] checks = new[] {
+                MatchesExecutableName(section, profiledProcessPath),
+                MatchesExecutablePathRegex(section, profiledProcessPath),
+                MatchesLoadedAssemblyPathRegex(section, traceFile),
+            };
+
+
+            // The section applies if at least one of the check criteria is set (!= null) and all of these are true.
+            return checks.Where(check => check != null).All(check => check == true);
+        }
+
+        /// <summary>
+        /// If executable name is set, the executable's name must match case-insensitive
+        /// </summary>
+        private static bool? MatchesExecutableName(ConfigParser.ProcessSection section, string profiledProcessPath)
+        {
+            if (section.ExecutableName == null)
             {
-                Match match = Regex.Match(profiledProcessPath, $"^{section.ExecutablePathRegex}$");
-                if (!match.Success)
-                {
-                    return false;
-                }
+                return null;
             }
 
             string profiledProcessName = Path.GetFileName(profiledProcessPath);
-            return section.ExecutableName == null || section.ExecutableName.Equals(profiledProcessName, StringComparison.OrdinalIgnoreCase);
+            return section.ExecutableName.Equals(profiledProcessName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// If executable path regex is set, the process must match
+        /// </summary>
+        private static bool? MatchesExecutablePathRegex(ConfigParser.ProcessSection section, string profiledProcessPath)
+        {
+            if (section.ExecutablePathRegex == null)
+            {
+                return null;
+            }
+
+            return Regex.IsMatch(profiledProcessPath, $"^{section.ExecutablePathRegex}$");
+        }
+
+        /// <summary>
+        /// If loaded assembly path regex is set, at least one of the loaded assembly's path must match
+        /// </summary>
+        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, ParsedTraceFile traceFile = null)
+        {
+            if (section.LoadedAssemblyPathRegex == null || traceFile == null)
+            {
+                return null;
+            }
+
+            Regex regex = new Regex($"^{section.LoadedAssemblyPathRegex}$");
+            return traceFile.LoadedAssemblies.Any(assembly => regex.IsMatch(assembly.path));
         }
 
         /// <summary>
