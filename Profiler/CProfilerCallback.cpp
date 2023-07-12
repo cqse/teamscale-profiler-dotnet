@@ -395,12 +395,11 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 
 	// Get Method Content in Intermediate Language
 	IMAGE_COR_ILMETHOD* pMethodHeader = nullptr;
-	ULONG iMethodSize = 0;
-	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&pMethodHeader, &iMethodSize);
+	ULONG oldMethodSize = 0;
+	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&pMethodHeader, &oldMethodSize);
 
-	printMethod(traceLog, iMethodSize, (byte*)pMethodHeader);
 
-	traceLog.info("Old Method Size: " + std::to_string(iMethodSize));
+	traceLog.info("Old Method Size: " + std::to_string(oldMethodSize));
 
 	// Based on read method and constructor of OpenCover
 	IMAGE_COR_ILMETHOD_FAT m_header;
@@ -413,6 +412,8 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&pMethodHeader->Fat);
 	BYTE* oldCode;
 	ULONG oldCodeSize;
+	int sehSize = 0;
+
 	if (!oldFatImage->IsFat())
 	{
 		auto tinyImage = static_cast<COR_ILMETHOD_TINY*>(&pMethodHeader->Tiny);
@@ -430,35 +431,27 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 		traceLog.info("Copied fat header size: " + std::to_string(oldFatImage->Size * sizeof(DWORD)));
 		traceLog.info("FAT");
 
-		ULONG oldMethodSize = m_header.CodeSize + m_header.Size * sizeof(DWORD);
-		traceLog.info("m_header claims that our codesize + size is " + std::to_string(oldMethodSize));
+		ULONG oldSizeNoSEH = m_header.CodeSize + m_header.Size * sizeof(DWORD);
+		traceLog.info("m_header claims that our codesize + size is " + std::to_string(oldSizeNoSEH));
 		m_header.CodeSize = oldFatImage->CodeSize + extraSize;
-	}
+		m_header.MaxStack = m_header.MaxStack + ((WORD)extraSize / 2);
 
-	if ((m_header.Flags & CorILMethod_MoreSects) == CorILMethod_MoreSects)
-	{
-		// TODO:
-		// Find Sections
-		// Get Size of Sections
-		// Update Section Offset value
-		// Copy Over Sections
-		
-		BYTE flags = 0;
-		long dwordSize = sizeof(DWORD) - 1;
-		long oldCodeSizeDwordAligned = (oldCodeSize + dwordSize) & ~(dwordSize);
-		BYTE* oldCodePos = oldCode + oldCodeSizeDwordAligned;
-		while ((flags & CorILMethod_Sect_MoreSects) == CorILMethod_Sect_MoreSects) {
-
-		}
+		sehSize = oldMethodSize - (3 * sizeof(DWORD) + oldFatImage->CodeSize);
+		traceLog.info("Getting SEH Size: " + std::to_string(sehSize));
 	}
+	traceLog.info("Old Method:");
+	printMethod(traceLog, oldMethodSize, (byte*)pMethodHeader);
+	traceLog.info("Old Method without SEHs:");
+	printMethod(traceLog, m_header.Size * sizeof(DWORD) + oldCodeSize, (byte*)pMethodHeader);
 
 	// Build new Method Header and Content
 	CComPtr<IMethodMalloc> methodMalloc;
 	profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
 
-	ULONG newMethodSize = m_header.CodeSize + m_header.Size * sizeof(DWORD);
+	ULONG newMethodSize = m_header.Size * sizeof(DWORD) + m_header.CodeSize + sehSize;
 	traceLog.info("allocating " + std::to_string(newMethodSize));
 	auto pNewMethodBody = static_cast<IMAGE_COR_ILMETHOD*>(methodMalloc->Alloc(newMethodSize));
+	methodMalloc.Release();
 	auto fatImage = static_cast<COR_ILMETHOD_FAT*>(&pNewMethodBody->Fat);
 	// Copy the header back into the newMethodBody
 	memcpy(fatImage, &m_header, m_header.Size * sizeof(DWORD));
@@ -480,36 +473,59 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	// Get Function Pointer
 	auto pt = GetFunctionVisited();
 
-	BYTE* pCode;
+	BYTE* newCode;
 	// Set the pointer after the header and add our own instructions
-	pCode = fatImage->GetCode();
+	newCode = fatImage->GetCode();
 
-	*(BYTE*)(pCode) = 0x21;
-	pCode += 1;
-	*(FunctionID*)(pCode) = (FunctionID)functionId;
-	pCode += 8;
+	*(BYTE*)(newCode) = 0x21;
+	newCode += 1;
+	*(FunctionID*)(newCode) = (FunctionID)functionId;
+	newCode += 8;
 
-	*(BYTE*)(pCode) = 0x21;
-	pCode += 1;
-	*(ULONGLONG*)(pCode) = (ULONGLONG)pt;
-	pCode += 8;
+	*(BYTE*)(newCode) = 0x21;
+	newCode += 1;
+	*(ULONGLONG*)(newCode) = (ULONGLONG)pt;
+	newCode += 8;
 
-	*(BYTE*)(pCode) = 0x29;
-	pCode += 1;
-	*(ULONG*)(pCode) = pmsig;
-	pCode += 4;
+	*(BYTE*)(newCode) = 0x29;
+	newCode += 1;
+	*(ULONG*)(newCode) = pmsig;
+	newCode += 4;
 
-	*(BYTE*)(pCode) = 0x00;
-	pCode += 1;
+	*(BYTE*)(newCode) = 0x00;
+	newCode += 1;
+
+	printMethod(traceLog, m_header.Size * sizeof(DWORD) + extraSize, (byte*)fatImage);
 
 	// Copy the original instructions
-	printMethod(traceLog, m_header.Size * sizeof(DWORD) + extraSize, (byte*)fatImage);
-	memcpy(pCode, oldCode, oldCodeSize);
+	memcpy(newCode, oldCode, oldCodeSize + sehSize);
+
+
+	// Fix SEH headers??
+	COR_ILMETHOD_DECODER* decoder = (COR_ILMETHOD_DECODER*) oldFatImage;
+	COR_ILMETHOD_SECT_EH* currentSectEH = (COR_ILMETHOD_SECT_EH*) decoder->EH;
+
+	unsigned ehCount, index;
+	do {
+		ehCount = currentSectEH->EHCount();
+		if (currentSectEH->IsFat()) {
+			IMAGE_COR_ILMETHOD_SECT_EH_CLAUSE_FAT* pFatEHClause = currentSectEH->Fat.Clauses;
+		}
+		else {
+
+		}
+
+		do
+		{
+			currentSectEH = (COR_ILMETHOD_SECT_EH*)currentSectEH->Next();
+		} while (currentSectEH && (currentSectEH->Kind() & CorILMethod_Sect_KindMask) != CorILMethod_Sect_EHTable);
+	} while (currentSectEH);
+
 
 	traceLog.info("New fatimage size: " + std::to_string(fatImage->CodeSize));
 	traceLog.info("Old fatimage size: " + std::to_string(oldCodeSize));
-	printMethod(traceLog, iMethodSize + extraSize, (byte*)pNewMethodBody);
-	traceLog.info("Code Size After: " + std::to_string(m_header.CodeSize));
+	traceLog.info("New Method total size: " + std::to_string(oldMethodSize + extraSize));
+	printMethod(traceLog, oldMethodSize + extraSize, (byte*)pNewMethodBody);
 
 	profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)pNewMethodBody);
 
