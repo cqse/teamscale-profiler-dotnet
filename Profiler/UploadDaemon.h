@@ -15,16 +15,12 @@ public:
 	virtual ~UploadDaemon() noexcept;
 
 	/** Starts the upload daemon in a new background process. */
-	void launch(TraceLog &traceLog);
+	void launch(TraceLog& traceLog);
 
 	/** Notifies the upload daemon that a profiler is shut down. */
 	void notifyShutdown();
 
 private:
-
-	/** The log for error reporting. */
-	TraceLog * traceLog;
-
 	/** Path to the executable of the upload daemon. */
 	std::string pathToExe;
 

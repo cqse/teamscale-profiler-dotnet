@@ -89,10 +89,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public static DirectoryInfo SolutionRoot => new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../"));
 
 #if DEBUG
-		/// <summary>
-		/// Field holding the build configuration, either 'Release' or 'Debug'
-		/// </summary>
+
+        /// <summary>
+        /// Field holding the build configuration, either 'Release' or 'Debug'
+        /// </summary>
         protected static readonly string Configuration = "Debug";
+
 #else
 		/// <summary>
 		/// Field holding the build configuration, either 'Release' or 'Debug'
@@ -100,14 +102,19 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         protected static readonly string Configuration = "Release";
 #endif
 
-        public static readonly string Profiler32Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler32.dll";
+        /// <summary>
+        /// The directory containing the profiler DLLs
+        /// </summary>
+        protected static readonly string ProfilerDirectory = $"{SolutionRoot}/Profiler/bin/{Configuration}";
 
-        public static readonly string Profiler64Dll = $"{SolutionRoot}/Profiler/bin/{Configuration}/Profiler64.dll";
+        public static readonly string Profiler32Dll = ProfilerDirectory + "/Profiler32.dll";
+
+        public static readonly string Profiler64Dll = ProfilerDirectory + "/Profiler64.dll";
 
         /// <summary>
         /// Executes the test application with the profiler attached and returns the written traces.
         /// </summary>
-        protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null)
+        protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null, bool setTargetDirAsEnvVariable = true)
         {
             DirectoryInfo targetDir = new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
             ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
@@ -119,7 +126,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 UseShellExecute = false
             };
 
-            RegisterProfiler(startInfo, targetDir, lightMode, bitness);
+            RegisterProfiler(startInfo, lightMode, bitness);
+            if (setTargetDirAsEnvVariable)
+            {
+                RegisterTargetDirAsEnvironmentVariable(startInfo, targetDir);
+            }
 
             if (environment != null)
             {
@@ -140,7 +151,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Sets all environment variables the profiler needs.
         /// </summary>
-        protected void RegisterProfiler(ProcessStartInfo processInfo, DirectoryInfo targetDir, bool lightMode = false, Bitness? bitness = null)
+        protected void RegisterProfiler(ProcessStartInfo processInfo, bool lightMode = false, Bitness? bitness = null)
         {
             if (bitness == null)
             {
@@ -157,7 +168,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 
             // set environment variables for the profiler
             processInfo.Environment[PROFILER_PATH_KEY] = Path.GetFullPath(profilerDll);
-            processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
             processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
             processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
             processInfo.Environment[PROFILER_UPLOAD_DAEMON_KEY] = "0";
@@ -165,6 +175,14 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             {
                 processInfo.Environment[PROFILER_LIGHT_MODE_KEY] = "1";
             }
+        }
+
+        /// <summary>
+        /// Sets the target directory for the traces as an environment variable. If this is not called, the target directory has to be set in the YAML configuration file.
+        /// </summary>
+        protected void RegisterTargetDirAsEnvironmentVariable(ProcessStartInfo processInfo, DirectoryInfo targetDir)
+        {
+            processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
         }
 
         /// <summary>

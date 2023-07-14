@@ -1,12 +1,22 @@
 #include "WindowsUtils.h"
 #include "Debug.h"
-#include <Windows.h>
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
+#include <chrono>
+#include <thread>
 
 /** Maximum size of an enironment variable value according to http://msdn.microsoft.com/en-us/library/ms683188.aspx */
 static const size_t MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE = 32767 * sizeof(char);
+
+/** Closes error window after 10 seconds, in case the profiled application is running in an automated environment where user interaction is not possible. */
+void CloseErrorWindow(LPCTSTR errorTitle) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+	HWND hWnd = FindWindow(NULL, errorTitle);
+	if (hWnd) {
+		PostMessage(hWnd, WM_CLOSE, 0, 0);
+	}
+}
 
 std::string WindowsUtils::getLastErrorAsString()
 {
@@ -25,12 +35,28 @@ std::string WindowsUtils::getLastErrorAsString()
 	return message;
 }
 
+std::string WindowsUtils::getPathConfigValueFromEnvironment() {
+	std::string value;
+	value = getConfigValueFromEnvironment("PATH");
+	if (value != "") {
+		return value;
+	}
+	value = getConfigValueFromEnvironment("PATH_32");
+	if (value != "") {
+		return value;
+	}
+	value = getConfigValueFromEnvironment("PATH_64");
+	return value;
+}
+
 std::string WindowsUtils::getConfigValueFromEnvironment(std::string suffix) {
 	std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::toupper);
 
 	char value[MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE];
-	std::string name = "COR_PROFILER_" + suffix;
-	if (!GetEnvironmentVariable(name.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
+	std::string nameForFramework = "COR_PROFILER_" + suffix;
+	std::string nameForCore = "CORECLR_PROFILER_" + suffix;
+	if (!GetEnvironmentVariable(nameForFramework.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)
+		&& !GetEnvironmentVariable(nameForCore.c_str(), value, MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE)) {
 		return "";
 	}
 	return value;
@@ -50,6 +76,25 @@ std::vector<std::string> WindowsUtils::listEnvironmentVariables() {
 	}
 
 	return variables;
+}
+
+std::string WindowsUtils::getPathOfProfiler() {
+	char profilerPath[_MAX_PATH];
+
+	HMODULE hm = NULL;
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPCSTR)&getPathOfProfiler, &hm) != 0)
+	{
+		size_t length = GetModuleFileName(hm, profilerPath, _MAX_PATH);
+		if (length != 0)
+		{
+			return std::string(profilerPath, length);
+		}
+	}
+
+	// Failed to retrieve module path, try to retrieve it from the environment variable instead
+	return getPathConfigValueFromEnvironment();
 }
 
 std::string WindowsUtils::getPathOfThisProcess() {
@@ -83,7 +128,6 @@ bool WindowsUtils::ensureDirectoryExists(std::string directory) {
 		return false;
 	}
 
-
 	if (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY || dwAttrib & FILE_ATTRIBUTE_REPARSE_POINT)) {
 		// directory or junction exists
 		return true;
@@ -98,4 +142,17 @@ bool WindowsUtils::ensureDirectoryExists(std::string directory) {
 
 	Debug::getInstance().log("Create: " + directory);
 	return CreateDirectory(directory.c_str(), NULL) == TRUE;
+}
+
+void WindowsUtils::reportError(LPCTSTR errorTitle, LPCTSTR errorMessage) {
+	HANDLE h_event_log = RegisterEventSource(0, ".NET Runtime");
+	ReportEvent(h_event_log, EVENTLOG_ERROR_TYPE, 0, 0x3E8, 0, 1, 0, &errorMessage, 0);
+
+	char appPool[BUFFER_SIZE];
+	bool isRunningInAppPool = GetEnvironmentVariable("APP_POOL_ID", appPool, sizeof(appPool));
+	if (!isRunningInAppPool) {
+		std::thread error_window_closing_thread(CloseErrorWindow, errorTitle);
+		error_window_closing_thread.detach();
+		MessageBox(NULL, errorMessage, errorTitle, MB_OK | MB_ICONERROR);
+	}
 }

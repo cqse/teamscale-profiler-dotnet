@@ -4,7 +4,7 @@
 
 std::string Config::getDefaultConfigPath()
 {
-	std::string profilerDllPath = WindowsUtils::getConfigValueFromEnvironment("PATH");
+	std::string profilerDllPath = WindowsUtils::getPathOfProfiler();
 	std::string profilerDllDirectory = StringUtils::removeLastPartOfPath(profilerDllPath);
 	return profilerDllDirectory + "\\Profiler.yml";
 }
