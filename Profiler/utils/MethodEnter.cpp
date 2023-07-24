@@ -6,12 +6,13 @@ namespace {
 	functionID_set* calledFunctionSet;
 	bool isTestCaseRecording = false;
 	CRITICAL_SECTION* methodSetSynchronization;
-	Queue* methodQueue;
 }
 
 extern "C" void _stdcall EnterCpp(FunctionIDOrClientID funcId) {
 	if (isTestCaseRecording && !calledFunctionSet->contains(funcId.functionID)) {
-		methodQueue->push(funcId.functionID);
+		EnterCriticalSection(methodSetSynchronization);
+		calledFunctionSet->insert(funcId.functionID);
+		LeaveCriticalSection(methodSetSynchronization);
 	}
 }
 
@@ -21,10 +22,6 @@ void setCalledMethodsSet(functionID_set* setToUse) {
 
 void setCriticalSection(CRITICAL_SECTION* methodSetSync) {
 	methodSetSynchronization = methodSetSync;
-}
-
-void setMethodIdQueue(Queue* methodIdQueue) {
-	methodQueue = methodIdQueue;
 }
 
 void setTestCaseRecording(bool testCaseRecording) {

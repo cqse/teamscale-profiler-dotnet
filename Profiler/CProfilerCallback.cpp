@@ -171,7 +171,8 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		this->ipc = new Ipc(&this->config, testStartCallback, testEndCallback, errorCallback);
 		std::string testName = this->ipc->getCurrentTestName();
 
-		worker = new CProfilerWorker(&config, &traceLog, &calledMethodIds, &methodSetSynchronization);
+		setCriticalSection(&methodSetSynchronization);
+		setCalledMethodsSet(&calledMethodIds);
 		if (!testName.empty()) {
 			setTestCaseRecording(true);
 			traceLog.startTestCase(testName);
@@ -242,9 +243,6 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	}
 	EnterCriticalSection(&callbackSynchronization);
 	EnterCriticalSection(&methodSetSynchronization);
-	if (config.isTiaEnabled()) {
-		worker->transferMethodIds();
-	}
 	writeFunctionInfosToLog();
 	LeaveCriticalSection(&methodSetSynchronization);
 	LeaveCriticalSection(&callbackSynchronization);
@@ -256,10 +254,6 @@ void CProfilerCallback::ShutdownOnce(bool clrIsAvailable) {
 	if (this->ipc != NULL) {
 		delete ipc;
 		ipc = NULL;
-	}
-	if (this->worker != NULL) {
-		delete worker;
-		worker = NULL;
 	}
 	if (config.shouldStartUploadDaemon()) {
 		createDaemon().notifyShutdown();
@@ -572,7 +566,6 @@ void CProfilerCallback::onTestStart(std::string testName)
 		if (!testName.empty()) {
 			setTestCaseRecording(true);
 		}
-
 		LeaveCriticalSection(&methodSetSynchronization);
 	}
 }
@@ -582,9 +575,7 @@ void CProfilerCallback::onTestEnd(std::string result, std::string message)
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
 		EnterCriticalSection(&methodSetSynchronization);
 		setTestCaseRecording(false);
-		worker->transferMethodIds();
 		writeFunctionInfosToLog();
-
 		traceLog.endTestCase(result, message);
 
 		LeaveCriticalSection(&methodSetSynchronization);

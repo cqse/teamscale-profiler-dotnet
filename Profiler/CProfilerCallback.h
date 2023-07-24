@@ -10,7 +10,6 @@
 #include <vector>
 #include <map>
 #include <utils/functionID_set/functionID_set.h>
-#include "CProfilerWorker.h"
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
 /**
@@ -115,8 +114,6 @@ private:
 	 * We use the set to efficiently determine if we already noticed an called method.
 	 */
 	functionID_set calledMethodIds;
-
-	CProfilerWorker* worker = NULL;
 
 	/**
 	 * Keeps track of called methods.
