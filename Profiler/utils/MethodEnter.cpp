@@ -10,7 +10,6 @@ namespace {
 }
 
 extern "C" void _stdcall EnterCpp(FunctionID funcId) {
-	std::cerr << "Done WUBWUB " << funcId << "\n";
 	if (isTestCaseRecording && !calledFunctionSet->contains(funcId)) {
 		methodQueue->push(funcId);
 	}
