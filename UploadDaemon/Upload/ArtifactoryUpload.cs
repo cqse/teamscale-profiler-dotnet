@@ -58,24 +58,17 @@ namespace UploadDaemon.Upload
             string url = $"{artifactory.Url}/uploads/{branchAndTimestamp[0]}/{branchAndTimestamp[1]}";
             if (lineCoverageReport.UploadFormat == "SIMPLE")
             {
-                url = $"{url}/{artifactory.Partition}/simple";
+                url = $"{url}/{artifactory.Partition}/SIMPLE";
             } else
             {
-                url = $"{url}/{artifactory.Partition}/testwise";
+                url = $"{url}/{artifactory.Partition}/TESTWISE_COVERAGE";
             }
             if (artifactory.PathSuffix != null)
             {
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-            String reportName = "";
-            if (lineCoverageReport.UploadFormat == "SIMPLE")
-            {
-                reportName = "report.simple";
-            } else
-            {
-                reportName = "report.testwise";
-            }
+            String reportName = "report.zip";
             url = $"{url}/{reportName}";
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
@@ -83,10 +76,7 @@ namespace UploadDaemon.Upload
             try
             {
                 byte[] reportBytes = CreateZipFile(lineCoverageReport.ToString());
-                using (MemoryStream stream = new MemoryStream(reportBytes))
-                {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream, reportName);
-                }
+                return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, reportBytes, reportName);
             }
             catch (Exception e)
             {
@@ -96,7 +86,7 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, MemoryStream stream, String reportName)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, byte[] stream, String reportName)
         {
             using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartPut(client, url, "report", stream, reportName))
             {

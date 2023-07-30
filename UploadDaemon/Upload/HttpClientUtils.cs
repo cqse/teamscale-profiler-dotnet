@@ -96,17 +96,15 @@ namespace UploadDaemon.Upload
         }
 
         /// <summary>
-        /// Uploads the given file in a multi-part request.
+        /// Uploads the given file in a put request.
         /// </summary>
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
         /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-        public static async Task<HttpResponseMessage> UploadMultiPartPut(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
+        public static async Task<HttpResponseMessage> UploadMultiPartPut(HttpClient client, string url, string multipartParameterName, byte[] stream, string fileName)
         {
-            using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
+            using (ByteArrayContent content = new ByteArrayContent(stream))
             {
-                content.Add(new StreamContent(stream), multipartParameterName, fileName);
-
                 return await client.PutAsync(url, content);
             }
         }
