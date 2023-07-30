@@ -9,6 +9,7 @@ using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report;
 using System.IO.Compression;
+using UploadDaemon.Report.Testwise;
 
 namespace UploadDaemon.Upload
 {
@@ -56,13 +57,6 @@ namespace UploadDaemon.Upload
             }
             string[] branchAndTimestamp = revisionOrTimestamp.Value.Split(':');
             string url = $"{artifactory.Url}/uploads/{branchAndTimestamp[0]}/{branchAndTimestamp[1]}";
-            if (lineCoverageReport.UploadFormat == "SIMPLE")
-            {
-                url = $"{url}/{artifactory.Partition}/SIMPLE";
-            } else
-            {
-                url = $"{url}/{artifactory.Partition}/TESTWISE_COVERAGE";
-            }
             if (artifactory.PathSuffix != null)
             {
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
@@ -73,9 +67,19 @@ namespace UploadDaemon.Upload
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
 
+            string covFileName = "";
+            if (lineCoverageReport.UploadFormat == "SIMPLE")
+            {
+                covFileName = $"{artifactory.Partition}/simple.txt";
+            }
+            else
+            {
+                covFileName = $"{artifactory.Partition}/testwise.json";
+            }
+
             try
             {
-                byte[] reportBytes = CreateZipFile(lineCoverageReport.ToString());
+                byte[] reportBytes = CreateZipFile(lineCoverageReport.ToString(), covFileName);
                 return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, reportBytes, reportName);
             }
             catch (Exception e)
@@ -106,7 +110,7 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private static byte[] CreateZipFile(string lineCoverageReport)
+        private static byte[] CreateZipFile(string lineCoverageReport, string entryName)
         {
             byte[] compressedBytes;
             byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
@@ -114,7 +118,7 @@ namespace UploadDaemon.Upload
             {
                 using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
                 {
-                    var fileInArchive = archive.CreateEntry("coverage.txt");
+                    var fileInArchive = archive.CreateEntry(entryName);
                     using (var entryStream = fileInArchive.Open())
                     using (var fileToCompressStream = new MemoryStream(reportBytes))
                     {
