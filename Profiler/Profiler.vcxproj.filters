@@ -156,9 +156,6 @@
     <ClCompile Include="utils\MethodEnter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CProfilerWorker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProfilerCallbackBase.h">
@@ -281,15 +278,6 @@
     <ClInclude Include="utils\MethodEnter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CProfilerWorker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\atomic_queue\atomic_queue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\atomic_queue\defs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\robin_hood\robin_hood.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -308,8 +296,5 @@
     <ResourceCompile Include="resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="utils\atomic_queue\LICENSE" />
   </ItemGroup>
 </Project>

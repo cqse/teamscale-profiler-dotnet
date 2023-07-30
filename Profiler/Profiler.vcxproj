@@ -223,7 +223,6 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CProfilerWorker.cpp" />
     <ClCompile Include="log\AttachLog.cpp" />
     <ClCompile Include="CClassFactory.cpp" />
     <ClCompile Include="config\Config.cpp" />
@@ -267,7 +266,6 @@
     <ClCompile Include="utils\Ipc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CProfilerWorker.h" />
     <ClInclude Include="utils\functionID_set\functionId_set.h" />
     <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
@@ -299,8 +297,6 @@
     <ClInclude Include="lib\yaml-cpp\src\token.h" />
     <ClInclude Include="lib\StackWalker\StackWalker.h" />
     <ClInclude Include="log\TraceLog.h" />
-    <ClInclude Include="utils\atomic_queue\atomic_queue.h" />
-    <ClInclude Include="utils\atomic_queue\defs.h" />
     <ClInclude Include="utils\MethodEnter.h" />
     <ClInclude Include="utils\robin_hood\robin_hood.h" />
     <ClInclude Include="utils\Testing.h" />
@@ -324,9 +320,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="utils\atomic_queue\LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

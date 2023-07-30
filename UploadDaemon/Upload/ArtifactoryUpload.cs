@@ -8,6 +8,7 @@ using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report;
+using System.IO.Compression;
 
 namespace UploadDaemon.Upload
 {
@@ -81,7 +82,7 @@ namespace UploadDaemon.Upload
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport.ToString());
+                byte[] reportBytes = CreateZipFile(lineCoverageReport.ToString());
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {
                     return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream, reportName);
@@ -113,6 +114,26 @@ namespace UploadDaemon.Upload
                     return false;
                 }
             }
+        }
+
+        private static byte[] CreateZipFile(string lineCoverageReport)
+        {
+            byte[] compressedBytes;
+            byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
+            using (var outStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
+                {
+                    var fileInArchive = archive.CreateEntry("coverage.txt");
+                    using (var entryStream = fileInArchive.Open())
+                    using (var fileToCompressStream = new MemoryStream(reportBytes))
+                    {
+                        fileToCompressStream.CopyTo(entryStream);
+                    }
+                }
+                compressedBytes = outStream.ToArray();
+            }
+            return compressedBytes;
         }
 
         /// <inheritdoc/>
