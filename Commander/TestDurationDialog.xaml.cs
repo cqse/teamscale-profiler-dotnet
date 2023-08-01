@@ -22,7 +22,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             InitializeComponent();
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private void SaveClicked(object sender, RoutedEventArgs e)
         {
             long? duration = viewModel.DurationMs;
             if (duration != null)

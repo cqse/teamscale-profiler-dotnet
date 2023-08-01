@@ -2,6 +2,9 @@
 
 namespace Cqse.Teamscale.Profiler.Commander.Tests
 {
+    /// <summary>
+    /// Tests the conversion between milliseconds (long) and human-readable duration strings.
+    /// </summary>
     [TestClass()]
     public class TestDurationDialogVMTests
     {

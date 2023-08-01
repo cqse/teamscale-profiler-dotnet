@@ -8,12 +8,21 @@ using System.Windows.Media;
 
 namespace Cqse.Teamscale.Profiler.Commander
 {
+    /// <summary>
+    /// View model for TestDurationDialog.xaml
+    /// </summary>
     public class TestDurationDialogVM : INotifyPropertyChanged
     {
+        /// <summary>
+        /// Event for view binding changes.
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
         private string durationString;
 
+        /// <summary>
+        /// The duration string entered in the text box.
+        /// </summary>
         public string DurationString
         {
             get => durationString;
@@ -24,6 +33,9 @@ namespace Cqse.Teamscale.Profiler.Commander
             }
         }
 
+        /// <summary>
+        /// Whether the entered string is valid.
+        /// </summary>
         public bool IsValid => DurationMs != null;
 
         public TestDurationDialogVM(long duration)
@@ -31,8 +43,14 @@ namespace Cqse.Teamscale.Profiler.Commander
             durationString = MillisecondsToString(duration);
         }
 
+        /// <summary>
+        /// The calculated duration in milliseconds or null if parsing the string failed.
+        /// </summary>
         public long? DurationMs => StringToMilliseconds(durationString);
 
+        /// <summary>
+        /// Converts a duration to a human-readable string.
+        /// </summary>
         public static string MillisecondsToString(long duration)
         {
             long seconds = (duration / 1000 ) % 60;
@@ -62,6 +80,9 @@ namespace Cqse.Teamscale.Profiler.Commander
             return result;
         }
 
+        /// <summary>
+        /// Converts a human-edited string into a duration in milliseconds. Returns null on parsing errors.
+        /// </summary>
         public static long? StringToMilliseconds(string durationString)
         {
             if (durationString == "")
