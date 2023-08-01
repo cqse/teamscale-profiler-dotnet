@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

@@ -1,4 +1,5 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System;
 using System.Configuration;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -10,13 +11,14 @@ namespace Cqse.Teamscale.Profiler.Commander
     /// </summary>
     public partial class MainWindow : Window
     {
-        private MainWindowVM viewModel = new MainWindowVM();
+        private readonly MainWindowVM viewModel = new MainWindowVM();
         private App app;
+        private long startTimestamp = 0;
 
         public MainWindow()
         {
             app = Application.Current as App;
-            this.DataContext = viewModel;
+            DataContext = viewModel;
             viewModel.ButtonText = "Start Test";
             viewModel.IsStopped = true;
             InitializeComponent();
@@ -32,24 +34,32 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             viewModel.IsStopped = false;
             app.StartTest(viewModel.TestName);
+            startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
         }
 
         private void OnPassedClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(TestExecutionResult.Passed);
+            ShowDurationDialog(TestExecutionResult.Passed);
         }
 
         private void OnFailureClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(TestExecutionResult.Failure);
+            ShowDurationDialog(TestExecutionResult.Failure);
         }
 
         private void OnSkippedClicked(object sender, RoutedEventArgs e)
         {
             viewModel.IsStopped = true;
-            app.EndTest(TestExecutionResult.Skipped);
+            ShowDurationDialog(TestExecutionResult.Skipped);
+        }
+
+        private void ShowDurationDialog(TestExecutionResult result)
+        {
+            long endTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            long duration = endTimestamp - startTimestamp;
+            new TestDurationDialog(duration, result).ShowDialog();
         }
     }
 }
