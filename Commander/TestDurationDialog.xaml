@@ -1,0 +1,17 @@
+﻿<Window x:Class="Cqse.Teamscale.Profiler.Commander.TestDurationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:commander="clr-namespace:Cqse.Teamscale.Profiler.Commander"
+        d:DataContext="{d:DesignInstance Type=commander:TestDurationDialogVM}"
+        mc:Ignorable="d"
+        Title="Confirm Test Duration" Height="156.532" Width="383.074" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
+    <Grid>
+        <Label Content="This is how long your test took." Margin="10,10,10,0" VerticalAlignment="Top" IsEnabled="False" Height="29" VerticalContentAlignment="Center" />
+        <TextBox x:Name="TestName" Margin="10,91,84,9" TextWrapping="Wrap" Text="{Binding Path=DurationString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Path=IsValid}" VerticalContentAlignment="Center" Background="{Binding Path=InputBoxBackground}" />
+        <Button Content="Save" Margin="298,91,10,9" IsEnabled="{Binding IsValid}" Width="69" />
+        <Label Content="Please adjust the duration if necessary so it reflects the actual test duration as closely as possible." Margin="10,44,10,0" VerticalAlignment="Top" IsEnabled="False" Height="21" VerticalContentAlignment="Center" FontSize="8" />
+        <Label Content="Example: 1h 20m 10s" Margin="10,65,10,0" VerticalAlignment="Top" IsEnabled="False" Height="21" VerticalContentAlignment="Center" FontSize="8" />
+    </Grid>
+</Window>

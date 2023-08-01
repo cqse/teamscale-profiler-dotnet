@@ -53,11 +53,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             ipcServer.Publish("test:start", testName);
         }
 
-        public void EndTest(TestExecutionResult result, string message = "")
+        public void EndTest(TestExecutionResult result, string message = "", long durationMs = 0)
         {
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
-            ipcServer.Publish("test:end", Enum.GetName(typeof(TestExecutionResult), result).ToUpper(), message);
+            ipcServer.Publish("test:end", Enum.GetName(typeof(TestExecutionResult), result).ToUpper(), message, durationMs.ToString());
         }
 
         public void Dispose()
