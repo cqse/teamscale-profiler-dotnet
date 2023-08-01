@@ -12,7 +12,7 @@ namespace Cqse.Teamscale.Profiler.Commander
     public partial class MainWindow : Window
     {
         private readonly MainWindowVM viewModel = new MainWindowVM();
-        private App app;
+        private readonly App app;
         private long startTimestamp = 0;
 
         public MainWindow()
@@ -39,19 +39,16 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         private void OnPassedClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsStopped = true;
             ShowDurationDialog(TestExecutionResult.Passed);
         }
 
         private void OnFailureClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsStopped = true;
             ShowDurationDialog(TestExecutionResult.Failure);
         }
 
         private void OnSkippedClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsStopped = true;
             ShowDurationDialog(TestExecutionResult.Skipped);
         }
 
@@ -59,7 +56,10 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             long endTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
             long duration = endTimestamp - startTimestamp;
-            new TestDurationDialog(duration, result).ShowDialog();
+            if (new TestDurationDialog(duration, result).ShowDialog() == true)
+            {
+                viewModel.IsStopped = true;
+            }
         }
     }
 }

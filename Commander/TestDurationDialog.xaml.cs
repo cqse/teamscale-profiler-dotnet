@@ -28,6 +28,8 @@ namespace Cqse.Teamscale.Profiler.Commander
             if (duration != null)
             {
                 app.EndTest(result, "", duration.Value);
+                DialogResult = true;
+                Close();
             }
         }
     }

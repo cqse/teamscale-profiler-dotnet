@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Windows.Media;
 
 namespace Cqse.Teamscale.Profiler.Commander
 {
@@ -24,18 +25,6 @@ namespace Cqse.Teamscale.Profiler.Commander
         }
 
         public bool IsValid => DurationMs != null;
-
-        public string InputBoxBackground
-        {
-            get
-            {
-                if (IsValid)
-                {
-                    return "#FFFFFFFF";
-                }
-                return "#FFFFCCCC";
-            }
-        }
 
         public TestDurationDialogVM(long duration)
         {

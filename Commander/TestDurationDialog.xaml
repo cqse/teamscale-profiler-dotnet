@@ -6,12 +6,12 @@
         xmlns:commander="clr-namespace:Cqse.Teamscale.Profiler.Commander"
         d:DataContext="{d:DesignInstance Type=commander:TestDurationDialogVM}"
         mc:Ignorable="d"
-        Title="Confirm Test Duration" Height="156.532" Width="383.074" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
+        Title="Confirm Test Duration" Height="179.532" Width="567.074" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
     <Grid>
         <Label Content="This is how long your test took." Margin="10,10,10,0" VerticalAlignment="Top" IsEnabled="False" Height="29" VerticalContentAlignment="Center" />
-        <TextBox x:Name="TestName" Margin="10,91,84,9" TextWrapping="Wrap" Text="{Binding Path=DurationString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Path=IsValid}" VerticalContentAlignment="Center" Background="{Binding Path=InputBoxBackground}" />
-        <Button Content="Save" Margin="298,91,10,9" IsEnabled="{Binding IsValid}" Width="69" Click="Save_Click" />
-        <Label Content="Please adjust the duration if necessary so it reflects the actual test duration as closely as possible." Margin="10,44,10,0" VerticalAlignment="Top" IsEnabled="False" Height="21" VerticalContentAlignment="Center" FontSize="8" />
-        <Label Content="Example: 1h 20m 10s" Margin="10,65,10,0" VerticalAlignment="Top" IsEnabled="False" Height="21" VerticalContentAlignment="Center" FontSize="8" />
+        <TextBox x:Name="Duration" Margin="10,111,0,12" TextWrapping="Wrap" Text="{Binding Path=DurationString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="467" />
+        <Button Content="Save" Margin="482,111,10,12" IsEnabled="{Binding IsValid}" Click="Save_Click" />
+        <Label Content="Please adjust the duration if necessary so it reflects the actual test duration as closely as possible." Margin="10,44,10,0" VerticalAlignment="Top" IsEnabled="False" Height="30" VerticalContentAlignment="Center" />
+        <Label Content="Example: 1h 20m 10s" Margin="10,79,10,0" VerticalAlignment="Top" IsEnabled="False" Height="27" VerticalContentAlignment="Center" />
     </Grid>
 </Window>
