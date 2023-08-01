@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Cqse.Teamscale.Profiler.Commander
 {
@@ -72,7 +74,47 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         public static long? StringToMilliseconds(string durationString)
         {
-            return null;
+            if (durationString == "")
+            {
+                return null;
+            }
+
+            MatchCollection matches = Regex.Matches(durationString, @"^\s*(?:(?<hours>\d+)h)?\s*(?:(?<minutes>\d+)m)?\s*(?:(?<seconds>\d+)s)?\s*$");
+            if (matches.Count != 1)
+            {
+                return null;
+            }
+
+            Match match = matches[0];
+            int hours = ParseNumberFromMatchGroup(match, "hours");
+            int minutes = ParseNumberFromMatchGroup(match, "minutes");
+            int seconds = ParseNumberFromMatchGroup(match, "seconds");
+            if (minutes >= 60 || seconds >= 60)
+            {
+                // this is most likely a typo that we want the user to fix, so we don't allow it
+                return null;
+            }
+
+            long milliseconds = hours * 3_600_000 + minutes * 60_000 + seconds * 1000;
+            if (milliseconds <= 0)
+            {
+                return null;
+            }
+            return milliseconds;
+        }
+
+        private static int ParseNumberFromMatchGroup(Match match, string groupName)
+        {
+           Group group = match.Groups[groupName];
+            if (group == null)
+            {
+                return 0;
+            }
+            if (int.TryParse(group.Value, out int milliseconds))
+            {
+                return milliseconds;
+            }
+            return 0;
         }
 
         private void SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

@@ -1,10 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Cqse.Teamscale.Profiler.Commander;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cqse.Teamscale.Profiler.Commander.Tests
 {
@@ -38,6 +32,10 @@ namespace Cqse.Teamscale.Profiler.Commander.Tests
             Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("m 12s"));
             Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("60m"));
             Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("60s"));
+            Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("-1s"));
+            Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("0s"));
+            Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("0m"));
+            Assert.AreEqual(null, TestDurationDialogVM.StringToMilliseconds("0h"));
         }
 
         [TestMethod()]
@@ -47,6 +45,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Tests
             Assert.AreEqual(1000 * 60, TestDurationDialogVM.StringToMilliseconds("1m"));
             Assert.AreEqual(1000 * 60 * 60, TestDurationDialogVM.StringToMilliseconds("1h"));
             Assert.AreEqual(1000 * 60 * 60 + 2 * 1000 * 60 + 3 * 1000, TestDurationDialogVM.StringToMilliseconds("1h 2m 3s"));
+            Assert.AreEqual(1000 * 60 * 60 + 2 * 1000 * 60 + 3 * 1000, TestDurationDialogVM.StringToMilliseconds("1h2m3s"));
             Assert.AreEqual(1000 * 60 * 60 * 120, TestDurationDialogVM.StringToMilliseconds("120h"));
         }
     }
