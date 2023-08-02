@@ -11,6 +11,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
     {
         private readonly ProfilerIpc profilerIpc;
         private readonly ILogger logger;
+        private long testStart = 0;
 
         public ProfilerTestController(ProfilerIpc profilerIpc, ILogger<ProfilerTestController> logger)
         {
@@ -33,6 +34,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             }
 
             logger.LogInformation("Starting test: {}", testName);
+            testStart = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
         }
 
@@ -40,7 +42,8 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         public void StopTest(TestExecutionResult result)
         {
             logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
-            profilerIpc.EndTest(result);
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            profilerIpc.EndTest(result, durationMs: testEnd - testStart);
         }
 
         /// <summary>
@@ -50,7 +53,8 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         public void EndTest(string name, [FromBody] TestResultDto result)
         {
             logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
-            profilerIpc.EndTest(result.Result);
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            profilerIpc.EndTest(result.Result, durationMs: testEnd - testStart);
         }
 
         public class TestResultDto

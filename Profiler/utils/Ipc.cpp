@@ -8,7 +8,7 @@
 // TODO: Profiler_disconnected is missing!
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
-Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
+Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string, long)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
 	this->testStartCallback = testStartCallback;
@@ -83,8 +83,12 @@ void Ipc::handleMessage(std::vector<std::string> frames) {
 		if (frames.size() > 2) {
 			message = frames[2];
 		}
+		long duration = 0;
+		if (frames.size() > 3) {
+			duration = std::stol(frames[3]);
+		}
 
-		this->testEndCallback(result, message);
+		this->testEndCallback(result, message, duration);
 	}
 }
 

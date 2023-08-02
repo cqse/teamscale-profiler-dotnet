@@ -4,6 +4,7 @@ using System.Reflection;
 var profilerIpc = new ProfilerIpc(new IpcConfig());
 
 bool quiet = args.Contains("-q") || args.Contains("--quiet");
+long testStart = 0;
 
 while(true)
 {
@@ -29,6 +30,8 @@ bool ExecuteCommand(Command command, string? arg)
 
             profilerIpc.StartTest(arg);
             PrintUnlessQuiet($"Started test {arg}");
+            testStart = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            
             return false;
         case Command.Stop:
             ArgumentNullException.ThrowIfNull(arg, nameof(arg));
@@ -37,7 +40,8 @@ bool ExecuteCommand(Command command, string? arg)
             {
                 if (Enum.TryParse(arg, ignoreCase: true, out TestExecutionResult result))
                 {
-                    profilerIpc.EndTest(result);
+                    long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+                    profilerIpc.EndTest(result, durationMs: testEnd - testStart);
                     PrintUnlessQuiet($"Stopped test with result {arg}");
                     return false;
                 }

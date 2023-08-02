@@ -21,7 +21,7 @@ namespace UploadDaemon.Scanning
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
-        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=((?:Start|End)):([^:]+):(.+)");
+        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=((?:Start|End)):([^:]+):([^:]+)(?::(\d+))?");
 
         /// <summary>
         /// The lines of text contained in the trace.
@@ -70,6 +70,7 @@ namespace UploadDaemon.Scanning
             DateTime currentTestStart = default;
             Trace currentTestTrace = noTestTrace;
             DateTime currentTestEnd;
+            long testDuration;
             string currentTestResult;
             IList<Test> tests = new List<Test>();
 
@@ -109,10 +110,12 @@ namespace UploadDaemon.Scanning
 
                             currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
                             currentTestResult = testCaseMatch.Groups[3].Value;
+                            Int64.TryParse(testCaseMatch.Groups[4].Value, out testDuration);
                             tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
                                 Start = currentTestStart,
                                 End = currentTestEnd,
+                                DurationMillis = testDuration,
                                 Result = currentTestResult
                             });
                             currentTestName = noTestName;

@@ -19,10 +19,19 @@ namespace UploadDaemon.Report.Testwise
 
         public DateTime End;
 
+        public long DurationMillis;
+
         [JsonProperty(PropertyName = "duration")]
         public double Duration
         {
-            get => End.Subtract(Start).TotalSeconds;
+
+            get {
+                if (DurationMillis != 0)
+                {
+                    return Convert.ToDouble(DurationMillis) / 1000;
+                }
+                return End.Subtract(Start).TotalSeconds;
+            }
             set
             {
                 // We cannot reconstruct the timestamps from the report format

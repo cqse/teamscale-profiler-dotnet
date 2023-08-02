@@ -10,7 +10,7 @@
     <Grid>
         <Label Content="This is how long your test took." Margin="10,10,10,0" VerticalAlignment="Top" IsEnabled="False" Height="29" VerticalContentAlignment="Center" />
         <TextBox x:Name="Duration" Margin="10,111,0,12" TextWrapping="Wrap" Text="{Binding Path=DurationString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="467" />
-        <Button Content="Save" Margin="482,111,10,12" IsEnabled="{Binding IsValid}" Click="SaveClicked" />
+        <Button Content="Save" Margin="482,111,10,12" IsDefault="True" IsEnabled="{Binding IsValid}" Click="SaveClicked" />
         <Label Content="Please adjust the duration if necessary so it reflects the actual test duration as closely as possible." Margin="10,44,10,0" VerticalAlignment="Top" IsEnabled="False" Height="30" VerticalContentAlignment="Center" />
         <Label Content="Example: 1h 20m 10s" Margin="10,79,10,0" VerticalAlignment="Top" IsEnabled="False" Height="27" VerticalContentAlignment="Center" />
     </Grid>
