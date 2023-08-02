@@ -3,15 +3,17 @@
 
 #define IPC_TIMEOUT_MS 1000
 #define IPC_BUFFER_SIZE 255
+#define IPC_LINGER 0
 
 // ZMQ strings are not zero-terminated, let's terminate these
-// TODO: Profiler_disconnected is missing!
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
 // Message signaling test start event
 const std::string TEST_START = "start";
 const std::string TEST_END = "end";
 
+// TODO add get testname to start
+// TODO What if this is already running?
 Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
@@ -19,11 +21,13 @@ Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std
 	this->testEndCallback = testEndCallback;
 	this->errorCallback = errorCallback;
 	this->zmqTimeout = IPC_TIMEOUT_MS;
+	this->zmqLinger = IPC_LINGER;
 	this->zmqContext = zmq_ctx_new();
-
-	this->handlerThread = new std::thread(&Ipc::handlerThreadLoop, this);
-
-	this->request("profiler_connected");
+	std::string replyPort = this->request("register");
+	
+	if (replyPort != "") {
+		this->handlerThread = new std::thread(&Ipc::handlerThreadLoop, this, replyPort);
+	}
 }
 
 Ipc::~Ipc()
@@ -40,22 +44,24 @@ Ipc::~Ipc()
 	zmq_ctx_term(this->zmqContext);
 }
 
-void Ipc::handlerThreadLoop() {
+void Ipc::handlerThreadLoop(std::string address) {
 	this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);
 	zmq_setsockopt(this->zmqReplySocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
-	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, 0, sizeof(0));
+	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, &zmqLinger, sizeof(0));
+	logError("Connecting IPC Socket");
 
-	if (!!zmq_bind(this->zmqReplySocket, config->getTiaSubscribeSocket().c_str())) {
+	if (!!zmq_bind(this->zmqReplySocket, address.c_str())) {
 		zmq_close(this->zmqReplySocket);
 		this->zmqReplySocket = NULL;
 		logError("Failed connecting to subscribe socket");
 		return;
 	}
-
+	logError("Going into Loop");
 	std::string message;
 	while (!this->shutdown) {
 		char buf[IPC_BUFFER_SIZE];
 		int bytes = zmq_recv(this->zmqReplySocket, &buf, IPC_BUFFER_SIZE, 0);
+		zmq_send(this->zmqReplySocket, "ack", 3, 0);
 		
 		if (bytes != -1) {
 			IPC_TERMINATE_STRING(buf, bytes);

@@ -13,6 +13,7 @@ public:
 	std::string getCurrentTestName();
 private:
 	int zmqTimeout;
+	int zmqLinger;
 	void* zmqContext = NULL;
 	void* zmqRequestSocket = NULL;
 	void* zmqReplySocket = NULL;
@@ -23,7 +24,7 @@ private:
 	std::function<void(std::string)> errorCallback;
 	std::atomic<bool> shutdown = false;
 	void sendDisconnect();
-	void handlerThreadLoop();
+	void handlerThreadLoop(std::string address);
 	void handleMessage(std::string message);
 	bool initRequestSocket();
 	void logError(std::string message);

@@ -11,7 +11,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
     public class ZmqIpcServer : IDisposable
     {
-        private const string REGISTER_CLIENT = "r:";
+        private const string REGISTER_CLIENT = "register";
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
 
@@ -24,6 +24,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         protected readonly IpcConfig config;
         protected readonly RequestHandler requestHandler;
 
+        private int portOffset = 0;
+
         public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler)
         {
             this.config = config;
@@ -35,19 +37,22 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         protected void StartRequestHandler()
         {
             this.responseSocket = new ResponseSocket();
-            this.responseSocket.Bind(this.config.RequestSocket);
+            this.responseSocket.Bind(this.config.RequestSocket + ":" + config.StartPortNumber);
             this.responseSocket.ReceiveReady += (s, e) =>
             {
                 string message = responseSocket.ReceiveFrameString();
                 if (message.StartsWith(REGISTER_CLIENT))
                 {
+                    portOffset++;
                     RequestSocket clientRequestSocket = new RequestSocket();
-                    string clientAddress = message.Substring(REGISTER_CLIENT.Length);
+                    string clientAddress = config.RequestSocket + ":" + (config.StartPortNumber + portOffset);
                     clientRequestSocket.Connect(clientAddress);
                     lock(clients)
                     {
                         clients.Add(clientAddress, clientRequestSocket);
                     }
+                    responseSocket.SendFrame(clientAddress);
+                    return;
                 }
                 string response = this.requestHandler(message);
                 responseSocket.SendFrame(response);
