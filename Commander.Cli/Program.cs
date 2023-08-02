@@ -30,7 +30,7 @@ bool ExecuteCommand(Command command, string? arg)
 
             profilerIpc.StartTest(arg);
             PrintUnlessQuiet($"Started test {arg}");
-            testStart = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            testStart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             
             return false;
         case Command.Stop:
@@ -40,7 +40,7 @@ bool ExecuteCommand(Command command, string? arg)
             {
                 if (Enum.TryParse(arg, ignoreCase: true, out TestExecutionResult result))
                 {
-                    long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+                    long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     profilerIpc.EndTest(result, durationMs: testEnd - testStart);
                     PrintUnlessQuiet($"Stopped test with result {arg}");
                     return false;

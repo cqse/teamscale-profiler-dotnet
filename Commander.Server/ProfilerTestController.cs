@@ -34,7 +34,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             }
 
             logger.LogInformation("Starting test: {}", testName);
-            testStart = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            testStart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
         }
 
@@ -42,7 +42,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         public void StopTest(TestExecutionResult result)
         {
             logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
-            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.EndTest(result, durationMs: testEnd - testStart);
         }
 
@@ -53,7 +53,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         public void EndTest(string name, [FromBody] TestResultDto result)
         {
             logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
-            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.EndTest(result.Result, durationMs: testEnd - testStart);
         }
 
