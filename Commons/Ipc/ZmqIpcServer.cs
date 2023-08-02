@@ -1,27 +1,54 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
+using NLog;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
-    public class ZmqIpcServer : IpcServer
+    public class ZmqIpcServer : IDisposable
     {
+        private const string REGISTER_CLIENT = "r:";
         private NetMQPoller? poller;
-        private PublisherSocket? publishSocket;
         private ResponseSocket? responseSocket;
 
-        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler) : base(config, requestHandler, false)
+        private Dictionary<string, RequestSocket> clients = new Dictionary<string, RequestSocket>();
+
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        public delegate string RequestHandler(string message);
+
+        protected readonly IpcConfig config;
+        protected readonly RequestHandler requestHandler;
+
+        public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler)
         {
-            // delegate to base class
+            this.config = config;
+            this.requestHandler = requestHandler;
+
+            StartRequestHandler();
         }
 
-        override protected void StartRequestHandler()
+        protected void StartRequestHandler()
         {
             this.responseSocket = new ResponseSocket();
             this.responseSocket.Bind(this.config.RequestSocket);
             this.responseSocket.ReceiveReady += (s, e) =>
             {
                 string message = responseSocket.ReceiveFrameString();
+                if (message.StartsWith(REGISTER_CLIENT))
+                {
+                    RequestSocket clientRequestSocket = new RequestSocket();
+                    string clientAddress = message.Substring(REGISTER_CLIENT.Length);
+                    clientRequestSocket.Connect(clientAddress);
+                    lock(clients)
+                    {
+                        clients.Add(clientAddress, clientRequestSocket);
+                    }
+                }
                 string response = this.requestHandler(message);
                 responseSocket.SendFrame(response);
             };
@@ -30,24 +57,45 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             poller.RunAsync("Profiler IPC", true);
         }
 
-        override protected void StartPublisher()
+        public void SendTestEvent(string testEvent)
         {
-            this.publishSocket = new PublisherSocket();
-            this.publishSocket.Bind(this.config.PublishSocket);
+            HashSet<string> clientsToRemove = new HashSet<string>();
+            System.Threading.Tasks.Parallel.ForEach(clients, entry =>
+            {
+                entry.Value.SendFrame(Encoding.UTF8.GetBytes(testEvent));
+                if (entry.Value.TryReceiveFrameString(TimeSpan.FromSeconds(5.0), out string? response))
+                {
+                    Console.WriteLine(response);
+                } else
+                {
+                    lock(clientsToRemove)
+                    {
+                        clientsToRemove.Add(entry.Key);
+                    }
+                    logger.Error($"Got no response from Profiler with Socket {entry.Key}");
+                }
+            });
+            lock (clients)
+            {
+                foreach (var client in clientsToRemove)
+                {
+                    if (!clients.ContainsKey(client)) {
+                        continue;
+                    }
+                    clients[client].Close();
+                    clients.Remove(client);
+                }
+            }
         }
 
-        public override void Publish(params string[] frames)
-        {
-            this.publishSocket?.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(frame))));
-        }
-
-        public override void Dispose()
+        public void Dispose()
         {
             this.poller?.Dispose();
-            this.responseSocket?.Dispose();
-            this.publishSocket?.Dispose();
+            foreach (var client in clients)
+            {
+                client.Value.Dispose();
+            }
             NetMQConfig.Cleanup();
-            base.Dispose();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Web;
 
@@ -25,7 +26,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         }
 
         [HttpPost("start/{testName}")]
-        public void StartTest(string testName)
+        public HttpStatusCode StartTest(string testName)
         {
             if (string.IsNullOrEmpty(testName))
             {
@@ -34,23 +35,29 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
 
             logger.LogInformation("Starting test: {}", testName);
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
+            return HttpStatusCode.NoContent;
         }
 
         [HttpPost("stop/{result}")]
-        public void StopTest(TestExecutionResult result)
+        public HttpStatusCode StopTest(TestExecutionResult result)
         {
             logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
             profilerIpc.EndTest(result);
+
+            return HttpStatusCode.NoContent;
+
         }
 
         /// <summary>
         /// Legacy end test to match the JaCoCo API.
         /// </summary>
         [HttpPost("end/{name}")]
-        public void EndTest(string name, [FromBody] TestResultDto result)
+        public HttpStatusCode EndTest(string name, [FromBody] TestResultDto result)
         {
             logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
             profilerIpc.EndTest(result.Result);
+
+            return HttpStatusCode.NoContent;
         }
 
         public class TestResultDto

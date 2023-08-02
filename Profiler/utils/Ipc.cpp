@@ -1,14 +1,18 @@
 #include "Ipc.h"
 #include "zmq.h"
 
-#define IPC_TIMEOUT_MS 250
+#define IPC_TIMEOUT_MS 1000
 #define IPC_BUFFER_SIZE 255
 
 // ZMQ strings are not zero-terminated, let's terminate these
 // TODO: Profiler_disconnected is missing!
 #define IPC_TERMINATE_STRING(buffer, len) buffer[len < IPC_BUFFER_SIZE ? len : IPC_BUFFER_SIZE - 1] = '\0'
 
-Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
+// Message signaling test start event
+const std::string TEST_START = "start";
+const std::string TEST_END = "end";
+
+Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
 	this->testStartCallback = testStartCallback;
@@ -37,54 +41,37 @@ Ipc::~Ipc()
 }
 
 void Ipc::handlerThreadLoop() {
-	this->zmqSubscribeSocket = zmq_socket(this->zmqContext, ZMQ_SUB);
-	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_SUBSCRIBE, "test:", 0);
-	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
-	zmq_setsockopt(this->zmqSubscribeSocket, ZMQ_LINGER, &zmqTimeout, sizeof(zmqTimeout));
+	this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);
+	zmq_setsockopt(this->zmqReplySocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
+	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, 0, sizeof(0));
 
-	if (!!zmq_connect(this->zmqSubscribeSocket, config->getTiaSubscribeSocket().c_str())) {
-		zmq_close(this->zmqSubscribeSocket);
-		this->zmqSubscribeSocket = NULL;
+	if (!!zmq_bind(this->zmqReplySocket, config->getTiaSubscribeSocket().c_str())) {
+		zmq_close(this->zmqReplySocket);
+		this->zmqReplySocket = NULL;
 		logError("Failed connecting to subscribe socket");
 		return;
 	}
 
-	std::vector<std::string> frames;
-	zmq_msg_t message;
+	std::string message;
 	while (!this->shutdown) {
-		zmq_msg_init(&message);
-		do {
-			int len = zmq_msg_recv(&message, this->zmqSubscribeSocket, 0);
-			if (len >= 0) {
-				frames.push_back(std::string((char*)zmq_msg_data(&message), zmq_msg_size(&message)));
-			}
-		} while (zmq_msg_more(&message));
-
-		if (!frames.empty()) {
-			handleMessage(frames);
-			frames.clear();
+		char buf[IPC_BUFFER_SIZE];
+		int bytes = zmq_recv(this->zmqReplySocket, &buf, IPC_BUFFER_SIZE, 0);
+		
+		if (bytes != -1) {
+			IPC_TERMINATE_STRING(buf, bytes);
+			handleMessage(message);
 		}
-		zmq_msg_close(&message);
 	}
-	zmq_close(this->zmqSubscribeSocket);
-}
+	zmq_close(this->zmqReplySocket);
+} 
 
-void Ipc::handleMessage(std::vector<std::string> frames) {
-	if (frames[0] == "test:start" && frames.size() > 1) {
-		this->testStartCallback(frames[1]);
+void Ipc::handleMessage(std::string message) {
+	if (message.find(TEST_START) == 0) {
+		this->testStartCallback(message.substr(TEST_START.length()));
 	}
-	else if (frames[0] == "test:end") {
-		std::string result = "";
-		if (frames.size() > 1) {
-			result = frames[1];
-		}
+	else if (message.find(TEST_END) == 0) {
 
-		std::string message = "";
-		if (frames.size() > 2) {
-			message = frames[2];
-		}
-
-		this->testEndCallback(result, message);
+		this->testEndCallback(message.substr(TEST_END.length()));
 	}
 }
 

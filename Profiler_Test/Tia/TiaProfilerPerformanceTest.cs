@@ -12,7 +12,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     /// </summary>
     public class TiaProfilerPerformanceTest : TiaProfilerTestBase
     {
-        public TiaProfilerPerformanceTest() : base(IpcImplementation.Native) { }
+        public TiaProfilerPerformanceTest() : base(IpcImplementation.NetMQ) { }
 
         [Test]
         public void RunProfilerTestee32()

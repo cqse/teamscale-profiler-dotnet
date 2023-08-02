@@ -15,12 +15,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             /// <summary>
             /// The default NetMQ based IPC server implementation
             /// </summary>
-            NetMQ,
-
-            /// <summary>
-            /// Alternate native libzmq based IPC implementation
-            /// </summary>
-            Native,
+            NetMQ
         }
 
         public TiaProfilerTestBase(IpcImplementation ipcImplementation)
@@ -37,11 +32,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 
         protected virtual RecordingProfilerIpc CreateProfilerIpc(IpcConfig config = null)
         {
-            if (this.ipcImplementation == IpcImplementation.Native)
-            {
-                return new NativeRecordingProfilerIpc(config);
-            }
-
             return new RecordingProfilerIpc(config);
         }
 

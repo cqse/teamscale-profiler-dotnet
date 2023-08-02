@@ -13,8 +13,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     /// </summary>
     [TestFixture(Bitness.x64, IpcImplementation.NetMQ)]
     [TestFixture(Bitness.x86, IpcImplementation.NetMQ)]
-    [TestFixture(Bitness.x64, IpcImplementation.Native)]
-    [TestFixture(Bitness.x86, IpcImplementation.Native)]
+
     public class TiaProfilerTest : TiaProfilerTestBase
     {
         private Testee testee;
@@ -141,7 +140,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         {
             RecordingProfilerIpc oldProfilerIpc = profilerIpc;
             oldProfilerIpc.StartTest("should not be triggered");
-            oldProfilerIpc.EndTest(TestExecutionResult.Passed, "");
+            oldProfilerIpc.EndTest(TestExecutionResult.Passed);
             profilerIpc.Dispose();
             TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
 
