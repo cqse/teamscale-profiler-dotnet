@@ -27,7 +27,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             long? duration = viewModel.DurationMs;
             if (duration != null)
             {
-                app.EndTest(result, "", duration.Value);
+                app.EndTest(result, durationMs: duration.Value);
                 DialogResult = true;
                 Close();
             }

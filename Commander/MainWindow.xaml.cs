@@ -34,7 +34,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             viewModel.IsStopped = false;
             app.StartTest(viewModel.TestName);
-            startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
         private void OnPassedClicked(object sender, RoutedEventArgs e)
@@ -54,7 +54,7 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         private void ShowDurationDialog(TestExecutionResult result)
         {
-            long endTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000;
+            long endTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long duration = endTimestamp - startTimestamp;
             if (new TestDurationDialog(duration, result).ShowDialog() == true)
             {
