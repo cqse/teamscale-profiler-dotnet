@@ -96,6 +96,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         public void Dispose()
         {
             this.poller?.Dispose();
+            this.responseSocket?.Dispose();
             foreach (var client in clients)
             {
                 client.Value.Dispose();

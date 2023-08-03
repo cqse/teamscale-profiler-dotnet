@@ -54,14 +54,14 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
             logger.Info("Broadcasting start of test {testName}", testName);
             this.TestName = testName;
-            ipcServer.SendTestEvent($"t:start:{testName}");
+            ipcServer.SendTestEvent($"start:{testName}");
         }
 
         public void EndTest(TestExecutionResult result)
         {
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
-            ipcServer.SendTestEvent($"t:end:{Enum.GetName(typeof(TestExecutionResult), result)}");
+            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result)}");
         }
 
         public void Dispose()
