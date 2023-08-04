@@ -30,7 +30,6 @@ namespace UploadDaemon.Scanning
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
-        /// </summary>
         public static bool IsTraceFile(string fileName)
         {
             return TraceFileRegex.IsMatch(fileName);
@@ -77,6 +76,11 @@ namespace UploadDaemon.Scanning
             foreach (string line in lines)
             {
                 string[] keyValuePair = line.Split(new[] { '=' }, count:2);
+                if (keyValuePair.Length < 2)
+                {
+                    logger.Warn("Invalid line in trace file {}: {}", FilePath, line);
+                    continue;
+                }
                 string key = keyValuePair[0];
                 string value = keyValuePair[1];
 
