@@ -15,7 +15,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
 
-        private Dictionary<string, RequestSocket> clients = new Dictionary<string, RequestSocket>();
+        private Dictionary<int, Tuple<string, RequestSocket>> clients = new Dictionary<int, Tuple<string, RequestSocket>>();
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -43,16 +43,25 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 string message = responseSocket.ReceiveFrameString();
                 if (message.StartsWith(REGISTER_CLIENT))
                 {
-                    portOffset++;
-                    RequestSocket clientRequestSocket = new RequestSocket();
-                    string clientAddress = config.RequestSocket + ":" + (config.StartPortNumber + portOffset);
-                    clientRequestSocket.Connect(clientAddress);
-                    lock(clients)
-                    {
-                        clients.Add(clientAddress, clientRequestSocket);
-                    }
-                    responseSocket.SendFrame(clientAddress);
-                    return;
+                    int pid = Int32.Parse(message.Split(':')[1]);
+					lock (clients)
+					{
+                        string clientAddress;
+						if (clients.ContainsKey(pid))
+						{
+							clientAddress = clients[pid].Item1;
+							responseSocket.SendFrame(clientAddress);
+							return;
+						}
+						portOffset++;
+                        RequestSocket clientRequestSocket = new RequestSocket();
+                        clientAddress = config.RequestSocket + ":" + (config.StartPortNumber + portOffset);
+                        clientRequestSocket.Connect(clientAddress);
+
+                        clients.Add(pid, Tuple.Create(clientAddress, clientRequestSocket));
+						responseSocket.SendFrame(clientAddress);
+					}
+					return;
                 }
                 string response = this.requestHandler(message);
                 responseSocket.SendFrame(response);
@@ -64,11 +73,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public void SendTestEvent(string testEvent)
         {
-            HashSet<string> clientsToRemove = new HashSet<string>();
+            HashSet<int> clientsToRemove = new HashSet<int>();
             System.Threading.Tasks.Parallel.ForEach(clients, entry =>
             {
-                entry.Value.SendFrame(Encoding.UTF8.GetBytes(testEvent));
-                if (entry.Value.TryReceiveFrameString(TimeSpan.FromSeconds(5.0), out string? response))
+                entry.Value.Item2.SendFrame(Encoding.UTF8.GetBytes(testEvent));
+                if (entry.Value.Item2.TryReceiveFrameString(TimeSpan.FromSeconds(5.0), out string? response))
                 {
                     Console.WriteLine(response);
                 } else
@@ -87,7 +96,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                     if (!clients.ContainsKey(client)) {
                         continue;
                     }
-                    clients[client].Close();
+                    clients[client].Item2.Close();
                     clients.Remove(client);
                 }
             }
@@ -99,7 +108,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             this.responseSocket?.Dispose();
             foreach (var client in clients)
             {
-                client.Value.Dispose();
+                client.Value.Item2.Dispose();
             }
             NetMQConfig.Cleanup();
         }

@@ -46,16 +46,16 @@ Ipc::~Ipc()
 void Ipc::handlerThreadLoop() {
 	std::string address = "";
 	while (address == "") {
-		 address = this->request("register");
+		 address = this->request("register:" + std::to_string(GetCurrentProcessId()));
 		 if (address == "") {
-			 std::this_thread::sleep_for(10000ms);
+			 std::this_thread::sleep_for(5000ms);
 		 }
 	}
 	handleMessage(getCurrentTestName());
 
 	this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);
 	zmq_setsockopt(this->zmqReplySocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
-	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, &zmqLinger, sizeof(0));
+	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, &zmqLinger, sizeof(zmqLinger));
 	logError("Connecting IPC Socket");
 
 	if (!!zmq_bind(this->zmqReplySocket, address.c_str())) {
@@ -89,14 +89,14 @@ void Ipc::handleMessage(std::string message) {
 
 std::string Ipc::getCurrentTestName()
 {
-	return this->request("get_testname");
+	return this->request("testname");
 }
 
 std::string Ipc::request(std::string message)
 {
 	if (!initRequestSocket()) {
 		return "";
-	}
+	}	
 
 	char buffer[IPC_BUFFER_SIZE];
 	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
