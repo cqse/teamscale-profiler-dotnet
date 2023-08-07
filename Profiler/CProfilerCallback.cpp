@@ -9,7 +9,6 @@
 #include <winuser.h>
 #include <utils/MethodEnter.h>
 #include "instrumentation/Instruction.h"
-#include <corhlpr.h>
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -374,7 +373,7 @@ void printMethod(TraceLog traceLog, ULONG iMethodSize, byte* pMethodHeader) {
 	traceLog.info(output);
 }
 
-bool checkAlreadyInstrumented(ULONG pmsig, BYTE* code) {
+bool checkAlreadyInstrumented(BYTE* code) {
 	if (*code != 0x21) {
 		return false;
 	}
@@ -386,11 +385,7 @@ bool checkAlreadyInstrumented(ULONG pmsig, BYTE* code) {
 	if (*code != 0x29) {
 		return false;
 	}
-	code++;
-	if (*(ULONG*)(code) != pmsig) {
-		return false;
-	}
-	code += 4;
+	code += 5;
 	if (*code != 0x00) {
 		return false;
 	}
@@ -459,135 +454,134 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 			newMethodHeader.SetMaxStack(newMethodHeader.GetMaxStack() + ((WORD)extraSize / 2));
 
 			sehSize = oldMethodSize - (oldFatImage->GetSize() * sizeof(DWORD) + oldFatImage->GetCodeSize());
-			//traceLog.info("Getting SEH Size: " + std::to_string(sehSize));
 		}
-
-		//traceLog.info("Old Method:");
-		//printMethod(traceLog, oldMethodSize, (byte*)pMethodHeader);
-		//traceLog.info("Old Method without SEHs:");
-		//printMethod(traceLog, m_header.Size * sizeof(DWORD) + oldCodeSize, (byte*)pMethodHeader);
 
 		// Build new Method Header and Content
 		CComPtr<IMethodMalloc> methodMalloc;
 		profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
-
 		ULONG newMethodSize = newMethodHeader.GetSize() * sizeof(DWORD) + newMethodHeader.GetCodeSize() + sehSize;
-		//traceLog.info("allocating " + std::to_string(newMethodSize));
 		auto newMethodBody = static_cast<COR_ILMETHOD*>(methodMalloc->Alloc(newMethodSize));
 		methodMalloc.Release();
 		auto newFatImage = static_cast<COR_ILMETHOD_FAT*>(&newMethodBody->Fat);
+
 		// Copy the header back into the newMethodBody
 		memcpy(newFatImage, &newMethodHeader, newMethodHeader.GetSize() * sizeof(DWORD));
-		//printMethod(traceLog, m_header.Size * sizeof(DWORD), (byte*)fatImage);
 
-		// Get pmsig
-		static COR_SIGNATURE unmanagedCallSignature[] =
-		{
-			IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
-			0x01,                                   // Parameter count
-			ELEMENT_TYPE_VOID,                      // Return type
-			ELEMENT_TYPE_I8                         // Parameter type (I8) needs to be adjusted for 32 bit
-		};
-		CComPtr<IMetaDataEmit> metaDataEmit;
-		profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
-		mdSignature pmsig;
-		metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
-
-		// Get Function Pointer
-		auto pt = GetFunctionVisited();
-
-		if (checkAlreadyInstrumented(pmsig, oldCode)) {
+		// Check if we already instrumented the current method. This is necessary because a method can be jitted multiple times.
+		if (checkAlreadyInstrumented(oldCode)) {
 			profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)oldMethodHeader);
 			return S_OK;
 		}
 
 		// Set the pointer after the header and add our own instructions
 		BYTE* newCode = newFatImage->GetCode();
-		*(BYTE*)(newCode) = 0x21;
-		newCode += 1;
-		*(FunctionID*)(newCode) = (FunctionID)functionId;
-		newCode += 8;
-
-		*(BYTE*)(newCode) = 0x21;
-		newCode += 1;
-		*(ULONGLONG*)(newCode) = (ULONGLONG)pt;
-		newCode += 8;
-
-		*(BYTE*)(newCode) = 0x29;
-		newCode += 1;
-		*(ULONG*)(newCode) = pmsig;
-		newCode += 4;
+		addCustomCode(newCode, functionId, moduleId);
 		
-		*(BYTE*)(newCode) = 0x00;
-		newCode += 1;
-		
-
-		//printMethod(traceLog, m_header.Size * sizeof(DWORD) + extraSize, (byte*)fatImage);
-
-		// Copy the original instructions
+		// Copy the original instructions to the new method body
 		memcpy(newCode, oldCode, oldCodeSize + sehSize);
 
-		COR_ILMETHOD_SECT_EH* currentSectEH = (COR_ILMETHOD_SECT_EH*)newFatImage->GetSect();
-
-		// Fix SEH headers??
-		if (currentSectEH != 0 && newFatImage->GetSect()->Kind() == CorILMethod_Sect_EHTable) {
-			do {
-				unsigned int sectCount = currentSectEH->EHCount();
-				if (currentSectEH->IsFat()) {
-					COR_ILMETHOD_SECT_EH_CLAUSE_FAT* fatEHClause = static_cast<COR_ILMETHOD_SECT_EH_CLAUSE_FAT*>(currentSectEH->Fat.Clauses);
-					for (unsigned int index = 0; index < sectCount; ++index) {
-						if ((fatEHClause[index].GetFlags() & COR_ILEXCEPTION_CLAUSE_FILTER) == COR_ILEXCEPTION_CLAUSE_FILTER) {
-							fatEHClause[index].SetFilterOffset(fatEHClause->GetFilterOffset() + extraSize);
-						}
-						fatEHClause[index].SetTryOffset(fatEHClause[index].GetTryOffset() + extraSize);
-						fatEHClause[index].SetHandlerOffset(fatEHClause[index].GetHandlerOffset() + extraSize);
-					}
-				}
-				else {
-					COR_ILMETHOD_SECT_EH_CLAUSE_SMALL* smallEHClause = static_cast<COR_ILMETHOD_SECT_EH_CLAUSE_SMALL*>(currentSectEH->Small.Clauses);
-					for (unsigned int index = 0; index < sectCount; ++index) {
-						if ((smallEHClause[index].GetFlags() & COR_ILEXCEPTION_CLAUSE_FILTER) == COR_ILEXCEPTION_CLAUSE_FILTER) {
-							smallEHClause[index].SetFilterOffset(smallEHClause[index].GetFilterOffset() + extraSize);
-							return S_OK;
-
-						}
-						
-						if ((smallEHClause[index].GetTryOffset() + extraSize) < 0xFFFF) // cannot modify if it's bigger than 2 bytes
-						{
-							smallEHClause[index].SetTryOffset(smallEHClause[index].GetTryOffset() + extraSize);
-
-						}
-						else {
-							traceLog.info("Try Offset Too Large");
-							return S_OK;
-						}
-						if ((smallEHClause[index].GetHandlerOffset() + extraSize) < 0xFFFF) // cannot modify if it's bigger than 2 bytes
-						{
-							smallEHClause[index].SetHandlerOffset(smallEHClause[index].GetHandlerOffset() + extraSize);
-
-						}
-						else {
-							traceLog.info("Handler Offset Too Large");
-							return S_OK;
-						}
-					}
-				}
-				do
-				{
-					currentSectEH = (COR_ILMETHOD_SECT_EH*)currentSectEH->Next();
-				} while (currentSectEH != 0 && currentSectEH->Kind() != CorILMethod_Sect_EHTable);
-			} while (currentSectEH != 0);
+		// Fix SEH header offsets
+		if (!fixSehHeaders(newFatImage, extraSize, functionId)) {
+			return S_OK;
 		}
 		
 		profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)newMethodBody);
-
 		return S_OK;
 	}
 	catch (...) {
 		traceLog.info("Failed!");
 		return S_OK;
 	}
-	
+}
+
+void CProfilerCallback::addCustomCode(BYTE*& newCode, const FunctionID& functionId, const ModuleID& moduleId)
+{
+	*(BYTE*)(newCode) = 0x21;
+	newCode += 1;
+	*(FunctionID*)(newCode) = (FunctionID)functionId;
+	newCode += 8;
+
+	// Get Coverage recording function
+	auto pt = GetFunctionVisited();
+	// Add function pointer to new code
+	*(BYTE*)(newCode) = 0x21;
+	newCode += 1;
+	*(ULONGLONG*)(newCode) = (ULONGLONG)pt;
+	newCode += 8;
+
+	// Get method signature pmsig
+	static COR_SIGNATURE unmanagedCallSignature[] =
+	{
+		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
+		0x01,                                   // Parameter count
+		ELEMENT_TYPE_VOID,                      // Return type
+		ELEMENT_TYPE_I8                         // Parameter type (I8) needs to be adjusted for 32 bit
+	};
+	CComPtr<IMetaDataEmit> metaDataEmit;
+	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
+	mdSignature pmsig;
+	metaDataEmit->GetTokenFromSig(unmanagedCallSignature, sizeof(unmanagedCallSignature), &pmsig);
+	// Add pmsig to new method code
+	*(BYTE*)(newCode) = 0x29;
+	newCode += 1;
+	*(ULONG*)(newCode) = pmsig;
+	newCode += 4;
+
+	// Add NOP for DWORD alignment of inserted code
+	*(BYTE*)(newCode) = 0x00;
+	newCode += 1;
+}
+
+bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize, const FunctionID& functionId)
+{
+	COR_ILMETHOD_SECT_EH* currentSectEH = (COR_ILMETHOD_SECT_EH*)newFatImage->GetSect();
+	if (currentSectEH != 0 && newFatImage->GetSect()->Kind() == CorILMethod_Sect_EHTable) {
+		do {
+			unsigned int sectCount = currentSectEH->EHCount();
+			if (currentSectEH->IsFat()) {
+				COR_ILMETHOD_SECT_EH_CLAUSE_FAT* fatEHClause = static_cast<COR_ILMETHOD_SECT_EH_CLAUSE_FAT*>(currentSectEH->Fat.Clauses);
+				for (unsigned int index = 0; index < sectCount; ++index) {
+					if ((fatEHClause[index].GetFlags() & COR_ILEXCEPTION_CLAUSE_FILTER) == COR_ILEXCEPTION_CLAUSE_FILTER) {
+						fatEHClause[index].SetFilterOffset(fatEHClause->GetFilterOffset() + extraSize);
+					}
+					fatEHClause[index].SetTryOffset(fatEHClause[index].GetTryOffset() + extraSize);
+					fatEHClause[index].SetHandlerOffset(fatEHClause[index].GetHandlerOffset() + extraSize);
+				}
+			}
+			else {
+				COR_ILMETHOD_SECT_EH_CLAUSE_SMALL* smallEHClause = static_cast<COR_ILMETHOD_SECT_EH_CLAUSE_SMALL*>(currentSectEH->Small.Clauses);
+				for (unsigned int index = 0; index < sectCount; ++index) {
+					if ((smallEHClause[index].GetFlags() & COR_ILEXCEPTION_CLAUSE_FILTER) == COR_ILEXCEPTION_CLAUSE_FILTER) {
+						smallEHClause[index].SetFilterOffset(smallEHClause[index].GetFilterOffset() + extraSize);
+					}
+
+					if ((smallEHClause[index].GetTryOffset() + extraSize) < 0xFFFF) // cannot modify if it's bigger than 2 bytes
+					{
+						smallEHClause[index].SetTryOffset(smallEHClause[index].GetTryOffset() + extraSize);
+
+					}
+					else {
+						traceLog.warn("Try Offset Too Large. Skipping instrumentation method " + std::to_string(functionId));
+						return false;
+					}
+					if ((smallEHClause[index].GetHandlerOffset() + extraSize) < 0xFFFF) // cannot modify if it's bigger than 2 bytes
+					{
+						smallEHClause[index].SetHandlerOffset(smallEHClause[index].GetHandlerOffset() + extraSize);
+
+					}
+					else {
+						traceLog.warn("Handler Offset Too Large. Skipping instrumentation method " + std::to_string(functionId));
+						return false;
+					}
+				}
+			}
+			do
+			{
+				currentSectEH = (COR_ILMETHOD_SECT_EH*)currentSectEH->Next();
+			} while (currentSectEH != 0 && currentSectEH->Kind() != CorILMethod_Sect_EHTable);
+		} while (currentSectEH != 0);
+	}
+	return true;
 }
 
 HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,

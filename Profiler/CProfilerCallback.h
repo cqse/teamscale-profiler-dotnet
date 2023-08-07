@@ -14,6 +14,7 @@
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
 #include "instrumentation/CanonicalNames.h"
+#include <corhlpr.h>
 
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
@@ -114,8 +115,6 @@ private:
 	/** Callback that is being called when a testcase ends. */
 	void onTestEnd(std::string result = "", std::string message = "");
 
-	void instrumentMethod(ModuleID moduleId, FunctionID functionId);
-
 	/**
 	 * Keeps track of called methods.
 	 * We use the set to efficiently determine if we already noticed an called method.
@@ -172,6 +171,17 @@ private:
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
 	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 	HRESULT InitializeImplementation(IUnknown* pICorProfilerInfoUnk);
+
+	/**
+	* Fix SEH header offsets. These need to be adjusted because we add additional bytes to the method which also
+	* moves around the exception hanlding sections.
+	*/
+	bool fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize, const FunctionID& functionId);
+
+	/**
+	* Add the code we need to record coveage to the start of a method.
+	*/
+	void addCustomCode(BYTE*& newCode, const FunctionID& functionId, const ModuleID& moduleId);
 
 	/** Logs a stack trace. May rethrow the caught exception. */
 	void handleException(std::string context);
