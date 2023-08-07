@@ -19,6 +19,9 @@ namespace UploadDaemon.Report.Testwise
 
         public DateTime End;
 
+        /// <summary>
+        /// Duration of the test case in milliseconds
+        /// </summary>
         public long DurationMillis;
 
         [JsonProperty(PropertyName = "duration")]
