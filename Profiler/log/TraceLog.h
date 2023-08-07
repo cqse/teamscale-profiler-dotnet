@@ -97,9 +97,6 @@ private:
 	/** Write all information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
 
-	/** Write all information about the given function to the log. */
-	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
-
 	/** Escapes the messages by putting a backslash before special characters, e.g. escapes the colon : -> \:. */
 	std::string escape(std::string message);
 };

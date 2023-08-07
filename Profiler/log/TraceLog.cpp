@@ -7,6 +7,7 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 #include <regex>
+#include <sstream>
 
 TraceLog::~TraceLog() {
 	// Nothing to do here, destructing is handled in FileLogBase
@@ -40,18 +41,14 @@ void TraceLog::createLogFile(std::string targetDir) {
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
+	std::stringstream stream;
+	std::string endLine = "\r\n";
 	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end(); i++) {
-		writeSingleFunctionInfoToLog(key, *i);
+		stream << key << '=' << i->assemblyNumber << ':' << i->functionToken << endLine;
 	}
+	writeToFile(stream.str().c_str());
 }
 
-void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	char signature[BUFFER_SIZE];
-	signature[0] = '\0';
-	sprintf_s(signature, "%i:%i", info.assemblyNumber,
-		info.functionToken);
-	writeTupleToFile(key, signature);
-}
 
 void TraceLog::info(std::string message) {
 	writeTupleToFile(LOG_KEY_INFO, message.c_str());
