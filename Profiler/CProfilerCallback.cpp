@@ -397,7 +397,6 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	try {
 	// TODOs
 	// Handle 32 bit apps
-	// Check if it's already instrumented
 	// Check if inline events are relevant
 	// Exclude Modules
 	// Make it beautiful
@@ -417,8 +416,6 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 		IMAGE_COR_ILMETHOD* oldMethodHeader = nullptr;
 		ULONG oldMethodSize = 0;
 		profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&oldMethodHeader, &oldMethodSize);
-
-		//traceLog.info("Old Method Size: " + std::to_string(oldMethodSize));
 
 		// Based on read method and constructor of OpenCover
 		COR_ILMETHOD_FAT newMethodHeader;
@@ -456,6 +453,13 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 			sehSize = oldMethodSize - (oldFatImage->GetSize() * sizeof(DWORD) + oldFatImage->GetCodeSize());
 		}
 
+
+		// Check if we already instrumented the current method. This is necessary because a method can be jitted multiple times.
+		if (checkAlreadyInstrumented(oldCode)) {
+			profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)oldMethodHeader);
+			return S_OK;
+		}
+
 		// Build new Method Header and Content
 		CComPtr<IMethodMalloc> methodMalloc;
 		profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
@@ -466,12 +470,6 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 
 		// Copy the header back into the newMethodBody
 		memcpy(newFatImage, &newMethodHeader, newMethodHeader.GetSize() * sizeof(DWORD));
-
-		// Check if we already instrumented the current method. This is necessary because a method can be jitted multiple times.
-		if (checkAlreadyInstrumented(oldCode)) {
-			profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)oldMethodHeader);
-			return S_OK;
-		}
 
 		// Set the pointer after the header and add our own instructions
 		BYTE* newCode = newFatImage->GetCode();
