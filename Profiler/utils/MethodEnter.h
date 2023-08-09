@@ -4,19 +4,19 @@
 #include <corprof.h>
 #include <windows.h>
 #include <functional>
-#include <utils/functionID_set/functionID_set.h>
+#include <utils/UIntSet/UIntSet.h>
 #include <utils/atomic_queue/atomic_queue.h>
 
 #include <iostream>
 #include <fstream>
 
-FunctionID constexpr NIL = static_cast<FunctionID>(-1);
-using Queue = atomic_queue::AtomicQueueB<FunctionID, std::allocator<FunctionID>, NIL>;
+FunctionID constexpr NIL = static_cast<UINT64>(-1);
+using Queue = atomic_queue::AtomicQueueB<UINT64, std::allocator<UINT64>, NIL>;
 
 /**
  * Sets the vector to be filled with methodIds from called methods at this time.
  */
-void setCalledMethodsSet(functionID_set*);
+void setCalledMethodsSet(UIntSet*);
 
 void setCriticalSection(CRITICAL_SECTION*);
 
@@ -31,7 +31,7 @@ void setTestCaseRecording(bool);
  * The callback function that is run on a method enter event.
  */
 #ifdef _WIN64
-EXTERN_C void FnEnterCallback(FunctionID);
+EXTERN_C void FnEnterCallback(UINT64);
 #else
-void FnEnterCallback(FunctionID);
+void FnEnterCallback(UINT64);
 #endif

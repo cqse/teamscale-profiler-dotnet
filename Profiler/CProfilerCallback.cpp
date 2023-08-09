@@ -250,6 +250,7 @@ void CProfilerCallback::adjustEventMask() {
 	dwEventMaskLow |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	dwEventMaskLow |= COR_PRF_MONITOR_JIT_COMPILATION;
+	dwEventMaskLow |= COR_PRF_DISABLE_INLINING;
 	// disable force re-jitting for the light variant
 	if (!config.shouldUseLightMode()) {
 		dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
@@ -356,7 +357,7 @@ void CProfilerCallback::getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyNa
 		NULL, 0, NULL, metadata, NULL);
 }
 
-typedef void(__fastcall* ipv)(FunctionID);
+typedef void(__fastcall* ipv)(UINT64);
 ipv GetFunctionVisited() {
 	return &FnEnterCallback;
 }
@@ -373,11 +374,15 @@ void printMethod(TraceLog traceLog, ULONG iMethodSize, byte* pMethodHeader) {
 	traceLog.info(output);
 }
 
-bool checkAlreadyInstrumented(BYTE* code) {
+bool CProfilerCallback::checkAlreadyInstrumented(BYTE* code, UINT64 coverageId) {
 	if (*code != 0x21) {
 		return false;
 	}
-	code += 9;
+	code += 1;
+	if (*(UINT64*)code != coverageId) {
+		return false;
+	}
+	code += 8;
 	if (*code != 0x21) {
 		return false;
 	}
@@ -395,6 +400,16 @@ bool checkAlreadyInstrumented(BYTE* code) {
 
 HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock) {
 	try {
+		return instrumentation(functionId);
+	}
+	catch (...) {
+		traceLog.info("JitCompilation");
+		return S_OK;
+	}
+}
+
+const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
+{
 	// TODOs
 	// Handle 32 bit apps
 	// Check if inline events are relevant
@@ -406,97 +421,94 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	// Fill value MethodID
 
 
-		ModuleID moduleId;
-		mdToken functionToken;
-		HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
+	ModuleID moduleId;
+	mdToken functionToken;
+	profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
+	AssemblyID assemblyId;
+	profilerInfo->GetModuleInfo(moduleId, NULL, NULL, NULL, NULL, &assemblyId);
+	int assemblyNumber = assemblyMap[assemblyId];
 
-		int extraSize = 24;
+	UINT64 coverageId = ((UINT64)assemblyNumber) << 32 | functionToken;
 
-		// Get Method Content in Intermediate Language
-		IMAGE_COR_ILMETHOD* oldMethodHeader = nullptr;
-		ULONG oldMethodSize = 0;
-		profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&oldMethodHeader, &oldMethodSize);
+	int extraSize = 24;
 
-		// Based on read method and constructor of OpenCover
-		COR_ILMETHOD_FAT newMethodHeader;
-		memset(&newMethodHeader, 0, 3 * sizeof(DWORD));
-		
-		auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&oldMethodHeader->Fat);
-		BYTE* oldCode;
-		ULONG oldCodeSize;
-		int sehSize = 0;
+	// Get Method Content in Intermediate Language
+	IMAGE_COR_ILMETHOD* oldMethodHeader = nullptr;
+	ULONG oldMethodSize = 0;
+	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&oldMethodHeader, &oldMethodSize);
 
-		if (!oldFatImage->IsFat())
-		{
-			newMethodHeader.SetSize(3);
-			newMethodHeader.SetFlags(CorILMethod_FatFormat & ~CorILMethod_MoreSects);
-			newMethodHeader.SetMaxStack(8 + ((WORD)extraSize / 2));
+	// Based on read method and constructor of OpenCover
+	COR_ILMETHOD_FAT newMethodHeader;
+	memset(&newMethodHeader, 0, 3 * sizeof(DWORD));
 
-			auto tinyImage = static_cast<COR_ILMETHOD_TINY*>(&oldMethodHeader->Tiny);
+	auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&oldMethodHeader->Fat);
+	BYTE* oldCode;
+	ULONG oldCodeSize;
+	int sehSize = 0;
 
-			newMethodHeader.SetCodeSize(tinyImage->GetCodeSize() + extraSize);
-			oldCode = tinyImage->GetCode();
-			oldCodeSize = tinyImage->GetCodeSize();
-		}
-		else
-		{
-			oldCode = oldFatImage->GetCode();
-			oldCodeSize = oldFatImage->GetCodeSize();
+	if (!oldFatImage->IsFat())
+	{
+		newMethodHeader.SetSize(3);
+		newMethodHeader.SetFlags(CorILMethod_FatFormat & ~CorILMethod_MoreSects);
+		newMethodHeader.SetMaxStack(8 + ((WORD)extraSize / 2));
 
-			memcpy(&newMethodHeader, oldMethodHeader, oldFatImage->Size * sizeof(DWORD));
-			
-			ULONG oldSizeNoSEH = oldFatImage->GetCodeSize() + oldFatImage->GetSize() * sizeof(DWORD);
+		auto tinyImage = static_cast<COR_ILMETHOD_TINY*>(&oldMethodHeader->Tiny);
 
-			newMethodHeader.SetCodeSize(oldFatImage->GetCodeSize() + extraSize);
-			newMethodHeader.SetMaxStack(newMethodHeader.GetMaxStack() + ((WORD)extraSize / 2));
-
-			sehSize = oldMethodSize - (oldFatImage->GetSize() * sizeof(DWORD) + oldFatImage->GetCodeSize());
-		}
-
-
+		newMethodHeader.SetCodeSize(tinyImage->GetCodeSize() + extraSize);
+		oldCode = tinyImage->GetCode();
+		oldCodeSize = tinyImage->GetCodeSize();
+	}
+	else
+	{
+		oldCode = oldFatImage->GetCode();
 		// Check if we already instrumented the current method. This is necessary because a method can be jitted multiple times.
-		if (checkAlreadyInstrumented(oldCode)) {
+		if (checkAlreadyInstrumented(oldCode, coverageId) || assemblyNumber == 1) {
 			profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)oldMethodHeader);
 			return S_OK;
 		}
 
-		// Build new Method Header and Content
-		CComPtr<IMethodMalloc> methodMalloc;
-		profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
-		ULONG newMethodSize = newMethodHeader.GetSize() * sizeof(DWORD) + newMethodHeader.GetCodeSize() + sehSize;
-		auto newMethodBody = static_cast<COR_ILMETHOD*>(methodMalloc->Alloc(newMethodSize));
-		methodMalloc.Release();
-		auto newFatImage = static_cast<COR_ILMETHOD_FAT*>(&newMethodBody->Fat);
+		oldCodeSize = oldFatImage->GetCodeSize();
 
-		// Copy the header back into the newMethodBody
-		memcpy(newFatImage, &newMethodHeader, newMethodHeader.GetSize() * sizeof(DWORD));
+		memcpy(&newMethodHeader, oldMethodHeader, oldFatImage->Size * sizeof(DWORD));
 
-		// Set the pointer after the header and add our own instructions
-		BYTE* newCode = newFatImage->GetCode();
-		addCustomCode(newCode, functionId, moduleId);
-		
-		// Copy the original instructions to the new method body
-		memcpy(newCode, oldCode, oldCodeSize + sehSize);
+		newMethodHeader.SetCodeSize(oldFatImage->GetCodeSize() + extraSize);
+		newMethodHeader.SetMaxStack(newMethodHeader.GetMaxStack() + ((WORD)extraSize / 2));
 
-		// Fix SEH header offsets
-		if (!fixSehHeaders(newFatImage, extraSize, functionId)) {
-			return S_OK;
-		}
-		
-		profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)newMethodBody);
+		sehSize = oldMethodSize - (oldFatImage->GetSize() * sizeof(DWORD) + oldFatImage->GetCodeSize());
+	}
+
+	// Build new Method Header and Content
+	CComPtr<IMethodMalloc> methodMalloc;
+	profilerInfo->GetILFunctionBodyAllocator(moduleId, &methodMalloc);
+	ULONG newMethodSize = newMethodHeader.GetSize() * sizeof(DWORD) + newMethodHeader.GetCodeSize() + sehSize;
+	auto newMethodBody = static_cast<COR_ILMETHOD*>(methodMalloc->Alloc(newMethodSize));
+	methodMalloc.Release();
+	auto newFatImage = static_cast<COR_ILMETHOD_FAT*>(&newMethodBody->Fat);
+
+	// Copy the header back into the newMethodBody
+	memcpy(newFatImage, &newMethodHeader, newMethodHeader.GetSize() * sizeof(DWORD));
+
+	// Set the pointer after the header and add our own instructions
+	BYTE* newCode = newFatImage->GetCode();
+	addCustomCode(newCode, coverageId, moduleId);
+
+	// Copy the original instructions to the new method body
+	memcpy(newCode, oldCode, oldCodeSize + sehSize);
+
+	// Fix SEH header offsets
+	if (!fixSehHeaders(newFatImage, extraSize)) {
 		return S_OK;
 	}
-	catch (...) {
-		traceLog.info("Failed!");
-		return S_OK;
-	}
+
+	profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)newMethodBody);
+	return S_OK;
 }
 
-void CProfilerCallback::addCustomCode(BYTE*& newCode, const FunctionID& functionId, const ModuleID& moduleId)
+void CProfilerCallback::addCustomCode(BYTE*& newCode, const UINT64 coverageId, const ModuleID& moduleId)
 {
 	*(BYTE*)(newCode) = 0x21;
 	newCode += 1;
-	*(FunctionID*)(newCode) = (FunctionID)functionId;
+	*(UINT64*)(newCode) = (UINT64)coverageId;
 	newCode += 8;
 
 	// Get Coverage recording function
@@ -530,7 +542,7 @@ void CProfilerCallback::addCustomCode(BYTE*& newCode, const FunctionID& function
 	newCode += 1;
 }
 
-bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize, const FunctionID& functionId)
+bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize)
 {
 	COR_ILMETHOD_SECT_EH* currentSectEH = (COR_ILMETHOD_SECT_EH*)newFatImage->GetSect();
 	if (currentSectEH != 0 && newFatImage->GetSect()->Kind() == CorILMethod_Sect_EHTable) {
@@ -559,7 +571,7 @@ bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSi
 
 					}
 					else {
-						traceLog.warn("Try Offset Too Large. Skipping instrumentation method " + std::to_string(functionId));
+						traceLog.warn("Try Offset Too Large. Skipping instrumentation method.");
 						return false;
 					}
 					if ((smallEHClause[index].GetHandlerOffset() + extraSize) < 0xFFFF) // cannot modify if it's bigger than 2 bytes
@@ -568,7 +580,7 @@ bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSi
 
 					}
 					else {
-						traceLog.warn("Handler Offset Too Large. Skipping instrumentation method " + std::to_string(functionId));
+						traceLog.warn("Handler Offset Too Large. Skipping instrumentation method.");
 						return false;
 					}
 				}
@@ -582,17 +594,6 @@ bool CProfilerCallback::fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSi
 	return true;
 }
 
-HRESULT CProfilerCallback::JITCompilationFinished(FunctionID functionId,
-	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	try {
-		return JITCompilationFinishedImplementation(functionId, hrStatus, fIsSafeToBlock);
-	}
-	catch (...) {
-		handleException("JITCompilationFinished");
-		return S_OK;
-	}
-}
-
 void CProfilerCallback::handleException(std::string context) {
 	Debug::getInstance().logErrorWithStracktrace(context);
 	if (!config.shouldIgnoreExceptions()) {
@@ -600,112 +601,18 @@ void CProfilerCallback::handleException(std::string context) {
 	}
 }
 
-HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId,
-	HRESULT hrStatus, BOOL fIsSafeToBlock) {
-	if (config.isProfilingEnabled() && config.isTgaEnabled()) {
-		EnterCriticalSection(&callbackSynchronization);
-		EnterCriticalSection(&methodSetSynchronization);
-		recordFunctionInfo(&jittedMethods, functionId);
-		LeaveCriticalSection(&methodSetSynchronization);
-		LeaveCriticalSection(&callbackSynchronization);
-	}
-	return S_OK;
-}
-
-HRESULT CProfilerCallback::JITInlining(FunctionID callerId, FunctionID calleeId,
-	BOOL* pfShouldInline) {
-	try {
-		return JITInliningImplementation(callerId, calleeId, pfShouldInline);
-	}
-	catch (...) {
-		handleException("JITInlining");
-		return S_OK;
-	}
-}
-
-HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, FunctionID calleeId,
-	BOOL* pfShouldInline) {
-	if (config.isProfilingEnabled() && config.isTgaEnabled()) {
-		// Save information about inlined method (if not already seen)
-
-		// TODO (MP) Better late call eval here as well.
-		if (!inlinedMethodIds.contains(calleeId)) {
-			EnterCriticalSection(&callbackSynchronization);
-			inlinedMethodIds.insert(calleeId);
-			recordFunctionInfo(&inlinedMethods, calleeId);
-			LeaveCriticalSection(&callbackSynchronization);
-		}
-	}
-
-	// Always allow inlining.
-	*pfShouldInline = true;
-
-	return S_OK;
-}
-
-void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFunctionInfos, FunctionID calleeId) {
-	// Must be called from synchronized context
-
-	FunctionInfo info;
-	getFunctionInfo(calleeId, &info);
-
-	if (config.isTiaEnabled() && info.assemblyNumber == 1) {
-		return;
-	}
-
-	recordedFunctionInfos->push_back(info);
-
-	if (shouldWriteEagerly()) {
-		writeFunctionInfosToLog();
-	}
-}
-
-inline bool CProfilerCallback::shouldWriteEagerly() {
-	// Must be called from synchronized context
-	size_t overallCount = inlinedMethods.size() + jittedMethods.size();
-	overallCount += calledMethods.size();
-	return config.getEagerness() > 0 && static_cast<int>(overallCount) >= config.getEagerness();
-}
-
 void CProfilerCallback::writeFunctionInfosToLog() {
 	// Must be called from synchronized context
-	if (config.isTgaEnabled()) {
-		traceLog.writeInlinedFunctionInfosToLog(&inlinedMethods);
-		inlinedMethods.clear();
-
-		traceLog.writeJittedFunctionInfosToLog(&jittedMethods);
-		jittedMethods.clear();
-	}
-
-	if (config.isTiaEnabled()) {
-		for (unsigned int i = 0; i < calledMethodIds.size(); i++) {
-			FunctionID value = calledMethodIds.at(i);
-			if (value != 0) {
-				recordFunctionInfo(&calledMethods, value);
-			}
-		}
-
-		calledMethodIds.clear();
-		traceLog.writeCalledFunctionInfosToLog(&calledMethods);
-		calledMethods.clear();
-	}
-}
-
-HRESULT CProfilerCallback::getFunctionInfo(FunctionID functionId, FunctionInfo* info) {
-	ModuleID moduleId = 0;
-	HRESULT hr = profilerInfo->GetFunctionInfo2(functionId, 0,
-		NULL, &moduleId, &info->functionToken, 0, NULL, NULL);
-
-	if (SUCCEEDED(hr) && moduleId != 0) {
-		AssemblyID assemblyId;
-		hr = profilerInfo->GetModuleInfo(moduleId, NULL, NULL,
-			NULL, NULL, &assemblyId);
-		if (SUCCEEDED(hr)) {
-			info->assemblyNumber = assemblyMap[assemblyId];
+	for (unsigned int i = 0; i < calledMethodIds.size(); i++) {
+		UINT64 value = calledMethodIds.at(i);
+		if (value != 0) {
+			calledMethods.push_back(FunctionInfo{ (int)(value >> 32), (mdToken)value });
 		}
 	}
 
-	return hr;
+	calledMethodIds.clear();
+	traceLog.writeCalledFunctionInfosToLog(&calledMethods);
+	calledMethods.clear();
 }
 
 int CProfilerCallback::writeFileVersionInfo(LPCWSTR assemblyPath, char* buffer, size_t bufferSize) {

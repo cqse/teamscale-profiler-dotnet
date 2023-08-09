@@ -271,7 +271,7 @@
     <ClInclude Include="instrumentation\CanonicalNames.h" />
     <ClInclude Include="instrumentation\Instruction.h" />
     <ClInclude Include="CProfilerWorker.h" />
-    <ClInclude Include="utils\functionID_set\functionId_set.h" />
+    <ClInclude Include="utils\UIntSet\UIntSet.h" />
     <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="config\Config.h" />

@@ -1,6 +1,6 @@
 #include "CProfilerWorker.h"
 
-CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, functionID_set* calledMethodIds, CRITICAL_SECTION* methodSetSynchronization) {
+CProfilerWorker::CProfilerWorker(Config* config, TraceLog* traceLog, UIntSet* calledMethodIds, CRITICAL_SECTION* methodSetSynchronization) {
 	this->traceLog = traceLog;
 	this->calledMethodIds = calledMethodIds;
 	this->methodSetSynchronization = methodSetSynchronization;

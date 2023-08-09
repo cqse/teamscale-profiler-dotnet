@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <utils/functionID_set/functionID_set.h>
+#include <utils/UIntSet/UIntSet.h>
 #include "CProfilerWorker.h"
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
@@ -38,16 +38,14 @@ public:
 	/** Write coverage information to log file at shutdown. */
 	STDMETHOD(Shutdown)();
 
+	bool checkAlreadyInstrumented(BYTE* code, UINT64 function);
+
 	STDMETHOD(JITCompilationStarted)(FunctionID functionId, BOOL fIsSafeToBlock);
 
-	/** Store information about jitted method. */
-	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
+	const HRESULT instrumentation(FunctionID functionId);
 
 	/** Write loaded assembly to log file. */
 	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
-
-	/** Record inlining of method, but generally allow it. */
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 
 	/**
 	 * Implements the actual shutdown procedure. Must only be called once.
@@ -80,23 +78,6 @@ private:
 	 */
 	std::map<AssemblyID, int> assemblyMap;
 
-	/**
-	 * Info object that keeps track of jitted methods.
-	 */
-	std::vector<FunctionInfo> jittedMethods;
-
-	/**
-	 * Keeps track of inlined methods.
-	 * We use the set to efficiently determine if we already noticed an inlined method.
-	 */
-	functionID_set inlinedMethodIds;
-
-	/**
-	 * Keeps track of inlined methods.
-	 * We use the vector to uniquely store the information about inlined methods.
-	 */
-	std::vector<FunctionInfo> inlinedMethods;
-
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo8> profilerInfo;
 
@@ -119,7 +100,7 @@ private:
 	 * Keeps track of called methods.
 	 * We use the set to efficiently determine if we already noticed an called method.
 	 */
-	functionID_set calledMethodIds;
+	UIntSet calledMethodIds;
 
 	CProfilerWorker* worker = NULL;
 
@@ -146,20 +127,12 @@ private:
 	/** Returns a proxy for the upload daemon process */
 	UploadDaemon createDaemon();
 
-	/** Create method info object for a function id. */
-	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
-
 	/**  Store assembly counter for id. */
 	int registerAssembly(AssemblyID assemblyId);
 
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* moduleId);
 
-	/** Triggers eagerly writing of function infos to log. */
-	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
-
-	/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
-	bool shouldWriteEagerly();
 
 	/** Write all information about the recorded functions to the log and clears the log. */
 	void writeFunctionInfosToLog();
@@ -167,21 +140,19 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
-	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
-	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 	HRESULT InitializeImplementation(IUnknown* pICorProfilerInfoUnk);
 
 	/**
 	* Fix SEH header offsets. These need to be adjusted because we add additional bytes to the method which also
 	* moves around the exception hanlding sections.
 	*/
-	bool fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize, const FunctionID& functionId);
+	bool fixSehHeaders(COR_ILMETHOD_FAT* newFatImage, int extraSize);
 
 	/**
 	* Add the code we need to record coveage to the start of a method.
 	*/
-	void addCustomCode(BYTE*& newCode, const FunctionID& functionId, const ModuleID& moduleId);
+	void addCustomCode(BYTE*& newCode, const UINT64 functionId, const ModuleID& moduleId);
 
 	/** Logs a stack trace. May rethrow the caught exception. */
 	void handleException(std::string context);

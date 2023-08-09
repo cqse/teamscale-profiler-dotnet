@@ -3,19 +3,19 @@
 #include "Debug.h"
 
 namespace {
-	functionID_set* calledFunctionSet;
+	UIntSet* calledFunctionSet;
 	bool isTestCaseRecording = false;
 	CRITICAL_SECTION* methodSetSynchronization;
 	Queue* methodQueue;
 }
 
-extern "C" void _stdcall EnterCpp(FunctionID funcId) {
-	if (isTestCaseRecording && !calledFunctionSet->contains(funcId)) {
-		methodQueue->push(funcId);
+extern "C" void _stdcall EnterCpp(UINT64 covId) {
+	if (isTestCaseRecording && !calledFunctionSet->contains(covId)) {
+		methodQueue->push(covId);
 	}
 }
 
-void setCalledMethodsSet(functionID_set* setToUse) {
+void setCalledMethodsSet(UIntSet* setToUse) {
 	calledFunctionSet = setToUse;
 }
 
@@ -33,13 +33,13 @@ void setTestCaseRecording(bool testCaseRecording) {
 
 #ifdef _WIN64
 
-void __fastcall FnEnterCallback(FunctionID funcId) {
-	EnterCpp(funcId);
+void __fastcall FnEnterCallback(UINT64 covId) {
+	EnterCpp(covId);
 }
 
 #else
 
-void __declspec(naked) FnEnterCallback(FunctionID funcId) {
+void __declspec(naked) FnEnterCallback(UINT64 covId) {
 	__asm {
 		PUSH EAX
 		PUSH ECX
