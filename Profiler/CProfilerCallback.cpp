@@ -9,6 +9,7 @@
 #include <winuser.h>
 #include <utils/MethodEnter.h>
 #include "instrumentation/Instruction.h"
+#include <codecvt>
 
 #pragma comment(lib, "version.lib")
 #pragma intrinsic(strcmp,labs,strcpy,_rotl,memcmp,strlen,_rotr,memcpy,_lrotl,_strset,memset,_lrotr,abs,strcat)
@@ -275,7 +276,6 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	}
 	EnterCriticalSection(&callbackSynchronization);
 
-	int assemblyNumber = registerAssembly(assemblyId);
 
 	char assemblyInfo[BUFFER_SIZE];
 	int writtenChars = 0;
@@ -284,6 +284,8 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	WCHAR assemblyPath[BUFFER_SIZE];
 	ASSEMBLYMETADATA metadata;
 	getAssemblyInfo(assemblyId, assemblyName, assemblyPath, &metadata);
+	std::wstring assembly(assemblyName);
+	int assemblyNumber = registerAssembly(assemblyId, assembly);
 
 	LeaveCriticalSection(&callbackSynchronization);
 
@@ -307,10 +309,11 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	return S_OK;
 }
 
-int CProfilerCallback::registerAssembly(AssemblyID assemblyId) {
+int CProfilerCallback::registerAssembly(AssemblyID assemblyId, std::wstring assemblyName) {
 	int assemblyNumber = assemblyCounter;
 	assemblyCounter++;
 	assemblyMap[assemblyId] = assemblyNumber;
+	assemblyNameMap[assemblyId] = assemblyName;
 	return assemblyNumber;
 }
 
@@ -362,18 +365,6 @@ ipv GetFunctionVisited() {
 	return &FnEnterCallback;
 }
 
-void printMethod(TraceLog traceLog, ULONG iMethodSize, byte* pMethodHeader) {
-	traceLog.info("Method Body:");
-	std::string output;
-	static const char hex_digits[] = "0123456789ABCDEF";
-	for (ULONG i = 0; i < iMethodSize; i++) {
-		output.push_back(hex_digits[*(pMethodHeader + i) >> 4]);
-		output.push_back(hex_digits[*(pMethodHeader + i) & 15]);
-		output.push_back(' ');
-	}
-	traceLog.info(output);
-}
-
 bool CProfilerCallback::checkAlreadyInstrumented(BYTE* code, UINT64 coverageId) {
 	if (*code != 0x21) {
 		return false;
@@ -408,6 +399,14 @@ HRESULT CProfilerCallback::JITCompilationStarted(FunctionID functionId, BOOL fIs
 	}
 }
 
+bool CProfilerCallback::excludeAssembly(AssemblyID assemblyId) {
+	std::wstring assembly = assemblyNameMap[assemblyId];
+	if (assembly.find(L"System") == 0) {
+		return true;
+	}
+	return false;
+}
+
 const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 {
 	// TODOs
@@ -425,8 +424,12 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 	mdToken functionToken;
 	profilerInfo->GetFunctionInfo2(functionId, 0, NULL, &moduleId, &functionToken, 0, NULL, NULL);
 	AssemblyID assemblyId;
+	ULONG nameLength = 0;
 	profilerInfo->GetModuleInfo(moduleId, NULL, NULL, NULL, NULL, &assemblyId);
 	int assemblyNumber = assemblyMap[assemblyId];
+	if (excludeAssembly(assemblyId)) {
+		return S_OK;
+	}
 
 	UINT64 coverageId = ((UINT64)assemblyNumber) << 32 | functionToken;
 
@@ -462,7 +465,7 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 	{
 		oldCode = oldFatImage->GetCode();
 		// Check if we already instrumented the current method. This is necessary because a method can be jitted multiple times.
-		if (checkAlreadyInstrumented(oldCode, coverageId) || assemblyNumber == 1) {
+		if (checkAlreadyInstrumented(oldCode, coverageId)) {
 			profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)oldMethodHeader);
 			return S_OK;
 		}

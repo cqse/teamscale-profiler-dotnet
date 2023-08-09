@@ -42,6 +42,8 @@ public:
 
 	STDMETHOD(JITCompilationStarted)(FunctionID functionId, BOOL fIsSafeToBlock);
 
+	bool excludeAssembly(AssemblyID assemblyId);
+
 	const HRESULT instrumentation(FunctionID functionId);
 
 	/** Write loaded assembly to log file. */
@@ -77,6 +79,7 @@ private:
 	 * It is used to identify the declaring assembly for functions.
 	 */
 	std::map<AssemblyID, int> assemblyMap;
+	std::map <AssemblyID, std::wstring > assemblyNameMap;
 
 	/** Smart pointer to the .NET framework profiler info. */
 	CComQIPtr<ICorProfilerInfo8> profilerInfo;
@@ -128,7 +131,7 @@ private:
 	UploadDaemon createDaemon();
 
 	/**  Store assembly counter for id. */
-	int registerAssembly(AssemblyID assemblyId);
+	int registerAssembly(AssemblyID assemblyId, std::wstring assemblyName);
 
 	/** Stores the assmebly name, path and metadata in the passed variables.*/
 	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* moduleId);
