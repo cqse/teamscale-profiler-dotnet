@@ -251,7 +251,6 @@ void CProfilerCallback::adjustEventMask() {
 	dwEventMaskLow |= COR_PRF_MONITOR_ASSEMBLY_LOADS;
 
 	dwEventMaskLow |= COR_PRF_MONITOR_JIT_COMPILATION;
-	dwEventMaskLow |= COR_PRF_DISABLE_INLINING;
 	// disable force re-jitting for the light variant
 	if (!config.shouldUseLightMode()) {
 		dwEventMaskLow |= COR_PRF_DISABLE_ALL_NGEN_IMAGES;
@@ -411,7 +410,7 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 {
 	// TODOs
 	// Handle 32 bit apps
-	// Check if inline events are relevant
+	// Enable inlining for everything that is not included
 	// Exclude Modules
 	// Make it beautiful
 	// Check if newMethodBody can be freed (and for other possible memory leaks)
@@ -438,7 +437,9 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 	// Get Method Content in Intermediate Language
 	IMAGE_COR_ILMETHOD* oldMethodHeader = nullptr;
 	ULONG oldMethodSize = 0;
-	profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&oldMethodHeader, &oldMethodSize);
+	if (profilerInfo->GetILFunctionBody(moduleId, functionToken, (LPCBYTE*)&oldMethodHeader, &oldMethodSize) != S_OK) {
+		return S_OK;
+	}
 
 	// Based on read method and constructor of OpenCover
 	COR_ILMETHOD_FAT newMethodHeader;
@@ -447,7 +448,7 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 	auto oldFatImage = static_cast<COR_ILMETHOD_FAT*>(&oldMethodHeader->Fat);
 	BYTE* oldCode;
 	ULONG oldCodeSize;
-	int sehSize = 0;
+	ULONG sehSize = 0;
 
 	if (!oldFatImage->IsFat())
 	{
@@ -504,6 +505,24 @@ const HRESULT CProfilerCallback::instrumentation(FunctionID functionId)
 	}
 
 	profilerInfo->SetILFunctionBody(moduleId, functionToken, (LPCBYTE)newMethodBody);
+
+	ULONG32 mapSize;
+	profilerInfo->GetILToNativeMapping(functionId, 0, &mapSize, NULL);
+	traceLog.info("Map Size: " + std::to_string(mapSize));
+
+	auto oldMaps = std::unique_ptr<COR_DEBUG_IL_TO_NATIVE_MAP>(new COR_DEBUG_IL_TO_NATIVE_MAP[mapSize]);
+	profilerInfo->GetILToNativeMapping(functionId, mapSize, NULL, oldMaps.get());
+	auto pMap = std::shared_ptr<COR_IL_MAP>(new COR_IL_MAP[mapSize]);
+	for (ULONG32 i = 0; i < mapSize; i++) {
+		ULONG32 oldOffset = oldMaps.get()[i].ilOffset;
+		ULONG32 newOffset = oldOffset + extraSize;
+		pMap.get()[i].fAccurate = TRUE;
+		pMap.get()[i].oldOffset = oldOffset;
+		pMap.get()[i].newOffset = newOffset;
+	}
+
+	profilerInfo->SetILInstrumentedCodeMap(functionId, TRUE, mapSize, pMap.get());
+	
 	return S_OK;
 }
 
@@ -528,7 +547,7 @@ void CProfilerCallback::addCustomCode(BYTE*& newCode, const UINT64 coverageId, c
 		IMAGE_CEE_CS_CALLCONV_DEFAULT,          // Default CallKind!
 		0x01,                                   // Parameter count
 		ELEMENT_TYPE_VOID,                      // Return type
-		ELEMENT_TYPE_I8                         // Parameter type (I8) needs to be adjusted for 32 bit
+		ELEMENT_TYPE_I8                         // Parameter type (I8)
 	};
 	CComPtr<IMetaDataEmit> metaDataEmit;
 	profilerInfo->GetModuleMetaData(moduleId, ofWrite, IID_IMetaDataEmit, (IUnknown**)&metaDataEmit);
