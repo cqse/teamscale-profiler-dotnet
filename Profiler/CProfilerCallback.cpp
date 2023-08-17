@@ -93,8 +93,8 @@ CProfilerCallback::~CProfilerCallback() {
 		// make sure we flush to disk and disable access to this instance for other threads
 		// even if the .NET framework doesn't call Shutdown() itself
 		getShutdownGuard().shutdownInstance(false);
-		DeleteCriticalSection(&methodSetSynchronization);
 		DeleteCriticalSection(&callbackSynchronization);
+		DeleteCriticalSection(&methodSetSynchronization);
 	}
 	catch (...) {
 		handleException("Destructor");
@@ -411,6 +411,9 @@ HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID funct
 		EnterCriticalSection(&callbackSynchronization);
 		EnterCriticalSection(&methodSetSynchronization);
 		recordFunctionInfo(&jittedMethods, functionId);
+		if (shouldWriteEagerly()) {
+			writeFunctionInfosToLog();
+		}
 		LeaveCriticalSection(&methodSetSynchronization);
 		LeaveCriticalSection(&callbackSynchronization);
 	}
@@ -436,8 +439,13 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 		// TODO (MP) Better late call eval here as well.
 		if (!inlinedMethodIds.contains(calleeId)) {
 			EnterCriticalSection(&callbackSynchronization);
+			EnterCriticalSection(&methodSetSynchronization);
 			inlinedMethodIds.insert(calleeId);
 			recordFunctionInfo(&inlinedMethods, calleeId);
+			if (shouldWriteEagerly()) {
+				writeFunctionInfosToLog();
+			}
+			LeaveCriticalSection(&methodSetSynchronization);
 			LeaveCriticalSection(&callbackSynchronization);
 		}
 	}
@@ -459,10 +467,6 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 	}
 
 	recordedFunctionInfos->push_back(info);
-
-	if (shouldWriteEagerly()) {
-		writeFunctionInfosToLog();
-	}
 }
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
