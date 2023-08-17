@@ -284,6 +284,7 @@ void CProfilerCallback::adjustEventMask() {
 
 	if (config.isTiaEnabled()) {
 		dwEventMaskLow |= COR_PRF_MONITOR_ENTERLEAVE;
+		dwEventMaskLow |= COR_PRF_DISABLE_INLINING;
 	}
 
 	profilerInfo->SetEventMask2(dwEventMaskLow, dwEventMaskHigh);
