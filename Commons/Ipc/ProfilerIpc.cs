@@ -65,7 +65,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
-            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result)}");
+            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}");
         }
 
         public void Dispose()
