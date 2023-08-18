@@ -54,7 +54,7 @@ public:
 	void logAssembly(std::string assembly);
 
 	void startTestCase(std::string testName);
-	void endTestCase(std::string result = "", std::string message = "");
+	void endTestCase(std::string result = "", std::string message = "", long duration = 0);
 
 protected:
 	/** The key to log information about the profiler startup. */

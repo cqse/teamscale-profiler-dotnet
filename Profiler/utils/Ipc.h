@@ -8,7 +8,7 @@
 class Ipc
 {
 public:
-	Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback);
+	Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string, long)> testEndCallback, std::function<void(std::string)> errorCallback);
 	~Ipc();
 	std::string getCurrentTestName();
 private:
@@ -19,7 +19,7 @@ private:
 	Config* config = NULL;
 	std::thread* handlerThread = NULL;
 	std::function<void(std::string)> testStartCallback;
-	std::function<void(std::string, std::string)> testEndCallback;
+	std::function<void(std::string, std::string, long)> testEndCallback;
 	std::function<void(std::string)> errorCallback;
 	std::atomic<bool> shutdown = false;
 	void sendDisconnect();
