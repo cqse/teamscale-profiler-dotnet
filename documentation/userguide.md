@@ -76,7 +76,7 @@ Please note that the profiler is **still** configured with variables with the `C
 
 ### IIS / Web Applications
 
-If the application is running in an IIS application server, the following steps need to be taken:
+If the application is running in an IIS application server (`w3wp.exe`), the following steps need to be taken:
 
 * Make the relevant application pool see the environment variables
 * Regularly recycle the relevant application pool or configure eager mode
