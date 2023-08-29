@@ -1,6 +1,7 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
 using System.Linq;
+using System.Text;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
@@ -38,7 +39,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public override void Publish(params string[] frames)
         {
-            this.publishSocket?.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(frame))));
+            this.publishSocket?.SendMultipartMessage(new NetMQMessage(frames.Select(frame => new NetMQFrame(System.Text.Encoding.UTF8.GetBytes(frame)))));
         }
 
         public override void Dispose()
