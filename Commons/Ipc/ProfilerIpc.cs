@@ -55,6 +55,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             {
                 throw new ArgumentException("Test name must not be empty or null");
             }
+            if (this.TestName != string.Empty)
+            {
+                logger.Info("Starting a new test while a test is still active. Ending active Test with result Skipped since actual result is unknown.");
+                this.EndTest(TestExecutionResult.Skipped);
+            }
 
             logger.Info("Broadcasting start of test {testName}", testName);
             this.TestName = testName;
@@ -63,6 +68,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public void EndTest(TestExecutionResult result)
         {
+            if (TestName == string.Empty)
+            {
+                logger.Info("Testname is empty. Result {result} cannot be associated with a testname and is not broadcasted.", TestName, result);
+                return;
+            }
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
             ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}");

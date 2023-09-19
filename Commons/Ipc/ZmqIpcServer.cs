@@ -77,7 +77,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             System.Threading.Tasks.Parallel.ForEach(clients, entry =>
             {
                 entry.Value.Item2.SendFrame(Encoding.UTF8.GetBytes(testEvent));
-                if (entry.Value.Item2.TryReceiveFrameString(TimeSpan.FromSeconds(5.0), out string? response))
+                if (entry.Value.Item2.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
                 {
                     Console.WriteLine(response);
                 } else

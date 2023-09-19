@@ -48,7 +48,7 @@ void Ipc::handlerThreadLoop() {
 	while (address == "") {
 		 address = this->request("register:" + std::to_string(GetCurrentProcessId()));
 		 if (address == "") {
-			 std::this_thread::sleep_for(5000ms);
+			 std::this_thread::sleep_for(3000ms);
 		 }
 	}
 	handleMessage(getCurrentTestName());
