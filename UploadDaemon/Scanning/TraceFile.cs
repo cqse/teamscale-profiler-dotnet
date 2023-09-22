@@ -20,7 +20,6 @@ namespace UploadDaemon.Scanning
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
-        private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(\d+):(?:\d+:)?(\d+)");
         private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=((?:Start|End)):([^:]+):(.+)");
 
         /// <summary>
@@ -122,15 +121,15 @@ namespace UploadDaemon.Scanning
                     case "Inlined":
                     case "Jitted":
                     case "Called":
-                        Match coverageMatch = CoverageLineRegex.Match(line);
-                        uint assemblyId = Convert.ToUInt32(coverageMatch.Groups[1].Value);
+                        String[] coverageMatch = line.Split(new[] { '=', ':' }, count: 3);
+                        uint assemblyId = Convert.ToUInt32(coverageMatch[1]);
                         if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
                         {
                             logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                                 " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
                             continue;
                         }
-                        currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch.Groups[2].Value)));
+                        currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch[2])));
                         break;
                     case "Stopped":
                         if (currentTestTrace.IsEmpty)
