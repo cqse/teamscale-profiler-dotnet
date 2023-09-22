@@ -34,12 +34,12 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             switch (message)
             {
                 case "testname":
-                    logger.Info("Received request get_testname. Response {testName}", TestName);
-                    if (TestName == string.Empty)
+                    logger.Info("Received request get_testname. Response {testName}", this.TestName);
+                    if (this.TestName == string.Empty)
                     {
                         return string.Empty;
                     }
-                    return $"start:{TestName}";
+                    return $"start:{this.TestName}";
                 case string profiler when new Regex("r:").IsMatch(profiler):
                     logger.Info("Registered");
                     return "registered";

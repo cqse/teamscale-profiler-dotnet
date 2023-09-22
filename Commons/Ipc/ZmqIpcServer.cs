@@ -55,11 +55,12 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 						}
 						portOffset++;
                         RequestSocket clientRequestSocket = new RequestSocket();
-                        clientAddress = config.RequestSocket + ":" + (config.StartPortNumber + portOffset);
+                        clientAddress = config.RequestSocket + ":" + ((config.StartPortNumber + portOffset) % 65535);
                         clientRequestSocket.Connect(clientAddress);
 
                         clients.Add(pid, Tuple.Create(clientAddress, clientRequestSocket));
 						responseSocket.SendFrame(clientAddress);
+                        logger.Info($"Registered profiler on address {clientAddress}");
 					}
 					return;
                 }
@@ -79,7 +80,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 entry.Value.Item2.SendFrame(Encoding.UTF8.GetBytes(testEvent));
                 if (entry.Value.Item2.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
                 {
-                    Console.WriteLine(response);
+                    logger.Info($"Got Response from {entry.Value.Item1}: {response}");
                 } else
                 {
                     lock(clientsToRemove)

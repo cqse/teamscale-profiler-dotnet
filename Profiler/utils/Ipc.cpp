@@ -15,7 +15,6 @@ using namespace std::chrono_literals;
 const std::string TEST_START = "start:";
 const std::string TEST_END = "end:";
 
-// TODO What if this is already running?
 Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
@@ -49,6 +48,7 @@ void Ipc::handlerThreadLoop() {
 		 address = this->request("register:" + std::to_string(GetCurrentProcessId()));
 		 if (address == "") {
 			 std::this_thread::sleep_for(3000ms);
+			 logError("Connection failed, trying again.");
 		 }
 	}
 	handleMessage(getCurrentTestName());
@@ -56,7 +56,6 @@ void Ipc::handlerThreadLoop() {
 	this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);
 	zmq_setsockopt(this->zmqReplySocket, ZMQ_RCVTIMEO, &zmqTimeout, sizeof(zmqTimeout));
 	zmq_setsockopt(this->zmqReplySocket, ZMQ_LINGER, &zmqLinger, sizeof(zmqLinger));
-	logError("Connecting IPC Socket");
 
 	if (!!zmq_bind(this->zmqReplySocket, address.c_str())) {
 		zmq_close(this->zmqReplySocket);
@@ -67,9 +66,9 @@ void Ipc::handlerThreadLoop() {
 
 	while (!this->shutdown) {
 		char buf[IPC_BUFFER_SIZE];
-		int bytes = zmq_recv(this->zmqReplySocket, &buf, IPC_BUFFER_SIZE, 0);
-		if (bytes != -1) {
-			IPC_TERMINATE_STRING(buf, bytes);
+		int len = zmq_recv(this->zmqReplySocket, &buf, IPC_BUFFER_SIZE, 0);
+		if (len != -1) {
+			IPC_TERMINATE_STRING(buf, len);
 			std::string message (buf);
 			handleMessage(message);
 			zmq_send(this->zmqReplySocket, "ack", 3, 0);
@@ -79,6 +78,7 @@ void Ipc::handlerThreadLoop() {
 } 
 
 void Ipc::handleMessage(std::string message) {
+	logError("Received Message " + message);
 	if (message.find(TEST_START) == 0) {
 		this->testStartCallback(message.substr(TEST_START.length()));
 	}
@@ -108,7 +108,7 @@ std::string Ipc::request(std::string message)
 	}
 
 	IPC_TERMINATE_STRING(buffer, len);
-	return buffer;
+	return std::string(buffer);
 }
 
 bool Ipc::initRequestSocket() {
