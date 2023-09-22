@@ -44,7 +44,7 @@ Ipc::~Ipc()
 
 void Ipc::handlerThreadLoop() {
 	std::string address = "";
-	while (address == "") {
+	while (address == "" && !this->shutdown) {
 		 address = this->request("register:" + std::to_string(GetCurrentProcessId()));
 		 if (address == "") {
 			 std::this_thread::sleep_for(3000ms);
