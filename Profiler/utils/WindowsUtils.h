@@ -41,4 +41,8 @@ public:
 
 	/** Writes an Event Log error about the errors. If the application is not running in an application pool, then also pops up a message box with the error. */
 	static void reportError(LPCTSTR errorTitle, LPCTSTR errorMessage);
+
+	/** Returns true if the directory is writable by the current user. False otherwise. */
+	static bool isDirectoryWritable(std::string directory);
+
 };

@@ -6,6 +6,8 @@
 #include <chrono>
 #include <thread>
 
+#include <fstream>
+
 /** Maximum size of an enironment variable value according to http://msdn.microsoft.com/en-us/library/ms683188.aspx */
 static const size_t MAX_ENVIRONMENT_VARIABLE_VALUE_SIZE = 32767 * sizeof(char);
 
@@ -142,6 +144,26 @@ bool WindowsUtils::ensureDirectoryExists(std::string directory) {
 
 	Debug::getInstance().log("Create: " + directory);
 	return CreateDirectory(directory.c_str(), NULL) == TRUE;
+}
+
+bool WindowsUtils::isDirectoryWritable(std::string directory)
+{
+	try {
+		std::string tempFileName = directory + "/" + std::to_string(std::time(nullptr)) + ".tmp";
+
+		// Attempt to create and immediately delete a temporary file in the directory.
+		std::ofstream fs(tempFileName, std::ios::binary | std::ios::trunc);
+		if (fs.is_open()) {
+			fs.close();
+			std::remove(tempFileName.c_str());
+			return true;
+		}
+		return false;
+	}
+	catch (...) {
+		return false;
+	}
+}
 }
 
 void WindowsUtils::reportError(LPCTSTR errorTitle, LPCTSTR errorMessage) {
