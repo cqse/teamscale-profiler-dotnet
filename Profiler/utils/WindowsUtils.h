@@ -29,4 +29,8 @@ public:
 
 	/** Returns true if the directory and parent directories exist or could be created. False otherwise. */
 	static bool ensureDirectoryExists(std::string directory);
+
+	/** Returns true if the directory is writable by the current user. False otherwise. */
+	static bool isDirectoryWritable(std::string directory);
+
 };
