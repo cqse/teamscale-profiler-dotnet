@@ -164,7 +164,6 @@ bool WindowsUtils::isDirectoryWritable(std::string directory)
 		return false;
 	}
 }
-}
 
 void WindowsUtils::reportError(LPCTSTR errorTitle, LPCTSTR errorMessage) {
 	HANDLE h_event_log = RegisterEventSource(0, ".NET Runtime");
