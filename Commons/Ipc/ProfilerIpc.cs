@@ -14,6 +14,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public string TestName { get; private set; } = String.Empty;
 
+        public long TestStartMS { get; set; } = 0;
+
         public IpcConfig Config { get; }
 
         public ProfilerIpc(IpcConfig config)
@@ -55,7 +57,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public void EndTest(TestExecutionResult result, string message = "", long durationMs = 0)
         {
-            logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
+            logger.Info("Broadcasting end of test {testName} with result {result} with duration {duration}", TestName, result, durationMs);
             this.TestName = string.Empty;
             ipcServer.Publish("test:end", Enum.GetName(typeof(TestExecutionResult), result).ToUpper(), message, durationMs.ToString());
         }

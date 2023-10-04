@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using System.Web;
+using System.Xml.Linq;
 
 namespace Cqse.Teamscale.Profiler.Commander.Server
 {
@@ -11,7 +12,6 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
     {
         private readonly ProfilerIpc profilerIpc;
         private readonly ILogger logger;
-        private long testStart = 0;
 
         public ProfilerTestController(ProfilerIpc profilerIpc, ILogger<ProfilerTestController> logger)
         {
@@ -25,6 +25,11 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             return profilerIpc.TestName;
         }
 
+        public long GetStart()
+        {
+            return profilerIpc.TestStartMS;
+        }
+
         [HttpPost("start/{testName}")]
         public void StartTest(string testName)
         {
@@ -34,16 +39,16 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             }
 
             logger.LogInformation("Starting test: {}", testName);
-            testStart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            profilerIpc.TestStartMS = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
         }
 
         [HttpPost("stop/{result}")]
         public void StopTest(TestExecutionResult result)
         {
-            logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
             long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            profilerIpc.EndTest(result, durationMs: testEnd - testStart);
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}; duration: {}", GetCurrent(), result, testEnd - GetStart());
+            profilerIpc.EndTest(result, durationMs: testEnd - GetStart());
         }
 
         /// <summary>
@@ -52,9 +57,9 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         [HttpPost("end/{name}")]
         public void EndTest(string name, [FromBody] TestResultDto result)
         {
-            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
             long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            profilerIpc.EndTest(result.Result, durationMs: testEnd - testStart);
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}; duration: {}", name, result.Result, testEnd - GetStart());
+            profilerIpc.EndTest(result.Result, durationMs: testEnd - GetStart());
         }
 
         public class TestResultDto
