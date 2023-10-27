@@ -5,7 +5,7 @@
 using namespace std::chrono_literals;
 
 #define IPC_TIMEOUT_MS 1000
-#define IPC_BUFFER_SIZE 255
+#define IPC_BUFFER_SIZE 768
 #define IPC_LINGER 0
 
 // ZMQ strings are not zero-terminated, let's terminate these

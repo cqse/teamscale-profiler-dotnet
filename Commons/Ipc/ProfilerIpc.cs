@@ -60,10 +60,10 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 logger.Info("Starting a new test while a test is still active. Ending active Test with result Skipped since actual result is unknown.");
                 this.EndTest(TestExecutionResult.Skipped);
             }
-
-            logger.Info("Broadcasting start of test {testName}", testName);
-            this.TestName = testName;
-            ipcServer.SendTestEvent($"start:{testName}");
+            String cleanedTestName = testName.Replace("\n", "").Replace("\r", ""); ;
+            logger.Info("Broadcasting start of test {testName}", cleanedTestName);
+            this.TestName = cleanedTestName;
+            ipcServer.SendTestEvent($"start:{cleanedTestName}");
         }
 
         public void EndTest(TestExecutionResult result)

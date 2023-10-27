@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace UploadDaemon.Report.Testwise
 {
@@ -63,7 +64,26 @@ namespace UploadDaemon.Report.Testwise
         /// </summary>
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore });
+
+            
+            StringBuilder sb = new StringBuilder();
+            
+            sb.Append("{");
+            if (Partial)
+            {
+                sb.Append("\"partial\":true,");
+            }
+            sb.Append("\"tests\":[");
+            JsonSerializerSettings settings = new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore };
+            for (int i = 0; i < Tests.Length; i++)
+            {
+                sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
+                Tests[i] = null;
+            }
+
+            sb.Append("]}");
+
+            return sb.ToString();
         }
     }
 }
