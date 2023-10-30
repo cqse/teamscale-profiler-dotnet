@@ -64,8 +64,6 @@ namespace UploadDaemon.Report.Testwise
         /// </summary>
         public override string ToString()
         {
-
-            
             StringBuilder sb = new StringBuilder();
             
             sb.Append("{");
@@ -80,10 +78,54 @@ namespace UploadDaemon.Report.Testwise
                 sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
                 Tests[i] = null;
             }
-
             sb.Append("]}");
 
             return sb.ToString();
+        }
+
+        public List<string> ToStringList()
+        {
+            List<string> result = new List<string>();
+            StringBuilder sb = new StringBuilder();
+            JsonSerializerSettings settings = new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore };
+
+            bool newReport = true;
+            for (int i = 0; i < Tests.Length; i++)
+            {
+                if (newReport)
+                {
+                    sb.Append("{");
+                    if (Partial)
+                    {
+                        sb.Append("\"partial\":true,");
+                    }
+                    sb.Append("\"tests\":[");
+                } else
+                {
+                    sb.Append(',');
+                }
+                
+                sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
+                Tests[i] = null;
+
+                if (sb.Length > 536_870_912)
+                {
+                    sb.Append("]}");
+                    result.Add(sb.ToString());
+                    sb = new StringBuilder();
+                    newReport = true;
+                } else
+                {
+                    newReport = false;
+                }
+            }
+            if (!newReport)
+            {
+                sb.Append("]}");
+                result.Add(sb.ToString());
+            }
+
+            return result;
         }
     }
 }

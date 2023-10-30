@@ -127,6 +127,7 @@ namespace UploadDaemon.Upload
                 CloudFileShare share = await GetOrCreateShareAsync(account);
                 CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
                 long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                // TODO support very large reports with ToStringList
                 await UploadTextAsync(coverageReport.ToString(), $"{unixSeconds}.{coverageReport.FileExtension}", directory);
                 await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}.metadata", directory);
 

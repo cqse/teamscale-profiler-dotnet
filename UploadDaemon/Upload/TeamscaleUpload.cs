@@ -106,6 +106,7 @@ namespace UploadDaemon.Upload
 
             try
             {
+                // TODO support very large reports with ToStringList
                 byte[] reportBytes = Encoding.UTF8.GetBytes(coverageReport.ToString());
                 using (MemoryStream stream = new MemoryStream(reportBytes))
                 {

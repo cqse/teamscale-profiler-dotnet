@@ -74,5 +74,15 @@ namespace UploadDaemon.Report.Simple
             }
             return report.ToString();
         }
+
+        public List<string> ToStringList()
+        {
+            List<String> result = new List<string>
+            {
+                this.ToString()
+            };
+            return result;
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
@@ -79,9 +80,14 @@ namespace UploadDaemon.Upload
             try
             {
                 EnsureTargetDirectoryExists(targetDirectory);
-
-                fileSystem.File.WriteAllText(filePath, coverageReport.ToString());
-                fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
+                List<string> reports = coverageReport.ToStringList();
+                int i = 1;
+                foreach (string report in reports)
+                {
+                    fileSystem.File.WriteAllText($"{filePath}_{i}", report);
+                    fileSystem.File.WriteAllText($"{metadataFilePath}_{i}.{coverageReport.FileExtension}", revisionOrTimestamp.ToRevisionFileContent());
+                    i++;
+                }
                 return Task.FromResult(true);
             }
             catch (Exception e)
