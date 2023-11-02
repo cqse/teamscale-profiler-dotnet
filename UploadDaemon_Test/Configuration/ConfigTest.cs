@@ -158,7 +158,29 @@ namespace UploadDaemon.Configuration
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
+        [Test]
+        public void TestEmbeddedUploadInformation()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\ProfilerTestee.exe
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
 
+            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
+                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\sources\ProfilerTestee\ProfilerTestee\bin\Release\ProfilerTestee.exe",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
+
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Assert.That(traceFile.embeddedUploadTargets.Count, Is.AtLeast(1));
+            Assert.That(fooConfig, Is.Not.Null);
+            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+        }
         [Test]
         public void TestLoadedAssemblyPathRegexWithNoMatch()
         {
@@ -394,24 +416,6 @@ namespace UploadDaemon.Configuration
             ").CreateConfigForProcess("foo.exe").Validate();
 
             Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
-        }
-
-        [Test]
-        public void MissingRevisionFile()
-        {
-            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
-            {
-                Config.Read(@"
-                match:
-                    - profiler:
-                        targetdir: C:\test1
-                    - uploader:
-                        directory: C:\target
-                        pdbDirectory: C:\pdbs
-                ").CreateConfigForProcess("foo.exe");
-            });
-
-            Assert.That(exception.Message, Contains.Substring("revisionFile"));
         }
 
         [Test]

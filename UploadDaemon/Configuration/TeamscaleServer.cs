@@ -1,4 +1,7 @@
+using NLog;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UploadDaemon.Configuration
 {
@@ -24,6 +27,11 @@ namespace UploadDaemon.Configuration
         public string Project { get; set; }
 
         /// <summary>
+        /// Additional Teamscale projects to upload to
+        /// </summary>
+        public List<string> AdditionalProjects { get; set; } = new List<string>();
+
+        /// <summary>
         /// Username to authenticate with.
         /// </summary>
         public string Username { get; set; }
@@ -43,6 +51,27 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Message { get; set; } = "Test coverage for version %v from %p created at %t";
 
+        public TeamscaleServer(string targetProject, TeamscaleServer previous, Logger logger)
+        {
+            url = previous.Url;
+            AdditionalProjects = previous.AdditionalProjects;
+            if (targetProject == null)
+            {
+                targetProject = GetNextTargetProject();
+                if (targetProject == null)
+                {
+                    logger.Warn("No more additional projects as upload targets found. Will use last found project as upload target. This is a configuration error, please check that there is an equal number of projects and revisions declared.");
+                    targetProject = previous.Project;
+                }
+            }
+            Project = targetProject;
+            Partition = previous.Partition;
+            Username = previous.Username;
+            AccessKey = previous.AccessKey;
+            Message = previous.Message;
+        }
+        public TeamscaleServer() {
+        }
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";
@@ -58,10 +87,6 @@ namespace UploadDaemon.Configuration
             {
                 yield return @"You must provide a valid URL to connect to Teamscale";
             }
-            if (Project == null)
-            {
-                yield return @"You must provide a project into which the coverage will be uploaded";
-            }
             if (Username == null)
             {
                 yield return @"You must provide a username to connect to Teamscale";
@@ -73,6 +98,19 @@ namespace UploadDaemon.Configuration
             if (Partition == null)
             {
                 yield return @"You must provide a partition into which the coverage will be uploaded";
+            }
+        }
+        private string GetNextTargetProject()
+        {
+            try
+            {
+                string nextProject = AdditionalProjects.First();
+                AdditionalProjects.Remove(nextProject);
+                return nextProject;
+            }
+    
+            catch(InvalidOperationException e){
+                return null;
             }
         }
     }

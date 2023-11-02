@@ -4,6 +4,7 @@ using UploadDaemon.Configuration;
 using System.Linq;
 using System.IO;
 using NLog;
+using System.Reflection;
 
 namespace UploadDaemon.SymbolAnalysis
 {

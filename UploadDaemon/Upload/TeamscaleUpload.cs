@@ -5,8 +5,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
 {
@@ -19,15 +19,21 @@ namespace UploadDaemon.Upload
 
         private readonly HttpClient client = new HttpClient();
 
-        private readonly TeamscaleServer server;
+        public TeamscaleServer Server { get; set; }
         private readonly MessageFormatter messageFormatter;
 
         public TeamscaleUpload(TeamscaleServer server)
         {
-            this.server = server;
+            this.Server = server;
             this.messageFormatter = new MessageFormatter(server);
-
             HttpClientUtils.SetUpBasicAuthentication(client, server);
+        }
+
+        public TeamscaleUpload(string targetProject, TeamscaleServer server)
+        {
+            Server = new TeamscaleServer(targetProject, server, logger);
+            messageFormatter = new MessageFormatter(Server);
+            HttpClientUtils.SetUpBasicAuthentication(client, Server);
         }
 
         /// <summary>
@@ -38,30 +44,53 @@ namespace UploadDaemon.Upload
         /// <returns>Whether the upload was successful.</returns>
         public async Task<bool> UploadAsync(string filePath, string version)
         {
-            logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
+            logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, version, Server.ToString());
 
             string message = messageFormatter.Format(version);
             string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedProject = HttpUtility.UrlEncode(server.Project);
+            string encodedProject = HttpUtility.UrlEncode(Server.Project);
             string encodedVersion = HttpUtility.UrlEncode(version);
-            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
+            string encodedPartition = HttpUtility.UrlEncode(Server.Partition);
+            string url = $"{Server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
 
+            bool isSuccessful;
+            isSuccessful = await DoAsyncUpload(filePath, version, url);
+            if (!isSuccessful)
+            {
+                return false;
+            }
+            foreach (string additionalProject in Server.AdditionalProjects)
+            {
+                encodedProject = HttpUtility.UrlEncode(additionalProject);
+                url = $"{Server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
+                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
+                isSuccessful = await DoAsyncUpload(filePath, version, url);
+                if (!isSuccessful)
+                {
+                    logger.Error("Upload of {trace} to additional Teamscale project {project} failed. Stopping. ", filePath, additionalProject);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private async Task<bool> DoAsyncUpload(String filePath, string version, String encodedUrl)
+        {
             try
             {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", filePath))
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, encodedUrl, "report", filePath))
                 {
                     if (response.IsSuccessStatusCode)
                     {
-                        logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
+                        logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, version, Server.ToString());
                         return true;
                     }
                     else
                     {
                         string body = await response.Content.ReadAsStringAsync();
                         logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
-                            filePath, server.ToString(), response.StatusCode, body);
+                            filePath, Server.ToString(), response.StatusCode, body);
                         return false;
                     }
                 }
@@ -69,14 +98,14 @@ namespace UploadDaemon.Upload
             catch (Exception e)
             {
                 logger.Error(e, "Upload of {trace} to {teamscale} failed due to an exception",
-                    filePath, server.ToString());
+                    filePath, Server.ToString());
                 return false;
             }
         }
 
         public string Describe()
         {
-            return server.ToString();
+            return Server.ToString();
         }
 
         public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
@@ -93,14 +122,14 @@ namespace UploadDaemon.Upload
 
             string message = messageFormatter.Format(timestampParameter);
             string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedProject = HttpUtility.UrlEncode(server.Project);
+            string encodedProject = HttpUtility.UrlEncode(Server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
-            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
+            string encodedPartition = HttpUtility.UrlEncode(Server.Partition);
+            string url = $"{Server.Url}/p/{encodedProject}/external-report?format=SIMPLE" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
-            logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, server.ToString(), url);
+            logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, Server.ToString(), url);
 
             try
             {
@@ -113,35 +142,43 @@ namespace UploadDaemon.Upload
             catch (Exception e)
             {
                 logger.Error(e, "Upload of line coverage from {trace} to {teamscale} failed due to an exception." +
-                    " Will retry later", originalTraceFilePath, server.ToString());
+                    " Will retry later", originalTraceFilePath, Server.ToString());
                 return false;
             }
         }
 
         private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+            try
             {
-                if (response.IsSuccessStatusCode)
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
                 {
-                    logger.Info("Successfully uploaded line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
-                        originalTraceFilePath, timestampParameter, timestampValue, server.ToString());
-                    return true;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        logger.Info("Successfully uploaded line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
+                            originalTraceFilePath, timestampParameter, timestampValue, Server.ToString());
+                        return true;
+                    }
+                    else
+                    {
+                        string body = await response.Content.ReadAsStringAsync();
+                        logger.Error("Upload of line coverage to {teamscale} failed with status code {statusCode}. This coverage is lost." +
+                            "\n{responseBody}", Server.ToString(), response.StatusCode, body);
+                        return false;
+                    }
                 }
-                else
-                {
-                    string body = await response.Content.ReadAsStringAsync();
-                    logger.Error("Upload of line coverage to {teamscale} failed with status code {statusCode}. This coverage is lost." +
-                        "\n{responseBody}", server.ToString(), response.StatusCode, body);
-                    return false;
-                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e);
+                return false;
             }
         }
 
         /// <inheritdoc/>
         public object GetTargetId()
         {
-            return (server.Url, server.Project, server.Partition);
+            return (Server.Url, Server.Project, Server.Partition);
         }
     }
 }

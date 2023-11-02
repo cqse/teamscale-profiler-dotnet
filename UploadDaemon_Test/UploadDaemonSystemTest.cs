@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
+using UploadDaemon_Test.Upload;
+using static System.Net.Mime.MediaTypeNames;
 using static UploadDaemon.Configuration.Config;
 
 namespace UploadDaemon
@@ -140,6 +142,116 @@ Inlined=1:33555646:100678050");
 
             IEnumerable<string> archivedFiles = Directory.GetFiles(TargetDir, "*.txt", SearchOption.AllDirectories);
             Assert.That(archivedFiles, Is.Empty);
+        }
+
+        [Test]
+        public void TestEmbeddedResourceDirectoyUpload()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Inlined=2:100663298");
+
+            // Explicitely do not set teamscale project and revision.txt
+            new UploadDaemon().RunOnce(Config.Read($@"
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  directory: {UploadDir}                  
+                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                    
+        "));
+            IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
+            Assert.Multiple(() =>
+            {
+                Assert.That(uploadedFiles.Select(file => Path.GetExtension(file)), Is.EquivalentTo(new string[] { ".simple", ".metadata" }));
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
+            });
+        }
+
+        [Test]
+        public void TestEmbeddedResourceTeamscaleUpload()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Inlined=2:100663298");
+            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
+            mockServer.SetResponse(200);
+
+            // Explicitely do not set teamscale project and revision.txt
+            new UploadDaemon().RunOnce(Config.Read($@"
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  directory: {UploadDir}                  
+                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                  teamscale:
+                    url: http://localhost:1337
+                    username: admin
+                    accessKey: fookey
+                    partition: my_partition
+                    
+        "));
+
+            List<string> requests = mockServer.GetRecievedRequests();
+            mockServer.StopServer();
+            Assert.Multiple(() =>
+            {
+                StringAssert.Contains("/p/ProjectA/", requests[0]);
+                StringAssert.Contains("revision=HEAD", requests[0]);
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
+            });
+        }
+
+        [Test]
+        public void TestMultiProjectCoverageUpload()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+Inlined=2:100663298");
+            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
+            mockServer.SetResponse(200);
+            File.WriteAllText(RevisionFile, "revision: 12345\nrevision: 55555\ntimestamp: 1234657651");
+            new UploadDaemon().RunOnce(Config.Read($@"
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  directory: {UploadDir}                  
+                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                  revisionFile: {RevisionFile}
+                  teamscale:
+                    url: http://localhost:1337
+                    project: projectA
+                    additionalProjects: [projectB, projectC]
+                    username: admin
+                    accessKey: fookey
+                    partition: my_partition
+                    
+        "));
+
+            List<string> requests = mockServer.GetRecievedRequests();
+            mockServer.StopServer();
+            Assert.Multiple(() =>
+            {
+                StringAssert.Contains("/p/projectA/", requests[0]);
+                StringAssert.Contains("revision=12345", requests[0]);
+                StringAssert.Contains("/p/projectB/", requests[1]);
+                StringAssert.Contains("revision=55555", requests[1]);
+                StringAssert.Contains("/p/projectC/", requests[2]);
+                StringAssert.Contains("t=1234657651", requests[2]);
+                // Check that the embedded resource has been uploaded as well.
+                StringAssert.Contains("/p/ProjectA/", requests[3]);
+                StringAssert.Contains("revision=HEAD", requests[3]);
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
+            });
         }
     }
 }

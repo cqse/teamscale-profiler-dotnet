@@ -182,13 +182,6 @@ namespace UploadDaemon.Configuration
                         @" without the file extension) to read the program version from in order to upload method coverage." +
                         @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
                 }
-                if (PdbDirectory != null && RevisionFile == null)
-                {
-                    yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You provided a path to PDB files but no revision file (property ""revisionFile"")." +
-                        @" This file must contain the ID of the commit in your VCS from which the profiled code" +
-                        @" was built (e.g. for TFS: the changeset number, for Git: the SHA1) in the format `revision: COMMIT_ID`.";
-                }
             }
         }
 
@@ -272,6 +265,11 @@ namespace UploadDaemon.Configuration
                 throw new InvalidConfigException(profiledProcessPath, errors);
             }
             return config;
+        }
+
+        private static void ReadFromAssembly()
+        {
+
         }
 
         /// <summary>

@@ -16,6 +16,10 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public class RevisionOrTimestamp
         {
+            public RevisionOrTimestamp(string value, bool isRevision) {
+                this.Value = value; 
+                this.IsRevision = isRevision;
+            }
             /// <summary>
             /// The timestamp or revision.
             /// </summary>
@@ -55,7 +59,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Parses the given revision file lines. May throw exceptions if the file is malformed or cannot be read.
         /// </summary>
-        public static RevisionOrTimestamp Parse(string[] revisionFileLines, string filePath)
+        public static List<RevisionOrTimestamp> Parse(string[] revisionFileLines, string filePath)
         {
             IEnumerable<(string, string)> matches = revisionFileLines.Select(line => FileContentRegex.Match(line))
                 .Where(match => match.Success)
@@ -66,28 +70,28 @@ namespace UploadDaemon.SymbolAnalysis
                     " found neither a timestamp nor a revision entry." +
                     " Examples: 'timestamp: 1234567890' or 'revision: 123456'");
             }
+            List<RevisionOrTimestamp> result = new List<RevisionOrTimestamp>();
 
-            (string type, string value) = matches.First();
-            switch (type.ToLower())
+            foreach ((string type, string value) in matches)
             {
-                case "timestamp":
-                    return new RevisionOrTimestamp
-                    {
-                        Value = value,
-                        IsRevision = false,
-                    };
+                switch (type.ToLower())
+                {
+                    case "timestamp":
+                        result.Add(new RevisionOrTimestamp(value,false));
+                        break;
 
-                case "revision":
-                    return new RevisionOrTimestamp
-                    {
-                        Value = value,
-                        IsRevision = true,
-                    };
+                    case "revision":
+                        result.Add(new RevisionOrTimestamp(value, true));
+                        break;
 
-                default:
-                    throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
-                        $" unknown type '{type}'");
+                    default:
+                        throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
+                            $" unknown type '{type}'");
+                }
             }
+
+            return result;
+          
         }
 
         private class InvalidRevisionFileException : Exception
