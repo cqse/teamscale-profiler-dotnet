@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
 using UploadDaemon_Test.Upload;
-using static System.Net.Mime.MediaTypeNames;
 using static UploadDaemon.Configuration.Config;
 
 namespace UploadDaemon
@@ -158,9 +157,9 @@ Inlined=2:100663298");
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
-                  directory: {UploadDir}                  
+                  directory: {UploadDir}
                   pdbDirectory: {PdbDirectory}\ProfilerTestee
-                    
+
         "));
             IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
             Assert.Multiple(() =>
@@ -187,14 +186,14 @@ Inlined=2:100663298");
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
-                  directory: {UploadDir}                  
+                  directory: {UploadDir}
                   pdbDirectory: {PdbDirectory}\ProfilerTestee
                   teamscale:
                     url: http://localhost:1337
                     username: admin
                     accessKey: fookey
                     partition: my_partition
-                    
+
         "));
 
             List<string> requests = mockServer.GetRecievedRequests();
@@ -223,7 +222,7 @@ Inlined=2:100663298");
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
-                  directory: {UploadDir}                  
+                  directory: {UploadDir}
                   pdbDirectory: {PdbDirectory}\ProfilerTestee
                   revisionFile: {RevisionFile}
                   teamscale:
@@ -233,7 +232,7 @@ Inlined=2:100663298");
                     username: admin
                     accessKey: fookey
                     partition: my_partition
-                    
+
         "));
 
             List<string> requests = mockServer.GetRecievedRequests();

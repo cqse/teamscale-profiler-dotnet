@@ -1,9 +1,6 @@
-﻿using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
@@ -11,17 +8,17 @@ using WireMock.Server;
 namespace UploadDaemon_Test.Upload
 {
     /// <summary>
-    /// Mock server class that responds to requests at a given port. 
+    /// Mock server class that responds to requests at a given port.
     /// </summary>
     public class TeamscaleMockServer
     {
-        private readonly WireMockServer Server; 
-    
+        private readonly WireMockServer Server;
+
         /// <summary>
         /// Constructor that starts the WireMockServer at the given port.
         /// </summary>
         /// <param name="port"></param>
-        public TeamscaleMockServer(int port) 
+        public TeamscaleMockServer(int port)
         {
             Server = WireMockServer.Start(port);
         }
@@ -51,7 +48,7 @@ namespace UploadDaemon_Test.Upload
         }
 
         /// <summary>
-        /// Stops the server. 
+        /// Stops the server.
         /// </summary>
         public void StopServer()
         {

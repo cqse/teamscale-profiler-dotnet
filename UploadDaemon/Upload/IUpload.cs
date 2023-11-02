@@ -41,6 +41,5 @@ namespace UploadDaemon.Upload
         /// which of the uploads was used, after the fact.
         /// </summary>
         object GetTargetId();
-
     }
 }

@@ -11,7 +11,6 @@ namespace UploadDaemon.Scanning
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
 
-
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
         /// </summary>

@@ -267,11 +267,6 @@ namespace UploadDaemon.Configuration
             return config;
         }
 
-        private static void ReadFromAssembly()
-        {
-
-        }
-
         /// <summary>
         /// Reads in the central YAML config file and parses its contents.
         /// </summary>

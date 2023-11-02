@@ -70,8 +70,10 @@ namespace UploadDaemon.Configuration
             AccessKey = previous.AccessKey;
             Message = previous.Message;
         }
-        public TeamscaleServer() {
-        }
+        /// <summary>
+        /// Needed for automatic creation via yaml file.
+        /// </summary>
+        public TeamscaleServer() {}
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";
