@@ -237,6 +237,11 @@ Inlined=2:100663298");
 
             List<string> requests = mockServer.GetRecievedRequests();
             mockServer.StopServer();
+            AssertMultiProjectRequests(requests, coverageFileName);
+        }
+
+        private void AssertMultiProjectRequests(List<string> requests, string coverageFileName)
+        {
             Assert.Multiple(() =>
             {
                 StringAssert.Contains("/p/projectA/", requests[0]);

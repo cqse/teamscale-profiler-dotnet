@@ -36,6 +36,9 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
+        /// <summary>
+        /// The uploads targets (revision and optionally teamscale project) that are embedded into assemblies referenced in the trace file.
+        /// </summary>
         public readonly List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>();
 
         public ParsedTraceFile(string[] lines, string filePath)
@@ -49,41 +52,7 @@ namespace UploadDaemon.SymbolAnalysis
                     match => (name: match.Groups["name"].Value, path: match.Groups["path"].Value)
                 );
             this.LoadedAssemblies = assemblyTokens.Values.ToList();
-
-            foreach ((_, string path) in this.LoadedAssemblies)
-            {
-                if(String.IsNullOrEmpty(path)) continue;
-
-                Assembly assembly = null;
-                try
-                {
-                    assembly = Assembly.LoadFrom(path);
-                }
-                catch (FileNotFoundException e)
-                {
-                    logger.Warn("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
-                    continue;
-                }
-                TypeInfo teamscaleResourceType = assembly.DefinedTypes.First(x => x.Name == "Teamscale_Resource");
-                if(teamscaleResourceType != null)
-                {
-                    
-                    logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly.FullName);
-                    ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
-                    string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Teamscale_Project");
-                    string embeddedRevision = teamscaleResourceManager.GetString("RevisionOrTimestamp");
-                    string isRevision = teamscaleResourceManager.GetString("isRevision");
-                    
-                    if(embeddedRevision == null || isRevision == null) 
-                    {
-                        logger.Error("Not all required fields in embedded resource found in {assembly}. Please specify atleast 'RevisionOrTimestamp' and 'isRevision'.", assembly.FullName);
-                        continue;
-                    }
-                    embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, bool.Parse(isRevision))));
-                }
-               
-
-            }
+            SearchForEmbeddedUploadTargets();
             IEnumerable<Match> coverageMatches = lines.Select(line => CoverageLineRegex.Match(line))
                             .Where(match => match.Success);
             foreach (Match match in coverageMatches)
@@ -96,6 +65,46 @@ namespace UploadDaemon.SymbolAnalysis
                     continue;
                 }
                 CoveredMethods.Add((assembly.name, Convert.ToUInt32(match.Groups[2].Value)));
+            }
+        }
+        /// <summary>
+        /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
+        /// </summary>
+        private void SearchForEmbeddedUploadTargets()
+        {
+            foreach ((_, string path) in this.LoadedAssemblies)
+            {
+                if (String.IsNullOrEmpty(path))
+                {
+                    continue;
+                }
+                Assembly assembly = null;
+                try
+                {
+                    assembly = Assembly.LoadFrom(path);
+                }
+                catch (Exception e)
+                {
+                    logger.Warn("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
+                    continue;
+                }
+                TypeInfo teamscaleResourceType = assembly.DefinedTypes.First(x => x.Name == "Teamscale_Resource");
+                if (teamscaleResourceType != null)
+                {
+
+                    logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly.FullName);
+                    ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
+                    string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Teamscale_Project");
+                    string embeddedRevision = teamscaleResourceManager.GetString("RevisionOrTimestamp");
+                    string isRevision = teamscaleResourceManager.GetString("isRevision");
+
+                    if (embeddedRevision == null || isRevision == null)
+                    {
+                        logger.Error("Not all required fields in embedded resource found in {assembly}. Please specify atleast 'RevisionOrTimestamp' and 'isRevision'.", assembly.FullName);
+                        continue;
+                    }
+                    embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, bool.Parse(isRevision))));
+                }
             }
         }
     }

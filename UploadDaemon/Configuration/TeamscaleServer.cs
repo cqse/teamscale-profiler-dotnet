@@ -73,7 +73,9 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Needed for automatic creation via yaml file.
         /// </summary>
-        public TeamscaleServer() {}
+        public TeamscaleServer() {
+            // intentionally left blank.
+        }
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";

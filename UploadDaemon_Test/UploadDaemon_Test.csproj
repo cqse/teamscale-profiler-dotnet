@@ -415,7 +415,7 @@
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Configuration\ConfigTest.cs" />
     <Compile Include="Configuration\ConfigParserTest.cs" />
-    <Compile Include="Upload\Class1.cs" />
+    <Compile Include="Upload\TeamscaleMockServer.cs" />
     <Compile Include="Upload\LineCoverageMergerTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
     <Compile Include="Archiving\ArchiveTest.cs" />

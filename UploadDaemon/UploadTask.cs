@@ -172,6 +172,12 @@ namespace UploadDaemon
                 archive.ArchiveLineCoverage(Path.GetFileName(parsedTraceFile.FilePath) + ".simple",
                     LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
             }
+            ProcessRevisionOrTimestamps(revisionOrTimestamps, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
+            ProcessEmbeddedUploadTargets(embeddedUploadTargets,parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
+        }
+
+        private void ProcessRevisionOrTimestamps(List<RevisionOrTimestamp> revisionOrTimestamps, ParsedTraceFile parsedTraceFile, Archive archive, LineCoverageMerger coverageMerger, Config.ConfigForProcess processConfig, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
+        {
             for (int i = 0; i < revisionOrTimestamps.Count; i++)
             {
                 RevisionOrTimestamp revisionOrTimestamp = revisionOrTimestamps[i];
@@ -181,7 +187,9 @@ namespace UploadDaemon
                 }
                 ProcessForRevisionOrTimestamp(revisionOrTimestamp, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
             }
-
+        }
+        private void ProcessEmbeddedUploadTargets(List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets, ParsedTraceFile parsedTraceFile, Archive archive, LineCoverageMerger coverageMerger, Config.ConfigForProcess processConfig, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
+        {
             foreach ((string project, RevisionOrTimestamp revisionOrTimestamp) in embeddedUploadTargets)
             {
                 if (project != null && upload is TeamscaleUpload)
