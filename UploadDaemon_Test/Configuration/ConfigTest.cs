@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
@@ -170,9 +171,9 @@ namespace UploadDaemon.Configuration
                       directory: C:\upload\foo
                       versionAssembly: foo
             ");
-
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "ProfilerTestee.exe");
             ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
-                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\sources\ProfilerTestee\ProfilerTestee\bin\Release\ProfilerTestee.exe",
+                $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
                 @"Inlined=2:{ExistingMethodToken}",
             }, "coverage_1_1.txt");
 
