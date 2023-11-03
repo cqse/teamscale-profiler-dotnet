@@ -147,8 +147,9 @@ Inlined=1:33555646:100678050");
         public void TestEmbeddedResourceDirectoyUpload()
         {
             string coverageFileName = "coverage_1_1.txt";
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
-Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName,"test-data", "test-programs", "ProfilerTestee.exe");
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
+Process={targetAssembly}
 Inlined=2:100663298");
 
             // Explicitely do not set teamscale project and revision.txt
@@ -174,8 +175,9 @@ Inlined=2:100663298");
         public void TestEmbeddedResourceTeamscaleUpload()
         {
             string coverageFileName = "coverage_1_1.txt";
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
-Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName,"test-data", "test-programs", "ProfilerTestee.exe");
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
+Process={targetAssembly}
 Inlined=2:100663298");
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
@@ -211,8 +213,9 @@ Inlined=2:100663298");
         public void TestMultiProjectCoverageUpload()
         {
             string coverageFileName = "coverage_1_1.txt";
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
-Process=C:\Dev\teamscale-profiler-dotnet\test-data\test-programs\ProfilerTestee.exe
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "ProfilerTestee.exe");
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
+Process={targetAssembly}
 Inlined=2:100663298");
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
