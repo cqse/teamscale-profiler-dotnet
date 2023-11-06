@@ -1,7 +1,6 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
@@ -67,6 +66,7 @@ namespace UploadDaemon.SymbolAnalysis
                 CoveredMethods.Add((assembly.name, Convert.ToUInt32(match.Groups[2].Value)));
             }
         }
+
         /// <summary>
         /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
         /// </summary>
@@ -74,24 +74,14 @@ namespace UploadDaemon.SymbolAnalysis
         {
             foreach ((_, string path) in this.LoadedAssemblies)
             {
-                if (String.IsNullOrEmpty(path))
+                Assembly assembly = LoadAssemblyFromPath(path);
+                if (assembly == null || assembly.DefinedTypes == null)
                 {
-                    continue;
-                }
-                Assembly assembly = null;
-                try
-                {
-                    assembly = Assembly.LoadFrom(path);
-                }
-                catch (Exception e)
-                {
-                    logger.Warn("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
                     continue;
                 }
                 TypeInfo teamscaleResourceType = assembly.DefinedTypes.First(x => x.Name == "Teamscale_Resource");
                 if (teamscaleResourceType != null)
                 {
-
                     logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly.FullName);
                     ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
                     string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Teamscale_Project");
@@ -106,6 +96,24 @@ namespace UploadDaemon.SymbolAnalysis
                     embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, bool.Parse(isRevision))));
                 }
             }
+        }
+
+        private Assembly LoadAssemblyFromPath(string path)
+        {
+            if (String.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+            Assembly assembly = null;
+            try
+            {
+                assembly = Assembly.LoadFrom(path);
+            }
+            catch (Exception e)
+            {
+                logger.Warn("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
+            }
+            return assembly;
         }
     }
 }
