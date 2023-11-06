@@ -19,7 +19,7 @@ namespace UploadDaemon.Upload
 
         private readonly HttpClient client = new HttpClient();
 
-        public TeamscaleServer Server { get; set; }
+        public readonly TeamscaleServer Server;
         private readonly MessageFormatter messageFormatter;
 
         public TeamscaleUpload(TeamscaleServer server)
