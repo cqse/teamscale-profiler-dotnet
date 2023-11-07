@@ -109,6 +109,12 @@ namespace UploadDaemon.Configuration
             public string RevisionFile { get; set; } = null;
 
             /// <summary>
+            /// File that contains a mapping of code revision to Teamscale project that are used as upload targets.
+            /// Defaults to null.
+            /// </summary>
+            public string UploadTargetFile { get; set; } = null;
+
+            /// <summary>
             /// Patterns to select which assemblies to analyze.
             /// Defaults to sane default patterns.
             /// This property is never null.
@@ -139,6 +145,7 @@ namespace UploadDaemon.Configuration
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
+                UploadTargetFile = section.UploadTargetFile ?? UploadTargetFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
 
                 if (section.AssemblyPatterns != null)
@@ -181,6 +188,13 @@ namespace UploadDaemon.Configuration
                         @" You must provide an assembly name (property ""versionAssembly""," +
                         @" without the file extension) to read the program version from in order to upload method coverage." +
                         @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
+                }
+                if (RevisionFile != null && UploadTargetFile != null)
+                {
+                    yield return $"Invalid configuration for process {ProcessPath}." +
+                        @" You configured both revision file (via property ""revisionFile"")" +
+                        @" and upload target file (via property ""uploadTargetFile""). Please decide which you would" +
+                        @" like to use and remove the other.";
                 }
             }
         }

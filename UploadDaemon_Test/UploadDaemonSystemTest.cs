@@ -1,10 +1,12 @@
-﻿using NUnit.Framework;
+﻿using Newtonsoft.Json;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
 using UploadDaemon_Test.Upload;
 using static UploadDaemon.Configuration.Config;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon
 {
@@ -143,33 +145,6 @@ Inlined=1:33555646:100678050");
             Assert.That(archivedFiles, Is.Empty);
         }
 
-        [Test]
-        public void TestEmbeddedResourceDirectoyUpload()
-        {
-            string coverageFileName = "coverage_1_1.txt";
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName,"test-data", "test-programs", "ProfilerTestee.exe");
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
-Process={targetAssembly}
-Inlined=2:100663298");
-
-            // Explicitely do not set teamscale project and revision.txt
-            new UploadDaemon().RunOnce(Config.Read($@"
-            match:
-              - profiler:
-                  targetdir: {TargetDir}
-                uploader:
-                  directory: {UploadDir}
-                  pdbDirectory: {PdbDirectory}\ProfilerTestee
-
-        "));
-            IEnumerable<string> uploadedFiles = Directory.GetFiles(UploadDir);
-            Assert.Multiple(() =>
-            {
-                Assert.That(uploadedFiles.Select(file => Path.GetExtension(file)), Is.EquivalentTo(new string[] { ".simple", ".metadata" }));
-                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
-                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
-            });
-        }
 
         [Test]
         public void TestEmbeddedResourceTeamscaleUpload()
@@ -208,6 +183,41 @@ Inlined=2:100663298");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
             });
         }
+        [Test]
+        public void TestNet6EmbeddedAssembly()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "Net6ConsoleApp.dll");
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
+Process={targetAssembly}
+Inlined=2:100663298");
+            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
+            mockServer.SetResponse(200);
+            new UploadDaemon().RunOnce(Config.Read($@"
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  directory: {UploadDir}
+                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                  teamscale:
+                    url: http://localhost:1337
+                    username: admin
+                    accessKey: fookey
+                    partition: my_partition
+
+        "));
+
+            List<string> requests = mockServer.GetRecievedRequests();
+            mockServer.StopServer();
+            Assert.Multiple(() =>
+            {
+                StringAssert.Contains("/p/TestProject/", requests[0]);
+                StringAssert.Contains("revision=master%3aHEAD", requests[0]);
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
+            });
+        }
 
         [Test]
         public void TestMultiProjectCoverageUpload()
@@ -217,9 +227,17 @@ Inlined=2:100663298");
             File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
 Process={targetAssembly}
 Inlined=2:100663298");
+            string uploadTargetFile = Path.Combine(TestUtils.TestTempDirectory, "uploadTargets.json");
+            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>
+            {
+                ("projectA", new RevisionOrTimestamp("12345", true)),
+                ("projectB", new RevisionOrTimestamp("55555", true)),
+                ("projectC", new RevisionOrTimestamp("1234657651", false))
+            };
+            string jsonContent = JsonConvert.SerializeObject(uploadTargets);
+            File.WriteAllText(uploadTargetFile, jsonContent);
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
-            File.WriteAllText(RevisionFile, "revision: 12345\nrevision: 55555\ntimestamp: 1234657651");
             new UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
@@ -227,11 +245,9 @@ Inlined=2:100663298");
                 uploader:
                   directory: {UploadDir}
                   pdbDirectory: {PdbDirectory}\ProfilerTestee
-                  revisionFile: {RevisionFile}
+                  uploadTargetFile: {uploadTargetFile}
                   teamscale:
                     url: http://localhost:1337
-                    project: projectA
-                    additionalProjects: [projectB, projectC]
                     username: admin
                     accessKey: fookey
                     partition: my_partition

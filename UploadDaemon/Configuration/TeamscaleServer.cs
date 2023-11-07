@@ -27,11 +27,6 @@ namespace UploadDaemon.Configuration
         public string Project { get; set; }
 
         /// <summary>
-        /// Additional Teamscale projects to upload to
-        /// </summary>
-        public List<string> AdditionalProjects { get; set; } = new List<string>();
-
-        /// <summary>
         /// Username to authenticate with.
         /// </summary>
         public string Username { get; set; }
@@ -54,16 +49,6 @@ namespace UploadDaemon.Configuration
         public TeamscaleServer(string targetProject, TeamscaleServer previous, Logger logger)
         {
             url = previous.Url;
-            AdditionalProjects = previous.AdditionalProjects;
-            if (targetProject == null)
-            {
-                targetProject = GetNextTargetProject();
-                if (targetProject == null)
-                {
-                    logger.Warn("No more additional projects as upload targets found. Will use last found project as upload target. This is a configuration error, please check that there is an equal number of projects and revisions declared.");
-                    targetProject = previous.Project;
-                }
-            }
             Project = targetProject;
             Partition = previous.Partition;
             Username = previous.Username;
@@ -71,7 +56,7 @@ namespace UploadDaemon.Configuration
             Message = previous.Message;
         }
         /// <summary>
-        /// Needed for automatic creation via yaml file.
+        /// Needed only for automatic creation via yaml file.
         /// </summary>
         public TeamscaleServer() {
             // intentionally left blank.
@@ -102,19 +87,6 @@ namespace UploadDaemon.Configuration
             if (Partition == null)
             {
                 yield return @"You must provide a partition into which the coverage will be uploaded";
-            }
-        }
-        private string GetNextTargetProject()
-        {
-            try
-            {
-                string nextProject = AdditionalProjects.First();
-                AdditionalProjects.Remove(nextProject);
-                return nextProject;
-            }
-    
-            catch(InvalidOperationException e){
-                return null;
             }
         }
     }

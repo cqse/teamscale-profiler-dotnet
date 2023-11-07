@@ -54,25 +54,7 @@ namespace UploadDaemon.Upload
             string url = $"{Server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
 
-            bool isSuccessful;
-            isSuccessful = await DoAsyncUpload(filePath, version, url);
-            if (!isSuccessful)
-            {
-                return false;
-            }
-            foreach (string additionalProject in Server.AdditionalProjects)
-            {
-                encodedProject = HttpUtility.UrlEncode(additionalProject);
-                url = $"{Server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
-                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
-                isSuccessful = await DoAsyncUpload(filePath, version, url);
-                if (!isSuccessful)
-                {
-                    logger.Error("Upload of {trace} to additional Teamscale project {project} failed. Stopping. ", filePath, additionalProject);
-                    return false;
-                }
-            }
-            return true;
+            return await DoAsyncUpload(filePath, version, url);
         }
 
         private async Task<bool> DoAsyncUpload(String filePath, string version, String encodedUrl)

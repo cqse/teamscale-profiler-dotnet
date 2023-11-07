@@ -59,7 +59,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Parses the given revision file lines. May throw exceptions if the file is malformed or cannot be read.
         /// </summary>
-        public static List<RevisionOrTimestamp> Parse(string[] revisionFileLines, string filePath)
+        public static RevisionOrTimestamp Parse(string[] revisionFileLines, string filePath)
         {
             IEnumerable<(string, string)> matches = revisionFileLines.Select(line => FileContentRegex.Match(line))
                 .Where(match => match.Success)
@@ -70,28 +70,21 @@ namespace UploadDaemon.SymbolAnalysis
                     " found neither a timestamp nor a revision entry." +
                     " Examples: 'timestamp: 1234567890' or 'revision: 123456'");
             }
-            List<RevisionOrTimestamp> result = new List<RevisionOrTimestamp>();
-
-            foreach ((string type, string value) in matches)
+            (string type, string value) = matches.First();
             {
                 switch (type.ToLower())
                 {
                     case "timestamp":
-                        result.Add(new RevisionOrTimestamp(value,false));
-                        break;
+                        return new RevisionOrTimestamp(value,false);
 
                     case "revision":
-                        result.Add(new RevisionOrTimestamp(value, true));
-                        break;
+                        return new RevisionOrTimestamp(value, true);
 
                     default:
                         throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
                             $" unknown type '{type}'");
                 }
-            }
-
-            return result;
-          
+            }          
         }
 
         private class InvalidRevisionFileException : Exception
