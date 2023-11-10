@@ -154,7 +154,6 @@ namespace UploadDaemon
         private void ProcessLineCoverage(ParsedTraceFile parsedTraceFile, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", parsedTraceFile.FilePath, upload.Describe());
-            RevisionOrTimestamp revisionOrTimestamp = ParseRevisionFile(parsedTraceFile, processConfig);
             Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(parsedTraceFile, archive, processConfig);
             if (lineCoverage == null)
             {
@@ -165,14 +164,9 @@ namespace UploadDaemon
                 archive.ArchiveLineCoverage(Path.GetFileName(parsedTraceFile.FilePath) + ".simple",
                     LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
             }
-            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = ParseUploadTargetFile(parsedTraceFile, processConfig) ?? new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
+            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = ParseRevisionOrUploadTargetFile(parsedTraceFile, processConfig);
             uploadTargets.AddRange(parsedTraceFile.embeddedUploadTargets);
-            
-            if (revisionOrTimestamp != null)
-            {
-                ProcessForRevisionOrTimestamp(revisionOrTimestamp, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
-            }
-            else if (uploadTargets.Any())
+            if (uploadTargets.Any())
             {
                 ProcessUploadTargets(uploadTargets, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
             }
@@ -181,42 +175,53 @@ namespace UploadDaemon
                 logger.Error("Could not identify any revision target for {traceFile}.", parsedTraceFile.FilePath);
             }
         }
-
-        private List<(string project, RevisionOrTimestamp revisionOrTimestamp)> ParseUploadTargetFile(ParsedTraceFile parsedTraceFile, Config.ConfigForProcess processConfig)
+        /// <summary>
+        /// Tries to read the revision or upload target file based on the config (absolute path, or relative to loaded assemblies).
+        /// </summary>
+        private List<(string project, RevisionOrTimestamp revisionOrTimestamp)> ParseRevisionOrUploadTargetFile(ParsedTraceFile parsedTraceFile, Config.ConfigForProcess processConfig)
         {
-            if (processConfig.UploadTargetFile == null)
+            string targetFile = processConfig.UploadTargetFile ?? processConfig.RevisionFile;
+            if(targetFile == null)
             {
-                return null;
+                logger.Warn("No revision or upload target file found.");
+                return new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
             }
-            if (!Config.IsAssemblyRelativePath(processConfig.UploadTargetFile))
+            if (Config.IsAssemblyRelativePath(targetFile))
             {
-                return ParseUploadTargetFile(processConfig.UploadTargetFile, parsedTraceFile.FilePath);
-            }
-
-            foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
-            {
-                string uploadTargetFile = Config.ResolveAssemblyRelativePath(processConfig.UploadTargetFile, path);
-                if (File.Exists(uploadTargetFile))
+                foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
                 {
-                    logger.Info("Using  upload target file {uploadTargetFile} while processing {traceFile}.", uploadTargetFile, parsedTraceFile.FilePath);
-                    return ParseUploadTargetFile(uploadTargetFile, parsedTraceFile.FilePath);
+                    string resolvedTargetFile = Config.ResolveAssemblyRelativePath(targetFile, path);
+                    if (File.Exists(resolvedTargetFile))
+                    {
+                        logger.Info("Using  upload target file {uploadTargetFile} while processing {traceFile}.", resolvedTargetFile, parsedTraceFile.FilePath);
+                        targetFile = resolvedTargetFile;
+                        break;
+                    }
                 }
             }
-
-            logger.Error("Failed to find upload target file {uploadTargetFile} while processing {traceFile}.", processConfig.RevisionFile, parsedTraceFile.FilePath);
-            return null;
+            if (processConfig.RevisionFile != null)
+            {
+                return new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>()
+                {
+                    ("", ParseRevisionFile(targetFile, parsedTraceFile.FilePath))
+                };
+            }
+            return ParseUploadTargetFile(targetFile, parsedTraceFile.FilePath);
         }
 
         private void ProcessUploadTargets(List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets, ParsedTraceFile parsedTraceFile, Archive archive, LineCoverageMerger coverageMerger, Config.ConfigForProcess processConfig, IUpload upload, Dictionary<string, FileCoverage> lineCoverage)
         {
             foreach ((string project, RevisionOrTimestamp revisionOrTimestamp) in uploadTargets)
             {
-                if (project == null || revisionOrTimestamp == null)
+                if (revisionOrTimestamp == null)
                 {
-                    logger.Error("Invalid Teamscale project {project} or revision {} for {traceFile}.", project, revisionOrTimestamp.ToString(), parsedTraceFile.FilePath);
+                    logger.Error("Invalid revision {revision} for {traceFile}.", revisionOrTimestamp.ToString(), parsedTraceFile.FilePath);
                     continue;
                 }
-                upload = new TeamscaleUpload(project, (upload as TeamscaleUpload).Server);
+                if (!String.IsNullOrEmpty(project))
+                {
+                    upload = new TeamscaleUpload(project, (upload as TeamscaleUpload).Server);
+                }
                 ProcessForRevisionOrTimestamp(revisionOrTimestamp, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
             }
         }
@@ -240,35 +245,6 @@ namespace UploadDaemon
             {
                 logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", parsedTraceFile.FilePath, upload.Describe());
             }
-        }
-
-        /// <summary>
-        /// Tries to read the revision file based on the config (absolute path, or relative to loaded assemblies).
-        /// Logs and returns null if this fails.
-        /// </summary>
-        private RevisionOrTimestamp ParseRevisionFile(ParsedTraceFile parsedTraceFile, Config.ConfigForProcess processConfig)
-        {
-            if (processConfig.RevisionFile == null)
-            {
-                return null;
-            }
-            if (!Config.IsAssemblyRelativePath(processConfig.RevisionFile))
-            {
-                return ParseRevisionFile(processConfig.RevisionFile, parsedTraceFile.FilePath);
-            }
-
-            foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
-            {
-                string revisionFile = Config.ResolveAssemblyRelativePath(processConfig.RevisionFile, path);
-                if (File.Exists(revisionFile))
-                {
-                    logger.Info("Using revision file {revisionFile} while processing {traceFile}.", revisionFile, parsedTraceFile.FilePath);
-                    return ParseRevisionFile(revisionFile, parsedTraceFile.FilePath);
-                }
-            }
-
-            logger.Error("Failed to find revision file {revisionFile} while processing {traceFile}.", processConfig.RevisionFile, parsedTraceFile.FilePath);
-            return null;
         }
 
         /// <summary>

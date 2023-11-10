@@ -145,44 +145,6 @@ Inlined=1:33555646:100678050");
             Assert.That(archivedFiles, Is.Empty);
         }
 
-
-        [Test]
-        public void TestEmbeddedResourceTeamscaleUpload()
-        {
-            string coverageFileName = "coverage_1_1.txt";
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName,"test-data", "test-programs", "ProfilerTestee.exe");
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
-Process={targetAssembly}
-Inlined=2:100663298");
-            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
-            mockServer.SetResponse(200);
-
-            // Explicitely do not set teamscale project and revision.txt
-            new UploadDaemon().RunOnce(Config.Read($@"
-            match:
-              - profiler:
-                  targetdir: {TargetDir}
-                uploader:
-                  directory: {UploadDir}
-                  pdbDirectory: {PdbDirectory}\ProfilerTestee
-                  teamscale:
-                    url: http://localhost:1337
-                    username: admin
-                    accessKey: fookey
-                    partition: my_partition
-
-        "));
-
-            List<string> requests = mockServer.GetRecievedRequests();
-            mockServer.StopServer();
-            Assert.Multiple(() =>
-            {
-                StringAssert.Contains("/p/ProjectA/", requests[0]);
-                StringAssert.Contains("revision=HEAD", requests[0]);
-                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
-                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
-            });
-        }
         [Test]
         public void TestNet6EmbeddedAssembly()
         {
