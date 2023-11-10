@@ -189,15 +189,7 @@ Inlined=2:100663298");
             File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
 Process={targetAssembly}
 Inlined=2:100663298");
-            string uploadTargetFile = Path.Combine(TestUtils.TestTempDirectory, "uploadTargets.json");
-            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>
-            {
-                ("projectA", new RevisionOrTimestamp("12345", true)),
-                ("projectB", new RevisionOrTimestamp("55555", true)),
-                ("projectC", new RevisionOrTimestamp("1234657651", false))
-            };
-            string jsonContent = JsonConvert.SerializeObject(uploadTargets);
-            File.WriteAllText(uploadTargetFile, jsonContent);
+            string uploadTargetFile = CreateUploadTargetFile();
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
             new UploadDaemon().RunOnce(Config.Read($@"
@@ -219,6 +211,20 @@ Inlined=2:100663298");
             List<string> requests = mockServer.GetRecievedRequests();
             mockServer.StopServer();
             AssertMultiProjectRequests(requests, coverageFileName);
+        }
+
+        private string CreateUploadTargetFile()
+        {
+            string uploadTargetFile = Path.Combine(TestUtils.TestTempDirectory, "uploadTargets.json");
+            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>
+            {
+                ("projectA", new RevisionOrTimestamp("12345", true)),
+                ("projectB", new RevisionOrTimestamp("55555", true)),
+                ("projectC", new RevisionOrTimestamp("1234657651", false))
+            };
+            string jsonContent = JsonConvert.SerializeObject(uploadTargets);
+            File.WriteAllText(uploadTargetFile, jsonContent);
+            return uploadTargetFile;
         }
 
         private void AssertMultiProjectRequests(List<string> requests, string coverageFileName)

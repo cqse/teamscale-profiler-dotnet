@@ -215,7 +215,7 @@ namespace UploadDaemon
             {
                 if (revisionOrTimestamp == null)
                 {
-                    logger.Error("Invalid revision {revision} for {traceFile}.", revisionOrTimestamp.ToString(), parsedTraceFile.FilePath);
+                    logger.Error("Invalid revision for {traceFile}.", parsedTraceFile.FilePath);
                     continue;
                 }
                 if (!String.IsNullOrEmpty(project))
