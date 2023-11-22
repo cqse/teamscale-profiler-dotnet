@@ -28,6 +28,10 @@ void FileLogBase::createLogFile(std::string directory, std::string name, bool ov
 		Debug::getInstance().log("Cannot create directory '" + directory + "', falling back to: " + fallbackDirectory);
 		directory = fallbackDirectory;
 	}
+	if (!WindowsUtils::isDirectoryWritable(directory)) {
+		Debug::getInstance().log("Cannot write to directory '" + directory + "', falling back to: " + fallbackDirectory);
+		directory = fallbackDirectory;
+	}
 
 	std::string logFilePath = directory + "\\" + name;
 
