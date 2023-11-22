@@ -97,13 +97,7 @@ namespace UploadDaemon.SymbolAnalysis
                         logger.Error("'Revision' and 'Timestamp' are both set in {assembly}. Please set only one, not both, in the Teamscale resource.", assembly);
                         continue;
                     }
-                    if (embeddedRevision != null)
-                    {
-                        embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, true)));
-                    } else
-                    {
-                        embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, false)));
-                    }
+                    embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, embeddedRevision != null)));
                 }
             }
         }

@@ -24,19 +24,19 @@ namespace UploadDaemon.SymbolAnalysis
         /// <param name="uploadTargets"></param>
         public static void SerializeToFile(string filePath, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
         {
-            List<UploadTargetFileEntry> UploadTargetFileEnties = new List<UploadTargetFileEntry>();
+            List<UploadTargetFileEntry> uploadTargetFileEntries = new List<UploadTargetFileEntry>();
 
             foreach ((string project, RevisionOrTimestamp RevisionOrTimestamp) in uploadTargets)
             {
                 if (RevisionOrTimestamp.IsRevision)
                 {
-                    UploadTargetFileEnties.Add(new UploadTargetFileEntry { Project = project, Revision = RevisionOrTimestamp.Value });
+                    uploadTargetFileEntries.Add(new UploadTargetFileEntry { Project = project, Revision = RevisionOrTimestamp.Value });
                 } else
                 {
-                    UploadTargetFileEnties.Add(new UploadTargetFileEntry { Project = project, Timestamp = RevisionOrTimestamp.Value });
+                    uploadTargetFileEntries.Add(new UploadTargetFileEntry { Project = project, Timestamp = RevisionOrTimestamp.Value });
                 }
             }
-            string jsonContent = JsonConvert.SerializeObject(UploadTargetFileEnties, Formatting.Indented);
+            string jsonContent = JsonConvert.SerializeObject(uploadTargetFileEntries, Formatting.Indented);
             System.IO.File.WriteAllText(filePath, jsonContent);
         }
 

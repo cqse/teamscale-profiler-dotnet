@@ -54,8 +54,6 @@ namespace UploadDaemon
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
             List<string> errorTraceFilePaths = new List<string>();
-            traces = scanner.ListTraceFilesReadyForUpload();
-
             foreach (TraceFile trace in traces)
             {
                 try
