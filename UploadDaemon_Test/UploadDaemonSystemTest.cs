@@ -148,6 +148,42 @@ Inlined=1:33555646:100678050");
         }
 
         [Test]
+        public void TestNet6EmbeddedAssembly()
+        {
+            string coverageFileName = "coverage_1_1.txt";
+            string targetAssembly = Path.Combine(TestProgramRoot, "Net6ConsoleApp.dll");
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
+Process={targetAssembly}
+Inlined=2:100663298");
+            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
+            mockServer.SetResponse(200);
+            new UploadDaemon().RunOnce(Config.Read($@"
+            match:
+              - profiler:
+                  targetdir: {TargetDir}
+                uploader:
+                  directory: {UploadDir}
+                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                  teamscale:
+                    url: http://localhost:1337
+                    username: admin
+                    accessKey: fookey
+                    partition: my_partition
+
+        "));
+
+            List<string> requests = mockServer.GetRecievedRequests();
+            mockServer.StopServer();
+            Assert.Multiple(() =>
+            {
+                StringAssert.Contains("/p/TestProject/", requests[0]);
+                StringAssert.Contains("revision=master%3aHEAD", requests[0]);
+                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
+                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
+            });
+        }
+
+        [Test]
         public void TestEmbeddedLibrarySetup()
         {
             string coverageFileName = "coverage_1_1.txt";
