@@ -79,21 +79,31 @@ namespace UploadDaemon.SymbolAnalysis
                 {
                     continue;
                 }
-                TypeInfo teamscaleResourceType = assembly.DefinedTypes.First(x => x.Name == "Teamscale_Resource");
+                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == "Teamscale") ?? null;
                 if (teamscaleResourceType != null)
                 {
-                    logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly.FullName);
+                    logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
                     ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
-                    string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Teamscale_Project");
-                    string embeddedRevision = teamscaleResourceManager.GetString("RevisionOrTimestamp");
-                    string isRevision = teamscaleResourceManager.GetString("isRevision");
-
-                    if (embeddedRevision == null || isRevision == null)
+                    string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
+                    string embeddedRevision = teamscaleResourceManager.GetString("Revision");
+                    string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
+                    if (embeddedRevision == null && embeddedTimestamp == null)
                     {
-                        logger.Error("Not all required fields in embedded resource found in {assembly}. Please specify atleast 'RevisionOrTimestamp' and 'isRevision'.", assembly.FullName);
+                        logger.Error("Not all required fields in embedded resource found in {assembly}. Please specify atleast 'Revision' or 'Timestamp'", assembly);
                         continue;
                     }
-                    embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, bool.Parse(isRevision))));
+                    if (embeddedRevision != null && embeddedTimestamp != null)
+                    {
+                        logger.Error("'Revision' and 'Timestamp' are both set in {assembly}. Please set only one, not both, in the Teamscale resource.", assembly);
+                        continue;
+                    }
+                    if (embeddedRevision != null)
+                    {
+                        embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, true)));
+                    } else
+                    {
+                        embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, false)));
+                    }
                 }
             }
         }

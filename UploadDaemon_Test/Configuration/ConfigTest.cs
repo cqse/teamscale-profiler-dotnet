@@ -166,12 +166,12 @@ namespace UploadDaemon.Configuration
                 match:
                   - profiler:
                       targetdir: C:\test1
-                  - loadedAssemblyPathRegex: .*\\ProfilerTestee.exe
+                  - loadedAssemblyPathRegex: .*\\NetFrameworkEmbeddedLibrary.dll
                     uploader:
                       directory: C:\upload\foo
                       versionAssembly: foo
             ");
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "ProfilerTestee.exe");
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "NetFrameworkEmbeddedLibrary.dll");
             ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
                 $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
                 @"Inlined=2:{ExistingMethodToken}",

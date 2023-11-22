@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
+using UploadDaemon.SymbolAnalysis;
 using UploadDaemon_Test.Upload;
 using static UploadDaemon.Configuration.Config;
 using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
@@ -20,6 +21,7 @@ namespace UploadDaemon
         private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
         private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");
         private static string RevisionFile => Path.Combine(TestUtils.TestTempDirectory, "revision.txt");
+        private static string TestProgramRoot => Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs");
         private static string PdbDirectory => TestUtils.TestDataDirectory;
 
         [SetUp]
@@ -146,22 +148,23 @@ Inlined=1:33555646:100678050");
         }
 
         [Test]
-        public void TestNet6EmbeddedAssembly()
+        public void TestEmbeddedLibrarySetup()
         {
             string coverageFileName = "coverage_1_1.txt";
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "Net6ConsoleApp.dll");
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
-Process={targetAssembly}
-Inlined=2:100663298");
+            string programmAssembly = "Assembly=PdfizerConsole:2 Version:1.1.1.0 Path:" + Path.Combine(TestProgramRoot, "PdfizerConsole.exe");
+            string libraryAssembly = "Assembly=NetFrameworkEmbeddedLibrary:4 Version:1.0.0.0 Path:" + Path.Combine(TestProgramRoot, "NetFrameworkEmbeddedLibrary.dll");
+            string process = "Process=" + Path.Combine(TestProgramRoot, "PdfizerConsole.exe");
+            string coverageStatement = "Jitted=2:100663297";
+            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), programmAssembly + "\n" + libraryAssembly + "\n" + process + "\n" + coverageStatement);
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
-            new UploadDaemon().RunOnce(Config.Read($@"
+            new UploadDaemon().RunOnce(Config.Read($@"  
             match:
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
                   directory: {UploadDir}
-                  pdbDirectory: {PdbDirectory}\ProfilerTestee
+                  pdbDirectory: {PdbDirectory}\PdfizerConsole
                   teamscale:
                     url: http://localhost:1337
                     username: admin
@@ -169,13 +172,12 @@ Inlined=2:100663298");
                     partition: my_partition
 
         "));
-
             List<string> requests = mockServer.GetRecievedRequests();
             mockServer.StopServer();
             Assert.Multiple(() =>
             {
-                StringAssert.Contains("/p/TestProject/", requests[0]);
-                StringAssert.Contains("revision=master%3aHEAD", requests[0]);
+                StringAssert.Contains("/p/MyFancyProject/", requests[0]);
+                StringAssert.Contains("revision=MyFancyRevision", requests[0]);
                 Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
             });
@@ -222,8 +224,7 @@ Inlined=2:100663298");
                 ("projectB", new RevisionOrTimestamp("55555", true)),
                 ("projectC", new RevisionOrTimestamp("1234657651", false))
             };
-            string jsonContent = JsonConvert.SerializeObject(uploadTargets);
-            File.WriteAllText(uploadTargetFile, jsonContent);
+            UploadTargetFileUtils.SerializeToFile(uploadTargetFile, uploadTargets);
             return uploadTargetFile;
         }
 
@@ -237,9 +238,6 @@ Inlined=2:100663298");
                 StringAssert.Contains("revision=55555", requests[1]);
                 StringAssert.Contains("/p/projectC/", requests[2]);
                 StringAssert.Contains("t=1234657651", requests[2]);
-                // Check that the embedded resource has been uploaded as well.
-                StringAssert.Contains("/p/ProjectA/", requests[3]);
-                StringAssert.Contains("revision=HEAD", requests[3]);
                 Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
             });
