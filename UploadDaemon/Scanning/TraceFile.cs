@@ -20,7 +20,7 @@ namespace UploadDaemon.Scanning
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
-        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=((?:Start|End)):([^:]+):(.+)");
+        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=(?<event>Start|End):(?<date>[^:]+):(?<testname>[^:]+)(?::(?<duration>\d+))?");
 
         /// <summary>
         /// The lines of text contained in the trace.
@@ -29,7 +29,6 @@ namespace UploadDaemon.Scanning
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
-        /// </summary>
         public static bool IsTraceFile(string fileName)
         {
             return TraceFileRegex.IsMatch(fileName);
@@ -69,12 +68,18 @@ namespace UploadDaemon.Scanning
             DateTime currentTestStart = default;
             Trace currentTestTrace = noTestTrace;
             DateTime currentTestEnd;
+            long testDuration = 0;
             string currentTestResult;
             IList<Test> tests = new List<Test>();
 
             foreach (string line in lines)
             {
                 string[] keyValuePair = line.Split(new[] { '=' }, count:2);
+                if (keyValuePair.Length < 2)
+                {
+                    logger.Warn("Invalid line in trace file {}: {}", FilePath, line);
+                    continue;
+                }
                 string key = keyValuePair[0];
                 string value = keyValuePair[1];
 
@@ -92,11 +97,11 @@ namespace UploadDaemon.Scanning
                         break;
                     case "Test":
                         Match testCaseMatch = TestCaseLineRegex.Match(line);
-                        string startOrEnd = testCaseMatch.Groups[1].Value;
+                        string startOrEnd = testCaseMatch.Groups["event"].Value;
                         if (startOrEnd.Equals("Start"))
                         {
-                            currentTestName = testCaseMatch.Groups[3].Value;
-                            currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
+                            currentTestName = testCaseMatch.Groups["testname"].Value;
+                            currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                             currentTestTrace = new Trace() { OriginTraceFilePath = this.FilePath };
                         }
                         else if (startOrEnd.Equals("End"))
@@ -106,12 +111,14 @@ namespace UploadDaemon.Scanning
                                 throw new InvalidTraceFileException($"encountered end of test that did not start: {line}");
                             }
 
-                            currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups[2].Value);
-                            currentTestResult = testCaseMatch.Groups[3].Value;
+                            currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
+                            currentTestResult = testCaseMatch.Groups["testname"].Value;
+                            Int64.TryParse(testCaseMatch.Groups["duration"].Value, out testDuration);
                             tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
                                 Start = currentTestStart,
                                 End = currentTestEnd,
+                                DurationMillis = testDuration,
                                 Result = currentTestResult
                             });
                             currentTestName = noTestName;

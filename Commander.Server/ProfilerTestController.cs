@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Web;
+using System.Xml.Linq;
 
 namespace Cqse.Teamscale.Profiler.Commander.Server
 {
@@ -25,6 +26,11 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             return profilerIpc.TestName;
         }
 
+        public long GetStart()
+        {
+            return profilerIpc.TestStartMS;
+        }
+
         [HttpPost("start/{testName}")]
         public HttpStatusCode StartTest(string testName)
         {
@@ -34,6 +40,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             }
 
             logger.LogInformation("Starting test: {}", testName);
+            profilerIpc.TestStartMS = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
             return HttpStatusCode.NoContent;
         }
@@ -41,11 +48,10 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         [HttpPost("stop/{result}")]
         public HttpStatusCode StopTest(TestExecutionResult result)
         {
-            logger.LogInformation("Stopping test: {}; Result: {}", GetCurrent(), result);
-            profilerIpc.EndTest(result);
-
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}; duration: {}", GetCurrent(), result, testEnd - GetStart());
+            profilerIpc.EndTest(result, durationMs: testEnd - GetStart());
             return HttpStatusCode.NoContent;
-
         }
 
         /// <summary>
@@ -54,8 +60,9 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         [HttpPost("end/{name}")]
         public HttpStatusCode EndTest(string name, [FromBody] TestResultDto result)
         {
-            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}", name, result.Result);
-            profilerIpc.EndTest(result.Result);
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}; duration: {}", name, result.Result, testEnd - GetStart());
+            profilerIpc.EndTest(result.Result, durationMs: testEnd - GetStart());
 
             return HttpStatusCode.NoContent;
         }

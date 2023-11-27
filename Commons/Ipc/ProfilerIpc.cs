@@ -15,6 +15,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public string TestName { get; private set; } = String.Empty;
 
+        public long TestStartMS { get; set; } = 0;
+
         public IpcConfig Config { get; }
 
         public ProfilerIpc(IpcConfig config)
@@ -66,16 +68,16 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             ipcServer.SendTestEvent($"start:{cleanedTestName}");
         }
 
-        public void EndTest(TestExecutionResult result)
+        public void EndTest(TestExecutionResult result, long durationMs = 0)
         {
             if (TestName == string.Empty)
             {
-                logger.Info("Testname is empty. Result {result} cannot be associated with a testname and is not broadcasted.", TestName, result);
+                logger.Info("Testname is empty. Result {result} cannot be associated with a testname and is not broadcasted with duration {duration}.", TestName, result, durationMs);
                 return;
             }
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
-            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}");
+            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}:{durationMs.ToString()}");
         }
 
         public void Dispose()

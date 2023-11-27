@@ -78,6 +78,7 @@ void Ipc::handlerThreadLoop() {
 } 
 
 void Ipc::handleMessage(std::string message) {
+	// TODO handle duration message
 	logError("Received Message " + message);
 	if (message.find(TEST_START) == 0) {
 		this->testStartCallback(message.substr(TEST_START.length()));
