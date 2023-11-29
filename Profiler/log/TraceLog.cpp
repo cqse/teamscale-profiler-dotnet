@@ -87,17 +87,14 @@ void TraceLog::startTestCase(std::string testName)
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
 }
 
-void TraceLog::endTestCase(std::string result, std::string message, long duration)
+void TraceLog::endTestCase(std::string result, std::string duration)
 {
 	// Line will look like this:
 	// Test=End:20150601_1220280807:PASSED:optional msg
 	std::string info = "End:" + getFormattedCurrentTime();
 	if (!result.empty()) {
 		info += ":" + result;
-		info += ":" + std::to_string(duration);
-		if (!message.empty()) {
-			info += ":" + message;
-		}
+		info += ":" + duration;
 	}
 
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());

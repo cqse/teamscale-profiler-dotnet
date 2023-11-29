@@ -107,7 +107,7 @@ private:
 	void onTestStart(std::string testName);
 
 	/** Callback that is being called when a testcase ends. */
-	void onTestEnd(std::string result = "");
+	void onTestEnd(std::string result = "", std::string duration = "");
 
 	/**
 	 * Keeps track of called methods.

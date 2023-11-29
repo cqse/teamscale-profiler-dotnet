@@ -15,7 +15,7 @@ using namespace std::chrono_literals;
 const std::string TEST_START = "start:";
 const std::string TEST_END = "end:";
 
-Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
+Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback)
 {
 	this->config = config;
 	this->testStartCallback = testStartCallback;
@@ -78,13 +78,16 @@ void Ipc::handlerThreadLoop() {
 } 
 
 void Ipc::handleMessage(std::string message) {
-	// TODO handle duration message
 	logError("Received Message " + message);
 	if (message.find(TEST_START) == 0) {
 		this->testStartCallback(message.substr(TEST_START.length()));
 	}
 	else if (message.find(TEST_END) == 0) {
-		this->testEndCallback(message.substr(TEST_END.length()));
+		// 21 = maximum length of long + 1
+		size_t last = message.find_last_of(':', 21);
+		std::string testIdentifier = message.substr(0, last);
+		std::string duration = message.substr(last + 1);
+		this->testEndCallback(testIdentifier.substr(TEST_END.length()), duration);
 	}
 }
 
