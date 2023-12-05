@@ -39,7 +39,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// The name of the Resource .resx file that holed information about embedded upload targets.
         /// </summary>
-        private static readonly String TeamscaleResourceName = "Teamscale";
+        private const String TeamscaleResourceName = "Teamscale";
 
         /// <summary>
         /// The uploads targets (revision/timestamp and optionally teamscale project) that are retrieved from resource files that are embedded into assemblies referenced in the trace file.
