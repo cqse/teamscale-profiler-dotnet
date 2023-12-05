@@ -149,11 +149,6 @@ namespace UploadDaemon.Configuration
             public string RevisionFile { get; set; }
 
             /// <summary>
-            /// File that contains a mapping of code revision to Teamscale project that are used as upload targets.
-            /// </summary>
-            public string UploadTargetFile { get; set; }
-
-            /// <summary>
             /// Patterns to select which assemblies to analyze.
             /// </summary>
             public IncludeExcludePatterns AssemblyPatterns { get; set; }

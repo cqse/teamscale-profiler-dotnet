@@ -1,13 +1,10 @@
-﻿using Newtonsoft.Json;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon_Test.Upload;
 using static UploadDaemon.Configuration.Config;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon
 {
@@ -172,7 +169,7 @@ Inlined=2:100663298");
 
         "));
 
-            List<string> requests = mockServer.GetRecievedRequests();
+            List<string> requests = mockServer.GetReceivedRequests();
             mockServer.StopServer();
             Assert.Multiple(() =>
             {
@@ -194,7 +191,7 @@ Inlined=2:100663298");
             File.WriteAllText(Path.Combine(TargetDir, coverageFileName), programmAssembly + "\n" + libraryAssembly + "\n" + process + "\n" + coverageStatement);
             TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
             mockServer.SetResponse(200);
-            new UploadDaemon().RunOnce(Config.Read($@"  
+            new UploadDaemon().RunOnce(Config.Read($@"
             match:
               - profiler:
                   targetdir: {TargetDir}
@@ -208,72 +205,12 @@ Inlined=2:100663298");
                     partition: my_partition
 
         "));
-            List<string> requests = mockServer.GetRecievedRequests();
+            List<string> requests = mockServer.GetReceivedRequests();
             mockServer.StopServer();
             Assert.Multiple(() =>
             {
                 StringAssert.Contains("/p/MyFancyProject/", requests[0]);
                 StringAssert.Contains("revision=MyFancyRevision", requests[0]);
-                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
-                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
-            });
-        }
-
-        [Test]
-        public void TestMultiProjectCoverageUpload()
-        {
-            string coverageFileName = "coverage_1_1.txt";
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "ProfilerTestee.exe");
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), $@"Assembly=ProfilerTestee:2 Version:1.0.0.0 Path:{targetAssembly}
-Process={targetAssembly}
-Inlined=2:100663298");
-            string uploadTargetFile = CreateUploadTargetFile();
-            TeamscaleMockServer mockServer = new TeamscaleMockServer(1337);
-            mockServer.SetResponse(200);
-            new UploadDaemon().RunOnce(Config.Read($@"
-            match:
-              - profiler:
-                  targetdir: {TargetDir}
-                uploader:
-                  directory: {UploadDir}
-                  pdbDirectory: {PdbDirectory}\ProfilerTestee
-                  uploadTargetFile: {uploadTargetFile}
-                  teamscale:
-                    url: http://localhost:1337
-                    username: admin
-                    accessKey: fookey
-                    partition: my_partition
-
-        "));
-
-            List<string> requests = mockServer.GetRecievedRequests();
-            mockServer.StopServer();
-            AssertMultiProjectRequests(requests, coverageFileName);
-        }
-
-        private string CreateUploadTargetFile()
-        {
-            string uploadTargetFile = Path.Combine(TestUtils.TestTempDirectory, "uploadTargets.json");
-            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>
-            {
-                ("projectA", new RevisionOrTimestamp("12345", true)),
-                ("projectB", new RevisionOrTimestamp("55555", true)),
-                ("projectC", new RevisionOrTimestamp("1234657651", false))
-            };
-            UploadTargetFileUtils.SerializeToFile(uploadTargetFile, uploadTargets);
-            return uploadTargetFile;
-        }
-
-        private void AssertMultiProjectRequests(List<string> requests, string coverageFileName)
-        {
-            Assert.Multiple(() =>
-            {
-                StringAssert.Contains("/p/projectA/", requests[0]);
-                StringAssert.Contains("revision=12345", requests[0]);
-                StringAssert.Contains("/p/projectB/", requests[1]);
-                StringAssert.Contains("revision=55555", requests[1]);
-                StringAssert.Contains("/p/projectC/", requests[2]);
-                StringAssert.Contains("t=1234657651", requests[2]);
                 Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
             });

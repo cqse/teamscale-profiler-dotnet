@@ -8,7 +8,7 @@ param(
 # Validate input parameters
 if ((-not $path) -or ((-not $revision) -and (-not $timestamp)) -or ($revision -and $timestamp)) {
     Write-Host "Usage: TeamscaleResourceUpdate.ps1 -path <Path> (-revision <Revision> | -timestamp <Timestamp>) [-project <Project>]"
-    Exit
+    Exit 1
 }
 
 # Function to update .resx file
@@ -48,9 +48,8 @@ function Update-ResxFile {
         $projectNode = $resxXml.CreateElement("data")
         $projectNode.SetAttribute("name", 'Project')
         $rootNode.AppendChild($projectNode)
-
+        $projectNode.InnerXml = "<value>$project</value>"
     }
-    $projectNode.InnerXml = "<value>$project</value>"
     # Write updated content back to .resx file
     $resxXml.Save($resxPath)
 }

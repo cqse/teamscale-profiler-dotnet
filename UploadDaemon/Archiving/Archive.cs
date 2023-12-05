@@ -128,7 +128,7 @@ namespace UploadDaemon.Archiving
             }
             catch (Exception e)
             {
-                if(e is FileNotFoundException)
+                if (e is FileNotFoundException)
                 {
                     logger.Info("Could not archive {trace} to {archivePath} as it no longer exists. This is probably because it has already been archived previously.", tracePath, targetDirectory);
                     return;

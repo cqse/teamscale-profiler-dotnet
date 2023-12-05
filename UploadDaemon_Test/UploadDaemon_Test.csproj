@@ -412,7 +412,6 @@
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolverTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionTest.cs" />
-    <Compile Include="SymbolAnalysis\RevisionFileUtilsTest.cs" />
     <Compile Include="TestUtils.cs" />
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Configuration\ConfigTest.cs" />

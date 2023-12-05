@@ -124,7 +124,6 @@
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigParser.cs" />
     <Compile Include="Configuration\Artifactory.cs" />
-    <Compile Include="SymbolAnalysis\UploadTargetFileUtils.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
     <Compile Include="Upload\MessageFormatter.cs" />

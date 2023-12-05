@@ -19,7 +19,7 @@ namespace UploadDaemon.Upload
 
         private readonly HttpClient client = new HttpClient();
 
-        public readonly TeamscaleServer Server;
+        private readonly TeamscaleServer Server;
         private readonly MessageFormatter messageFormatter;
 
         public TeamscaleUpload(TeamscaleServer server)
@@ -29,11 +29,10 @@ namespace UploadDaemon.Upload
             HttpClientUtils.SetUpBasicAuthentication(client, server);
         }
 
-        public TeamscaleUpload(string targetProject, TeamscaleServer server)
+        public TeamscaleUpload CopyWithNewProject(string targetProject)
         {
-            Server = new TeamscaleServer(targetProject, server, logger);
-            messageFormatter = new MessageFormatter(Server);
-            HttpClientUtils.SetUpBasicAuthentication(client, Server);
+            TeamscaleServer server = new TeamscaleServer(targetProject, Server);
+            return new TeamscaleUpload(server);
         }
 
         /// <summary>
@@ -102,7 +101,7 @@ namespace UploadDaemon.Upload
                 timestampParameter = "t";
             }
 
-            string message = messageFormatter.Format(timestampParameter);
+            string message = messageFormatter.Format(revisionOrTimestamp);
             string encodedMessage = HttpUtility.UrlEncode(message);
             string encodedProject = HttpUtility.UrlEncode(Server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);

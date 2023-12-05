@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Text.RegularExpressions;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -36,9 +37,14 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
         /// <summary>
-        /// The uploads targets (revision and optionally teamscale project) that are embedded into assemblies referenced in the trace file.
+        /// The name of the Resource .resx file that holed information about embedded upload targets.
         /// </summary>
-        public readonly List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>();
+        private static readonly String TeamscaleResourceName = "Teamscale";
+
+        /// <summary>
+        /// The uploads targets (revision/timestamp and optionally teamscale project) that are retrieved from resource files that are embedded into assemblies referenced in the trace file.
+        /// </summary>
+        public readonly List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
 
         public ParsedTraceFile(string[] lines, string filePath)
         {
@@ -79,26 +85,49 @@ namespace UploadDaemon.SymbolAnalysis
                 {
                     continue;
                 }
-                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == "Teamscale") ?? null;
-                if (teamscaleResourceType != null)
+                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
+                if (teamscaleResourceType == null)
                 {
-                    logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
-                    ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
-                    string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
-                    string embeddedRevision = teamscaleResourceManager.GetString("Revision");
-                    string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
-                    if (embeddedRevision == null && embeddedTimestamp == null)
-                    {
-                        logger.Error("Not all required fields in embedded resource found in {assembly}. Please specify atleast 'Revision' or 'Timestamp'", assembly);
-                        continue;
-                    }
-                    if (embeddedRevision != null && embeddedTimestamp != null)
-                    {
-                        logger.Error("'Revision' and 'Timestamp' are both set in {assembly}. Please set only one, not both, in the Teamscale resource.", assembly);
-                        continue;
-                    }
-                    embeddedUploadTargets.Add((embeddedTeamscaleProject, new RevisionFileUtils.RevisionOrTimestamp(embeddedRevision, embeddedRevision != null)));
+                    continue;
                 }
+                logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
+                ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
+                string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
+                string embeddedRevision = teamscaleResourceManager.GetString("Revision");
+                string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
+                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, embeddedUploadTargets, assembly.FullName);
+            }
+        }
+
+        /// <summary>
+        /// Adds a revision or timestamp and optionally a project to the list of upload targets. This method checks if both, revision and timestamp, are declared, or neither.
+        /// </summary>
+        /// <param name="revision"></param>
+        /// <param name="timestamp"></param>
+        /// <param name="project"></param>
+        /// <param name="uploadTargets"></param>
+        /// <param name="origin"></param>
+        public static void AddUploadTarget(string revision, string timestamp, string project, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets, string origin)
+        {
+            Logger logger = LogManager.GetCurrentClassLogger();
+
+            if (revision == null && timestamp == null)
+            {
+                logger.Error("Not all required fields in {origin}. Please specify either 'Revision' or 'Timestamp'", origin);
+                return;
+            }
+            if (revision != null && timestamp != null)
+            {
+                logger.Error("'Revision' and 'Timestamp' are both set in {origin}. Please set only one, not both.", origin);
+                return;
+            }
+            if (revision != null)
+            {
+                uploadTargets.Add((project, new RevisionOrTimestamp(revision, true)));
+            }
+            else
+            {
+                uploadTargets.Add((project, new RevisionOrTimestamp(timestamp, false)));
             }
         }
 

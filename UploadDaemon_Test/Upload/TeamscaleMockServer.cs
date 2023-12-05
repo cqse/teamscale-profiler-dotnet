@@ -33,18 +33,12 @@ namespace UploadDaemon_Test.Upload
         }
 
         /// <summary>
-        /// Get a list of requests that this server recieved.
+        /// Get a list of requests that this server received.
         /// </summary>
         /// <returns></returns>
-        public List<String> GetRecievedRequests()
+        public List<String> GetReceivedRequests()
         {
-            List<string> requests = new List<string>();
-            List<WireMock.Logging.ILogEntry> entries = this.Server.LogEntries.ToList();
-            foreach (WireMock.Logging.ILogEntry entry in entries)
-            {
-                requests.Add(entry.RequestMessage.Url);
-            }
-            return requests;
+            return Server.LogEntries.Select(entry => entry.RequestMessage.Url).ToList();
         }
 
         /// <summary>

@@ -1,7 +1,4 @@
-using NLog;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UploadDaemon.Configuration
 {
@@ -46,21 +43,24 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Message { get; set; } = "Test coverage for version %v from %p created at %t";
 
-        public TeamscaleServer(string targetProject, TeamscaleServer previous, Logger logger)
+        public TeamscaleServer(string targetProject, TeamscaleServer other)
         {
-            url = previous.Url;
+            Url = other.Url;
             Project = targetProject;
-            Partition = previous.Partition;
-            Username = previous.Username;
-            AccessKey = previous.AccessKey;
-            Message = previous.Message;
+            Partition = other.Partition;
+            Username = other.Username;
+            AccessKey = other.AccessKey;
+            Message = other.Message;
         }
+
         /// <summary>
         /// Needed only for automatic creation via yaml file.
         /// </summary>
-        public TeamscaleServer() {
+        public TeamscaleServer()
+        {
             // intentionally left blank.
         }
+
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";
