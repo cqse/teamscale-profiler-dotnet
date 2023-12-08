@@ -43,13 +43,17 @@ function Update-ResxFile {
     $dataNode.InnerXml = "<value>$value</value>"
 
     # Add or update the 'Project' property
-    $projectNode =  $resxXml.SelectSingleNode("/root/data[@name='Project']")
-    if ($projectNode -eq $null) {
-        $projectNode = $resxXml.CreateElement("data")
-        $projectNode.SetAttribute("name", 'Project')
-        $rootNode.AppendChild($projectNode)
+    if ($project -ne $null) {
+
+        $projectNode =  $resxXml.SelectSingleNode("/root/data[@name='Project']")
+        if ($projectNode -eq $null) {
+            $projectNode = $resxXml.CreateElement("data")
+            $projectNode.SetAttribute("name", 'Project')
+            $rootNode.AppendChild($projectNode)
+        }
         $projectNode.InnerXml = "<value>$project</value>"
     }
+
     # Write updated content back to .resx file
     $resxXml.Save($resxPath)
 }
@@ -65,5 +69,9 @@ if ($revision) {
 
 # Update the .resx file
 Update-ResxFile -resxPath $path -key $key -value $value -project $project
-Write-Host "Updated Teamscale Resource with $($key): $($value) and $($project)"
+if ($project -eq $null){
+    Write-Host "Updated Teamscale Resource with $($key): $($value)"
+} else {
+    Write-Host "Updated Teamscale Resource with $($key): $($value) and $($project)"
+}
 

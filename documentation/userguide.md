@@ -360,7 +360,7 @@ This is an example how to integrate it into an Azure DevOps Pipeline:
       displayName: 'Update Teamscale Resource'
       workingDirectory: $(Build.Repository.LocalPath)
 
-**_Note:_** The Teamscale Resource can work in combination with a revision file. So you can create a resource for your libraries and add a revision/uploadTarget file for your "main" application. 
+**_Note:_** The Teamscale Resource can work in combination with a revision file. So you can create a resource for your libraries and add a revision file for your "main" application. 
 
 Finally, please configure sensible `assemblyPatterns` in order to only include your application's
 assemblies in the coverage analysis. This prevents lots of useless error log entries both in the

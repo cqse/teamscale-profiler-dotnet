@@ -36,7 +36,7 @@ namespace UploadDaemon.Upload
         public string Format(RevisionFileUtils.RevisionOrTimestamp revision)
         {
             string formattedTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-            return server.Message.Replace("version %v", revision.GetType() + " " + revision.Value).Replace("%p", server.Partition).Replace("%t", formattedTime);
+            return server.Message.Replace("version %v", revision.ToRevisionFileContent()).Replace("%p", server.Partition).Replace("%t", formattedTime);
         }
     }
 }
