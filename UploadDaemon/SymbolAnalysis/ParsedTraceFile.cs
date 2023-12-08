@@ -81,12 +81,11 @@ namespace UploadDaemon.SymbolAnalysis
             foreach ((_, string path) in this.LoadedAssemblies)
             {
                 Assembly assembly = LoadAssemblyFromPath(path);
-                IEnumerable<TypeInfo> definedTypes = assembly.DefinedTypes;
-                if(assembly == null || definedTypes == null)
+                if (assembly == null || assembly.DefinedTypes == null)
                 {
                     continue;
                 }
-                TypeInfo teamscaleResourceType = definedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
+                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
                 if (teamscaleResourceType == null)
                 {
                     continue;
@@ -138,16 +137,20 @@ namespace UploadDaemon.SymbolAnalysis
             {
                 return null;
             }
-            Assembly assembly = null;
+            Assembly assembly;
             try
             {
                 assembly = Assembly.LoadFrom(path);
-                // Check that defined types can actually be loaded (this is implicetly a null check as well)
-                IEnumerable<TypeInfo> definedTypes =  assembly.DefinedTypes;
+                // Check that defined types can actually be loaded
+                if (assembly == null)
+                {
+                    return null;
+                }
+                IEnumerable<TypeInfo> ignored = assembly.DefinedTypes;
             }
             catch (Exception e)
             {
-                logger.Warn("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
+                logger.Debug("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
                 return null;
             }
             return assembly;
