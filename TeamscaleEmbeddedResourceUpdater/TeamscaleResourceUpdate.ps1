@@ -43,7 +43,7 @@ function Update-ResxFile {
     $dataNode.InnerXml = "<value>$value</value>"
 
     # Add or update the 'Project' property
-    if ($project -ne $null) {
+    if ($project) {
 
         $projectNode =  $resxXml.SelectSingleNode("/root/data[@name='Project']")
         if ($projectNode -eq $null) {
@@ -69,7 +69,7 @@ if ($revision) {
 
 # Update the .resx file
 Update-ResxFile -resxPath $path -key $key -value $value -project $project
-if ($project -eq $null){
+if (-not $project){
     Write-Host "Updated Teamscale Resource with $($key): $($value)"
 } else {
     Write-Host "Updated Teamscale Resource with $($key): $($value) and $($project)"
