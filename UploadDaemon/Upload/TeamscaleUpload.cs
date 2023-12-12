@@ -5,8 +5,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
 {
@@ -26,8 +26,13 @@ namespace UploadDaemon.Upload
         {
             this.server = server;
             this.messageFormatter = new MessageFormatter(server);
-
             HttpClientUtils.SetUpBasicAuthentication(client, server);
+        }
+
+        public TeamscaleUpload CopyWithNewProject(string targetProject)
+        {
+            TeamscaleServer server = new TeamscaleServer(targetProject, this.server);
+            return new TeamscaleUpload(server);
         }
 
         /// <summary>
@@ -48,9 +53,14 @@ namespace UploadDaemon.Upload
             string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
 
+            return await DoAsyncUpload(filePath, version, url);
+        }
+
+        private async Task<bool> DoAsyncUpload(String filePath, string version, String encodedUrl)
+        {
             try
             {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", filePath))
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, encodedUrl, "report", filePath))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -91,7 +101,7 @@ namespace UploadDaemon.Upload
                 timestampParameter = "t";
             }
 
-            string message = messageFormatter.Format(timestampParameter);
+            string message = messageFormatter.Format(revisionOrTimestamp);
             string encodedMessage = HttpUtility.UrlEncode(message);
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
@@ -120,21 +130,29 @@ namespace UploadDaemon.Upload
 
         private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+            try
             {
-                if (response.IsSuccessStatusCode)
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
                 {
-                    logger.Info("Successfully uploaded line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
-                        originalTraceFilePath, timestampParameter, timestampValue, server.ToString());
-                    return true;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        logger.Info("Successfully uploaded line coverage from {trace} with {parameter}={parameterValue} to {teamscale}",
+                            originalTraceFilePath, timestampParameter, timestampValue, server.ToString());
+                        return true;
+                    }
+                    else
+                    {
+                        string body = await response.Content.ReadAsStringAsync();
+                        logger.Error("Upload of line coverage to {teamscale} failed with status code {statusCode}. This coverage is lost." +
+                            "\n{responseBody}", server.ToString(), response.StatusCode, body);
+                        return false;
+                    }
                 }
-                else
-                {
-                    string body = await response.Content.ReadAsStringAsync();
-                    logger.Error("Upload of line coverage to {teamscale} failed with status code {statusCode}. This coverage is lost." +
-                        "\n{responseBody}", server.ToString(), response.StatusCode, body);
-                    return false;
-                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e);
+                return false;
             }
         }
 

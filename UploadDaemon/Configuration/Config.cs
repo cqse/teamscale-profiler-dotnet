@@ -1,8 +1,8 @@
-using System.IO;
-using System.Collections.Generic;
 using System;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
@@ -182,13 +182,6 @@ namespace UploadDaemon.Configuration
                         @" without the file extension) to read the program version from in order to upload method coverage." +
                         @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
                 }
-                if (PdbDirectory != null && RevisionFile == null)
-                {
-                    yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You provided a path to PDB files but no revision file (property ""revisionFile"")." +
-                        @" This file must contain the ID of the commit in your VCS from which the profiled code" +
-                        @" was built (e.g. for TFS: the changeset number, for Git: the SHA1) in the format `revision: COMMIT_ID`.";
-                }
             }
         }
 
@@ -290,7 +283,6 @@ namespace UploadDaemon.Configuration
                 throw new InvalidConfigException($"{e.Message}: The uploader will only watch for trace files in the targetdir" +
                     $" directories configured in {configFilePath}");
             }
-
         }
 
         /// <summary>
@@ -320,7 +312,6 @@ namespace UploadDaemon.Configuration
                 MatchesExecutablePathRegex(section, profiledProcessPath),
                 MatchesLoadedAssemblyPathRegex(section, traceFile),
             };
-
 
             // The section applies if at least one of the check criteria is set (!= null) and all of these are true.
             return checks.Where(check => check != null).All(check => check == true);

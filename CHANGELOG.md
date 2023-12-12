@@ -7,8 +7,8 @@ Please prefix each entry with one of:
 
 
 # Next Release
-
 - [fix] Log message when trace directory is not writable
+- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions. 
 
 # v23.6.0
 - [feature] Support for uploading to artifactory with the Teamscale default artifact storage schema.

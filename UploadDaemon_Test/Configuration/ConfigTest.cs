@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
@@ -158,7 +159,29 @@ namespace UploadDaemon.Configuration
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
+        [Test]
+        public void TestEmbeddedUploadInformation()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\NetFrameworkEmbeddedLibrary.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "NetFrameworkEmbeddedLibrary.dll");
+            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
+                $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
+                @"Inlined=2:{ExistingMethodToken}",
+            }, "coverage_1_1.txt");
 
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Assert.That(traceFile.embeddedUploadTargets.Count, Is.AtLeast(1));
+            Assert.That(fooConfig, Is.Not.Null);
+            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+        }
         [Test]
         public void TestLoadedAssemblyPathRegexWithNoMatch()
         {
@@ -394,24 +417,6 @@ namespace UploadDaemon.Configuration
             ").CreateConfigForProcess("foo.exe").Validate();
 
             Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
-        }
-
-        [Test]
-        public void MissingRevisionFile()
-        {
-            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
-            {
-                Config.Read(@"
-                match:
-                    - profiler:
-                        targetdir: C:\test1
-                    - uploader:
-                        directory: C:\target
-                        pdbDirectory: C:\pdbs
-                ").CreateConfigForProcess("foo.exe");
-            });
-
-            Assert.That(exception.Message, Contains.Substring("revisionFile"));
         }
 
         [Test]

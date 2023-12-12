@@ -311,13 +311,56 @@ This approach also works if assemblies are spread in multiple directories.
 
 Since the generated coverage must be matched to the correct code revision (otherwise you get
 incorrect coverage results),
-you must furthermore configure a `revisionFile`, which contains
+you must declare the target revision in the `revision.txt` or via an embedded `Teamscale` resource.
+
+#### Adding a `revision.txt` file
+
+The revision file consists of a single line of text: 
 
     revision: REVISION
 
 where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
 Similarly to the PDB directory, you can specify the revision file relative to the loaded assemblies like `pdbDirectory: '@AssemblyDir\revision.txt'`.
 This will scan the assembly directories in the order of loading for the first found revision file.
+
+#### Adding a `Teamscale.resx` resource 
+
+You can create a Teamscale resource file and this way include the Teamscale project and revision information directly in your build.
+This option comes in handy if you record traces for multiple libraries that are set up in separate Teamscale projects. 
+
+
+Here is a step-by-step guide, how to create such a resource in Visual Studio: 
+
+1. Right-click on your Visual Studio project go to `Properties`.
+2. In the properties window, go to `Resources`.
+3. If there are no resources declared, click on the message to create a new default resource, otherwise, add a new one. 
+4. In the project explorer under `Properties`, right-click the newly created resource and rename it to `Teamscale.resx`.
+5. Optional: Already add a revision/timestamp entry into the resource and a Teamscale project public ID. This is optional because this can be done in a later stage with the Azure DevOps pipeline script `TeamscaleResourceUpdate.ps1`.
+
+This is how the resource looks like in VisualStudio when a `revision` is set:
+![Resource with revision](Resource_Revision.png)
+
+And here with a `timestamp`:
+![Resource with timestamp](Resource_Timestamp.png)
+
+After creating the Teamscale resource it will be integrated into your assembly. The Teamscale .NET profiler can then extract this information to identify the project and revision/timestamp to upload the trace files to. 
+To automatically update your revision and project entries of the Teamscale resource, you can add a new pipeline step that executes `TeamscaleResourceUpdate.ps1`. This script takes 3 arguments:
+ - `-path`: the path to your `Teamscale.resx` file.
+ - `-project` (can be null): The public ID of the Teamscale projec to upload to. Can be null if the coverage is not uploaded to Teamscale.
+ - `-revision` or `-timestamp` (exclusive): The revision (e.g. Git SHA) or timestamp of the coverage. 
+
+This is an example how to integrate it into an Azure DevOps Pipeline:
+ 
+    variables:
+      GIT_REVISION: $(git rev-parse HEAD)
+    
+    steps:
+    - powershell: |
+          .\TeamscaleResourceUpdate.ps1 -path "YourApplication\Properties\Teamscale.resx" -revision $(GIT_REVISION) -project "ProjectA"
+      displayName: 'Update Teamscale Resource'
+      workingDirectory: $(Build.Repository.LocalPath)
+
+**_Note:_** The Teamscale Resource can work in combination with a revision file. So you can create a resource for your libraries and add a revision file for your "main" application. 
 
 Finally, please configure sensible `assemblyPatterns` in order to only include your application's
 assemblies in the coverage analysis. This prevents lots of useless error log entries both in the
@@ -344,6 +387,8 @@ Futher config options for the uploader in this mode:
 
 ## Example: Teamscale upload with local method-accurate coverage conversion
 
+With `revisionFile`: 
+
 **Profiler.yml:**
 
 ```yaml
@@ -368,9 +413,33 @@ match: [{
   }
 }]
 ```
-
 This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
 If this is not the case, simply replace by absolute paths.
+
+With only embedded resources: 
+
+**Profiler.yml:**
+```yaml
+match: [{
+  executableName: foo.exe,
+  profiler: {
+    targetdir: C:\output
+  },
+  uploader: {
+    pdbDirectory: '@AssemblyDir',
+    assemblyPatterns: {
+      include: [ "MyCompany.*" ]
+    },
+    teamscale: {
+      url: http://localhost:8080,
+      username: build,
+      accessKey: u7a9abc32r45r2uiig3vvv,
+      partition: Manual Tests
+    }
+  }
+}]
+```
+(Note that you can then leave out the `project` in the `teamscale` section)
 
 ## Example: Teamscale upload without local method-accurate coverage conversion
 

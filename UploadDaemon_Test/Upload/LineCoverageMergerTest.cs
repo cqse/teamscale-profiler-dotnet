@@ -10,17 +10,9 @@ namespace UploadDaemon.Upload
     [TestFixture]
     public class LineCoverageMergerTest
     {
-        private static readonly RevisionFileUtils.RevisionOrTimestamp Revision1 = new RevisionFileUtils.RevisionOrTimestamp
-        {
-            IsRevision = true,
-            Value = "rev1"
-        };
+        private static readonly RevisionFileUtils.RevisionOrTimestamp Revision1 = new RevisionFileUtils.RevisionOrTimestamp("rev1", false);
 
-        private static readonly RevisionFileUtils.RevisionOrTimestamp Revision2 = new RevisionFileUtils.RevisionOrTimestamp
-        {
-            IsRevision = true,
-            Value = "rev2"
-        };
+        private static readonly RevisionFileUtils.RevisionOrTimestamp Revision2 = new RevisionFileUtils.RevisionOrTimestamp("rev2", true);
 
         private static IUpload Upload;
 
