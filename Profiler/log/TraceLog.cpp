@@ -82,15 +82,15 @@ void TraceLog::logAssembly(std::string assembly)
 void TraceLog::startTestCase(std::string testName)
 {
 	// Line will look like this:
-	// Test=Start:20150601_1220270707:Test Name\: 1:something we do not know yet
-	std::string info = "Start:" + getFormattedCurrentTime() + ":" + escape(testName);
+	// Test=Start:{Start Date}:{Testname}
+	std::string info = "Start:" + getFormattedCurrentTime() + ":" + testName;
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
 }
 
 void TraceLog::endTestCase(std::string result, std::string duration)
 {
 	// Line will look like this:
-	// Test=End:20150601_1220280807:PASSED:optional msg
+	// Test=End:{End Date}:{Result}:{Duration}
 	std::string info = "End:" + getFormattedCurrentTime();
 	if (!result.empty()) {
 		info += ":" + result;
@@ -98,11 +98,6 @@ void TraceLog::endTestCase(std::string result, std::string duration)
 	}
 
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
-}
-
-inline std::string TraceLog::escape(std::string message) {
-	static std::regex colonEscape("(:|\\\\)");
-	return std::regex_replace(message, colonEscape, "\\$1");
 }
 
 void TraceLog::shutdown() {

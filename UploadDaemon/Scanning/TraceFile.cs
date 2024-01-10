@@ -20,7 +20,9 @@ namespace UploadDaemon.Scanning
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
-        private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=(?<event>Start|End):(?<date>[^:]+):(?<testname>[^:]+)(?::(?<duration>\d+))?");
+        private static readonly Regex TestCaseStartRegex = new Regex(@"^Test=Start:(?<date>[^:]+):(?<testname>.+)");
+        private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))");
+
 
         /// <summary>
         /// The lines of text contained in the trace.
@@ -96,23 +98,21 @@ namespace UploadDaemon.Scanning
                         assemblyTokens[Convert.ToUInt32(assemblyMatch.Groups[2].Value)] = assemblyMatch.Groups[1].Value;
                         break;
                     case "Test":
-                        Match testCaseMatch = TestCaseLineRegex.Match(line);
-                        string startOrEnd = testCaseMatch.Groups["event"].Value;
-                        if (startOrEnd.Equals("Start"))
+                        if (value.StartsWith("Start"))
                         {
+                            Match testCaseMatch = TestCaseStartRegex.Match(line);
                             currentTestName = testCaseMatch.Groups["testname"].Value;
                             currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                             currentTestTrace = new Trace() { OriginTraceFilePath = this.FilePath };
-                        }
-                        else if (startOrEnd.Equals("End"))
+                        } else
                         {
+                            Match testCaseMatch = TestCaseEndRegex.Match(line);
                             if (currentTestTrace == noTestTrace)
                             {
                                 throw new InvalidTraceFileException($"encountered end of test that did not start: {line}");
                             }
-
                             currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
-                            currentTestResult = testCaseMatch.Groups["testname"].Value;
+                            currentTestResult = testCaseMatch.Groups["testresult"].Value;
                             Int64.TryParse(testCaseMatch.Groups["duration"].Value, out testDuration);
                             tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {

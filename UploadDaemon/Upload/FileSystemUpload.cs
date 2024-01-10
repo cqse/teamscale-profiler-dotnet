@@ -74,8 +74,6 @@ namespace UploadDaemon.Upload
         public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.{coverageReport.FileExtension}");
-            string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}.metadata");
 
             try
             {
@@ -84,8 +82,11 @@ namespace UploadDaemon.Upload
                 int i = 1;
                 foreach (string report in reports)
                 {
-                    fileSystem.File.WriteAllText($"{filePath}_{i}", report);
-                    fileSystem.File.WriteAllText($"{metadataFilePath}_{i}.{coverageReport.FileExtension}", revisionOrTimestamp.ToRevisionFileContent());
+                    string filePath = Path.Combine(targetDirectory, $"{unixSeconds}_{i}.{coverageReport.FileExtension}");
+                    fileSystem.File.WriteAllText(filePath, report);
+
+                    string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}_{i}.{coverageReport.FileExtension}.metadata");
+                    fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
                     i++;
                 }
                 return Task.FromResult(true);

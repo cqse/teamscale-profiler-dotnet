@@ -78,7 +78,6 @@ void Ipc::handlerThreadLoop() {
 } 
 
 void Ipc::handleMessage(std::string message) {
-	logError("Received Message " + message);
 	if (message.find(TEST_START) == 0) {
 		this->testStartCallback(message.substr(TEST_START.length()));
 	}
@@ -131,6 +130,6 @@ bool Ipc::initRequestSocket() {
 }
 
 void Ipc::logError(std::string message) {
-	std::string error = message + " (ZMQ error: " + zmq_strerror(zmq_errno()) + ")";
+	std::string error = message + " (ZMQ Status: " + zmq_strerror(zmq_errno()) + ")";
 	errorCallback(error);
 }
