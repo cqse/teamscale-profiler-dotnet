@@ -27,8 +27,14 @@ namespace UploadDaemon.Report
         /// </summary>
         ICoverageReport Union(ICoverageReport coverageReport);
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         string ToString();
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         List<string> ToStringList();
     }
 }

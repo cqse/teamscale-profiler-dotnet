@@ -4,11 +4,15 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
+    /// <summary>
+    /// .Net Profiler instances can connect to this server to receive test events for testwise coverage.
+    /// </summary>
     public class ZmqIpcServer : IDisposable
     {
         private const string REGISTER_CLIENT = "register";
@@ -21,8 +25,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         public delegate string RequestHandler(string message);
 
-        protected readonly IpcConfig config;
-        protected readonly RequestHandler requestHandler;
+        private readonly IpcConfig config;
+        private readonly RequestHandler requestHandler;
 
         private int portOffset = 0;
 
@@ -34,6 +38,9 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             StartRequestHandler();
         }
 
+        /// <summary>
+        /// Starts the zeromq request and response handler
+        /// </summary>
         protected void StartRequestHandler()
         {
             this.responseSocket = new ResponseSocket();
@@ -43,26 +50,8 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                 string message = responseSocket.ReceiveFrameString();
                 if (message.StartsWith(REGISTER_CLIENT))
                 {
-                    int pid = Int32.Parse(message.Split(':')[1]);
-					lock (clients)
-					{
-                        string clientAddress;
-						if (clients.ContainsKey(pid))
-						{
-							clientAddress = clients[pid].Item1;
-							responseSocket.SendFrame(clientAddress);
-							return;
-						}
-						portOffset++;
-                        RequestSocket clientRequestSocket = new RequestSocket();
-                        clientAddress = config.RequestSocket + ":" + ((config.StartPortNumber + portOffset) % 65535);
-                        clientRequestSocket.Connect(clientAddress);
-
-                        clients.Add(pid, Tuple.Create(clientAddress, clientRequestSocket));
-						responseSocket.SendFrame(clientAddress);
-                        logger.Info($"Registered profiler on address {clientAddress}");
-					}
-					return;
+                    RegisterClient(message);
+                    return;
                 }
                 string response = this.requestHandler(message);
                 responseSocket.SendFrame(response);
@@ -72,6 +61,33 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             poller.RunAsync("Profiler IPC", true);
         }
 
+        private  void RegisterClient(string message)
+        {
+            int pid = Int32.Parse(message.Split(':')[1]);
+            lock (clients)
+            {
+                string clientAddress;
+                if (clients.ContainsKey(pid))
+                {
+                    clientAddress = clients[pid].Item1;
+                    responseSocket.SendFrame(clientAddress);
+                    return;
+                }
+                portOffset++;
+                RequestSocket clientRequestSocket = new RequestSocket();
+                clientAddress = config.RequestSocket + ":" + ((config.StartPortNumber + portOffset) % 65535);
+                clientRequestSocket.Connect(clientAddress);
+
+                clients.Add(pid, Tuple.Create(clientAddress, clientRequestSocket));
+                responseSocket.SendFrame(clientAddress);
+                logger.Info($"Registered profiler on address {clientAddress}");
+            }
+        }
+
+        /// <summary>
+        /// Sends the given test event to all connected profiler instances.
+        /// </summary>
+        /// <param name="testEvent"></param>
         public void SendTestEvent(string testEvent)
         {
             HashSet<int> clientsToRemove = new HashSet<int>();

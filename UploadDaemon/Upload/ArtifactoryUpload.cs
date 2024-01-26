@@ -126,15 +126,13 @@ namespace UploadDaemon.Upload
             byte[] compressedBytes;
             byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
             using (var outStream = new MemoryStream())
+            using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
             {
-                using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
+                var fileInArchive = archive.CreateEntry(entryName);
+                using (var entryStream = fileInArchive.Open())
+                using (var fileToCompressStream = new MemoryStream(reportBytes))
                 {
-                    var fileInArchive = archive.CreateEntry(entryName);
-                    using (var entryStream = fileInArchive.Open())
-                    using (var fileToCompressStream = new MemoryStream(reportBytes))
-                    {
-                        fileToCompressStream.CopyTo(entryStream);
-                    }
+                    fileToCompressStream.CopyTo(entryStream);
                 }
                 compressedBytes = outStream.ToArray();
             }

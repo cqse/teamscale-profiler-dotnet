@@ -12,6 +12,8 @@ namespace UploadDaemon.Report.Testwise
     [JsonObject(MemberSerialization.OptIn)]
     public class TestwiseCoverageReport : ICoverageReport
     {
+        private const int MAX_REPORT_STRING_SIZE = 536_870_912;
+
         [JsonProperty("partial")]
         public bool Partial { get; }
 
@@ -83,6 +85,10 @@ namespace UploadDaemon.Report.Testwise
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Converts this report into a list of TESTWISE format reports for Teamscale.
+        /// Reports are split to avoid too large strings (around 1GB) which cause OutOfMemoryErrors.
+        /// </summary>
         public List<string> ToStringList()
         {
             List<string> result = new List<string>();
@@ -94,13 +100,10 @@ namespace UploadDaemon.Report.Testwise
             {
                 if (newReport)
                 {
-                    sb.Append("{");
-                    if (Partial)
-                    {
-                        sb.Append("\"partial\":true,");
-                    }
-                    sb.Append("\"tests\":[");
-                } else
+                    AddReportStart(sb);
+                    newReport = false;
+                }
+                else
                 {
                     sb.Append(',');
                 }
@@ -108,24 +111,26 @@ namespace UploadDaemon.Report.Testwise
                 sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
                 Tests[i] = null;
 
-                if (sb.Length > 536_870_912)
+                if (sb.Length > MAX_REPORT_STRING_SIZE || i == Tests.Length - 1)
                 {
                     sb.Append("]}");
                     result.Add(sb.ToString());
                     sb = new StringBuilder();
                     newReport = true;
-                } else
-                {
-                    newReport = false;
                 }
-            }
-            if (!newReport)
-            {
-                sb.Append("]}");
-                result.Add(sb.ToString());
             }
 
             return result;
+        }
+
+        private void AddReportStart(StringBuilder sb)
+        {
+            sb.Append("{");
+            if (Partial)
+            {
+                sb.Append("\"partial\":true,");
+            }
+            sb.Append("\"tests\":[");
         }
     }
 }
