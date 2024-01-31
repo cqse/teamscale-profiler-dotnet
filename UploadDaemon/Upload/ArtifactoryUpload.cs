@@ -69,27 +69,27 @@ namespace UploadDaemon.Upload
             {
                 bool result = true;
                 List<string> reports = coverageReport.ToStringList();
-                int i = 1;
+                int index = 1;
                 foreach (string report in reports)
                 {
                     string covFileName = "";
                     if (coverageReport.UploadFormat == "SIMPLE")
                     {
-                        covFileName = $"{artifactory.Partition}/simple_{i}.txt";
+                        covFileName = $"{artifactory.Partition}/simple_{index}.txt";
                     }
                     else
                     {
-                        covFileName = $"{artifactory.Partition}/testwise_{i}.json";
+                        covFileName = $"{artifactory.Partition}/testwise_{index}.json";
                     }
                     byte[] reportBytes = CreateZipFile(report, covFileName);
 
-                    String reportName = $"report_{i}.zip";
+                    String reportName = $"report_{index}.zip";
                     string reportUrl = $"{url}/{reportName}";
 
                     logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), reportUrl);
 
                     result = result && await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes, reportName);
-                    i++;
+                    index++;
                 }
                 return result;
             }
