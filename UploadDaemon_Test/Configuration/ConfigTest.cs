@@ -30,7 +30,7 @@ namespace UploadDaemon.Configuration
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Config.ConfigForProcess barConfig = config.CreateConfigForProcess("C:\\test\\bar.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.True(config.DisableSslValidation, "SSL verification disabled by default");
+            Assert.That(config.DisableSslValidation, Is.True, "SSL verification disabled by default");
             Assert.That(config.UploadInterval, Is.EqualTo(TimeSpan.FromMinutes(5)));
             Assert.Multiple(() =>
             {
@@ -150,7 +150,7 @@ namespace UploadDaemon.Configuration
                       versionAssembly: foo
             ");
 
-            ParsedTraceFile traceFile = new ParsedTraceFile(new [] {
+            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
                 @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
                 @"Inlined=2:{ExistingMethodToken}",
             }, "coverage_1_1.txt");
@@ -159,6 +159,7 @@ namespace UploadDaemon.Configuration
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
+
         [Test]
         public void TestEmbeddedUploadInformation()
         {
@@ -182,6 +183,7 @@ namespace UploadDaemon.Configuration
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
+
         [Test]
         public void TestLoadedAssemblyPathRegexWithNoMatch()
         {
@@ -202,7 +204,6 @@ namespace UploadDaemon.Configuration
 
             Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile));
         }
-
 
         [Test]
         public void TestLoadedAssemblyPathRegexWillPickLastMatchingSection()
@@ -485,7 +486,7 @@ namespace UploadDaemon.Configuration
                         targetdir: C:\test1
             ");
 
-            Assert.False(config.DisableSslValidation, "Enabling of SSL validation");
+            Assert.That(config.DisableSslValidation, Is.False, "Enabling of SSL validation");
         }
 
         [Test]
