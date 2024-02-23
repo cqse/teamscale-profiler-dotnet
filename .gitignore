@@ -10,3 +10,4 @@ test-data/test-programs/output.pdf
 !packages/repositories.config
 
 StyleCop.Cache
+/*.txt
