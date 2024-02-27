@@ -101,7 +101,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: release-zip
-        path: path/to/artifact/world.txt
         path: teamscale-profiler-dotnet.zip
           
       - name: Upload Release Assets
