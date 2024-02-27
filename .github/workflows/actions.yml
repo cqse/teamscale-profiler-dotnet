@@ -76,6 +76,7 @@ jobs:
         run: node_modules/.bin/markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
 
       - name: Create release zip
+        shell: bash
 
         # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
         # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
@@ -83,39 +84,26 @@ jobs:
         #
         # copy Profiler dlls and pdbs
         run: |
-            echo "start"
-            dir
-            echo 0
-            mkdir teamscale_dotnet_profiler\UploadDaemon
-            echo 1
-            mkdir teamscale_dotnet_profiler\Documentation
-            echo 2
-            mkdir teamscale_dotnet_profiler\Licenses
-            echo 3
-            mkdir teamscale_dotnet_profiler\Tools
-            echo 4
-            robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
-            echo 5
-            robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
-            echo 6
-            robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
-            echo 7
-            mkdir teamscale_dotnet_profiler\UploadDaemon\service
-            echo 8
-            robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* & exit 0
-            echo 9
-            robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb & exit 0
-            echo 10
-            robocopy . teamscale_dotnet_profiler LICENSE & exit 0
-            echo 11
-            robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
-            echo 12
-            robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
-            echo 13
-            7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
-            echo 14
-            dir
-            echo 15
+            cp ./Profiler/bin/Release/*.dll teamscale_dotnet_profiler
+            cp ./Profiler/bin/Release/*.pdb teamscale_dotnet_profiler
+            cp ./Profiler/Profiler.example.yml teamscale_dotnet_profiler
+
+            # todo: exclude pdbs
+            cp -r ./Profiler/bin/Release/UploadDaemon teamscale_dotnet_profiler
+
+            mkdir teamscale_dotnet_profiler/Tools
+            # todo: exclude pdbs
+            cp -r ./Profiler/bin/Release/DumpPdb teamscale_dotnet_profiler/Tools
+
+            mkdir teamscale_dotnet_profiler/Licenses
+            cp ./Profiler/lib/LICENSE teamscale_dotnet_profiler/Licenses
+            cp ./LICENSE teamscale_dotnet_profiler
+
+            mkdir teamscale_dotnet_profiler/Documentation
+            cp ./documentation/userguide.pdf teamscale_dotnet_profiler/Documentation
+
+            zip -r teamscale-profiler-dotnet.zip ./teamscale_dotnet_profiler
+            ls -al
 
       - uses: actions/upload-artifact@v4
         with:
