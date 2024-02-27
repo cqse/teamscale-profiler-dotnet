@@ -97,6 +97,12 @@ jobs:
             robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
             robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
             7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-zip
+        path: path/to/artifact/world.txt
+        path: teamscale-profiler-dotnet.zip
           
       - name: Upload Release Assets
         if: startsWith(github.ref, 'refs/tags/v')
