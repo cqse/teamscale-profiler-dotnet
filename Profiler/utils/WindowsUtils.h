@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
+#include "Testing.h"
 
 static const int BUFFER_SIZE = 2048;
 
@@ -25,7 +26,7 @@ public:
 	static std::vector<std::string> listEnvironmentVariables();
 
 	/** Returns the path to the profiler. */
-	static std::string getPathOfProfiler();
+	static EXPOSE_TO_CPP_TESTS std::string getPathOfProfiler();
 
 	/** Returns the path to the profiled process. */
 	static std::string getPathOfThisProcess();

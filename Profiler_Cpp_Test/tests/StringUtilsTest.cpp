@@ -1,6 +1,7 @@
 #include <sstream>
 #include "CppUnitTest.h"
 #include "utils/StringUtils.h"
+#include "utils/WindowsUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -45,5 +46,6 @@ public:
 	{
 		Assert::AreEqual(std::string("C:\\foo\\bar"), StringUtils::removeLastPartOfPath("C:\\foo\\bar\\test.exe"));
 		Assert::AreEqual(std::string("C:\\foo"), StringUtils::removeLastPartOfPath("C:\\foo\\bar"));
+		Assert::AreEqual(std::string("S:\\teamscale_dotnet_profiler"), StringUtils::removeLastPartOfPath("S:\\teamscale_dotnet_profiler\\Profiler64.dll"));
 	}
 };

@@ -92,7 +92,10 @@ HRESULT CProfilerCallback::Initialize(IUnknown* pICorProfilerInfoUnkown) {
 }
 
 HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoUnkown) {
+	Debug::getInstance().log("Started profiler");
 	initializeConfig();
+	Debug::getInstance().log("looking for configuration options in: " + config.getConfigPath());
+	Debug::getInstance().log("inferred profiler path: " + WindowsUtils::getPathOfProfiler());
 
 	if (!config.isProfilingEnabled()) {
 		return S_OK;
@@ -104,7 +107,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	attachLog.logAttach();
 
 	traceLog.createLogFile(config.getTargetDir());
-	traceLog.info("looking for configuration options in: " + config.getConfigPath());
+	traceLog.info("inferred profiler path from environment: " + WindowsUtils::getPathConfigValueFromEnvironment());
 
 	for (std::string problem : config.getProblems()) {
 		traceLog.error(problem);
