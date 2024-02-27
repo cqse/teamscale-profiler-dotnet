@@ -104,7 +104,10 @@ jobs:
             mkdir teamscale_dotnet_profiler/Documentation
             cp ./documentation/userguide.pdf teamscale_dotnet_profiler/Documentation
 
-            zip -r teamscale-profiler-dotnet.zip ./teamscale_dotnet_profiler
+            ls -al
+            echo "zip"
+            7z a teamscale-profiler-dotnet.zip ./teamscale_dotnet_profiler
+            echo "done"
             ls -al
 
       - uses: actions/upload-artifact@v4
