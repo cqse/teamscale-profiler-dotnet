@@ -83,21 +83,39 @@ jobs:
         #
         # copy Profiler dlls and pdbs
         run: |
-            mkdir teamscale_dotnet_profiler\UploadDaemon
-            mkdir teamscale_dotnet_profiler\Documentation
-            mkdir teamscale_dotnet_profiler\Licenses
-            mkdir teamscale_dotnet_profiler\Tools
-            robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
-            robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
-            robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
-            mkdir teamscale_dotnet_profiler\UploadDaemon\service
-            robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* & exit 0
-            robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb & exit 0
-            robocopy . teamscale_dotnet_profiler LICENSE & exit 0
-            robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
-            robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
-            7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
+            echo "start"
             dir
+            echo 0
+            mkdir teamscale_dotnet_profiler\UploadDaemon
+            echo 1
+            mkdir teamscale_dotnet_profiler\Documentation
+            echo 2
+            mkdir teamscale_dotnet_profiler\Licenses
+            echo 3
+            mkdir teamscale_dotnet_profiler\Tools
+            echo 4
+            robocopy .\Profiler\bin\Release teamscale_dotnet_profiler *.dll *.pdb & exit 0
+            echo 5
+            robocopy .\Profiler teamscale_dotnet_profiler Profiler.example.yml & exit 0
+            echo 6
+            robocopy .\Profiler\bin\Release\UploadDaemon teamscale_dotnet_profiler\UploadDaemon *.* /xf *.pdb & exit 0
+            echo 7
+            mkdir teamscale_dotnet_profiler\UploadDaemon\service
+            echo 8
+            robocopy .\UploadDaemon\service teamscale_dotnet_profiler\UploadDaemon\service *.* & exit 0
+            echo 9
+            robocopy .\Profiler\bin\Release\DumpPdb teamscale_dotnet_profiler\Tools *.* /xf *.pdb & exit 0
+            echo 10
+            robocopy . teamscale_dotnet_profiler LICENSE & exit 0
+            echo 11
+            robocopy .\Profiler\lib teamscale_dotnet_profiler\Licenses LICENSE /s & exit 0
+            echo 12
+            robocopy .\documentation teamscale_dotnet_profiler\Documentation userguide.pdf & exit 0
+            echo 13
+            7z a teamscale-profiler-dotnet.zip .\teamscale_dotnet_profiler
+            echo 14
+            dir
+            echo 15
 
       - uses: actions/upload-artifact@v4
         with:
