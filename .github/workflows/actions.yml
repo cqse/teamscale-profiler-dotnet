@@ -84,6 +84,7 @@ jobs:
         #
         # copy Profiler dlls and pdbs
         run: |
+            mkdir teamscale_dotnet_profiler
             cp ./Profiler/bin/Release/*.dll teamscale_dotnet_profiler
             cp ./Profiler/bin/Release/*.pdb teamscale_dotnet_profiler
             cp ./Profiler/Profiler.example.yml teamscale_dotnet_profiler
