@@ -109,11 +109,6 @@ jobs:
             echo "--------------------"
 
             7z a teamscale-profiler-dotnet.zip ./teamscale_dotnet_profiler
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-zip
-          path: '*.zip'
           
       - name: Upload Release Assets
         if: startsWith(github.ref, 'refs/tags/v')
