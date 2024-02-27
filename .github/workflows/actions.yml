@@ -97,7 +97,8 @@ jobs:
             cp -r ./Profiler/bin/Release/DumpPdb teamscale_dotnet_profiler/Tools
 
             mkdir teamscale_dotnet_profiler/Licenses
-            cp ./Profiler/lib/LICENSE teamscale_dotnet_profiler/Licenses
+            # Todo copy licenses of used libs
+            # cp ./Profiler/lib/*/LICENSE teamscale_dotnet_profiler/Licenses
             cp ./LICENSE teamscale_dotnet_profiler
 
             mkdir teamscale_dotnet_profiler/Documentation
