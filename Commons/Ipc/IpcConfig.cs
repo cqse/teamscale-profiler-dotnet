@@ -34,7 +34,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             PublishSocket = publishSocket;
             RequestSocket = requestSocket.Substring(0, requestSocket.LastIndexOf(':')) ;
-            StartPortNumber = Int32.Parse(RequestSocket.Split(':').Last());
+            StartPortNumber = Int32.Parse(requestSocket.Split(':').Last());
         }
     }
 }

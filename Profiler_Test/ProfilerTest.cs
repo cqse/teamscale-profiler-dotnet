@@ -52,7 +52,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Makes sure that processes not matching the given process name are not profiled.
         /// </summary>
-        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*blubblub.exe", ExpectedResult = 0)]
         [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
         public int TestConfigFile(string regex)
         {
@@ -66,7 +66,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 enabled: true
           ");
 
-            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
             return profiler.GetTraceFiles().Count;
         }
