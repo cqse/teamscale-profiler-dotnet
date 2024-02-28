@@ -24,7 +24,7 @@ Ipc::Ipc(Config* config, std::function<void(std::string)> testStartCallback, std
 	this->zmqTimeout = IPC_TIMEOUT_MS;
 	this->zmqLinger = IPC_LINGER;
 	this->zmqContext = zmq_ctx_new();
-	
+
 	this->handlerThread = new std::thread(&Ipc::handlerThreadLoop, this);
 }
 
@@ -45,11 +45,11 @@ Ipc::~Ipc()
 void Ipc::handlerThreadLoop() {
 	std::string address = "";
 	while (address == "" && !this->shutdown) {
-		 address = this->request("register:" + std::to_string(GetCurrentProcessId()));
-		 if (address == "") {
-			 std::this_thread::sleep_for(3000ms);
-			 logError("Connection failed, trying again.");
-		 }
+		address = this->request("register:" + std::to_string(GetCurrentProcessId()));
+		if (address == "") {
+			std::this_thread::sleep_for(3000ms);
+			logError("Connection failed, trying again.");
+		}
 	}
 	handleMessage(getCurrentTestName());
 
@@ -69,13 +69,13 @@ void Ipc::handlerThreadLoop() {
 		int len = zmq_recv(this->zmqReplySocket, &buf, IPC_BUFFER_SIZE, 0);
 		if (len != -1) {
 			IPC_TERMINATE_STRING(buf, len);
-			std::string message (buf);
+			std::string message(buf);
 			handleMessage(message);
 			zmq_send(this->zmqReplySocket, "ack", 3, 0);
 		}
 	}
 	zmq_close(this->zmqReplySocket);
-} 
+}
 
 void Ipc::handleMessage(std::string message) {
 	if (message.find(TEST_START) == 0) {
@@ -99,7 +99,7 @@ std::string Ipc::request(std::string message)
 {
 	if (!initRequestSocket()) {
 		return "";
-	}	
+	}
 
 	char buffer[IPC_BUFFER_SIZE];
 	zmq_send(this->zmqRequestSocket, message.c_str(), message.length(), 0);
@@ -109,7 +109,7 @@ std::string Ipc::request(std::string message)
 		this->zmqRequestSocket = NULL;
 		return "";
 	}
-
+	
 	IPC_TERMINATE_STRING(buffer, len);
 	return std::string(buffer);
 }

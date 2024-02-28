@@ -52,7 +52,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Makes sure that processes not matching the given process name are not profiled.
         /// </summary>
-        [TestCase(".*blubblub.exe", ExpectedResult = 0)]
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
         [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
         public int TestConfigFile(string regex)
         {
@@ -65,6 +65,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
               profiler:
                 enabled: true
           ");
+            profiler.ConfigFilePath = configFile;
 
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
             return profiler.GetTraceFiles().Count;
@@ -131,12 +132,11 @@ match:
       enabled: true
       tga: false
       tia: true
-      tia_request_socket: {profilerIpc.Config.RequestSocket}
-      tia_subscribe_socket: {profilerIpc.Config.PublishSocket}
+      tia_request_socket: {profilerIpc.Config.PublishSocket}
 ");
 
             profiler.ConfigFilePath = configFile;
-            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
 
             string[] lines = profiler.GetSingleTrace();
             Assert.That(lines, Has.Some.Matches("^(Called)"));

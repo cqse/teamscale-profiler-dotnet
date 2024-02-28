@@ -42,9 +42,6 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                         return string.Empty;
                     }
                     return $"start:{this.TestName}";
-                case string profiler when new Regex("r:").IsMatch(profiler):
-                    logger.Info("Registered");
-                    return "registered";
                 default:
                     logger.Info("Received request: {request}.", message);
                     return string.Empty;

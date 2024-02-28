@@ -44,7 +44,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         protected void StartRequestHandler()
         {
             this.responseSocket = new ResponseSocket();
-            this.responseSocket.Bind(this.config.RequestSocket + ":" + config.StartPortNumber);
+            this.responseSocket.Bind(this.config.PublishSocket);
             this.responseSocket.ReceiveReady += (s, e) =>
             {
                 string message = responseSocket.ReceiveFrameString();

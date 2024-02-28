@@ -40,7 +40,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
                 {
                     FileInfo actualTrace = GetSingleTraceFile();
                     TiaTestResult testResult = new TiaTestResult(File.ReadAllLines(actualTrace.FullName));
-                    Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. SUB: {ipcConfig.PublishSocket} REQ: {ipcConfig.RequestSocket}"));
+                    Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. REQ Socket: {ipcConfig.RequestSocket}"));
                     Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
                     return testResult;
                 }

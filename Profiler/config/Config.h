@@ -95,9 +95,6 @@ public:
 		return tiaRequestSocket;
 	}
 
-	std::string getTiaSubscribeSocket() {
-		return tiaSubscribeSocket;
-	}
 private:
 
 	std::string processPath;
@@ -118,7 +115,6 @@ private:
 	bool tgaEnabled;
 	bool tiaEnabled;
 	std::string tiaRequestSocket;
-	std::string tiaSubscribeSocket;
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);
