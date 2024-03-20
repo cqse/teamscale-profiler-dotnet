@@ -78,6 +78,9 @@ namespace UploadDaemon.Report.Testwise
             for (int i = 0; i < Tests.Length; i++)
             {
                 sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
+                if (i < Tests.Length - 1) {
+                    sb.Append(",");
+                }
                 Tests[i] = null;
             }
             sb.Append("]}");

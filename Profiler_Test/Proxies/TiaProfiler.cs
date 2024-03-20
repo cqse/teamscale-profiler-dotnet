@@ -27,8 +27,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             base.RegisterOn(processInfo, bitness);
             
             processInfo.Environment["COR_PROFILER_TIA"] = "true";
-            processInfo.Environment["COR_PROFILER_TIA_SUBSCRIBE_SOCKET"] = ipcConfig.PublishSocket; // PUB-SUB
-            processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.RequestSocket; // REQ-REP
+            processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.PublishSocket; // REQ-REP
         }
 
         /// <summary>
@@ -40,7 +39,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
                 {
                     FileInfo actualTrace = GetSingleTraceFile();
                     TiaTestResult testResult = new TiaTestResult(File.ReadAllLines(actualTrace.FullName));
-                    Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. REQ Socket: {ipcConfig.RequestSocket}"));
+                    Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. REQ Socket: {ipcConfig.RequestSocket}:{ipcConfig.StartPortNumber - 1}"));
                     Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
                     return testResult;
                 }
@@ -116,34 +115,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
                 {
                     if (line.StartsWith("Test=Start:"))
                     {
-                        string[] parts = line.Substring("Test=".Length).Split(':');
-                        bool mergeNext = false;
-                        parts = parts.Aggregate(new List<string>(), (acc, part) =>
-                        {
-                            // @"Test = Start:20210126_0105500760:Test\:Case\\\\\:\\\:";
-                            string unescaped = part.Replace("\\\\", "\\");
-                            bool mergeCurrent = mergeNext;
-                            if (part.Reverse().TakeWhile(c => c == '\\').Count() % 2 != 0)
-                            {
-                                unescaped = unescaped.Substring(0, unescaped.Length - 1) + ":";
-                                mergeNext = true;
-                            }
-                            else
-                            {
-                                mergeNext = false;
-                            }
-
-                            if (mergeCurrent)
-                            {
-                                acc[acc.Count - 1] += unescaped;
-                            }
-                            else
-                            {
-                                acc.Add(unescaped);
-                            }
-
-                            return acc;
-                        }).ToArray();
+                        string[] parts = line.Substring("Test=".Length).Split(new char[] { ':' }, 3);
                         currentLines = new List<string>();
                         testCases.Add(new TestCase(parts[2], currentLines));
                     }

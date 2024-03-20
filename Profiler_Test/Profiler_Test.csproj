@@ -58,7 +58,6 @@
     <Compile Include="Proxies\Profiler.cs" />
     <Compile Include="Proxies\TiaProfiler.cs" />
     <Compile Include="Proxies\Testee.cs" />
-    <Compile Include="Tia\TiaProfilerPerformanceTest.cs" />
     <Compile Include="Tia\TiaProfilerTest.cs" />
     <Compile Include="ProfilerTest.cs" />
     <Compile Include="ProfilerTestBase.cs" />

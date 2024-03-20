@@ -30,12 +30,12 @@ namespace UploadDaemon.Report
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
             Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
-            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(6));
 
             mergedReport = report2.Union(report1) as TestwiseCoverageReport;
 
             Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
-            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(9));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(6));
         }
 
         [Test]

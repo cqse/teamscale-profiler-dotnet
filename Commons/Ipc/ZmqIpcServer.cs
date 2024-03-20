@@ -3,10 +3,7 @@ using NetMQ.Sockets;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel.Channels;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
