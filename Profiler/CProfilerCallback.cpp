@@ -93,8 +93,8 @@ CProfilerCallback::~CProfilerCallback() {
 		// make sure we flush to disk and disable access to this instance for other threads
 		// even if the .NET framework doesn't call Shutdown() itself
 		getShutdownGuard().shutdownInstance(false);
-		DeleteCriticalSection(&methodSetSynchronization);
 		DeleteCriticalSection(&callbackSynchronization);
+		DeleteCriticalSection(&methodSetSynchronization);
 	}
 	catch (...) {
 		handleException("Destructor");
@@ -164,19 +164,14 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 	}
 
 	if (config.isTiaEnabled()) {
-		traceLog.info("TIA enabled. SUB: " + config.getTiaSubscribeSocket() + " REQ: " + config.getTiaRequestSocket());
+		traceLog.info("TIA enabled. REQ Socket: " + config.getTiaRequestSocket());
 		std::function<void(std::string)> testStartCallback = std::bind(&CProfilerCallback::onTestStart, this, std::placeholders::_1);
-		std::function<void(std::string, std::string, long)> testEndCallback = std::bind(&CProfilerCallback::onTestEnd, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+		std::function<void(std::string, std::string)> testEndCallback = std::bind(&CProfilerCallback::onTestEnd, this, std::placeholders::_1, std::placeholders::_2);
 		std::function<void(std::string)> errorCallback = std::bind(&TraceLog::error, this->traceLog, std::placeholders::_1);
 		this->ipc = new Ipc(&this->config, testStartCallback, testEndCallback, errorCallback);
-		std::string testName = this->ipc->getCurrentTestName();
 
 		setCriticalSection(&methodSetSynchronization);
 		setCalledMethodsSet(&calledMethodIds);
-		if (!testName.empty()) {
-			setTestCaseRecording(true);
-			traceLog.startTestCase(testName);
-		}
 	}
 
 	char appPool[BUFFER_SIZE];
@@ -289,6 +284,7 @@ void CProfilerCallback::adjustEventMask() {
 
 	if (config.isTiaEnabled()) {
 		dwEventMaskLow |= COR_PRF_MONITOR_ENTERLEAVE;
+		dwEventMaskLow |= COR_PRF_DISABLE_INLINING;
 	}
 
 	profilerInfo->SetEventMask2(dwEventMaskLow, dwEventMaskHigh);
@@ -416,6 +412,9 @@ HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID funct
 		EnterCriticalSection(&callbackSynchronization);
 		EnterCriticalSection(&methodSetSynchronization);
 		recordFunctionInfo(&jittedMethods, functionId);
+		if (shouldWriteEagerly()) {
+			writeFunctionInfosToLog();
+		}
 		LeaveCriticalSection(&methodSetSynchronization);
 		LeaveCriticalSection(&callbackSynchronization);
 	}
@@ -441,8 +440,13 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 		// TODO (MP) Better late call eval here as well.
 		if (!inlinedMethodIds.contains(calleeId)) {
 			EnterCriticalSection(&callbackSynchronization);
+			EnterCriticalSection(&methodSetSynchronization);
 			inlinedMethodIds.insert(calleeId);
 			recordFunctionInfo(&inlinedMethods, calleeId);
+			if (shouldWriteEagerly()) {
+				writeFunctionInfosToLog();
+			}
+			LeaveCriticalSection(&methodSetSynchronization);
 			LeaveCriticalSection(&callbackSynchronization);
 		}
 	}
@@ -464,10 +468,6 @@ void CProfilerCallback::recordFunctionInfo(std::vector<FunctionInfo>* recordedFu
 	}
 
 	recordedFunctionInfos->push_back(info);
-
-	if (shouldWriteEagerly()) {
-		writeFunctionInfosToLog();
-	}
 }
 
 inline bool CProfilerCallback::shouldWriteEagerly() {
@@ -570,13 +570,13 @@ void CProfilerCallback::onTestStart(std::string testName)
 	}
 }
 
-void CProfilerCallback::onTestEnd(std::string result, std::string message, long duration)
+void CProfilerCallback::onTestEnd(std::string result, std::string duration)
 {
 	if (config.isProfilingEnabled() && config.isTiaEnabled()) {
 		EnterCriticalSection(&methodSetSynchronization);
 		setTestCaseRecording(false);
 		writeFunctionInfosToLog();
-		traceLog.endTestCase(result, message, duration);
+		traceLog.endTestCase(result, duration);
 
 		LeaveCriticalSection(&methodSetSynchronization);
 	}

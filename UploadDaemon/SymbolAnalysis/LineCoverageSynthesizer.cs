@@ -26,7 +26,6 @@ namespace UploadDaemon.SymbolAnalysis
         public SimpleCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
-
             if (symbolCollection.IsEmpty)
             {
                 throw new LineCoverageConversionFailedException($"Failed to convert {trace.OriginTraceFilePath} to line coverage." +
@@ -60,12 +59,16 @@ namespace UploadDaemon.SymbolAnalysis
             logger.Debug("Converting trace {traceFile} to line coverage", trace);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
             Dictionary<string, FileCoverage> lineCoverageByFile = new Dictionary<string, FileCoverage>();
+            HashSet<string> includedAssemblies = new HashSet<string>();
+            HashSet<string> excludedAssemblies = new HashSet<string>();
             foreach ((string assemblyName, uint methodId) in trace.CoveredMethods)
             {
-                if (!assemblyPatterns.Matches(assemblyName))
+                if (excludedAssemblies.Contains(assemblyName) || (!includedAssemblies.Contains(assemblyName) && !assemblyPatterns.Matches(assemblyName)))
                 {
+                    excludedAssemblies.Add(assemblyName);
                     continue;
                 }
+                includedAssemblies.Add(assemblyName);
 
                 SymbolCollection.SourceLocation sourceLocation = symbolCollection.Resolve(assemblyName, methodId);
                 if (!resolutionCounts.TryGetValue(assemblyName, out AssemblyResolutionCount count))
@@ -121,7 +124,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             if (count.unresolvedMethods > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
                     " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
@@ -131,7 +134,7 @@ namespace UploadDaemon.SymbolAnalysis
             }
             if (count.methodsWithoutSourceFile > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
                     " Read from trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
@@ -141,7 +144,7 @@ namespace UploadDaemon.SymbolAnalysis
             }
             if (count.methodsWithoutSourceFile > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
                     " Read from trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This is usually not a problem as the compiler may generate additional code that does not correspond to any source code." +

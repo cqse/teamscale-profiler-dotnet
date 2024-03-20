@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -62,7 +63,8 @@ namespace UploadDaemon.Upload
             {
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("X-JFrog-Art-Api", artifactory.ApiKey);
             }
-            else {
+            else
+            {
                 byte[] byteArray = Encoding.ASCII.GetBytes($"{artifactory.Username}:{artifactory.Password}");
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
             }
@@ -90,6 +92,25 @@ namespace UploadDaemon.Upload
             using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
             {
                 content.Add(new StreamContent(stream), multipartParameterName, fileName);
+
+                return await client.PostAsync(url, content);
+            }
+        }
+
+        /// <summary>
+        /// Uploads the given list of streams in a multi-part request.
+        /// </summary>
+        /// <returns>The HTTP response. The caller must dispose of it.</returns>
+        /// <exception cref="IOException">In case there are network or file system errors.</exception>
+        /// <exception cref="HttpRequestException">In case there are network errors.</exception>
+        public static async Task<HttpResponseMessage> UploadMultiPartList(HttpClient client, string url, string multipartParameterName, List<string> contents, string fileName)
+        {
+            using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))
+            {
+                foreach (var singleContent in contents)
+                {
+                    content.Add(new StringContent(singleContent), multipartParameterName, fileName);
+                }
 
                 return await client.PostAsync(url, content);
             }

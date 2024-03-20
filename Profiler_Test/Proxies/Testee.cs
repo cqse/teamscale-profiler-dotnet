@@ -11,7 +11,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
 
         public Bitness? bitness;
 
-        public Testee(FileInfo exectable, Bitness? bitness = null)
+        public Testee(FileInfo exectable, Bitness? bitness = Bitness.x64)
         {
             this.bitness = bitness;
             this.executable = exectable;

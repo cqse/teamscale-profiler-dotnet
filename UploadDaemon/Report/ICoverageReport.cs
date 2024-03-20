@@ -1,4 +1,6 @@
-﻿namespace UploadDaemon.Report
+﻿using System.Collections.Generic;
+
+namespace UploadDaemon.Report
 {
     /// <summary>
     /// A coverage report.
@@ -24,5 +26,15 @@
         /// Returns a new report wth the union of the coverage data of both reports.
         /// </summary>
         ICoverageReport Union(ICoverageReport coverageReport);
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        string ToString();
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        List<string> ToStringList();
     }
 }

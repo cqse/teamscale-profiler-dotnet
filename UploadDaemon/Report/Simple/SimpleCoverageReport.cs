@@ -10,6 +10,8 @@ namespace UploadDaemon.Report.Simple
     /// </summary>
     public class SimpleCoverageReport : ICoverageReport
     {
+        private const int MAX_REPORT_STRING_SIZE = 536_870_912;
+
         private readonly IDictionary<string, FileCoverage> lineCoverageByFile;
 
         public SimpleCoverageReport(IDictionary<string, FileCoverage> lineCoverageByFile)
@@ -74,5 +76,41 @@ namespace UploadDaemon.Report.Simple
             }
             return report.ToString();
         }
+
+        /// <summary>
+        /// Creates a list containing one or more simple coverage reports for this report.
+        /// Reports are split to avoid too large strings (around 1GB) which cause OutOfMemoryErrors.
+        /// </summary>
+        public List<string> ToStringList()
+        {
+            List<String> result = new List<string>();
+
+            StringBuilder report = new StringBuilder();
+            bool newReport = true;
+            foreach (string file in FileNames)
+            {
+                if (newReport)
+                {
+                    report.AppendLine("# isMethodAccurate=true");
+                    newReport = false;
+                }
+
+                report.AppendLine(file);
+                foreach ((uint startLine, uint endLine) in this[file].CoveredLineRanges)
+                {
+                    report.AppendLine($"{startLine}-{endLine}");
+                }
+
+                if (report.Length > MAX_REPORT_STRING_SIZE)
+                {
+                    result.Add(report.ToString());
+                    report = new StringBuilder();
+                    newReport = true;
+                }
+            }
+            result.Add(report.ToString());
+            return result;
+        }
+
     }
 }

@@ -20,9 +20,9 @@ namespace Cqse.Teamscale.Profiler.Commander
             profilerIpc.Dispose();
         }
 
-        internal void EndTest(TestExecutionResult result, string message = "", long durationMs = 0)
+        internal void EndTest(TestExecutionResult result, long durationMs = 0)
         {
-            profilerIpc.EndTest(result, message, durationMs);
+            profilerIpc.EndTest(result, durationMs);
         }
 
         internal void StartTest(string testName = null)

@@ -1,5 +1,6 @@
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using UploadDaemon.Report;
@@ -43,11 +44,17 @@ namespace UploadDaemon.Archiving
             }
 
             // Remove path components from file name.
-            string sanitizedFileName = Path.GetFileName(baseName) + $".{report.FileExtension}";
+            string sanitizedFileName = Path.GetFileName(baseName);
             string targetPath = Path.Combine(coverageReportDirectory, sanitizedFileName);
             try
             {
-                fileSystem.File.WriteAllText(targetPath, report.ToString());
+                List<string> reports = report.ToStringList();
+                int i = 1;
+                foreach (string covReport in reports)
+                {
+                    fileSystem.File.WriteAllText($"{targetPath}_{i}.{report.FileExtension}", covReport);
+                    i++;
+                }
             }
             catch (Exception e)
             {
