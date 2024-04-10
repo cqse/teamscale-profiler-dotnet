@@ -33,7 +33,7 @@ public:
 			matches += testSet.contains(i);
 		}
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-		std::string message = "Time difference = " + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) + " [mikrosekunden]\n";
+		std::string message = "Time Difference Custom Set = " + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) + " [mikrosekunden]\n";
 		std::string message2 = "Matches: " + std::to_string(matches) + "\n";
 		Logger::WriteMessage(message.c_str());
 		Logger::WriteMessage(message2.c_str());
@@ -48,7 +48,7 @@ public:
 			matches2 += testSet2.find(i) != testSet2.end();
 		}
 		std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
-		std::string message3 = "Time difference = " + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(end2 - begin2).count()) + " [mikrosekunden]\n";
+		std::string message3 = "Time Difference Standard Set = " + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(end2 - begin2).count()) + " [mikrosekunden]\n";
 		std::string message4 = "Matches: " + std::to_string(matches2) + "\n";
 		Logger::WriteMessage(message3.c_str());
 		Logger::WriteMessage(message4.c_str());

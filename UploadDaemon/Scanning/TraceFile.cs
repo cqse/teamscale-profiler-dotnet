@@ -21,7 +21,7 @@ namespace UploadDaemon.Scanning
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex TestCaseStartRegex = new Regex(@"^Test=Start:(?<date>[^:]+):(?<testname>.+)");
-        private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))");
+        private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
 
 
         /// <summary>
