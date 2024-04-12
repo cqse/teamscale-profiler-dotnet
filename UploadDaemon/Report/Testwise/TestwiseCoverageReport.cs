@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace UploadDaemon.Report.Testwise
 {
@@ -11,6 +12,8 @@ namespace UploadDaemon.Report.Testwise
     [JsonObject(MemberSerialization.OptIn)]
     public class TestwiseCoverageReport : ICoverageReport
     {
+        private const int MAX_REPORT_STRING_SIZE = 536_870_912;
+
         [JsonProperty("partial")]
         public bool Partial { get; }
 
@@ -63,7 +66,74 @@ namespace UploadDaemon.Report.Testwise
         /// </summary>
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore });
+            StringBuilder sb = new StringBuilder();
+            
+            sb.Append("{");
+            if (Partial)
+            {
+                sb.Append("\"partial\":true,");
+            }
+            sb.Append("\"tests\":[");
+            JsonSerializerSettings settings = new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore };
+            for (int i = 0; i < Tests.Length; i++)
+            {
+                sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
+                if (i < Tests.Length - 1) {
+                    sb.Append(",");
+                }
+                Tests[i] = null;
+            }
+            sb.Append("]}");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Converts this report into a list of TESTWISE format reports for Teamscale.
+        /// Reports are split to avoid too large strings (around 1GB) which cause OutOfMemoryErrors.
+        /// </summary>
+        public List<string> ToStringList()
+        {
+            List<string> result = new List<string>();
+            StringBuilder sb = new StringBuilder();
+            JsonSerializerSettings settings = new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore };
+
+            bool newReport = true;
+            for (int i = 0; i < Tests.Length; i++)
+            {
+                if (newReport)
+                {
+                    AddReportStart(sb);
+                    newReport = false;
+                }
+                else
+                {
+                    sb.Append(',');
+                }
+                
+                sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
+                Tests[i] = null;
+
+                if (sb.Length > MAX_REPORT_STRING_SIZE || i == Tests.Length - 1)
+                {
+                    sb.Append("]}");
+                    result.Add(sb.ToString());
+                    sb = new StringBuilder();
+                    newReport = true;
+                }
+            }
+
+            return result;
+        }
+
+        private void AddReportStart(StringBuilder sb)
+        {
+            sb.Append("{");
+            if (Partial)
+            {
+                sb.Append("\"partial\":true,");
+            }
+            sb.Append("\"tests\":[");
         }
     }
 }

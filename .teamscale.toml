@@ -1,0 +1,38 @@
+# The Teamscale IDE configuration file format version of this file.
+
+version = "1.0" # Optional, default: 1.0
+
+# Whether this is the root config file.
+# If true, configuration discovery stops at this file and does not continue upwards to the filesystem root.
+
+root = true # Optional, default: false
+
+[server]
+
+# The URL of the Teamscale server.
+# If set, it must match the URL of a server for which credentials (Username, Access Key) have been configured in the respective IDE.
+
+url = "https://cqse.teamscale.io/" # Optional, but must be set in the merged configuration
+
+[project]
+
+# The Project ID (or one of its Alternative Project IDs) of the Teamscale project.
+# Note that the Project ID may be different from the more prominently displayed Project Name.
+#
+# If a .teamscale.toml file sets the project.id and does not set project.path
+# explicitly, then it implicitly sets project.path = "" (i.e., associates the
+# current folder with the root folder of the Teamscale project).
+
+id = "teamscale-net-profiler" # Optional, but must be set in the merged configuration
+
+# The branch to use for retrieving data from the server.
+# 
+# If empty or unset, the applicable branch is discovered from the VCS, with the
+# Teamscale default branch being a fallback.
+# If set and non-empty, branch auto-discovery is not used. Instead, the given branch is used
+
+# The code path within the Teamscale project on the server.
+#
+# Paths from parent configs will be overwritten.
+# Forward-slashes are used as path separators.
+# If empty (i.e., path = ""), the Teamscale project root is used as code path.

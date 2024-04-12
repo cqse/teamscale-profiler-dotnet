@@ -10,6 +10,8 @@ using UploadDaemon.Configuration;
 using UploadDaemon.Report;
 using System.IO.Compression;
 using UploadDaemon.Report.Testwise;
+using System.IO.Abstractions;
+using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -48,7 +50,7 @@ namespace UploadDaemon.Upload
             return artifactory.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             if (revisionOrTimestamp.IsRevision)
             {
@@ -62,25 +64,34 @@ namespace UploadDaemon.Upload
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-            String reportName = "report.zip";
-            url = $"{url}/{reportName}";
-
-            logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
-
-            string covFileName = "";
-            if (lineCoverageReport.UploadFormat == "SIMPLE")
-            {
-                covFileName = $"{artifactory.Partition}/simple.txt";
-            }
-            else
-            {
-                covFileName = $"{artifactory.Partition}/testwise.json";
-            }
 
             try
             {
-                byte[] reportBytes = CreateZipFile(lineCoverageReport.ToString(), covFileName);
-                return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, reportBytes, reportName);
+                bool result = true;
+                List<string> reports = coverageReport.ToStringList();
+                int index = 1;
+                foreach (string report in reports)
+                {
+                    string covFileName = "";
+                    if (coverageReport.UploadFormat == "SIMPLE")
+                    {
+                        covFileName = $"{artifactory.Partition}/simple_{index}.txt";
+                    }
+                    else
+                    {
+                        covFileName = $"{artifactory.Partition}/testwise_{index}.json";
+                    }
+                    byte[] reportBytes = CreateZipFile(report, covFileName);
+
+                    String reportName = $"report_{index}.zip";
+                    string reportUrl = $"{url}/{reportName}";
+
+                    logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), reportUrl);
+
+                    result = result && await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes, reportName);
+                    index++;
+                }
+                return result;
             }
             catch (Exception e)
             {
@@ -115,15 +126,13 @@ namespace UploadDaemon.Upload
             byte[] compressedBytes;
             byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
             using (var outStream = new MemoryStream())
+            using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
             {
-                using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
+                var fileInArchive = archive.CreateEntry(entryName);
+                using (var entryStream = fileInArchive.Open())
+                using (var fileToCompressStream = new MemoryStream(reportBytes))
                 {
-                    var fileInArchive = archive.CreateEntry(entryName);
-                    using (var entryStream = fileInArchive.Open())
-                    using (var fileToCompressStream = new MemoryStream(reportBytes))
-                    {
-                        fileToCompressStream.CopyTo(entryStream);
-                    }
+                    fileToCompressStream.CopyTo(entryStream);
                 }
                 compressedBytes = outStream.ToArray();
             }

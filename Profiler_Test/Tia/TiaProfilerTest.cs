@@ -13,8 +13,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
     /// </summary>
     [TestFixture(Bitness.x64, IpcImplementation.NetMQ)]
     [TestFixture(Bitness.x86, IpcImplementation.NetMQ)]
-    [TestFixture(Bitness.x64, IpcImplementation.Native)]
-    [TestFixture(Bitness.x86, IpcImplementation.Native)]
+
     public class TiaProfilerTest : TiaProfilerTestBase
     {
         private Testee testee;
@@ -41,7 +40,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         {
             Stop(Start(testee, profilerUnderTest));
 
-            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_connected", "get_testname", "profiler_disconnected" }));
+            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected", "testname" }));
         }
 
         [Test]
@@ -141,7 +140,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
         {
             RecordingProfilerIpc oldProfilerIpc = profilerIpc;
             oldProfilerIpc.StartTest("should not be triggered");
-            oldProfilerIpc.EndTest(TestExecutionResult.Passed, "");
+            oldProfilerIpc.EndTest(TestExecutionResult.Passed);
             profilerIpc.Dispose();
             TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
 
@@ -152,7 +151,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             Stop(testeeProcess);
 
             //Assert.That(oldProfilerIpc.ReceivedRequests, Is.Empty);
-            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected" }));
+            Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected", "testname" }));
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));

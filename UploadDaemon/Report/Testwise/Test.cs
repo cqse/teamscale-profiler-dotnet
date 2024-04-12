@@ -75,10 +75,27 @@ namespace UploadDaemon.Report.Testwise
 
         public Test Union(Test other)
         {
+            long thisTimeInterval = End.Ticks - Start.Ticks;
+            long otherTimeInterval = other.End.Ticks - other.Start.Ticks;
+
+            // When merging coverage from different test cases, we use the longest time for a testcase.
+            // Using the earliest start and latest end has issues with repeated execution.
+            DateTime newStart;
+            DateTime newEnd;
+            if (thisTimeInterval > otherTimeInterval)
+            {
+                newStart = Start;
+                newEnd = End;
+            } else
+            {
+                newStart = other.Start;
+                newEnd = other.End;
+            }
+
             return new Test(UniformPath, (SimpleCoverageReport)ToSimpleCoverageReport().Union(other.ToSimpleCoverageReport()))
             {
-                Start = new DateTime(Math.Min(Start.Ticks, other.Start.Ticks)),
-                End = new DateTime(Math.Max(End.Ticks, other.End.Ticks)),
+                Start = newStart,
+                End = newEnd,
                 Result = Result.Equals("SKIPPED") ? other.Result : Result,
                 Message = Message,
                 Content = Content,

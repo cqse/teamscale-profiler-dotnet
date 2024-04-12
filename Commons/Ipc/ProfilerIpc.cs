@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
@@ -7,7 +8,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        private readonly IpcServer ipcServer;
+        private readonly ZmqIpcServer ipcServer;
 
         /// <summary>
         /// The name of the current test, empty string if no test is running.
@@ -24,7 +25,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             this.ipcServer = CreateIpcServer(config);
         }
 
-        protected virtual IpcServer CreateIpcServer(IpcConfig config)
+        protected virtual ZmqIpcServer CreateIpcServer(IpcConfig config)
         {
             logger.Info("Starting IPC server (PUB={pub}, REQ={req})", config.PublishSocket, config.RequestSocket);
             return new ZmqIpcServer(config, this.HandleRequest);
@@ -34,9 +35,13 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             switch (message)
             {
-                case "get_testname":
-                    logger.Info("Received request get_testname. Response {testName}", TestName);
-                    return TestName;
+                case "testname":
+                    logger.Info("Received request get_testname. Response {testName}", this.TestName);
+                    if (this.TestName == string.Empty)
+                    {
+                        return string.Empty;
+                    }
+                    return $"start:{this.TestName}";
                 default:
                     logger.Info("Received request: {request}.", message);
                     return string.Empty;
@@ -47,19 +52,29 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             if (string.IsNullOrEmpty(testName))
             {
-                throw new ArgumentException("Test name may not be empty or null");
+                throw new ArgumentException("Test name must not be empty or null");
             }
-
-            logger.Info("Broadcasting start of test {testName}", testName);
-            this.TestName = testName;
-            ipcServer.Publish("test:start", testName);
+            if (this.TestName != string.Empty)
+            {
+                logger.Info("Starting a new test while a test is still active. Ending active Test with result Skipped since actual result is unknown.");
+                this.EndTest(TestExecutionResult.Skipped);
+            }
+            String cleanedTestName = testName.Replace("\n", " ").Replace("\r", " ");
+            logger.Info("Broadcasting start of test {testName}", cleanedTestName);
+            this.TestName = cleanedTestName;
+            ipcServer.SendTestEvent($"start:{cleanedTestName}");
         }
 
-        public void EndTest(TestExecutionResult result, string message = "", long durationMs = 0)
+        public void EndTest(TestExecutionResult result, long durationMs = 0)
         {
-            logger.Info("Broadcasting end of test {testName} with result {result} with duration {duration}", TestName, result, durationMs);
+            if (TestName == string.Empty)
+            {
+                logger.Info("Testname is empty. Result {result} cannot be associated with a testname and is not broadcasted with duration {duration}.", TestName, result, durationMs);
+                return;
+            }
+            logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
-            ipcServer.Publish("test:end", Enum.GetName(typeof(TestExecutionResult), result).ToUpper(), message, durationMs.ToString());
+            ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}:{durationMs}");
         }
 
         public void Dispose()

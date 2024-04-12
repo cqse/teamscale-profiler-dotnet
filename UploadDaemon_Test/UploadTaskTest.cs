@@ -63,7 +63,7 @@ namespace UploadDaemon
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(config);
@@ -78,7 +78,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
             { RevisionFile, @"revision: 12345" },
             { PdbDirectory, new MockDirectoryData() },
         });
@@ -95,7 +95,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
@@ -110,7 +110,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
             { RevisionFile, @"revision: 12345" },
             { PdbDirectory, new MockDirectoryData() },
         });
@@ -127,7 +127,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
             { RevisionFile, @"revision: 12345" },
             { PdbDirectory, new MockDirectoryData() },
         });
@@ -144,14 +144,14 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
             { RevisionFile, @"revision: 12345" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(archiveLineCoverageConfig);
 
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-coverage\coverage_1_1.txt.simple");
+            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-coverage\coverage_1_1.txt_1.simple");
         }
 
         [Test]
@@ -161,7 +161,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
@@ -175,7 +175,7 @@ Inlined=1:33555646:100678050" },
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
@@ -204,7 +204,7 @@ Process=foo.exe" },
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             Config configWithSpaceInTraceDirectory = Config.Read($@"
@@ -238,7 +238,7 @@ Inlined=1:33555646:100678050" },
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=1:33555646" },
         });
 
             MockUploadFactory uploadFactory = new MockUploadFactory(true);
@@ -311,7 +311,7 @@ Inlined=1:33555646:100678050" },
         {
             string[] files = fileSystem.Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
             IEnumerable<string> relativePaths = files.Select(path => path.Substring(directory.Length + 1));
-            Assert.That(relativePaths, Is.EquivalentTo(expectedFileNames));
+            CollectionAssert.AreEquivalent(relativePaths, expectedFileNames);
         }
     }
 }

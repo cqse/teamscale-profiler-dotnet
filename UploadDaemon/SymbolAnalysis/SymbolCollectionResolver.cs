@@ -26,6 +26,10 @@ namespace UploadDaemon.SymbolAnalysis
         private readonly IDictionary<string, DateTime> symbolFileLastWriteDates =
             new Dictionary<string, DateTime>();
 
+        private long lastAssemblyCheckTime;
+
+        private readonly long ONE_HOUR = 3600;
+
         /// <summary>
         /// Resolves a <see cref="SymbolCollection"/> from the PDB files in the given symbol directory whose file names
         /// without extension match the given pattern list.
@@ -37,25 +41,33 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public SymbolCollection ResolveFrom(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            (string, GlobPatternList) key = GetCacheKey(symbolDirectory, assemblyPatterns);
-            ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
-            if (!symbolCollectionsCache.TryGetValue(key, out SymbolCollection collection) || !IsValid(collection, relevantSymbolFiles))
+            lock (symbolCollectionsCache)
             {
-                symbolCollectionsCache[key] = collection = SymbolCollection.CreateFromFiles(relevantSymbolFiles.Select(info => info.Path));
-                UpdateValidationInfo(relevantSymbolFiles);
+                (string, GlobPatternList) cacheKey = (symbolDirectory, assemblyPatterns);
+                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
+                {
+                    ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
+                    symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(relevantSymbolFiles.Select(info => info.Path));
+                    UpdateValidationInfo(relevantSymbolFiles);
+                }
+                return collection;
             }
-            return collection;
+  
         }
 
-        private static (string, GlobPatternList) GetCacheKey(string symbolDirectory, GlobPatternList assemblyPatterns)
+        private bool IsValid(SymbolCollection collection, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            return (symbolDirectory, assemblyPatterns);
-        }
-
-        private bool IsValid(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFiles)
-        {
-            return ContainsExactly(collection, relevantSymbolFiles)
-                && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            // For performance reasony, we only recheck every hour.
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (lastAssemblyCheckTime - now > ONE_HOUR)
+            {
+                lastAssemblyCheckTime = now;
+                ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
+                return ContainsExactly(collection, relevantSymbolFiles)
+                    && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            }
+            return true;
+            
         }
 
         private static bool ContainsExactly(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFilePaths)

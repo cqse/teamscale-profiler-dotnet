@@ -65,8 +65,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
               profiler:
                 enabled: true
           ");
+            profiler.ConfigFilePath = configFile;
 
-            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
             return profiler.GetTraceFiles().Count;
         }
@@ -132,12 +132,11 @@ match:
       enabled: true
       tga: false
       tia: true
-      tia_request_socket: {profilerIpc.Config.RequestSocket}
-      tia_subscribe_socket: {profilerIpc.Config.PublishSocket}
+      tia_request_socket: {profilerIpc.Config.PublishSocket}
 ");
 
             profiler.ConfigFilePath = configFile;
-            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
 
             string[] lines = profiler.GetSingleTrace();
             Assert.That(lines, Has.Some.Matches("^(Called)"));
