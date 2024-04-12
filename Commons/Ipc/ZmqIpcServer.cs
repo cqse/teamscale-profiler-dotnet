@@ -124,7 +124,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             {
                 client.Value.Item2.Dispose();
             }
-            NetMQConfig.Cleanup();
+            NetMQConfig.Cleanup(false);
         }
     }
 }
