@@ -7,6 +7,7 @@ Please prefix each entry with one of:
 
 
 # Next Release
+- [fix] Updated legacy API calls in Upload Daemon
 
 # v24.2.0
 - [fix] Log message when trace directory is not writable
