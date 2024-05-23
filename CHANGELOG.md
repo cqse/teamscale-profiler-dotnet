@@ -7,6 +7,8 @@ Please prefix each entry with one of:
 
 
 # Next Release
+
+# v24.5.0
 - [fix] Updated legacy API calls in Upload Daemon
 
 # v24.2.0
