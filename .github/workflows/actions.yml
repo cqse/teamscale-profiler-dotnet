@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: '**'
+    tags: 'v*'
+  pull_request:
+    branches: '**'
+
+env:
+  BUILD_VERSION: ${{ github.ref_name }}.${{ github.run_number }}
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+
+    steps:
+      - name: Cut v from release tag and set version string
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          if (-not ($env:BUILD_VERSION -match "^v((\d+).(\d+).(\d+).(\d+))$")) {
+            Write-Host "Invalid version number: $env:BUILD_VERSION"
+            exit 1
+          }
+
+          echo "BUILD_VERSION=$($matches[1])" >> $env:GITHUB_ENV
+
+      - name: Set version string to 1.0.0.0 for non-release
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        shell: pwsh
+        run: |
+          echo "BUILD_VERSION=1.0.0.0" >> $env:GITHUB_ENV
+
+      - uses: actions/checkout@v3
+
+      - name: Setup VSTest Path
+        uses: darenm/Setup-VSTest@v1.2
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Restore NuGet packages
+        run: nuget restore
+
+      - name: Patch C++ Version Info
+        shell: pwsh
+        run: |
+          $content = Get-Content Profiler/version.h
+          $newContent = $content -replace '1\.0\.0\.0', "${env:BUILD_VERSION}"
+          $newContent = $newContent -replace '1,0,0,0', $env:BUILD_VERSION.Replace('.', ',').Split('-')[0]
+          $newContent | Set-Content Profiler/version.h
+
+      - name: Set version in AssemblyInfo.cs files
+        uses: secondbounce/assemblyinfo-update@v2
+        with:
+          version: ${{ env.BUILD_VERSION }}
+
+      - name: Build x86
+        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=Win32 -property:Configuration=Release
+
+      - name: Build x64
+        run: msbuild Cqse.Teamscale.Profiler.Dotnet.sln /p:Platform=x64 -property:Configuration=Release
+
+      - name: Test
+        run: >
+          vstest.console.exe /parallel
+          Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
+          Profiler_Test/bin/Release/Profiler_Test.dll
+          UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
+
+      - name: Install markdown-pdf
+        run: npm install markdown-pdf
+
+      - name: Convert documentation
+        run: node_modules/.bin/markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
+
+      - uses: GuillaumeFalourd/setup-rsync@v1.2
+
+      - name: Create release zip
+        shell: bash
+
+        # robocopy sets weird exit codes (codes != 0 that still signal success) so we need to ignore them
+        # c.f. https://superuser.com/questions/280425/getting-robocopy-to-return-a-proper-exit-code#346112
+        # we achieve this by following up the robocopy commands with "exit 0"
+        #
+        # copy Profiler dlls and pdbs
+        run: |
+            mkdir teamscale_dotnet_profiler
+            cp ./Profiler/bin/Release/*.dll teamscale_dotnet_profiler
+            cp ./Profiler/bin/Release/*.pdb teamscale_dotnet_profiler
+            cp ./Profiler/Profiler.example.yml teamscale_dotnet_profiler
+
+            rsync -avz ./Profiler/bin/Release/UploadDaemon teamscale_dotnet_profiler/ --exclude='*.pdb'
+
+            mkdir teamscale_dotnet_profiler/Tools
+            rsync -avz ./Profiler/bin/Release/DumpPdb/ teamscale_dotnet_profiler/Tools/ --exclude='*.pdb'
+
+            mkdir teamscale_dotnet_profiler/Licenses
+            # include subdirectories, include LICENSE files, but exclude everything else
+            rsync -avz ./Profiler/lib/ teamscale_dotnet_profiler/Licenses/ --include='*/' --include='LICENSE' --exclude='*'
+            cp ./LICENSE teamscale_dotnet_profiler
+
+            mkdir teamscale_dotnet_profiler/Documentation
+            cp ./documentation/userguide.pdf teamscale_dotnet_profiler/Documentation
+
+            echo "--------------------"
+            ls -alR teamscale_dotnet_profiler
+            echo "--------------------"
+
+            7z a teamscale-profiler-dotnet.zip ./teamscale_dotnet_profiler
+          
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          asset_name: teamscale-profiler-dotnet_v${{env.BUILD_VERSION}}.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: 'teamscale-profiler-dotnet.zip'
+          overwrite: true

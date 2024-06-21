@@ -59,6 +59,12 @@ namespace UploadDaemon.Configuration
             public string ExecutablePathRegex { get; set; }
 
             /// <summary>
+            /// Regex for limiting processing of trace files to a loaded assembly.
+            /// If not given, this is null.
+            /// </summary>
+            public string LoadedAssemblyPathRegex { get; set; }
+
+            /// <summary>
             /// Profiler options. Never null.
             /// </summary>
             public Dictionary<string, string> Profiler { get; set; }

@@ -174,9 +174,6 @@ private:
 	/** Writes the fileVersionInfo into the provided buffer. */
 	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
 
-	/** Writes an Event Log error about the YAML file errors. If the application is not running in an application pool, then also pops up a message box with the error. */
-	void reportYamlConfigLoadError();
-
 	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
 	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);

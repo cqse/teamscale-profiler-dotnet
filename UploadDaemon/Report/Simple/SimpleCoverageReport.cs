@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Report.Simple
 {
@@ -12,9 +13,12 @@ namespace UploadDaemon.Report.Simple
     {
         private readonly IDictionary<string, FileCoverage> lineCoverageByFile;
 
-        public SimpleCoverageReport(IDictionary<string, FileCoverage> lineCoverageByFile)
+        public List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets { get; }
+
+        public SimpleCoverageReport(IDictionary<string, FileCoverage> lineCoverageByFile, List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
         {
             this.lineCoverageByFile = lineCoverageByFile;
+            EmbeddedUploadTargets = embeddedUploadTargets;
         }
 
         /// <inheritDoc/>
@@ -54,7 +58,7 @@ namespace UploadDaemon.Report.Simple
 
             return new SimpleCoverageReport(new[] { lineCoverageByFile, other.lineCoverageByFile }.SelectMany(dict => dict)
                 .ToLookup(pair => pair.Key, pair => pair.Value)
-                .ToDictionary(group => group.Key, group => group.Aggregate((fc1, fc2) => new FileCoverage(fc1.CoveredLineRanges.Union(fc2.CoveredLineRanges)))));
+                .ToDictionary(group => group.Key, group => group.Aggregate((fc1, fc2) => new FileCoverage(fc1.CoveredLineRanges.Union(fc2.CoveredLineRanges)))), EmbeddedUploadTargets);
         }
 
         /// <summary>

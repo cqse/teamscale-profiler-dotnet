@@ -13,6 +13,7 @@ namespace UploadDaemon.Configuration
                 match:
                   - executableName: foo.exe
                     executablePathRegex: .*test.*
+                    loadedAssemblyPathRegex: .*foo.dll
                     profiler:
                       foo: 1
                     uploader:
@@ -25,6 +26,7 @@ namespace UploadDaemon.Configuration
             {
                 Assert.That(config.Match[0].ExecutableName, Is.EqualTo("foo.exe"), "section 0 executable name");
                 Assert.That(config.Match[0].ExecutablePathRegex, Is.EqualTo(".*test.*"), "section 0 executable regex");
+                Assert.That(config.Match[0].LoadedAssemblyPathRegex, Is.EqualTo(".*foo.dll"), "section 0 executable regex");
                 Assert.That(config.Match[0].Profiler, Has.Count.EqualTo(1), "section 0 profiler option count");
                 Assert.That(config.Match[0].Profiler, Contains.Key("foo"), "section 0 profiler option 'foo'");
                 Assert.That(config.Match[0].Profiler["foo"], Is.EqualTo("1"), "section 0 profiler option 'foo' value");
@@ -58,6 +60,7 @@ namespace UploadDaemon.Configuration
             Assert.Multiple(() =>
             {
                 Assert.That(config.Match[0].ExecutablePathRegex, Is.Null, "section 0 executable regex");
+                Assert.That(config.Match[0].LoadedAssemblyPathRegex, Is.Null, "section 0 loaded assembly path regex");
                 Assert.That(config.Match[0].Uploader, Is.Not.Null, "section 0 uploader options");
                 Assert.That(config.Match[0].Profiler, Is.Not.Null, "section 0 profiler options");
                 Assert.That(config.Match[0].Profiler, Is.Empty, "section 0 profiler options");

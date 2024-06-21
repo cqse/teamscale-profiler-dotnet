@@ -4,7 +4,7 @@
 
 std::string Config::getDefaultConfigPath()
 {
-	std::string profilerDllPath = WindowsUtils::getConfigValueFromEnvironment("PATH");
+	std::string profilerDllPath = WindowsUtils::getPathOfProfiler();
 	std::string profilerDllDirectory = StringUtils::removeLastPartOfPath(profilerDllPath);
 	return profilerDllDirectory + "\\Profiler.yml";
 }
@@ -72,7 +72,7 @@ void Config::setOptions()
 	enabled = getBooleanOption("enabled", true);
 	useLightMode = getBooleanOption("light_mode", true);
 	logAssemblyFileVersion = getBooleanOption("assembly_file_version", false);
-	logAssemblyPaths = getBooleanOption("assembly_paths", false);
+	logAssemblyPaths = getBooleanOption("assembly_paths", true);
 	dumpEnvironment = getBooleanOption("dump_environment", false);
 	ignoreExceptions = getBooleanOption("ignore_exceptions", false);
 	startUploadDaemon = getBooleanOption("upload_daemon", false);

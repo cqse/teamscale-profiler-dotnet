@@ -5,6 +5,7 @@ using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {
@@ -125,7 +126,7 @@ namespace UploadDaemon.Scanning
 
             ICoverageReport report = traceFile.ToReport((Trace t) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                 { "file1.cs", new FileCoverage((10,20)) }
-            }));
+            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -161,13 +162,13 @@ namespace UploadDaemon.Scanning
                 {
                     return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file1.cs", new FileCoverage((1,2)) }
-                    });
+                    }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
                 }
                 else if (t.CoveredMethods.Contains(("ProfilerGUI", 67890)) && t.CoveredMethods.Count == 1)
                 {
                     return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file2.cs", new FileCoverage((1,2)) }
-                    });
+                    }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
                 }
 
                 throw new ArgumentException();
@@ -273,7 +274,7 @@ namespace UploadDaemon.Scanning
 
         private SimpleCoverageReport SomeSimpleCoverageReport()
         {
-            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
         }
     }
 }

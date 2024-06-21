@@ -1,4 +1,7 @@
-﻿namespace UploadDaemon.Report
+﻿using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
+using System.Collections.Generic;
+
+namespace UploadDaemon.Report
 {
     /// <summary>
     /// A coverage report.
@@ -19,6 +22,8 @@
         /// The file extension for this type of report.
         /// </summary>
         string FileExtension { get; }
+
+        List<(string project, RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets { get; }
 
         /// <summary>
         /// Returns a new report wth the union of the coverage data of both reports.

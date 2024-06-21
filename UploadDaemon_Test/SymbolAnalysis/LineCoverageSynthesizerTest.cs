@@ -19,9 +19,13 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TestSynthesizing()
         {
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
-            SimpleCoverageReport report = Convert(trace, TestUtils.TestDataDirectory,
+            SimpleCoverageReport report = Convert(trace, traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
             string sourceFilePath = @"\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs";
@@ -32,9 +36,13 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TracesWithoutCoverageShouldResultInEmptyReport()
         {
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
             Trace trace = new Trace() { CoveredMethods = new List<(string, uint)>() };
 
-            SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, TestUtils.TestDataDirectory,
+            SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
             Assert.That(report.IsEmpty, Is.True);
         }
@@ -42,11 +50,15 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ExcludingAllPdbsShouldResultInException()
         {
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
             Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
             {
-                Convert(trace, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
+                Convert(trace, traceFile, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
             });
 
             Assert.That(exception.Message, Contains.Substring("no symbols"));
@@ -90,9 +102,9 @@ namespace UploadDaemon.SymbolAnalysis
             return text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
 
-        private static SimpleCoverageReport Convert(Trace trace, string symbolDirectory, GlobPatternList assemlyPatterns)
+        private static SimpleCoverageReport Convert(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, symbolDirectory, assemlyPatterns);
+            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, symbolDirectory, assemlyPatterns);
         }
     }
 }

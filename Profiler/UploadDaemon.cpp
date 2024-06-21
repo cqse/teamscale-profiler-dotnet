@@ -13,7 +13,7 @@ UploadDaemon::~UploadDaemon()
 	// nothing to do
 }
 
-void UploadDaemon::launch(TraceLog &traceLog)
+void UploadDaemon::launch(TraceLog& traceLog)
 {
 	bool successful = execute();
 	if (!successful)
@@ -31,6 +31,10 @@ void UploadDaemon::notifyShutdown()
 
 bool UploadDaemon::execute()
 {
+	if (!WindowsUtils::isFile(this->pathToExe)) {
+		WindowsUtils::reportError("UploadDaemon could not be started", "Failed to launch upload daemon to upload coverages into Teamscale as UploadDaemon.exe was not found.");
+		return false;
+	}
 	// We need to unset COR_ENABLE_PROFILING so the upload daemon process is not
 	// profiled as well. See https://docs.microsoft.com/en-us/windows/desktop/procthread/changing-environment-variables
 	SetEnvironmentVariable("COR_ENABLE_PROFILING", "0");

@@ -1,6 +1,12 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
+using UploadDaemon.Scanning;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -28,7 +34,7 @@ namespace UploadDaemon.Configuration
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Config.ConfigForProcess barConfig = config.CreateConfigForProcess("C:\\test\\bar.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.True(config.DisableSslValidation, "SSL verification disabled by default");
+            Assert.That(config.DisableSslValidation, Is.True, "SSL verification disabled by default");
             Assert.That(config.UploadInterval, Is.EqualTo(TimeSpan.FromMinutes(5)));
             Assert.Multiple(() =>
             {
@@ -135,6 +141,114 @@ namespace UploadDaemon.Configuration
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+        }
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWithMatch()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
+
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Assert.That(fooConfig, Is.Not.Null);
+            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+        }
+
+        [Test]
+        public void TestEmbeddedUploadInformation()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\NetFrameworkEmbeddedLibrary.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "NetFrameworkEmbeddedLibrary.dll");
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
+
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Scanning.Trace trace = null;
+            ICoverageReport report = traceFile.ToReport((Scanning.Trace t) => { trace = t; return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()); });
+            Assert.That(report.EmbeddedUploadTargets.Count, Is.AtLeast(1));
+            Assert.That(fooConfig, Is.Not.Null);
+            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+        }
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWithNoMatch()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+            ");
+
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
+
+            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile));
+        }
+
+        [Test]
+        public void TestLoadedAssemblyPathRegexWillPickLastMatchingSection()
+        {
+            Config config = Config.Read(@"
+                match:
+                  - profiler:
+                      targetdir: C:\test1
+                  - loadedAssemblyPathRegex: .*\\foo.dll
+                    uploader:
+                      directory: C:\upload\foo
+                      versionAssembly: foo
+                  - loadedAssemblyPathRegex: .*\\bar.dll
+                    uploader:
+                      directory: C:\upload\bar
+                      versionAssembly: bar
+            ");
+
+            TraceFile traceFile1 = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=foo:1 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Assembly=bar:2 Version:1.0.0.0 Path:C:\bla\bar.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
+
+            TraceFile traceFile2 = new TraceFile("coverage_1_1.txt", new[] {
+                @"Assembly=bar:1 Version:1.0.0.0 Path:C:\bla\bar.dll",
+                @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
+                @"Inlined=2:{ExistingMethodToken}",
+            });
+
+            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile1);
+            Assert.That(config1, Is.Not.Null);
+            Assert.That(config1.VersionAssembly, Is.EqualTo("bar"));
+
+            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile2);
+            Assert.That(config2, Is.Not.Null);
+            Assert.That(config2.VersionAssembly, Is.EqualTo("bar"));
         }
 
         [Test]
@@ -336,24 +450,6 @@ namespace UploadDaemon.Configuration
         }
 
         [Test]
-        public void MissingRevisionFile()
-        {
-            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
-            {
-                Config.Read(@"
-                match:
-                    - profiler:
-                        targetdir: C:\test1
-                    - uploader:
-                        directory: C:\target
-                        pdbDirectory: C:\pdbs
-                ").CreateConfigForProcess("foo.exe");
-            });
-
-            Assert.That(exception.Message, Contains.Substring("revisionFile"));
-        }
-
-        [Test]
         public void BothVersionAssemblyAndPdbDirectoryConfigured()
         {
             Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
@@ -419,7 +515,7 @@ namespace UploadDaemon.Configuration
                         targetdir: C:\test1
             ");
 
-            Assert.False(config.DisableSslValidation, "Enabling of SSL validation");
+            Assert.That(config.DisableSslValidation, Is.False, "Enabling of SSL validation");
         }
 
         [Test]
@@ -481,6 +577,27 @@ namespace UploadDaemon.Configuration
             Assert.That(config.ArchivePurgingThresholds.UploadedTraces, Is.Null);
             Assert.That(config.ArchivePurgingThresholds.EmptyTraces, Is.Null);
             Assert.That(config.ArchivePurgingThresholds.IncompleteTraces, Is.Null);
+        }
+
+        [Test]
+        public void TestIsAssemblyRelativePath()
+        {
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@assemblydir"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir\\foo"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("@AssemblyDir/foo"), Is.True);
+            Assert.That(Config.IsAssemblyRelativePath("Foo/@AssemblyDir"), Is.False);
+        }
+
+        [Test]
+        public void TestResolveAssemblyRelativePath()
+        {
+            string assemblyPath = "c:\\path\\assembly.dll";
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir", assemblyPath), Is.EqualTo("c:\\path"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@assemblydir", assemblyPath), Is.EqualTo("c:\\path"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir\\foo", assemblyPath), Is.EqualTo("c:\\path\\foo"));
+            Assert.That(Config.ResolveAssemblyRelativePath("@AssemblyDir/foo", assemblyPath), Is.EqualTo("c:\\path/foo"));
+            Assert.That(Config.ResolveAssemblyRelativePath("Foo/@AssemblyDir", assemblyPath), Is.Null);
         }
     }
 }

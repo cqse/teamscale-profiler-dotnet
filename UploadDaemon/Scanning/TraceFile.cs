@@ -1,12 +1,17 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Scanning
 {
@@ -17,11 +22,20 @@ namespace UploadDaemon.Scanning
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        /// <summary>
+        /// The name of the Resource .resx file that holed information about embedded upload targets.
+        /// </summary>
+        private const String TeamscaleResourceName = "Teamscale";
+
+
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted|Called)=(?<assembly>\d+):(?:\d+:)?(?<functionToken>\d+)");
         private static readonly Regex TestCaseLineRegex = new Regex(@"^(?:Test)=(?<event>Start|End):(?<date>[^:]+):(?<testname>[^:]+)(?::(?<duration>\d+))?");
+
+        public readonly Dictionary<uint, string> assemblies = new Dictionary<uint, string>();
+
 
         /// <summary>
         /// The lines of text contained in the trace.
@@ -59,7 +73,6 @@ namespace UploadDaemon.Scanning
 
         public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver)
         {
-            Dictionary<uint, string> assemblyTokens = new Dictionary<uint, string>();
 
             DateTime traceStart = default;
             bool isTestwiseTrace = false;
@@ -75,7 +88,7 @@ namespace UploadDaemon.Scanning
 
             foreach (string line in lines)
             {
-                string[] keyValuePair = line.Split(new[] { '=' }, count:2);
+                string[] keyValuePair = line.Split(new[] { '=' }, count: 2);
                 if (keyValuePair.Length < 2)
                 {
                     logger.Warn("Invalid line in trace file {}: {}", FilePath, line);
@@ -94,7 +107,7 @@ namespace UploadDaemon.Scanning
                         break;
                     case "Assembly":
                         Match assemblyMatch = AssemblyLineRegex.Match(line);
-                        assemblyTokens[Convert.ToUInt32(assemblyMatch.Groups[2].Value)] = assemblyMatch.Groups[1].Value;
+                        assemblies[Convert.ToUInt32(assemblyMatch.Groups[2].Value)] = assemblyMatch.Groups[1].Value;
                         break;
                     case "Test":
                         Match testCaseMatch = TestCaseLineRegex.Match(line);
@@ -131,7 +144,7 @@ namespace UploadDaemon.Scanning
                     case "Called":
                         Match coverageMatch = CoverageLineRegex.Match(line);
                         uint assemblyId = Convert.ToUInt32(coverageMatch.Groups["assembly"].Value);
-                        if (!assemblyTokens.TryGetValue(assemblyId, out string assemblyName))
+                        if (!assemblies.TryGetValue(assemblyId, out string assemblyName))
                         {
                             logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                                 " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
@@ -161,9 +174,12 @@ namespace UploadDaemon.Scanning
                 }
             }
 
+            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
+            SearchForEmbeddedUploadTargets(assemblies, embeddedUploadTargets);
+
             if (isTestwiseTrace)
             {
-                return new TestwiseCoverageReport(tests.ToArray());
+                return new TestwiseCoverageReport(tests.ToArray(), embeddedUploadTargets);
             }
             else
             {
@@ -200,6 +216,89 @@ namespace UploadDaemon.Scanning
         public bool IsEmpty()
         {
             return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined=") || line.StartsWith("Called="));
+        }
+
+        /// <summary>
+        /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
+        /// </summary>
+        private void SearchForEmbeddedUploadTargets(Dictionary<uint, string> assemblyTokens, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
+        {
+            foreach (KeyValuePair<uint, string> entry in assemblyTokens)
+            {
+                Assembly assembly = LoadAssemblyFromPath(entry.Value);
+                if (assembly == null || assembly.DefinedTypes == null)
+                {
+                    continue;
+                }
+                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
+                if (teamscaleResourceType == null)
+                {
+                    continue;
+                }
+                logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
+                ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
+                string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
+                string embeddedRevision = teamscaleResourceManager.GetString("Revision");
+                string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
+                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, uploadTargets, assembly.FullName);
+            }
+        }
+
+        /// <summary>
+        /// Adds a revision or timestamp and optionally a project to the list of upload targets. This method checks if both, revision and timestamp, are declared, or neither.
+        /// </summary>
+        /// <param name="revision"></param>
+        /// <param name="timestamp"></param>
+        /// <param name="project"></param>
+        /// <param name="uploadTargets"></param>
+        /// <param name="origin"></param>
+        public static void AddUploadTarget(string revision, string timestamp, string project, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets, string origin)
+        {
+            Logger logger = LogManager.GetCurrentClassLogger();
+
+            if (revision == null && timestamp == null)
+            {
+                logger.Error("Not all required fields in {origin}. Please specify either 'Revision' or 'Timestamp'", origin);
+                return;
+            }
+            if (revision != null && timestamp != null)
+            {
+                logger.Error("'Revision' and 'Timestamp' are both set in {origin}. Please set only one, not both.", origin);
+                return;
+            }
+            if (revision != null)
+            {
+                uploadTargets.Add((project, new RevisionOrTimestamp(revision, true)));
+            }
+            else
+            {
+                uploadTargets.Add((project, new RevisionOrTimestamp(timestamp, false)));
+            }
+        }
+
+        private Assembly LoadAssemblyFromPath(string path)
+        {
+            if (String.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+            Assembly assembly;
+            try
+            {
+                assembly = Assembly.LoadFrom(path);
+                // Check that defined types can actually be loaded
+                if (assembly == null)
+                {
+                    return null;
+                }
+                IEnumerable<TypeInfo> ignored = assembly.DefinedTypes;
+            }
+            catch (Exception e)
+            {
+                logger.Debug("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
+                return null;
+            }
+            return assembly;
         }
     }
 }

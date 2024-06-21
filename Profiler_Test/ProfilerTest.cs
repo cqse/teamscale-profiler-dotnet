@@ -15,11 +15,22 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     public class ProfilerTest : ProfilerTestBase
     {
         private Proxies.Profiler profiler;
+        private static readonly string AttachLog = ProfilerDirectory + "/attach.log";
 
+        /// <summary>
+        /// Clears the profiler environment variables to guarantee a stable test even if
+        /// the developer has variables set on their development machine.
+        /// </summary>
         [SetUp]
         public void CreateProfiler()
         {
             profiler = new Proxies.Profiler(basePath: SolutionRoot, targetDir: TestTraceDirectory);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            File.Delete(AttachLog);
         }
 
         /// <summary>
@@ -71,7 +82,38 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             return profiler.GetTraceFiles().Count;
         }
 
-         /// <summary>
+        /// <summary>
+        /// Makes sure that the default Profiler.yml configuration is used, if the environment variable is not set.
+        /// </summary>
+        [TestCase(".*w3wp.exe", ExpectedResult = 0)]
+        [TestCase(".*ProfilerTestee.exe", ExpectedResult = 1)]
+        public int TestConfigFileInProfilerDllDirectory(string regex)
+        {
+            var configFile = Path.Combine(ProfilerDirectory, "profiler.yml");
+            try
+            {
+                File.WriteAllText(configFile, $@"
+          match:
+            - profiler:
+                enabled: false
+            - executablePathRegex: {regex}
+              profiler:
+                enabled: true
+                targetdir: {Path.Combine(TestTempDirectory, "traces")}
+          ");
+                new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+                return profiler.GetTraceFiles().Count;
+            }
+            finally
+            {
+                if (File.Exists(configFile))
+                {
+                    File.Delete(configFile);
+                }
+            }
+        }
+
+        /// <summary>
         /// Makes sure that processes not matching the given process name are not profiled.
         /// This is the same test as #TestConfigFile but uses the YAML flow style to check that we can properly understand it.
         /// </summary>
@@ -212,7 +254,7 @@ match:
         }
 
         [Test]
-        public void TestDetatchLog()
+        public void TestDetachLog()
         {
             new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
 

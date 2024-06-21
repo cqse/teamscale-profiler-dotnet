@@ -23,9 +23,9 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            SymbolCollection symbolCollection = symbolCollectionResolver.ResolveFrom(symbolDirectory, assemblyPatterns);
+            SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(traceFile, symbolDirectory, assemblyPatterns);
 
             if (symbolCollection.IsEmpty)
             {
@@ -105,7 +105,7 @@ namespace UploadDaemon.SymbolAnalysis
 
             LogResolutionFailures(trace, symbolDirectory, assemblyPatterns, resolutionCounts);
 
-            return new SimpleCoverageReport(lineCoverageByFile);
+            return new SimpleCoverageReport(lineCoverageByFile, new List<(string project, SymbolAnalysis.RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
         }
 
         private static void LogResolutionFailures(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)

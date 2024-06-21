@@ -7,9 +7,16 @@ Please prefix each entry with one of:
 
 
 # Next Release
+
+# v24.2.0
+- [fix] Log message when trace directory is not writable
+- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions. 
+
+# v23.6.0
 - [feature] Support for uploading to artifactory with the Teamscale default artifact storage schema.
 - [feature] Display error window and add Event Log error entry when the Profiler.yml could not be loaded
 - [fix] Upload Daemon failed to upload when Teamscale URL was provided with trailing slash
+- [fix] Default Profiler.yml configuration and Upload Daemon failed to load for .NET Core environment
 
 # v22.8.0
 - [feature] support for .NET core PDBs

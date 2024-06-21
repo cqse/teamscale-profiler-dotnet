@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Report.Testwise
 {
@@ -17,12 +18,15 @@ namespace UploadDaemon.Report.Testwise
         [JsonProperty("tests")]
         public Test[] Tests { get; }
 
-        public TestwiseCoverageReport(params Test[] tests) : this(false, tests) {}
+        public List<(string project, RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets { get; }
 
-        public TestwiseCoverageReport(bool partial, params Test[] tests)
+        public TestwiseCoverageReport(Test[] tests, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) : this(false, tests, embeddedUploadTargets) { }
+
+        public TestwiseCoverageReport(bool partial, Test[] tests, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
         {
             Partial = partial;
             Tests = tests;
+            EmbeddedUploadTargets = embeddedUploadTargets;
         }
 
         /// <inheritDoc/>
@@ -33,6 +37,7 @@ namespace UploadDaemon.Report.Testwise
 
         /// <inheritDoc/>
         public string UploadFormat => "TESTWISE_COVERAGE";
+
 
         /// <inheritDoc/>
         public ICoverageReport Union(ICoverageReport coverageReport)
@@ -55,7 +60,7 @@ namespace UploadDaemon.Report.Testwise
                 }
             }
 
-            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray());
+            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray(), this.EmbeddedUploadTargets);
         }
 
         /// <summary>

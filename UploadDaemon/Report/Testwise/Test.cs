@@ -92,7 +92,7 @@ namespace UploadDaemon.Report.Testwise
             {
                 lineCoverageByPath = CoverageByPath.First().Files.ToDictionary(file => file.FileName, file => (FileCoverage)file);
             }
-            return new SimpleCoverageReport(lineCoverageByPath);
+            return new SimpleCoverageReport(lineCoverageByPath, new List<(string project, SymbolAnalysis.RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
         }
     }
 }
