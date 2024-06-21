@@ -7,6 +7,7 @@
 #include "utils/WindowsUtils.h"
 #include <string>
 #include <regex>
+#include <sstream>
 
 TraceLog::~TraceLog() {
 	// Nothing to do here, destructing is handled in FileLogBase
@@ -40,18 +41,14 @@ void TraceLog::createLogFile(std::string targetDir) {
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
+	std::stringstream stream;
+	std::string endLine = "\r\n";
 	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end(); i++) {
-		writeSingleFunctionInfoToLog(key, *i);
+		stream << key << '=' << i->assemblyNumber << ':' << i->functionToken << endLine;
 	}
+	writeToFile(stream.str().c_str());
 }
 
-void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	char signature[BUFFER_SIZE];
-	signature[0] = '\0';
-	sprintf_s(signature, "%i:%i", info.assemblyNumber,
-		info.functionToken);
-	writeTupleToFile(key, signature);
-}
 
 void TraceLog::info(std::string message) {
 	writeTupleToFile(LOG_KEY_INFO, message.c_str());
@@ -85,30 +82,22 @@ void TraceLog::logAssembly(std::string assembly)
 void TraceLog::startTestCase(std::string testName)
 {
 	// Line will look like this:
-	// Test=Start:20150601_1220270707:Test Name\: 1:something we do not know yet
-	std::string info = "Start:" + getFormattedCurrentTime() + ":" + escape(testName);
+	// Test=Start:{Start Date}:{Testname}
+	std::string info = "Start:" + getFormattedCurrentTime() + ":" + testName;
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
 }
 
-void TraceLog::endTestCase(std::string result, std::string message, long duration)
+void TraceLog::endTestCase(std::string result, std::string duration)
 {
 	// Line will look like this:
-	// Test=End:20150601_1220280807:PASSED:optional msg
+	// Test=End:{End Date}:{Result}:{Duration}
 	std::string info = "End:" + getFormattedCurrentTime();
 	if (!result.empty()) {
 		info += ":" + result;
-		info += ":" + std::to_string(duration);
-		if (!message.empty()) {
-			info += ":" + message;
-		}
+		info += ":" + duration;
 	}
 
 	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
-}
-
-inline std::string TraceLog::escape(std::string message) {
-	static std::regex colonEscape("(:|\\\\)");
-	return std::regex_replace(message, colonEscape, "\\$1");
 }
 
 void TraceLog::shutdown() {

@@ -19,7 +19,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
         private const string PROFILER_ENABLE_KEY = "COR_ENABLE_PROFILING";
 
         /** Environment variable name to enable the upload daemon. */
-        private const string PROFILER_UPLOAD_DAEMON_KEY = "PROFILER_UPLOAD_DAEMON";
+        private const string PROFILER_UPLOAD_DAEMON_KEY = "COR_PROFILER_UPLOAD_DAEMON";
 
         /** Environment variable name for the profiler's class ID. */
         private const string PROFILER_CLASS_ID_KEY = "COR_PROFILER";
@@ -107,7 +107,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
             processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
             processInfo.Environment[PROFILER_UPLOAD_DAEMON_KEY] = "0";
-            processInfo.Environment["COR_PROFILER_TGA"] = "1";
 
             if (LightMode)
             {

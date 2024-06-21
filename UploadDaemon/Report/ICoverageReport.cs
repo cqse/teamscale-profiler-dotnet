@@ -29,5 +29,15 @@ namespace UploadDaemon.Report
         /// Returns a new report wth the union of the coverage data of both reports.
         /// </summary>
         ICoverageReport Union(ICoverageReport coverageReport);
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        string ToString();
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        List<string> ToStringList();
     }
 }

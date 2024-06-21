@@ -8,6 +8,11 @@ using System.Web;
 using UploadDaemon.Configuration;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Report;
+using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
+using System.Linq;
+using System.Runtime.Serialization.Json;
+using Newtonsoft.Json;
 
 namespace UploadDaemon.Upload
 {
@@ -108,19 +113,15 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/external-report?format={coverageReport.UploadFormat}" +
-                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true" +
-                $"&{timestampParameter}={encodedTimestamp}";
+            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format={coverageReport.UploadFormat}" +
+                $"&message={encodedMessage}&partition={encodedPartition}&movetolastcommit=true&{timestampParameter}={encodedTimestamp}";
 
             logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, server.ToString(), url);
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(coverageReport.ToString());
-                using (MemoryStream stream = new MemoryStream(reportBytes))
-                {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
-                }
+                List<string> reports = coverageReport.ToStringList();
+                return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, reports);
             }
             catch (Exception e)
             {
@@ -130,7 +131,7 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, List<string> reports)
         {
             try
             {

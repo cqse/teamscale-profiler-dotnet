@@ -54,7 +54,8 @@ public:
 	void logAssembly(std::string assembly);
 
 	void startTestCase(std::string testName);
-	void endTestCase(std::string result = "", std::string message = "", long duration = 0);
+
+	void endTestCase(std::string result = "", std::string duration = "");
 
 protected:
 	/** The key to log information about the profiler startup. */
@@ -96,9 +97,6 @@ protected:
 private:
 	/** Write all information about the given functions to the log. */
 	void writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions);
-
-	/** Write all information about the given function to the log. */
-	void writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info);
 
 	/** Escapes the messages by putting a backslash before special characters, e.g. escapes the colon : -> \:. */
 	std::string escape(std::string message);

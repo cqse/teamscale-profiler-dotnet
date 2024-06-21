@@ -1,4 +1,7 @@
-﻿namespace Cqse.Teamscale.Profiler.Commons.Ipc
+﻿using System;
+using System.Linq;
+
+namespace Cqse.Teamscale.Profiler.Commons.Ipc
 {
     /// <summary>
     /// Configuration for ZeroMQ IPC.
@@ -15,7 +18,12 @@
         /// The ZeroMQ socket to receive and answer requests from subscribed profilers via REQ-REP pattern.
         /// Default ist localhost TCP port 7146 (leet for TIA-Socket + 1 = 7145 + 1)
         /// </summary>
-        public string RequestSocket { get; } = "tcp://127.0.0.1:7146";
+        public string RequestSocket { get; } = "tcp://127.0.0.1";
+
+        /// <summary>
+        /// The intial port number. As new .Net Profiler instances are registered, this is changed so each one has its own port.
+        /// </summary>
+        public int StartPortNumber { get; } = 7146;
 
         public IpcConfig()
         {
@@ -25,7 +33,8 @@
         public IpcConfig(string publishSocket, string requestSocket)
         {
             PublishSocket = publishSocket;
-            RequestSocket = requestSocket;
+            RequestSocket = requestSocket.Substring(0, requestSocket.LastIndexOf(':')) ;
+            StartPortNumber = Int32.Parse(requestSocket.Split(':').Last());
         }
     }
 }

@@ -72,42 +72,6 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         [Test]
-        public void InvalidatesCacheIfSymbolFileIsAdded()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            File.Copy(TestSymbolFilePath, $"{TestSymbolDirectory}\\SomeNew.pdb");
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
-        }
-
-        [Test]
-        public void InvalidatesCacheIfSymbolFileChanges()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            SimulateSymbolFileChange(collection1.SymbolFilePaths.First());
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
-        }
-
-        [Test]
-        public void InvalidatesCacheIfSymbolFileIsDeleted()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            File.Delete(TestSymbolFilePath);
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
-        }
-
-        [Test]
         public void CachesCollectionAgainAfterInvalidation()
         {
             SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);

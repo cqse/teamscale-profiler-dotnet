@@ -9,7 +9,7 @@
 class functionID_set
 {
 private:
-	const unsigned int default_size = 2'097'152;
+	const unsigned int default_size = 524'288;
 	static const FunctionID rotation_mask = (-1) & (CHAR_BIT * sizeof(FunctionID) - 1);
 
 	unsigned int current_size = default_size;

@@ -30,6 +30,10 @@ namespace UploadDaemon.SymbolAnalysis
         private readonly IDictionary<string, DateTime> symbolFileLastWriteDates =
             new Dictionary<string, DateTime>();
 
+        private long lastAssemblyCheckTime;
+
+        private readonly long ONE_HOUR = 3600;
+
         /// <summary>
         /// Resolves the symbol collection either from PDBs stored in the passed symbol directory or the assembly directory.
         /// </summary>
@@ -100,10 +104,19 @@ namespace UploadDaemon.SymbolAnalysis
             return (symbolDirectory, assemblyPatterns);
         }
 
-        private bool IsValid(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFiles)
+        private bool IsValid(SymbolCollection collection, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            return ContainsExactly(collection, relevantSymbolFiles)
-                && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            // For performance reasony, we only recheck every hour.
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (lastAssemblyCheckTime - now > ONE_HOUR)
+            {
+                lastAssemblyCheckTime = now;
+                ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
+                return ContainsExactly(collection, relevantSymbolFiles)
+                    && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            }
+            return true;
+            
         }
 
         private static bool ContainsExactly(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFilePaths)
