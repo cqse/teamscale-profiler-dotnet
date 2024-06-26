@@ -135,7 +135,7 @@ namespace UploadDaemon.Upload
         {
             try
             {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartList(client, url, "report", reports, "report.simple"))
                 {
                     if (response.IsSuccessStatusCode)
                     {

@@ -13,6 +13,8 @@ namespace UploadDaemon.Configuration
     [TestFixture]
     public class ConfigTest
     {
+        private const uint ExistingMethodToken = 100663427;
+
         [Test]
         public void TestDefaultValues()
         {
@@ -158,7 +160,7 @@ namespace UploadDaemon.Configuration
 
             TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
-                @"Inlined=2:{ExistingMethodToken}",
+                $@"Inlined=2:{ExistingMethodToken}",
             });
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
@@ -181,12 +183,12 @@ namespace UploadDaemon.Configuration
             string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "NetFrameworkEmbeddedLibrary.dll");
             TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
                 $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
-                @"Inlined=2:{ExistingMethodToken}",
+                $@"Inlined=2:{ExistingMethodToken}",
             });
 
-            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
             Scanning.Trace trace = null;
             ICoverageReport report = traceFile.ToReport((Scanning.Trace t) => { trace = t; return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()); });
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
             Assert.That(report.EmbeddedUploadTargets.Count, Is.AtLeast(1));
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));

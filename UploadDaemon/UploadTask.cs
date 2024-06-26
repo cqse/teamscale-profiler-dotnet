@@ -206,9 +206,9 @@ namespace UploadDaemon
             }
             if (Config.IsAssemblyRelativePath(revisionFile))
             {
-                foreach (KeyValuePair<uint, string> entry in traceFile.assemblies)
+                foreach (KeyValuePair<uint, (string, string)> entry in traceFile.assemblies)
                 {
-                    string resolvedRevisionFile = Config.ResolveAssemblyRelativePath(revisionFile, entry.Value);
+                    string resolvedRevisionFile = Config.ResolveAssemblyRelativePath(revisionFile, entry.Value.Item2);
                     if (File.Exists(resolvedRevisionFile))
                     {
                         logger.Info("Using revision file {revisionFile} while processing {traceFile}.", resolvedRevisionFile, traceFile.FilePath);

@@ -30,11 +30,11 @@ namespace UploadDaemon.Scanning
 
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
-        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=([^:]+):(\d+)");
+        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
         private static readonly Regex TestCaseStartRegex = new Regex(@"^Test=Start:(?<date>[^:]+):(?<testname>.+)");
         private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
 
-        public readonly Dictionary<uint, string> assemblies = new Dictionary<uint, string>();
+        public readonly Dictionary<uint, (string name, string path)> assemblies = new Dictionary<uint, (string name, string path)>();
 
 
         /// <summary>
@@ -73,7 +73,6 @@ namespace UploadDaemon.Scanning
 
         public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver)
         {
-
             DateTime traceStart = default;
             bool isTestwiseTrace = false;
             Trace noTestTrace = new Trace();
@@ -107,7 +106,7 @@ namespace UploadDaemon.Scanning
                         break;
                     case "Assembly":
                         Match assemblyMatch = AssemblyLineRegex.Match(line);
-                        assemblies[Convert.ToUInt32(assemblyMatch.Groups[2].Value)] = assemblyMatch.Groups[1].Value;
+                        assemblies[Convert.ToUInt32(assemblyMatch.Groups["id"].Value)] = (assemblyMatch.Groups["name"].Value, assemblyMatch.Groups["path"].Value);
                         break;
                     case "Test":
                         if (value.StartsWith("Start"))
@@ -142,13 +141,13 @@ namespace UploadDaemon.Scanning
                     case "Called":
                         String[] coverageMatch = line.Split(new[] { '=', ':' }, count: 3);
                         uint assemblyId = Convert.ToUInt32(coverageMatch[1]);
-                        if (!assemblies.TryGetValue(assemblyId, out string assemblyName))
+                        if (!assemblies.TryGetValue(assemblyId, out (string, string) entry))
                         {
                             logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                                 " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
                             continue;
                         }
-                        currentTestTrace.CoveredMethods.Add((assemblyName, Convert.ToUInt32(coverageMatch[2])));
+                        currentTestTrace.CoveredMethods.Add((entry.Item1, Convert.ToUInt32(coverageMatch[2])));
                         break;
                     case "Stopped":
                         if (currentTestTrace.IsEmpty)
@@ -219,11 +218,11 @@ namespace UploadDaemon.Scanning
         /// <summary>
         /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
         /// </summary>
-        private void SearchForEmbeddedUploadTargets(Dictionary<uint, string> assemblyTokens, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
+        private void SearchForEmbeddedUploadTargets(Dictionary<uint, (string, string)> assemblyTokens, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
         {
-            foreach (KeyValuePair<uint, string> entry in assemblyTokens)
+            foreach (KeyValuePair<uint, (string, string)> entry in assemblyTokens)
             {
-                Assembly assembly = LoadAssemblyFromPath(entry.Value);
+                Assembly assembly = LoadAssemblyFromPath(entry.Value.Item2);
                 if (assembly == null || assembly.DefinedTypes == null)
                 {
                     continue;

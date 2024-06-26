@@ -1,5 +1,6 @@
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;

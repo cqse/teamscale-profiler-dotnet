@@ -62,7 +62,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             (string, GlobPatternList) cacheKey = GetCacheKey(symbolDirectory, assemblyPatterns);
             ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
-            if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, relevantSymbolFiles))
+            if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
             {
                 symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(relevantSymbolFiles.Select(info => info.Path));
                 UpdateValidationInfo(relevantSymbolFiles);
@@ -76,9 +76,9 @@ namespace UploadDaemon.SymbolAnalysis
         public SymbolCollection ResolveFromTraceFile(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             List<SymbolCollection> collectionOfAllAssemblies = new List<SymbolCollection>();
-            foreach (KeyValuePair<uint, string> assembly in traceFile.assemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.Value)))
+            foreach (KeyValuePair<uint, (string, string)> assembly in traceFile.assemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.Value.Item1)))
             {
-                string pdbPath = Path.Combine(Config.ResolveAssemblyRelativePath(symbolDirectory, assembly.Value), Path.GetFileNameWithoutExtension(assembly.Value) + ".pdb");
+                string pdbPath = Path.Combine(Config.ResolveAssemblyRelativePath(symbolDirectory, assembly.Value.Item2), Path.GetFileNameWithoutExtension(assembly.Value.Item2) + ".pdb");
                 if (!File.Exists(pdbPath))
                 {
                     logger.Debug("No PDB found for assembly {assembly}", assembly.Value);
@@ -87,7 +87,7 @@ namespace UploadDaemon.SymbolAnalysis
 
                 (string, GlobPatternList) cacheKey = GetCacheKey(pdbPath, null); // assembly patterns are irrelevant for single assemblies
                 SymbolFileInfo[] symbolFile = new[] { new SymbolFileInfo { Path = pdbPath, LastWriteTime = File.GetLastWriteTimeUtc(pdbPath) } };
-                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolFile))
+                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
                 {
                     symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(new[] { pdbPath });
                     UpdateValidationInfo(symbolFile);

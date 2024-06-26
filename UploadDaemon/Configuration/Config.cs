@@ -370,7 +370,7 @@ namespace UploadDaemon.Configuration
             }
 
             Regex regex = new Regex($"^{section.LoadedAssemblyPathRegex}$");
-            return traceFile.assemblies.Any(assembly => regex.IsMatch(assembly.Value));
+            return traceFile.assemblies.Any(assembly => regex.IsMatch(assembly.Value.Item2));
         }
 
         /// <summary>
