@@ -56,8 +56,8 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedVersion = HttpUtility.UrlEncode(version);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/p/{encodedProject}/dotnet-ephemeral-trace-upload?version={encodedVersion}" +
-                $"&message={encodedMessage}&partition={encodedPartition}&adjusttimestamp=true&movetolastcommit=true";
+            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/dotnet-ephemeral-trace?version={encodedVersion}" +
+                $"&message={encodedMessage}&partition={encodedPartition}";
 
             return await DoAsyncUpload(filePath, version, url);
         }
@@ -113,8 +113,9 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format={coverageReport.UploadFormat}" +
-                $"&message={encodedMessage}&partition={encodedPartition}&movetolastcommit=true&{timestampParameter}={encodedTimestamp}";
+            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format=SIMPLE" +
+                $"&message={encodedMessage}&partition={encodedPartition}&movetolastcommit=true" +
+                $"&{timestampParameter}={encodedTimestamp}";
 
             logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, server.ToString(), url);
 

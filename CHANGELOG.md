@@ -8,6 +8,9 @@ Please prefix each entry with one of:
 
 # Next Release
 
+# v24.5.0
+- [fix] Updated legacy API calls in Upload Daemon
+
 # v24.2.0
 - [fix] Log message when trace directory is not writable
 - [feature] Added support to upload coverage to multiple Teamscale projects with different revisions. 
