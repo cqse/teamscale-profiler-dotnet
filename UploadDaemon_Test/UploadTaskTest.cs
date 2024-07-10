@@ -13,6 +13,7 @@ using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon
 {
@@ -277,7 +278,7 @@ Inlined=1:33555646" },
                 this.shouldProduceCoverage = shouldProduceCoverage;
             }
 
-            public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+            public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
             {
                 var coverage = new Dictionary<string, FileCoverage>();
 

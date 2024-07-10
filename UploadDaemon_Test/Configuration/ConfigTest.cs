@@ -7,6 +7,7 @@ using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
 using UploadDaemon.SymbolAnalysis;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Configuration
 {
@@ -163,6 +164,10 @@ namespace UploadDaemon.Configuration
                 $@"Inlined=2:{ExistingMethodToken}",
             });
 
+            ICoverageReport report = traceFile.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
+                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
+            });
+
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
@@ -186,8 +191,10 @@ namespace UploadDaemon.Configuration
                 $@"Inlined=2:{ExistingMethodToken}",
             });
 
-            Scanning.Trace trace = null;
-            ICoverageReport report = traceFile.ToReport((Scanning.Trace t) => { trace = t; return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()); });
+            ICoverageReport report = traceFile.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { 
+                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets); 
+            });
+
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
             Assert.That(report.EmbeddedUploadTargets.Count, Is.AtLeast(1));
             Assert.That(fooConfig, Is.Not.Null);
@@ -235,18 +242,26 @@ namespace UploadDaemon.Configuration
             TraceFile traceFile1 = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=foo:1 Version:1.0.0.0 Path:C:\bla\foo.dll",
                 @"Assembly=bar:2 Version:1.0.0.0 Path:C:\bla\bar.dll",
-                @"Inlined=2:{ExistingMethodToken}",
+                $@"Inlined=2:{ExistingMethodToken}",
             });
 
             TraceFile traceFile2 = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=bar:1 Version:1.0.0.0 Path:C:\bla\bar.dll",
                 @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
-                @"Inlined=2:{ExistingMethodToken}",
+                $@"Inlined=2:{ExistingMethodToken}",
+            });
+
+            ICoverageReport report1 = traceFile1.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
+                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
             });
 
             Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile1);
             Assert.That(config1, Is.Not.Null);
             Assert.That(config1.VersionAssembly, Is.EqualTo("bar"));
+
+            ICoverageReport report2 = traceFile2.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
+                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
+            });
 
             Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile2);
             Assert.That(config2, Is.Not.Null);

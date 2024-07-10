@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -23,7 +24,7 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(traceFile, symbolDirectory, assemblyPatterns);
 
@@ -33,7 +34,7 @@ namespace UploadDaemon.SymbolAnalysis
                     $" Found no symbols in {symbolDirectory} matching {assemblyPatterns.Describe()}");
             }
 
-            return ConvertToLineCoverage(trace, symbolCollection, symbolDirectory, assemblyPatterns);
+            return ConvertToLineCoverage(trace, symbolCollection, symbolDirectory, assemblyPatterns, embeddedUploadTargets);
         }
 
         private class AssemblyResolutionCount
@@ -55,7 +56,7 @@ namespace UploadDaemon.SymbolAnalysis
         /// Public for testing.
         /// </summary>
         public static SimpleCoverageReport ConvertToLineCoverage(Trace trace, SymbolCollection symbolCollection,
-            string symbolDirectory, GlobPatternList assemblyPatterns)
+            string symbolDirectory, GlobPatternList assemblyPatterns, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
         {
             logger.Debug("Converting trace {traceFile} to line coverage", trace);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
@@ -109,7 +110,7 @@ namespace UploadDaemon.SymbolAnalysis
 
             LogResolutionFailures(trace, symbolDirectory, assemblyPatterns, resolutionCounts);
 
-            return new SimpleCoverageReport(lineCoverageByFile, new List<(string project, SymbolAnalysis.RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
+            return new SimpleCoverageReport(lineCoverageByFile, embeddedUploadTargets);
         }
 
         private static void LogResolutionFailures(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)

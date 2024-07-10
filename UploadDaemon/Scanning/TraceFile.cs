@@ -71,7 +71,7 @@ namespace UploadDaemon.Scanning
             return matchingLine?.Groups[1]?.Value;
         }
 
-        public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver)
+        public ICoverageReport ToReport(Func<Trace, List<(string project, RevisionOrTimestamp revisionOrTimestamp)>, SimpleCoverageReport> traceResolver)
         {
             DateTime traceStart = default;
             bool isTestwiseTrace = false;
@@ -125,7 +125,7 @@ namespace UploadDaemon.Scanning
                             currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                             currentTestResult = testCaseMatch.Groups["testresult"].Value;
                             Int64.TryParse(testCaseMatch.Groups["duration"].Value, out testDuration);
-                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
+                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace, null))
                             {
                                 Start = currentTestStart,
                                 End = currentTestEnd,
@@ -160,7 +160,7 @@ namespace UploadDaemon.Scanning
                         }
                         currentTestEnd = ParseProfilerDateTimeString(value);
                         currentTestResult = "SKIPPED";
-                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
+                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace, null))
                         {
                             Start = currentTestStart,
                             End = currentTestEnd,
@@ -180,7 +180,7 @@ namespace UploadDaemon.Scanning
             }
             else
             {
-                return traceResolver(noTestTrace);
+                return traceResolver(noTestTrace, embeddedUploadTargets);
             }
         }
 

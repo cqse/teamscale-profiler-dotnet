@@ -6,6 +6,7 @@ using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
 using UploadDaemon.SymbolAnalysis;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Scanning
 {
@@ -42,7 +43,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
             Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
@@ -60,7 +61,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
             Assert.That(trace.CoveredMethods.Select(m => m.Item2), Is.EquivalentTo(new[] { 123, 456, 789 }));
@@ -74,7 +75,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(trace.CoveredMethods, Is.Empty);
         }
@@ -89,7 +90,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
             Assert.That(trace.CoveredMethods, Is.EquivalentTo(new[] { ("ProfilerGUI", 12345) }));
@@ -108,7 +109,7 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109440000"
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
+            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                 { "file1.cs", new FileCoverage((10,20)) }
             }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
 
@@ -141,7 +142,7 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109440000"
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => {
+            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
                 if (t.CoveredMethods.Contains(("ProfilerGUI", 12345)) && t.CoveredMethods.Count == 1)
                 {
                     return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
@@ -191,7 +192,7 @@ namespace UploadDaemon.Scanning
 
             Exception exception = Assert.Throws<InvalidTraceFileException>(() =>
             {
-                traceFile.ToReport((Trace t) => SomeSimpleCoverageReport());
+                traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => SomeSimpleCoverageReport());
             });
 
             Assert.That(exception.Message, Contains.Substring("encountered end of test that did not start"));
@@ -210,7 +211,7 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -242,7 +243,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); });
+            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { 
+                trace = t;
+                return SomeSimpleCoverageReport(); 
+            });
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;

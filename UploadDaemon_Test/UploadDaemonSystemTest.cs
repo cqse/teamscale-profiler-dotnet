@@ -173,7 +173,7 @@ Inlined=2:100663298");
             mockServer.StopServer();
             Assert.Multiple(() =>
             {
-                Assert.That(requests[0], Contains.Substring("/p/TestProject/"));
+                Assert.That(requests[0], Contains.Substring("/api/projects/TestProject/"));
                 Assert.That(requests[0], Contains.Substring("revision=master%3aHEAD"));
                 Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");
@@ -209,7 +209,7 @@ Inlined=2:100663298");
             mockServer.StopServer();
             Assert.Multiple(() =>
             {
-                Assert.That(requests[0], Contains.Substring("/p/MyFancyProject/"));
+                Assert.That(requests[0], Contains.Substring("/api/projects/MyFancyProject/"));
                 Assert.That(requests[0], Contains.Substring("revision=MyFancyRevision"));
                 Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "File is in upload folder.");
                 Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "File was properly archived.");

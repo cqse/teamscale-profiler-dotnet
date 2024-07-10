@@ -6,6 +6,7 @@ using System.Linq;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -43,7 +44,7 @@ namespace UploadDaemon.SymbolAnalysis
             Trace trace = new Trace() { CoveredMethods = new List<(string, uint)>() };
 
             SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
+                new GlobPatternList(new List<string> { "*" }, new List<string> { }), new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
             Assert.That(report.IsEmpty, Is.True);
         }
 
@@ -92,7 +93,7 @@ namespace UploadDaemon.SymbolAnalysis
             SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
 
             SimpleCoverageReport coverage = LineCoverageSynthesizer.ConvertToLineCoverage(trace, symbolCollection, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
+                new GlobPatternList(new List<string> { "*" }, new List<string> { }), new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
 
             Assert.That(coverage.IsEmpty, Is.True);
         }
@@ -104,7 +105,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private static SimpleCoverageReport Convert(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, symbolDirectory, assemlyPatterns);
+            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, symbolDirectory, assemlyPatterns, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
         }
     }
 }

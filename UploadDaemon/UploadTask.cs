@@ -164,7 +164,7 @@ namespace UploadDaemon
             }
             if (config.ArchiveLineCoverage)
             {
-                archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath) + ".simple", coverageReport);
+                archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);
             }
 
             string type = "line";
@@ -297,7 +297,7 @@ namespace UploadDaemon
             ICoverageReport report;
             try
             {
-                report = traceFile.ToReport((trace) => lineCoverageSynthesizer.ConvertToLineCoverage(trace, traceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns));
+                report = traceFile.ToReport((trace, embeddedUploadTargets) => lineCoverageSynthesizer.ConvertToLineCoverage(trace, traceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns, embeddedUploadTargets));
             }
             catch (Exception e)
             {
