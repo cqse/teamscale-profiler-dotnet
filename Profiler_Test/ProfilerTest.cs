@@ -15,7 +15,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     public class ProfilerTest : ProfilerTestBase
     {
         private Proxies.Profiler profiler;
-        private static readonly string AttachLog = ProfilerDirectory + "/attach.log";
 
         /// <summary>
         /// Clears the profiler environment variables to guarantee a stable test even if
@@ -25,12 +24,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         public void CreateProfiler()
         {
             profiler = new Proxies.Profiler(basePath: SolutionRoot, targetDir: TestTraceDirectory);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            File.Delete(AttachLog);
         }
 
         /// <summary>
