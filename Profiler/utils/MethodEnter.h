@@ -11,7 +11,7 @@ FunctionID constexpr NIL = static_cast<FunctionID>(-1);
 /**
  * Sets the vector to be filled with methodIds from called methods at this time.
  */
-void setCalledMethodsSet(functionID_set*);
+void setCalledMethodsSet(functionId_set*);
 
 void setCriticalSection(CRITICAL_SECTION*);
 

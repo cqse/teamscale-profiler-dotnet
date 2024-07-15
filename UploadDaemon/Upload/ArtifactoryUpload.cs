@@ -9,8 +9,6 @@ using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report;
 using System.IO.Compression;
-using UploadDaemon.Report.Testwise;
-using System.IO.Abstractions;
 using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
@@ -88,7 +86,7 @@ namespace UploadDaemon.Upload
 
                     logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), reportUrl);
 
-                    result = result && await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes, reportName);
+                    result = result && await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes);
                     index++;
                 }
                 return result;
@@ -101,9 +99,9 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, byte[] stream, String reportName)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, byte[] stream)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartPut(client, url, "report", stream, reportName))
+            using (HttpResponseMessage response = await HttpClientUtils.UploadPut(client, url, stream))
             {
                 if (response.IsSuccessStatusCode)
                 {

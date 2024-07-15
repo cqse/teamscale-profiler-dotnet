@@ -6,7 +6,7 @@
 /// Set that can only contain functionIDs, which are just unsigned ints.
 /// This is based on an array and is a lot faster than the default set implementation of the standard library for this use case.
 /// </summary>
-class functionID_set
+class functionId_set
 {
 private:
 	const unsigned int default_size = 524'288;
@@ -72,7 +72,7 @@ private:
 
 public:
 
-	~functionID_set() {
+	~functionId_set() {
 		delete set;
 	}
 
@@ -144,12 +144,18 @@ public:
 	void insert(FunctionID f) {
 		// Try insertion at the number modulo the size of the set first
 		unsigned int position = f & modulo_mask;
-		if (tryInsert(position, f)) return;
+		if (tryInsert(position, f))
+		{
+			return;
+		}
 
 		// Then rotate bits and xor to try and find a new position
 		for (unsigned int i = 0; i < num_xor_values; i++) {
 			position = (rotr(f) ^ xor_values[i]) & modulo_mask;
-			if (tryInsert(position, f)) return;
+			if (tryInsert(position, f))
+			{
+				return;
+			}
 		}
 
 		// If no position was found, just go to the next position with +1

@@ -1,13 +1,10 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
-using UploadDaemon.SymbolAnalysis;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Scanning
 {
@@ -47,7 +44,11 @@ namespace UploadDaemon.Scanning
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
+            traceFile.ToReport((Trace t) =>
+            {
+                trace = t;
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
             Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
@@ -68,7 +69,11 @@ namespace UploadDaemon.Scanning
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
+            traceFile.ToReport((Trace t) =>
+            {
+                trace = t;
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
             Assert.That(trace.CoveredMethods.Select(m => m.Item2), Is.EquivalentTo(new[] { 123, 456, 789 }));
@@ -85,7 +90,11 @@ namespace UploadDaemon.Scanning
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
+            traceFile.ToReport((Trace t) =>
+            {
+                trace = t;
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Is.Empty);
         }
@@ -103,7 +112,11 @@ namespace UploadDaemon.Scanning
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
+            ICoverageReport report = traceFile.ToReport((Trace t) =>
+            {
+                trace = t;
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
             Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
             Assert.That(trace.CoveredMethods, Is.EquivalentTo(new[] { ("ProfilerGUI", 12345) }));
         }
@@ -236,7 +249,11 @@ namespace UploadDaemon.Scanning
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
+            ICoverageReport report = traceFile.ToReport((Trace t) =>
+            {
+                trace = t;
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;

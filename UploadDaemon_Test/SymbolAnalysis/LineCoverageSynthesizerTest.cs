@@ -106,11 +106,6 @@ namespace UploadDaemon.SymbolAnalysis
             Assert.That(coverage.IsEmpty, Is.True);
         }
 
-        private static string NormalizeNewLines(string text)
-        {
-            return text.Replace("\r\n", "\n").Replace("\r", "\n");
-        }
-
         private static SimpleCoverageReport Convert(Trace trace, AssemblyExtractor extractor, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
             return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, extractor, symbolDirectory, assemlyPatterns);

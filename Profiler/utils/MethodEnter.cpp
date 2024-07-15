@@ -3,7 +3,7 @@
 #include "Debug.h"
 
 namespace {
-	functionID_set* calledFunctionSet;
+	functionId_set* calledFunctionSet;
 	bool isTestCaseRecording = false;
 	CRITICAL_SECTION* methodSetSynchronization;
 }
@@ -16,7 +16,7 @@ extern "C" void _stdcall EnterCpp(FunctionIDOrClientID funcId) {
 	}
 }
 
-void setCalledMethodsSet(functionID_set* setToUse) {
+void setCalledMethodsSet(functionId_set* setToUse) {
 	calledFunctionSet = setToUse;
 }
 

@@ -303,7 +303,7 @@ HRESULT CProfilerCallback::AssemblyLoadFinishedImplementation(AssemblyID assembl
 	}
 
 	if (config.shouldLogAssemblyPaths()) {
-		writtenChars += sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
+		sprintf_s(assemblyInfo + writtenChars, BUFFER_SIZE - writtenChars, " Path:%S", assemblyPath);
 	}
 	traceLog.logAssembly(assemblyInfo);
 
@@ -410,7 +410,6 @@ HRESULT CProfilerCallback::JITInliningImplementation(FunctionID callerId, Functi
 	if (config.isProfilingEnabled() && config.isTgaEnabled()) {
 		// Save information about inlined method (if not already seen)
 
-		// TODO (MP) Better late call eval here as well.
 		if (!inlinedMethodIds.contains(calleeId)) {
 			EnterCriticalSection(&callbackSynchronization);
 			EnterCriticalSection(&methodSetSynchronization);

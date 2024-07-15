@@ -122,7 +122,7 @@ namespace UploadDaemon.Upload
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
         /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-        public static async Task<HttpResponseMessage> UploadMultiPartPut(HttpClient client, string url, string multipartParameterName, byte[] stream, string fileName)
+        public static async Task<HttpResponseMessage> UploadPut(HttpClient client, string url, byte[] stream)
         {
             using (ByteArrayContent content = new ByteArrayContent(stream))
             {
