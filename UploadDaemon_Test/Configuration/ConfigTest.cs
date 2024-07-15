@@ -164,11 +164,10 @@ namespace UploadDaemon.Configuration
                 $@"Inlined=2:{ExistingMethodToken}",
             });
 
-            ICoverageReport report = traceFile.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
-                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
-            });
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
 
-            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies);
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
@@ -191,12 +190,11 @@ namespace UploadDaemon.Configuration
                 $@"Inlined=2:{ExistingMethodToken}",
             });
 
-            ICoverageReport report = traceFile.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { 
-                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets); 
-            });
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
 
-            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
-            Assert.That(report.EmbeddedUploadTargets.Count, Is.AtLeast(1));
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies);
+            Assert.That(assemblyExtractor.EmbeddedUploadTargets.Count, Is.AtLeast(1));
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
@@ -219,7 +217,10 @@ namespace UploadDaemon.Configuration
                 @"Inlined=2:{ExistingMethodToken}",
             });
 
-            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile));
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
+
+            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies));
         }
 
         [Test]
@@ -251,19 +252,17 @@ namespace UploadDaemon.Configuration
                 $@"Inlined=2:{ExistingMethodToken}",
             });
 
-            ICoverageReport report1 = traceFile1.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
-                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
-            });
+            AssemblyExtractor assemblyExtractor1 = new AssemblyExtractor();
+            assemblyExtractor1.ExtractAssemblies(traceFile1.Lines);
 
-            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile1);
+            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config1, Is.Not.Null);
             Assert.That(config1.VersionAssembly, Is.EqualTo("bar"));
 
-            ICoverageReport report2 = traceFile2.ToReport((Scanning.Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
-                return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), embeddedUploadTargets);
-            });
+            AssemblyExtractor assemblyExtractor2 = new AssemblyExtractor();
+            assemblyExtractor2.ExtractAssemblies(traceFile2.Lines);
 
-            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile2);
+            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config2, Is.Not.Null);
             Assert.That(config2.VersionAssembly, Is.EqualTo("bar"));
         }

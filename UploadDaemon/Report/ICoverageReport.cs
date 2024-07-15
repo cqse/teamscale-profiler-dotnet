@@ -23,8 +23,6 @@ namespace UploadDaemon.Report
         /// </summary>
         string FileExtension { get; }
 
-        List<(string project, RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets { get; }
-
         /// <summary>
         /// Returns a new report wth the union of the coverage data of both reports.
         /// </summary>

@@ -263,12 +263,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Creates the configuration that should be applied to the given profiled process.
         /// </summary>
-        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, TraceFile traceFile = null)
+        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, Dictionary<uint, (string name, string path)> assemblies = null)
         {
             ConfigForProcess config = new ConfigForProcess(profiledProcessPath);
             foreach (ConfigParser.ProcessSection section in Sections)
             {
-                if (SectionApplies(section, profiledProcessPath, traceFile))
+                if (SectionApplies(section, profiledProcessPath, assemblies))
                 {
                     config.ApplySection(section.Uploader);
                 }
@@ -320,12 +320,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Returns true if the given section applies to the given profiled process.
         /// </summary>
-        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, TraceFile traceFile = null)
+        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, Dictionary<uint, (string name, string path)> assemblies = null)
         {
             bool?[] checks = new[] {
                 MatchesExecutableName(section, profiledProcessPath),
                 MatchesExecutablePathRegex(section, profiledProcessPath),
-                MatchesLoadedAssemblyPathRegex(section, traceFile),
+                MatchesLoadedAssemblyPathRegex(section, assemblies),
             };
 
             // The section applies if at least one of the check criteria is set (!= null) and all of these are true.
@@ -362,15 +362,15 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// If loaded assembly path regex is set, at least one of the loaded assembly's path must match
         /// </summary>
-        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, TraceFile traceFile = null)
+        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, Dictionary<uint, (string name, string path)> assemblies = null)
         {
-            if (section.LoadedAssemblyPathRegex == null || traceFile == null)
+            if (section.LoadedAssemblyPathRegex == null || assemblies == null)
             {
                 return null;
             }
 
             Regex regex = new Regex($"^{section.LoadedAssemblyPathRegex}$");
-            return traceFile.assemblies.Any(assembly => regex.IsMatch(assembly.Value.Item2));
+            return assemblies.Any(assembly => regex.IsMatch(assembly.Value.Item2));
         }
 
         /// <summary>

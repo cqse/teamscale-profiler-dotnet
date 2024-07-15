@@ -278,7 +278,7 @@ Inlined=1:33555646" },
                 this.shouldProduceCoverage = shouldProduceCoverage;
             }
 
-            public SimpleCoverageReport ConvertToLineCoverage(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
+            public SimpleCoverageReport ConvertToLineCoverage(Trace trace, AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
             {
                 var coverage = new Dictionary<string, FileCoverage>();
 
@@ -288,7 +288,7 @@ Inlined=1:33555646" },
                     coverage["file1.cs"] = new FileCoverage((12, 33));
                 }
 
-                return new SimpleCoverageReport(coverage, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
+                return new SimpleCoverageReport(coverage);
             }
         }
 

@@ -12,8 +12,8 @@ namespace UploadDaemon.Report
         [Test]
         public void MergesDifferentTests()
         {
-            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[]{ new Test("Test1", new File("file1.cs", (10, 20))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
-            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test2", new File("file1.cs", (10, 20))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[]{ new Test("Test1", new File("file1.cs", (10, 20))) });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test2", new File("file1.cs", (10, 20))) });
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
@@ -26,8 +26,8 @@ namespace UploadDaemon.Report
         public void MergesSameTestsRuntime()
         {
             DateTime now = DateTime.Now;
-            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(10)), End = now.Subtract(TimeSpan.FromSeconds(5)) } }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
-            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(7)), End = now.Subtract(TimeSpan.FromSeconds(1)) } }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(10)), End = now.Subtract(TimeSpan.FromSeconds(5)) } });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Start = now.Subtract(TimeSpan.FromSeconds(7)), End = now.Subtract(TimeSpan.FromSeconds(1)) } });
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
@@ -44,8 +44,8 @@ namespace UploadDaemon.Report
         public void MergesSameTestsResult()
         {
             DateTime now = DateTime.Now;
-            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" } }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
-            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Result = "SKIPPED" } }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" } });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Result = "SKIPPED" } });
 
             TestwiseCoverageReport mergedReport = report2.Union(report1) as TestwiseCoverageReport;
 
@@ -61,8 +61,8 @@ namespace UploadDaemon.Report
         [Test]
         public void MergesSameTestsCoverageInDifferentFiles()
         {
-            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
-            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) });
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
@@ -76,8 +76,8 @@ namespace UploadDaemon.Report
         [Test]
         public void MergesSameTestsCoverageInSameFiles()
         {
-            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
-            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (30, 40))) }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (30, 40))) });
 
             TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
 
@@ -102,7 +102,7 @@ namespace UploadDaemon.Report
                     Content = "43d743a8ef4389bc5",
                     Message = "Awesome!"
                 }
-             }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+             });
 
             Assert.That(report.ToString(), Is.EqualTo(@"
             {
@@ -141,7 +141,7 @@ namespace UploadDaemon.Report
         [Test]
         public void PartialReport()
         {
-            TestwiseCoverageReport report = new TestwiseCoverageReport(true, new Test[] { new Test("Test/Method()") }, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            TestwiseCoverageReport report = new TestwiseCoverageReport(true, new Test[] { new Test("Test/Method()") });
             Assert.That(report.ToString(), Is.EqualTo(@"
             {
                 ""partial"": true,

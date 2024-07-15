@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
@@ -43,7 +44,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(1));
             Assert.That(trace.CoveredMethods[0].Item1, Is.EqualTo("ProfilerGUI"));
@@ -61,7 +65,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
             Assert.That(trace.CoveredMethods.Select(m => m.Item2), Is.EquivalentTo(new[] { 123, 456, 789 }));
@@ -75,7 +82,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
 
             Assert.That(trace.CoveredMethods, Is.Empty);
         }
@@ -90,8 +100,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
 
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
             Assert.That(report, Is.InstanceOf<SimpleCoverageReport>());
             Assert.That(trace.CoveredMethods, Is.EquivalentTo(new[] { ("ProfilerGUI", 12345) }));
         }
@@ -109,9 +121,12 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109440000"
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            ICoverageReport report = traceFile.ToReport((Trace t) => new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                 { "file1.cs", new FileCoverage((10,20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }), extractor.Assemblies);
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -142,22 +157,26 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109440000"
             });
 
-            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => {
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            ICoverageReport report = traceFile.ToReport((Trace t) =>
+            {
                 if (t.CoveredMethods.Contains(("ProfilerGUI", 12345)) && t.CoveredMethods.Count == 1)
                 {
                     return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file1.cs", new FileCoverage((1,2)) }
-                    }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
+                    });
                 }
                 else if (t.CoveredMethods.Contains(("ProfilerGUI", 67890)) && t.CoveredMethods.Count == 1)
                 {
                     return new SimpleCoverageReport(new Dictionary<string, FileCoverage>() {
                         { "file2.cs", new FileCoverage((1,2)) }
-                    }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
+                    });
                 }
 
                 throw new ArgumentException();
-            });
+            }, extractor.Assemblies);
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -190,9 +209,12 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109440000"
             });
 
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
             Exception exception = Assert.Throws<InvalidTraceFileException>(() =>
             {
-                traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => SomeSimpleCoverageReport());
+                traceFile.ToReport((Trace t) => SomeSimpleCoverageReport(), extractor.Assemblies);
             });
 
             Assert.That(exception.Message, Contains.Substring("encountered end of test that did not start"));
@@ -211,7 +233,10 @@ namespace UploadDaemon.Scanning
             });
             Trace trace = null;
 
-            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { trace = t; return SomeSimpleCoverageReport(); });
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            ICoverageReport report = traceFile.ToReport((Trace t) => { trace = t; return SomeSimpleCoverageReport(); }, extractor.Assemblies);
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -242,11 +267,14 @@ namespace UploadDaemon.Scanning
                 "Stopped=20200131_1109460000"
             });
             Trace trace = null;
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
 
-            ICoverageReport report = traceFile.ToReport((Trace t, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) => { 
+            ICoverageReport report = traceFile.ToReport((Trace t) =>
+            {
                 trace = t;
-                return SomeSimpleCoverageReport(); 
-            });
+                return SomeSimpleCoverageReport();
+            }, extractor.Assemblies);
 
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
@@ -262,7 +290,7 @@ namespace UploadDaemon.Scanning
 
         private SimpleCoverageReport SomeSimpleCoverageReport()
         {
-            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>(), new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>());
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
         }
     }
 }

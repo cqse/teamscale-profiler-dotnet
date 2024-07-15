@@ -144,6 +144,7 @@
     <Compile Include="Report\Testwise\File.cs" />
     <Compile Include="Report\Testwise\Test.cs" />
     <Compile Include="Report\Testwise\TestwiseCoverageReport.cs" />
+    <Compile Include="Scanning\AssemblyExtractor.cs" />
     <Compile Include="Scanning\InvalidTraceFileException.cs" />
     <Compile Include="Scanning\Trace.cs" />
     <Compile Include="Configuration\Artifactory.cs" />

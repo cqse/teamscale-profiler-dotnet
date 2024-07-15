@@ -26,7 +26,10 @@ namespace UploadDaemon.SymbolAnalysis
             });
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
-            SimpleCoverageReport report = Convert(trace, traceFile, TestUtils.TestDataDirectory,
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
+            SimpleCoverageReport report = Convert(trace, extractor, TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
             string sourceFilePath = @"\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs";
@@ -42,9 +45,11 @@ namespace UploadDaemon.SymbolAnalysis
                 @"Inlined=2:{ExistingMethodToken}",
             });
             Trace trace = new Trace() { CoveredMethods = new List<(string, uint)>() };
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
 
-            SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { }), new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, extractor, TestUtils.TestDataDirectory,
+                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
             Assert.That(report.IsEmpty, Is.True);
         }
 
@@ -57,9 +62,12 @@ namespace UploadDaemon.SymbolAnalysis
             });
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
+            AssemblyExtractor extractor = new AssemblyExtractor();
+            extractor.ExtractAssemblies(traceFile.Lines);
+
             Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
             {
-                Convert(trace, traceFile, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
+                Convert(trace, extractor, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
             });
 
             Assert.That(exception.Message, Contains.Substring("no symbols"));
@@ -93,7 +101,7 @@ namespace UploadDaemon.SymbolAnalysis
             SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });
 
             SimpleCoverageReport coverage = LineCoverageSynthesizer.ConvertToLineCoverage(trace, symbolCollection, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { }), new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
             Assert.That(coverage.IsEmpty, Is.True);
         }
@@ -103,9 +111,9 @@ namespace UploadDaemon.SymbolAnalysis
             return text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
 
-        private static SimpleCoverageReport Convert(Trace trace, TraceFile traceFile, string symbolDirectory, GlobPatternList assemlyPatterns)
+        private static SimpleCoverageReport Convert(Trace trace, AssemblyExtractor extractor, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, traceFile, symbolDirectory, assemlyPatterns, new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>());
+            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, extractor, symbolDirectory, assemlyPatterns);
         }
     }
 }

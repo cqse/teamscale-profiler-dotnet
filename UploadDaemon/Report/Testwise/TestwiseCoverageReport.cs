@@ -21,15 +21,13 @@ namespace UploadDaemon.Report.Testwise
         [JsonProperty("tests")]
         public Test[] Tests { get; }
 
-        public List<(string project, RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets { get; }
 
-        public TestwiseCoverageReport(Test[] tests, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets) : this(false, tests, embeddedUploadTargets) { }
+        public TestwiseCoverageReport(Test[] tests) : this(false, tests) { }
 
-        public TestwiseCoverageReport(bool partial, Test[] tests, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets)
+        public TestwiseCoverageReport(bool partial, Test[] tests)
         {
             Partial = partial;
             Tests = tests;
-            EmbeddedUploadTargets = embeddedUploadTargets;
         }
 
         /// <inheritDoc/>
@@ -63,7 +61,7 @@ namespace UploadDaemon.Report.Testwise
                 }
             }
 
-            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray(), this.EmbeddedUploadTargets);
+            return new TestwiseCoverageReport(this.Partial || other.Partial, mergedCoverage.Values.ToArray());
         }
 
         /// <summary>

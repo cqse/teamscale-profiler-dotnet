@@ -31,18 +31,18 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
             Assert.That(batches.First().AggregatedCoverageReport.ToString(), Is.EqualTo(new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()).ToString()));
+            }).ToString()));
         }
 
         [Test]
@@ -52,18 +52,18 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((30, 40)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
             Assert.That(batches.First().AggregatedCoverageReport.ToString(), Is.EqualTo(new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20), (30,40)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()).ToString()));
+            }).ToString()));
         }
 
         /// <summary>
@@ -78,18 +78,18 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((15, 17)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
             Assert.That(batches.First().AggregatedCoverageReport.ToString(), Is.EqualTo(new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20), (15, 17)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()).ToString()));
+            }).ToString()));
         }
 
         [Test]
@@ -99,11 +99,11 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file2.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(1), "Number of batches");
@@ -111,7 +111,7 @@ namespace UploadDaemon.Upload
             {
                 { "file1.cs",  new FileCoverage((10, 20)) },
                 { "file2.cs",  new FileCoverage((10, 20)) },
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()).ToString()));
+            }).ToString()));
         }
 
         [Test]
@@ -121,11 +121,11 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision2, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(2), "Number of batches");
@@ -142,11 +142,11 @@ namespace UploadDaemon.Upload
             merger.AddLineCoverage("trace1.txt", Revision1, Upload, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
             merger.AddLineCoverage("trace2.txt", Revision1, uploadWithDifferentTarget, new SimpleCoverageReport(new Dictionary<string, FileCoverage>()
             {
                 { "file1.cs",  new FileCoverage((10, 20)) }
-            }, new List<(string project, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)>()));
+            }));
 
             IEnumerable<LineCoverageMerger.CoverageBatch> batches = merger.GetBatches();
             Assert.That(batches, Has.Count.EqualTo(2), "Number of batches");

@@ -1,16 +1,12 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
-using System.Resources;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Scanning
@@ -22,25 +18,19 @@ namespace UploadDaemon.Scanning
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <summary>
-        /// The name of the Resource .resx file that holed information about embedded upload targets.
-        /// </summary>
-        private const String TeamscaleResourceName = "Teamscale";
-
-
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
-        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
         private static readonly Regex TestCaseStartRegex = new Regex(@"^Test=Start:(?<date>[^:]+):(?<testname>.+)");
         private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
-
-        public readonly Dictionary<uint, (string name, string path)> assemblies = new Dictionary<uint, (string name, string path)>();
-
 
         /// <summary>
         /// The lines of text contained in the trace.
         /// </summary>
-        private string[] lines;
+        public string[] Lines
+        {
+            get; 
+            private set;
+        }
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
@@ -57,7 +47,7 @@ namespace UploadDaemon.Scanning
         public TraceFile(string filePath, string[] lines)
         {
             this.FilePath = filePath;
-            this.lines = lines;
+            this.Lines = lines;
         }
 
         /// <summary>
@@ -67,11 +57,11 @@ namespace UploadDaemon.Scanning
         public string FindVersion(string versionAssembly)
         {
             Regex versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
-            Match matchingLine = lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
+            Match matchingLine = Lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
             return matchingLine?.Groups[1]?.Value;
         }
 
-        public ICoverageReport ToReport(Func<Trace, List<(string project, RevisionOrTimestamp revisionOrTimestamp)>, SimpleCoverageReport> traceResolver)
+        public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver, Dictionary<uint, (string name, string path)> assemblies)
         {
             DateTime traceStart = default;
             bool isTestwiseTrace = false;
@@ -85,7 +75,7 @@ namespace UploadDaemon.Scanning
             string currentTestResult;
             IList<Test> tests = new List<Test>();
 
-            foreach (string line in lines)
+            foreach (string line in Lines)
             {
                 string[] keyValuePair = line.Split(new[] { '=' }, count: 2);
                 if (keyValuePair.Length < 2)
@@ -101,13 +91,11 @@ namespace UploadDaemon.Scanning
                     case "Started":
                         traceStart = ParseProfilerDateTimeString(value);
                         break;
+
                     case "Info":
                         isTestwiseTrace |= value.StartsWith("TIA enabled");
                         break;
-                    case "Assembly":
-                        Match assemblyMatch = AssemblyLineRegex.Match(line);
-                        assemblies[Convert.ToUInt32(assemblyMatch.Groups["id"].Value)] = (assemblyMatch.Groups["name"].Value, assemblyMatch.Groups["path"].Value);
-                        break;
+
                     case "Test":
                         if (value.StartsWith("Start"))
                         {
@@ -115,7 +103,8 @@ namespace UploadDaemon.Scanning
                             currentTestName = testCaseMatch.Groups["testname"].Value;
                             currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                             currentTestTrace = new Trace() { OriginTraceFilePath = this.FilePath };
-                        } else
+                        }
+                        else
                         {
                             Match testCaseMatch = TestCaseEndRegex.Match(line);
                             if (currentTestTrace == noTestTrace)
@@ -125,7 +114,7 @@ namespace UploadDaemon.Scanning
                             currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                             currentTestResult = testCaseMatch.Groups["testresult"].Value;
                             Int64.TryParse(testCaseMatch.Groups["duration"].Value, out testDuration);
-                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace, null))
+                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                             {
                                 Start = currentTestStart,
                                 End = currentTestEnd,
@@ -136,6 +125,7 @@ namespace UploadDaemon.Scanning
                             currentTestTrace = noTestTrace;
                         }
                         break;
+
                     case "Inlined":
                     case "Jitted":
                     case "Called":
@@ -149,6 +139,7 @@ namespace UploadDaemon.Scanning
                         }
                         currentTestTrace.CoveredMethods.Add((entry.Item1, Convert.ToUInt32(coverageMatch[2])));
                         break;
+
                     case "Stopped":
                         if (currentTestTrace.IsEmpty)
                         {
@@ -160,7 +151,7 @@ namespace UploadDaemon.Scanning
                         }
                         currentTestEnd = ParseProfilerDateTimeString(value);
                         currentTestResult = "SKIPPED";
-                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace, null))
+                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
                         {
                             Start = currentTestStart,
                             End = currentTestEnd,
@@ -171,16 +162,13 @@ namespace UploadDaemon.Scanning
                 }
             }
 
-            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
-            SearchForEmbeddedUploadTargets(assemblies, embeddedUploadTargets);
-
             if (isTestwiseTrace)
             {
-                return new TestwiseCoverageReport(tests.ToArray(), embeddedUploadTargets);
+                return new TestwiseCoverageReport(tests.ToArray());
             }
             else
             {
-                return traceResolver(noTestTrace, embeddedUploadTargets);
+                return traceResolver(noTestTrace);
             }
         }
 
@@ -189,7 +177,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public string FindProcessPath()
         {
-            foreach (string line in lines)
+            foreach (string line in Lines)
             {
                 Match match = ProcessLineRegex.Match(line);
                 if (match.Success)
@@ -212,90 +200,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public bool IsEmpty()
         {
-            return !lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined=") || line.StartsWith("Called="));
-        }
-
-        /// <summary>
-        /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
-        /// </summary>
-        private void SearchForEmbeddedUploadTargets(Dictionary<uint, (string, string)> assemblyTokens, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
-        {
-            foreach (KeyValuePair<uint, (string, string)> entry in assemblyTokens)
-            {
-                Assembly assembly = LoadAssemblyFromPath(entry.Value.Item2);
-                if (assembly == null || assembly.DefinedTypes == null)
-                {
-                    continue;
-                }
-                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
-                if (teamscaleResourceType == null)
-                {
-                    continue;
-                }
-                logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
-                ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
-                string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
-                string embeddedRevision = teamscaleResourceManager.GetString("Revision");
-                string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
-                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, uploadTargets, assembly.FullName);
-            }
-        }
-
-        /// <summary>
-        /// Adds a revision or timestamp and optionally a project to the list of upload targets. This method checks if both, revision and timestamp, are declared, or neither.
-        /// </summary>
-        /// <param name="revision"></param>
-        /// <param name="timestamp"></param>
-        /// <param name="project"></param>
-        /// <param name="uploadTargets"></param>
-        /// <param name="origin"></param>
-        public static void AddUploadTarget(string revision, string timestamp, string project, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets, string origin)
-        {
-            Logger logger = LogManager.GetCurrentClassLogger();
-
-            if (revision == null && timestamp == null)
-            {
-                logger.Error("Not all required fields in {origin}. Please specify either 'Revision' or 'Timestamp'", origin);
-                return;
-            }
-            if (revision != null && timestamp != null)
-            {
-                logger.Error("'Revision' and 'Timestamp' are both set in {origin}. Please set only one, not both.", origin);
-                return;
-            }
-            if (revision != null)
-            {
-                uploadTargets.Add((project, new RevisionOrTimestamp(revision, true)));
-            }
-            else
-            {
-                uploadTargets.Add((project, new RevisionOrTimestamp(timestamp, false)));
-            }
-        }
-
-        private Assembly LoadAssemblyFromPath(string path)
-        {
-            if (String.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-            Assembly assembly;
-            try
-            {
-                assembly = Assembly.LoadFrom(path);
-                // Check that defined types can actually be loaded
-                if (assembly == null)
-                {
-                    return null;
-                }
-                IEnumerable<TypeInfo> ignored = assembly.DefinedTypes;
-            }
-            catch (Exception e)
-            {
-                logger.Debug("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
-                return null;
-            }
-            return assembly;
+            return !Lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined=") || line.StartsWith("Called="));
         }
     }
 }

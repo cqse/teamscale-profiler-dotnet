@@ -37,12 +37,12 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Resolves the symbol collection either from PDBs stored in the passed symbol directory or the assembly directory.
         /// </summary>
-        internal SymbolCollection Resolve(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        internal SymbolCollection Resolve(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             if (Config.IsAssemblyRelativePath(symbolDirectory))
             {
                 logger.Debug("Resolve PDBs from assembly directory");
-                return ResolveFromTraceFile(traceFile, symbolDirectory, assemblyPatterns);
+                return ResolveFromTraceFile(assemblyExtractor, symbolDirectory, assemblyPatterns);
             }
 
             logger.Debug($"Resolve PDBs from {symbolDirectory}");
@@ -73,10 +73,10 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Resolves the symbol collection from PDBs loaded relative to all loaded assemblies. The result is cached per assembly.
         /// </summary>
-        public SymbolCollection ResolveFromTraceFile(TraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SymbolCollection ResolveFromTraceFile(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             List<SymbolCollection> collectionOfAllAssemblies = new List<SymbolCollection>();
-            foreach (KeyValuePair<uint, (string, string)> assembly in traceFile.assemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.Value.Item1)))
+            foreach (KeyValuePair<uint, (string, string)> assembly in assemblyExtractor.Assemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.Value.Item1)))
             {
                 string pdbPath = Path.Combine(Config.ResolveAssemblyRelativePath(symbolDirectory, assembly.Value.Item2), Path.GetFileNameWithoutExtension(assembly.Value.Item2) + ".pdb");
                 if (!File.Exists(pdbPath))
