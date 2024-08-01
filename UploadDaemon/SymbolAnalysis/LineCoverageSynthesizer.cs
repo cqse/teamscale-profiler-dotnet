@@ -2,9 +2,10 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report.Simple;
+using UploadDaemon.Scanning;
+using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -23,41 +24,17 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <inheritdoc/>
-        public Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(traceFile, symbolDirectory, assemblyPatterns);
+            SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(assemblyExtractor, symbolDirectory, assemblyPatterns);
 
             if (symbolCollection.IsEmpty)
             {
-                throw new LineCoverageConversionFailedException($"Failed to convert {traceFile.FilePath} to line coverage." +
+                throw new LineCoverageConversionFailedException($"Failed to convert {trace.OriginTraceFilePath} to line coverage." +
                     $" Found no symbols in {symbolDirectory} matching {assemblyPatterns.Describe()}");
             }
 
-            Dictionary<string, FileCoverage> lineCoverage = ConvertToLineCoverage(traceFile, symbolCollection, symbolDirectory, assemblyPatterns);
-            if (lineCoverage.Count == 0 || lineCoverage.Values.All(fileCoverage => fileCoverage.CoveredLineRanges.Count() == 0))
-            {
-                return null;
-            }
-
-            return lineCoverage;
-        }
-
-        /// <summary>
-        /// Converts the given line coverage (covered line ranges per file) into a SIMPLE format report for Teamscale.
-        /// </summary>
-        public static string ConvertToLineCoverageReport(Dictionary<string, FileCoverage> lineCoverage)
-        {
-            StringBuilder report = new StringBuilder();
-            report.AppendLine("# isMethodAccurate=true");
-            foreach (string file in lineCoverage.Keys)
-            {
-                report.AppendLine(file);
-                foreach ((uint startLine, uint endLine) in lineCoverage[file].CoveredLineRanges)
-                {
-                    report.AppendLine($"{startLine}-{endLine}");
-                }
-            }
-            return report.ToString();
+            return ConvertToLineCoverage(trace, symbolCollection, symbolDirectory, assemblyPatterns);
         }
 
         private class AssemblyResolutionCount
@@ -78,18 +55,22 @@ namespace UploadDaemon.SymbolAnalysis
         ///
         /// Public for testing.
         /// </summary>
-        public static Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, SymbolCollection symbolCollection,
+        public static SimpleCoverageReport ConvertToLineCoverage(Trace trace, SymbolCollection symbolCollection,
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            logger.Debug("Converting trace {traceFile} to line coverage", traceFile);
+            logger.Debug("Converting trace {traceFile} to line coverage", trace);
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
-            Dictionary<string, FileCoverage> lineCoverage = new Dictionary<string, FileCoverage>();
-            foreach ((string assemblyName, uint methodId) in traceFile.CoveredMethods)
+            Dictionary<string, FileCoverage> lineCoverageByFile = new Dictionary<string, FileCoverage>();
+            HashSet<string> includedAssemblies = new HashSet<string>();
+            HashSet<string> excludedAssemblies = new HashSet<string>();
+            foreach ((string assemblyName, uint methodId) in trace.CoveredMethods)
             {
-                if (!assemblyPatterns.Matches(assemblyName))
+                if (excludedAssemblies.Contains(assemblyName) || (!includedAssemblies.Contains(assemblyName) && !assemblyPatterns.Matches(assemblyName)))
                 {
+                    excludedAssemblies.Add(assemblyName);
                     continue;
                 }
+                includedAssemblies.Add(assemblyName);
 
                 SymbolCollection.SourceLocation sourceLocation = symbolCollection.Resolve(assemblyName, methodId);
                 if (!resolutionCounts.TryGetValue(assemblyName, out AssemblyResolutionCount count))
@@ -103,7 +84,7 @@ namespace UploadDaemon.SymbolAnalysis
                     count.unresolvedMethods += 1;
                     logger.Debug("Could not resolve method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
-                        traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                        trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
                 else if (string.IsNullOrEmpty(sourceLocation.SourceFile))
@@ -111,7 +92,7 @@ namespace UploadDaemon.SymbolAnalysis
                     count.methodsWithoutSourceFile += 1;
                     logger.Debug("Could not resolve source file of method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
-                        traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                        trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
                 else if (sourceLocation.StartLine == PdbFile.CompilerHiddenLine || sourceLocation.EndLine == PdbFile.CompilerHiddenLine)
@@ -119,59 +100,59 @@ namespace UploadDaemon.SymbolAnalysis
                     count.methodsWithCompilerHiddenLines += 1;
                     logger.Debug("Resolved lines of method ID {methodId} from assembly {assemblyName} contain compiler hidden lines in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
-                        traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                        trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
 
                 count.resolvedMethods += 1;
-                AddToLineCoverage(lineCoverage, sourceLocation);
+                AddToLineCoverage(lineCoverageByFile, sourceLocation);
             }
 
-            LogResolutionFailures(traceFile, symbolDirectory, assemblyPatterns, resolutionCounts);
+            LogResolutionFailures(trace, symbolDirectory, assemblyPatterns, resolutionCounts);
 
-            return lineCoverage;
+            return new SimpleCoverageReport(lineCoverageByFile);
         }
 
-        private static void LogResolutionFailures(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)
+        private static void LogResolutionFailures(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns, Dictionary<string, AssemblyResolutionCount> resolutionCounts)
         {
             foreach (string assemblyName in resolutionCounts.Keys)
             {
                 AssemblyResolutionCount count = resolutionCounts[assemblyName];
-                LogResolutionFailuresForAssembly(traceFile, symbolDirectory, assemblyPatterns, assemblyName, count);
+                LogResolutionFailuresForAssembly(trace, symbolDirectory, assemblyPatterns, assemblyName, count);
             }
         }
 
-        private static void LogResolutionFailuresForAssembly(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns, string assemblyName, AssemblyResolutionCount count)
+        private static void LogResolutionFailuresForAssembly(Trace trace, string symbolDirectory, GlobPatternList assemblyPatterns, string assemblyName, AssemblyResolutionCount count)
         {
             if (count.unresolvedMethods > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} could not be resolved in trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This may happen if the corresponding PDB file either could not be found or could not be parsed. Ensure the PDB file for this assembly is" +
                     " in the specified PDB folder where the Upload Daemon looks for it and it is included by the PDB file include/exclude patterns configured for the UploadDaemon. " +
                     " You can exclude this assembly from the coverage analysis to suppress this warning.",
                     count.unresolvedMethods, count.TotalMethods, count.UnresolvedPercentage,
-                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                    assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
             }
             if (count.methodsWithoutSourceFile > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} do not have a source file in the corresponding PDB file." +
                     " Read from trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This sometimes happens and may be an indication of broken PDB files. Please make sure your PDB files are correct." +
                     " You can exclude this assembly from the coverage analysis to suppress this warning.",
                     count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
-                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                    assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
             }
             if (count.methodsWithoutSourceFile > 0)
             {
-                logger.Warn("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
+                logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
                     " Read from trace file {traceFile} with symbols from" +
                     " {symbolDirectory} with {assemblyPatterns}. Turn on debug logging to get the exact method IDs." +
                     " This is usually not a problem as the compiler may generate additional code that does not correspond to any source code." +
                     " You can exclude this assembly from the coverage analysis to suppress this warning.",
                     count.methodsWithCompilerHiddenLines, count.TotalMethods, count.WithCompilerHiddenLinesPercentage,
-                    assemblyName, traceFile.FilePath, symbolDirectory, assemblyPatterns.Describe());
+                    assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
             }
         }
 

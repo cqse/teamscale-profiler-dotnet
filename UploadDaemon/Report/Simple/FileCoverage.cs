@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UploadDaemon.SymbolAnalysis
+namespace UploadDaemon.Report.Simple
 {
     /// <summary>
     /// The line coverage collected for one file.
@@ -12,12 +12,22 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public HashSet<(uint, uint)> CoveredLineRanges { get; } = new HashSet<(uint, uint)>();
 
-        public FileCoverage(params (uint, uint)[] lineRanges)
+        public FileCoverage(params (uint, uint)[] lineRanges) : this((IEnumerable<(uint, uint)>)lineRanges) {}
+
+        public FileCoverage(IEnumerable<(uint, uint)> lineRanges)
         {
             foreach ((uint, uint) range in lineRanges)
             {
                 CoveredLineRanges.Add(range);
             }
+        }
+
+        /// <summary>
+        /// Modifies the current <see cref="FileCoverage"/> to contain all the coverage from the both itself and the other <see cref="FileCoverage"/>.
+        /// </summary>
+        public void UnionWith(FileCoverage otherCoverage)
+        {
+            CoveredLineRanges.UnionWith(otherCoverage.CoveredLineRanges);
         }
 
         public override bool Equals(object obj) =>

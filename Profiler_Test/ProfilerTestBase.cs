@@ -12,60 +12,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     /// </summary>
     public abstract class ProfilerTestBase
     {
-        /// <summary>
-        /// Enumeration for processor bitness
-        /// </summary>
-        public enum Bitness
-        {
-            /// <summary>
-            /// x86 architecture.
-            /// </summary>
-            x86,
-
-            /// <summary>
-            /// x64 architecture.
-            /// </summary>
-            x64
-        }
-
-        /// <summary>
-        /// Environment variable name to enable the profiler.
-        /// </summary>
-        private const string PROFILER_ENABLE_KEY = "COR_ENABLE_PROFILING";
-
-        /// <summary>
-        /// Environment variable name to enable the upload daemon.
-        /// </summary>
-        private const string PROFILER_UPLOAD_DAEMON_KEY = "PROFILER_UPLOAD_DAEMON";
-
-        /// <summary>
-        /// Environment variable name for the profiler's class ID.
-        /// </summary>
-        private const string PROFILER_CLASS_ID_KEY = "COR_PROFILER";
-
-        /// <summary>
-        /// Environment variable name for the directory to store profiler traces.
-        /// </summary>
-        private const string PROFILER_TARGETDIR_KEY = "COR_PROFILER_TARGETDIR";
-
-        /// <summary>
-        /// Environment variable name for the path to the profiler DLL.
-        /// </summary>
-        private const string PROFILER_PATH_KEY = "COR_PROFILER_PATH";
-
-        /// <summary>
-        /// Environment variable name to enable the profiler's light mode.
-        /// </summary>
-        private const string PROFILER_LIGHT_MODE_KEY = "COR_PROFILER_LIGHT_MODE";
-
-        /// <summary>
-        /// The profiler's class ID.
-        /// </summary>
-        private const string PROFILER_CLASS_ID = "{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}";
-
-        /// <summary>
-        /// Label with which jitted methods are prefixed
-        /// </summary>
+        /** Label with which jitted methods are prefixed */
         public const string LABEL_JITTED = "Jitted";
 
         /// <summary>
@@ -83,6 +30,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// </summary>
         public const char KEY_SEPARATOR = ':';
 
+        private List<Process> startedProcesses = new List<Process>();
+
         /// <summary>
         /// The directory containing profiler solution.
         /// </summary>
@@ -96,9 +45,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         protected static readonly string Configuration = "Debug";
 
 #else
-		/// <summary>
-		/// Field holding the build configuration, either 'Release' or 'Debug'
-		/// </summary>
+        /// <summary>
+        /// Field holding the build configuration, either 'Release' or 'Debug'
+        /// </summary>
         protected static readonly string Configuration = "Release";
 #endif
 
@@ -107,100 +56,17 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// </summary>
         protected static readonly string ProfilerDirectory = $"{SolutionRoot}/Profiler/bin/{Configuration}";
 
-        public static readonly string Profiler32Dll = ProfilerDirectory + "/Profiler32.dll";
-
-        public static readonly string Profiler64Dll = ProfilerDirectory + "/Profiler64.dll";
-
-        /// <summary>
-        /// Executes the test application with the profiler attached and returns the written traces.
-        /// </summary>
-        protected List<FileInfo> RunProfiler(string application, string arguments = null, bool lightMode = false, Bitness? bitness = null, IDictionary<string, string> environment = null, bool setTargetDirAsEnvVariable = true)
+        [TearDown]
+        public void TearDown()
         {
-            DirectoryInfo targetDir = new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
-            ProcessStartInfo startInfo = new ProcessStartInfo(GetTestDataPath("test-programs", application), arguments)
-            {
-                WorkingDirectory = GetTestDataPath("test-programs"),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                UseShellExecute = false
-            };
-
-            RegisterProfiler(startInfo, lightMode, bitness);
-            if (setTargetDirAsEnvVariable)
-            {
-                RegisterTargetDirAsEnvironmentVariable(startInfo, targetDir);
-            }
-
-            if (environment != null)
-            {
-                foreach (KeyValuePair<string, string> entry in environment)
-                {
-                    startInfo.Environment[entry.Key] = entry.Value;
-                }
-            }
-
-            Process result = Process.Start(startInfo);
-            result.StandardOutput.ReadToEnd();
-            result.WaitForExit();
-
-            Assert.That(result.ExitCode, Is.EqualTo(0), "Program " + application + " did not execute properly.");
-            return GetTraceFiles(targetDir);
-        }
-
-        /// <summary>
-        /// Sets all environment variables the profiler needs.
-        /// </summary>
-        protected void RegisterProfiler(ProcessStartInfo processInfo, bool lightMode = false, Bitness? bitness = null)
-        {
-            if (bitness == null)
-            {
-                bitness = GetBitness();
-            }
-
-            string profilerDll = Profiler32Dll;
-            if (bitness == Bitness.x64)
-            {
-                profilerDll = Profiler64Dll;
-            }
-
-            Assume.That(File.Exists(profilerDll), "Could not find profiler DLL at " + profilerDll);
-
-            // set environment variables for the profiler
-            processInfo.Environment[PROFILER_PATH_KEY] = Path.GetFullPath(profilerDll);
-            processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
-            processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
-            processInfo.Environment[PROFILER_UPLOAD_DAEMON_KEY] = "0";
-            if (lightMode)
-            {
-                processInfo.Environment[PROFILER_LIGHT_MODE_KEY] = "1";
-            }
-        }
-
-        /// <summary>
-        /// Sets the target directory for the traces as an environment variable. If this is not called, the target directory has to be set in the YAML configuration file.
-        /// </summary>
-        protected void RegisterTargetDirAsEnvironmentVariable(ProcessStartInfo processInfo, DirectoryInfo targetDir)
-        {
-            processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
-        }
-
-        /// <summary>
-        /// Asserts that the provided traces list contains exactly one item and returns that.
-        /// </summary>
-        protected FileInfo AssertSingleTrace(List<FileInfo> traces)
-        {
-            Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
-            Assert.That(traces, Has.Count.LessThanOrEqualTo(1), "More than one coverage trace was written: " + string.Join(", ", traces));
-            return traces[0];
+            startedProcesses.Where(process => !process.HasExited).ToList().ForEach(process => process.Kill());
         }
 
         /// <summary>
         /// Asserts that the trace file written by the profiler has the same contents as the given reference trace, modulo some normalization.
         /// </summary>
-        protected void AssertNormalizedTraceFileEqualsReference(List<FileInfo> traces, int[] assembliesToCompare)
+        protected void AssertNormalizedTraceFileEqualsReference(FileInfo actual, int[] assembliesToCompare)
         {
-            FileInfo actual = AssertSingleTrace(traces);
             FileInfo referenceTraceFile = new FileInfo(GetTestDataPath("reference-traces", GetSanitizedTestName() + ".txt"));
 
             var assmeblyIds = new HashSet<int>(assembliesToCompare);
@@ -210,22 +76,33 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         }
 
         /// <summary>
-        /// Returns the single trace file in the output directory.
-        /// </summary>
-        private List<FileInfo> GetTraceFiles(DirectoryInfo directory)
-            => directory.EnumerateFiles().Where(file => file.Name.StartsWith("coverage_")).ToList();
-
-        /// <summary>
         /// Returns the absolute path to a test data file.
         /// </summary>
         protected static string GetTestDataPath(params string[] path)
             => Path.Combine(SolutionRoot.FullName, "test-data", Path.Combine(path));
 
         /// <summary>
+        /// An executabel file in the TestProgramsDirectory.
+        /// </summary>
+        protected FileInfo GetTestProgram(string executableName) => new FileInfo(Path.Combine(TestProgramsDirectory.FullName, executableName));
+
+        /// <summary>
+        /// The directory containing the testee binaries.
+        /// </summary>
+        private static DirectoryInfo TestProgramsDirectory =>
+            new DirectoryInfo(GetTestDataPath("test-programs"));
+        
+        /// <summary>
         /// Returns a test-specific directory for temp files
         /// </summary>
         protected static string TestTempDirectory =>
             Path.Combine(SolutionRoot.FullName, "test-tmp", GetSanitizedTestName());
+        
+        /// <summary>
+        /// A temporary directory for a profiler to write trace files to.
+        /// </summary>
+        protected static DirectoryInfo TestTraceDirectory =>
+            new DirectoryInfo(TestTempDirectory).CreateSubdirectory("traces");
 
         /// <summary>
         /// Creates a unique (and empty) temporary test directory for storing output.
@@ -290,31 +167,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                         yield return methodInvocation;
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Returns "64" if running on an x64 OS and having a .NET framework x64 installed, or "32" in case of an x86.NET framework.
-        /// </summary>
-        private static Bitness GetBitness()
-        {
-            // TODO (MP) we could examine this now w/o staring an external process
-            var startInfo = new ProcessStartInfo(GetTestDataPath("test-programs/bitness-checker.exe"));
-            startInfo.UseShellExecute = false;
-            startInfo.RedirectStandardOutput = true;
-            var process = Process.Start(startInfo);
-            process.WaitForExit();
-            var bitness = process.StandardOutput.ReadToEnd().Substring(0, 2);
-            switch (bitness)
-            {
-                case "32":
-                    return Bitness.x86;
-
-                case "64":
-                    return Bitness.x64;
-
-                default:
-                    throw new Exception("Unknown bitness: " + bitness);
             }
         }
 

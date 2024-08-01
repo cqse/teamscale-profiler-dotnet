@@ -6,6 +6,8 @@ obj/
 test-tmp/
 *.aps
 test-data/test-programs/output.pdf
+test-data/test-programs/*.pdb
+test-data/test-programs/*.exe.config
 /packages/
 !packages/repositories.config
 

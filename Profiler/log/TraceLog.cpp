@@ -6,6 +6,8 @@
 #include <winuser.h>
 #include "utils/WindowsUtils.h"
 #include <string>
+#include <regex>
+#include <sstream>
 
 TraceLog::~TraceLog() {
 	// Nothing to do here, destructing is handled in FileLogBase
@@ -21,8 +23,12 @@ void TraceLog::writeInlinedFunctionInfosToLog(std::vector<FunctionInfo>* functio
 	writeFunctionInfosToLog(LOG_KEY_INLINED, functions);
 }
 
-void TraceLog::createLogFile(std::string targetDir) {
+void TraceLog::writeCalledFunctionInfosToLog(std::vector<FunctionInfo>* functions)
+{
+	writeFunctionInfosToLog(LOG_KEY_CALLED, functions);
+}
 
+void TraceLog::createLogFile(std::string targetDir) {
 	std::string timeStamp = getFormattedCurrentTime();
 
 	std::string fileName = "";
@@ -35,18 +41,14 @@ void TraceLog::createLogFile(std::string targetDir) {
 }
 
 void TraceLog::writeFunctionInfosToLog(const char* key, std::vector<FunctionInfo>* functions) {
+	std::stringstream stream;
+	std::string endLine = "\r\n";
 	for (std::vector<FunctionInfo>::iterator i = functions->begin(); i != functions->end(); i++) {
-		writeSingleFunctionInfoToLog(key, *i);
+		stream << key << '=' << i->assemblyNumber << ':' << i->functionToken << endLine;
 	}
+	writeToFile(stream.str().c_str());
 }
 
-void TraceLog::writeSingleFunctionInfoToLog(const char* key, FunctionInfo& info) {
-	char signature[BUFFER_SIZE];
-	signature[0] = '\0';
-	sprintf_s(signature, "%i:%i", info.assemblyNumber,
-		info.functionToken);
-	writeTupleToFile(key, signature);
-}
 
 void TraceLog::info(std::string message) {
 	writeTupleToFile(LOG_KEY_INFO, message.c_str());
@@ -75,6 +77,27 @@ void TraceLog::logProcess(std::string process)
 void TraceLog::logAssembly(std::string assembly)
 {
 	writeTupleToFile(LOG_KEY_ASSEMBLY, assembly.c_str());
+}
+
+void TraceLog::startTestCase(std::string testName)
+{
+	// Line will look like this:
+	// Test=Start:{Start Date}:{Testname}
+	std::string info = "Start:" + getFormattedCurrentTime() + ":" + testName;
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
+}
+
+void TraceLog::endTestCase(std::string result, std::string duration)
+{
+	// Line will look like this:
+	// Test=End:{End Date}:{Result}:{Duration}
+	std::string info = "End:" + getFormattedCurrentTime();
+	if (!result.empty()) {
+		info += ":" + result;
+		info += ":" + duration;
+	}
+
+	writeTupleToFile(LOG_KEY_TESTCASE, info.c_str());
 }
 
 void TraceLog::shutdown() {

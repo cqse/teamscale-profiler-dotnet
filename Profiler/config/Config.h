@@ -76,9 +76,23 @@ public:
 		return startUploadDaemon;
 	}
 
+	/** Whether TGA profiling is enabled */
+	bool isTgaEnabled() {
+		return tgaEnabled;
+	}
+
 	/** Whether to eagerly log trace data. */
 	size_t getEagerness() {
 		return eagerness;
+	}
+
+	/** Whether TIA profiling is enabled */
+	bool isTiaEnabled() {
+		return tiaEnabled;
+	}
+
+	std::string getTiaRequestSocket() {
+		return tiaRequestSocket;
 	}
 
 private:
@@ -98,6 +112,9 @@ private:
 	bool ignoreExceptions;
 	bool startUploadDaemon;
 	size_t eagerness;
+	bool tgaEnabled;
+	bool tiaEnabled;
+	std::string tiaRequestSocket;
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);

@@ -1,5 +1,7 @@
-﻿using NUnit.Framework;
-using System;
+﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using Cqse.Teamscale.Profiler.Dotnet.Proxies;
+using Cqse.Teamscale.Profiler.Dotnet.Tia;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,35 +14,16 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     [TestFixture]
     public class ProfilerTest : ProfilerTestBase
     {
-        private static readonly string AttachLog = ProfilerDirectory + "/attach.log";
-
-        [OneTimeSetUp]
-        public static void SetUpFixture()
-        {
-            Assume.That(File.Exists(Profiler32Dll), "Could not find profiler 32bit DLL at " + Profiler32Dll);
-            Assume.That(File.Exists(Profiler64Dll), "Could not find profiler 64bit DLL at " + Profiler64Dll);
-        }
+        private Proxies.Profiler profiler;
 
         /// <summary>
         /// Clears the profiler environment variables to guarantee a stable test even if
         /// the developer has variables set on their development machine.
         /// </summary>
         [SetUp]
-        public void SetUp()
+        public void CreateProfiler()
         {
-            foreach (string variable in Environment.GetEnvironmentVariables().Keys)
-            {
-                if (variable.StartsWith("COR"))
-                {
-                    Environment.SetEnvironmentVariable(variable, null);
-                }
-            }
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            File.Delete(AttachLog);
+            profiler = new Proxies.Profiler(basePath: SolutionRoot, targetDir: TestTraceDirectory);
         }
 
         /// <summary>
@@ -49,8 +32,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         [Test]
         public void TestCommandLine()
         {
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86));
-            string[] lines = File.ReadAllLines(actualTrace.FullName);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
             Assert.That(lines.Any(line => line.StartsWith("Info=Command Line: ") && line.EndsWith(" all")));
         }
 
@@ -62,8 +46,11 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         [TestCase("profilerTesTEE.EXE", ExpectedResult = 1)]
         public int TestProcessSelection(string process)
         {
-            var environment = new Dictionary<string, string> { { "COR_PROFILER_PROCESS", process } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            profiler.TargetProcessName = process;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            return profiler.GetTraceFiles().Count;
         }
 
         /// <summary>
@@ -82,9 +69,10 @@ namespace Cqse.Teamscale.Profiler.Dotnet
               profiler:
                 enabled: true
           ");
+            profiler.ConfigFilePath = configFile;
 
-            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+            return profiler.GetTraceFiles().Count;
         }
 
         /// <summary>
@@ -106,8 +94,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet
                 enabled: true
                 targetdir: {Path.Combine(TestTempDirectory, "traces")}
           ");
-
-                return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, setTargetDirAsEnvVariable: false).Count;
+                new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+                return profiler.GetTraceFiles().Count;
             }
             finally
             {
@@ -131,8 +119,62 @@ namespace Cqse.Teamscale.Profiler.Dotnet
 match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: {regex}     , profiler: {{enabled: true}}}}]
 ");
 
-            var environment = new Dictionary<string, string> { { "COR_PROFILER_CONFIG", configFile } };
-            return RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86, environment: environment).Count;
+            profiler.ConfigFilePath = configFile;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            return profiler.GetTraceFiles().Count;
+        }
+
+        /// <summary>
+        /// Makes sure that when tga mode is active, we only get regular coverage.
+        /// </summary>
+        [Test]
+        public void TestTgaConfig()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: true
+      tga: true
+");
+
+            RecordingProfilerIpc profilerIpc = new RecordingProfilerIpc(null);
+            profilerIpc.StartTest("Test1");
+
+            profiler.ConfigFilePath = configFile;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.Some.Matches("^(Inlines|Jitted)"));
+            Assert.That(lines, Has.None.Matches("^(Called)"));
+        }
+
+        /// <summary>
+        /// Makes sure that when tia mode is active, we only get testwise coverage.
+        /// </summary>
+        [Test]
+        public void TestTiaConfig()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            RecordingProfilerIpc profilerIpc = new RecordingProfilerIpc(null);
+            profilerIpc.StartTest("Test1");
+
+            File.WriteAllText(configFile, $@"
+match:
+  - profiler:
+      enabled: true
+      tga: false
+      tia: true
+      tia_request_socket: {profilerIpc.Config.PublishSocket}
+");
+
+            profiler.ConfigFilePath = configFile;
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.Some.Matches("^(Called)"));
         }
 
         /// <summary>
@@ -141,9 +183,11 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         [Test]
         public void TestWithAppPool()
         {
-            var environment = new Dictionary<string, string> { { "APP_POOL_ID", "MyAppPool" } };
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, environment: environment, bitness: Bitness.x86));
-            string[] lines = File.ReadAllLines(actualTrace.FullName);
+            profiler.AppPoolId = "MyAppPool";
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
             Assert.That(lines.Any(line => line.Equals("Info=IIS AppPool: MyAppPool")));
         }
 
@@ -153,8 +197,11 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         [Test]
         public void TestWithoutAppPool()
         {
-            FileInfo actualTrace = AssertSingleTrace(RunProfiler("ProfilerTestee.exe", arguments: "none", lightMode: true, bitness: Bitness.x86));
-            string[] lines = File.ReadAllLines(actualTrace.FullName);
+            profiler.AppPoolId = null;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "none", profiler);
+
+            string[] lines = profiler.GetSingleTrace();
             Assert.That(!lines.Any(line => line.StartsWith("Info=IIS AppPool:")));
         }
 
@@ -166,8 +213,11 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
             [Values("none", "all")] string applicationMode,
             [Values(true, false)] bool isLightMode)
         {
-            List<FileInfo> traces = RunProfiler("ProfilerTestee.exe", arguments: applicationMode, lightMode: isLightMode, bitness: Bitness.x86);
-            AssertNormalizedTraceFileEqualsReference(traces, new[] { 2 });
+            profiler.LightMode = isLightMode;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: applicationMode, profiler);
+
+            AssertNormalizedTraceFileEqualsReference(profiler.GetSingleTraceFile(), new[] { 2 });
         }
 
         /// <summary>
@@ -179,15 +229,17 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         [TestCase("GeneratedTest.exe", new int[] { 2, 3, 4 })]
         public void TestProfiling(string application, int[] expectedAssemblyIds)
         {
-            List<FileInfo> traces = RunProfiler(application);
-            AssertNormalizedTraceFileEqualsReference(traces, expectedAssemblyIds);
+            new Testee(GetTestProgram(application)).Run(profiler: profiler);
+
+            AssertNormalizedTraceFileEqualsReference(profiler.GetSingleTraceFile(), expectedAssemblyIds);
         }
 
         [Test]
         public void TestAttachLog()
         {
-            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
-            string[] lines = File.ReadAllLines(AttachLog);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
+
+            string[] lines = profiler.GetAttachLog();
             string firstLine = lines[0];
             Assert.That(firstLine.StartsWith("Attach"));
             Assert.That(firstLine.Contains("ProfilerTestee.exe"));
@@ -196,8 +248,9 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         [Test]
         public void TestDetachLog()
         {
-            RunProfiler("ProfilerTestee.exe", arguments: "all", lightMode: true, bitness: Bitness.x86);
-            string[] lines = File.ReadAllLines(AttachLog);
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(arguments: "all", profiler: profiler);
+
+            string[] lines = profiler.GetAttachLog();
             string secondLine = lines[1];
             Assert.That(secondLine.StartsWith("Detach"));
             Assert.That(secondLine.Contains("ProfilerTestee.exe"));

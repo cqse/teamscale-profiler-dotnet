@@ -4,6 +4,7 @@ using UploadDaemon.Configuration;
 using System.Linq;
 using System.IO;
 using NLog;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -29,15 +30,19 @@ namespace UploadDaemon.SymbolAnalysis
         private readonly IDictionary<string, DateTime> symbolFileLastWriteDates =
             new Dictionary<string, DateTime>();
 
+        private long lastAssemblyCheckTime;
+
+        private readonly long ONE_HOUR = 3600;
+
         /// <summary>
         /// Resolves the symbol collection either from PDBs stored in the passed symbol directory or the assembly directory.
         /// </summary>
-        internal SymbolCollection Resolve(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        internal SymbolCollection Resolve(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             if (Config.IsAssemblyRelativePath(symbolDirectory))
             {
                 logger.Debug("Resolve PDBs from assembly directory");
-                return ResolveFromTraceFile(traceFile, symbolDirectory, assemblyPatterns);
+                return ResolveFromTraceFile(assemblyExtractor, symbolDirectory, assemblyPatterns);
             }
 
             logger.Debug($"Resolve PDBs from {symbolDirectory}");
@@ -57,7 +62,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             (string, GlobPatternList) cacheKey = GetCacheKey(symbolDirectory, assemblyPatterns);
             ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
-            if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, relevantSymbolFiles))
+            if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
             {
                 symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(relevantSymbolFiles.Select(info => info.Path));
                 UpdateValidationInfo(relevantSymbolFiles);
@@ -68,21 +73,21 @@ namespace UploadDaemon.SymbolAnalysis
         /// <summary>
         /// Resolves the symbol collection from PDBs loaded relative to all loaded assemblies. The result is cached per assembly.
         /// </summary>
-        public SymbolCollection ResolveFromTraceFile(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SymbolCollection ResolveFromTraceFile(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             List<SymbolCollection> collectionOfAllAssemblies = new List<SymbolCollection>();
-            foreach ((string name, string path) assembly in traceFile.LoadedAssemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.name)))
+            foreach (KeyValuePair<uint, (string, string)> assembly in assemblyExtractor.Assemblies.Where(assembly => MatchesAssemblyPattern(assemblyPatterns, assembly.Value.Item1)))
             {
-                string pdbPath = Path.Combine(Config.ResolveAssemblyRelativePath(symbolDirectory, assembly.path), Path.GetFileNameWithoutExtension(assembly.path) + ".pdb");
+                string pdbPath = Path.Combine(Config.ResolveAssemblyRelativePath(symbolDirectory, assembly.Value.Item2), Path.GetFileNameWithoutExtension(assembly.Value.Item2) + ".pdb");
                 if (!File.Exists(pdbPath))
                 {
-                    logger.Debug("No PDB found for assembly {assembly}", assembly.path);
+                    logger.Debug("No PDB found for assembly {assembly}", assembly.Value);
                     continue;
                 }
 
                 (string, GlobPatternList) cacheKey = GetCacheKey(pdbPath, null); // assembly patterns are irrelevant for single assemblies
                 SymbolFileInfo[] symbolFile = new[] { new SymbolFileInfo { Path = pdbPath, LastWriteTime = File.GetLastWriteTimeUtc(pdbPath) } };
-                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolFile))
+                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
                 {
                     symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(new[] { pdbPath });
                     UpdateValidationInfo(symbolFile);
@@ -99,10 +104,19 @@ namespace UploadDaemon.SymbolAnalysis
             return (symbolDirectory, assemblyPatterns);
         }
 
-        private bool IsValid(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFiles)
+        private bool IsValid(SymbolCollection collection, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            return ContainsExactly(collection, relevantSymbolFiles)
-                && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            // For performance reasony, we only recheck every hour.
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (lastAssemblyCheckTime - now > ONE_HOUR)
+            {
+                lastAssemblyCheckTime = now;
+                ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);
+                return ContainsExactly(collection, relevantSymbolFiles)
+                    && relevantSymbolFiles.All(symbolFile => symbolFile.LastWriteTime.Equals(symbolFileLastWriteDates[symbolFile.Path]));
+            }
+            return true;
+            
         }
 
         private static bool ContainsExactly(SymbolCollection collection, ICollection<SymbolFileInfo> relevantSymbolFilePaths)

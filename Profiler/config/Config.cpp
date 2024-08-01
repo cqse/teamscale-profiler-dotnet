@@ -76,7 +76,13 @@ void Config::setOptions()
 	dumpEnvironment = getBooleanOption("dump_environment", false);
 	ignoreExceptions = getBooleanOption("ignore_exceptions", false);
 	startUploadDaemon = getBooleanOption("upload_daemon", false);
+	tgaEnabled = getBooleanOption("tga", true);
+	tiaEnabled = getBooleanOption("tia", false);
 
+	tiaRequestSocket = getOption("tia_request_socket");
+	if (tiaRequestSocket.empty()) {
+		tiaRequestSocket = "tcp://127.0.0.1:7145";
+	}
 	std::string eagernessValue = getOption("eagerness");
 	if (eagernessValue.empty()) {
 		eagerness = 0;

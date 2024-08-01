@@ -7,80 +7,49 @@ using System.Resources;
 using System.Text.RegularExpressions;
 using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
-namespace UploadDaemon.SymbolAnalysis
+namespace UploadDaemon.Scanning
 {
-    /// <summary>
-    /// Parses the text of a trace file into a list of assembly names and method IDs that can be translated to line coverage
-    /// with the help of PDB files.
-    /// </summary>
-    public class ParsedTraceFile
+    public class AssemblyExtractor
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-        /// <summary>
-        /// All assembly names mentioned in the trace file.
-        /// </summary>
-        public List<(string name, string path)> LoadedAssemblies { get; } = new List<(string name, string path)>();
-
-        /// <summary>
-        /// Path to this trace file.
-        /// </summary>
-        public string FilePath { get; private set; }
-
-        /// <summary>
-        /// All methods that are reported as covered. A method is identified by the name of its assembly
-        /// (first elment in the tuple) and its ID (second element in the tuple).
-        /// </summary>
-        public List<(string, uint)> CoveredMethods { get; } = new List<(string, uint)>();
-
-        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
-        private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
         /// <summary>
         /// The name of the Resource .resx file that holed information about embedded upload targets.
         /// </summary>
         private const String TeamscaleResourceName = "Teamscale";
+        private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
 
-        /// <summary>
-        /// The uploads targets (revision/timestamp and optionally teamscale project) that are retrieved from resource files that are embedded into assemblies referenced in the trace file.
-        /// </summary>
-        public readonly List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
+        public readonly Dictionary<uint, (string name, string path)> Assemblies = new Dictionary<uint, (string name, string path)>();
+        public readonly List<(string project, RevisionOrTimestamp revisionOrTimestamp)> EmbeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
 
-        public ParsedTraceFile(string[] lines, string filePath)
+        public void ExtractAssemblies(string[] lines)
         {
-            this.FilePath = filePath;
-
-            Dictionary<uint, (string name, string path)> assemblyTokens = lines.Select(line => AssemblyLineRegex.Match(line))
-                .Where(match => match.Success)
-                .ToDictionary(
-                    match => Convert.ToUInt32(match.Groups["id"].Value),
-                    match => (name: match.Groups["name"].Value, path: match.Groups["path"].Value)
-                );
-            this.LoadedAssemblies = assemblyTokens.Values.ToList();
-            SearchForEmbeddedUploadTargets();
-            IEnumerable<Match> coverageMatches = lines.Select(line => CoverageLineRegex.Match(line))
-                            .Where(match => match.Success);
-            foreach (Match match in coverageMatches)
+            foreach (string line in lines)
             {
-                uint assemblyId = Convert.ToUInt32(match.Groups[1].Value);
-                if (!assemblyTokens.TryGetValue(assemblyId, out (string name, string path) assembly))
+                string[] keyValuePair = line.Split(new[] { '=' }, 2);
+                if (keyValuePair.Length < 2)
                 {
-                    logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
-                        " Please report it to CQSE. Coverage for this assembly will be ignored.", filePath, assemblyId);
                     continue;
                 }
-                CoveredMethods.Add((assembly.name, Convert.ToUInt32(match.Groups[2].Value)));
+
+                if (keyValuePair[0] == "Assembly")
+                {
+                    Match assemblyMatch = AssemblyLineRegex.Match(line);
+                    Assemblies[Convert.ToUInt32(assemblyMatch.Groups["id"].Value)] = (assemblyMatch.Groups["name"].Value, assemblyMatch.Groups["path"].Value);
+                }
             }
+
+            SearchForEmbeddedUploadTargets(Assemblies, EmbeddedUploadTargets);
         }
 
         /// <summary>
         /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
         /// </summary>
-        private void SearchForEmbeddedUploadTargets()
+        private void SearchForEmbeddedUploadTargets(Dictionary<uint, (string, string)> assemblyTokens, List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets)
         {
-            foreach ((_, string path) in this.LoadedAssemblies)
+            foreach (KeyValuePair<uint, (string, string)> entry in assemblyTokens)
             {
-                Assembly assembly = LoadAssemblyFromPath(path);
+                Assembly assembly = LoadAssemblyFromPath(entry.Value.Item2);
                 if (assembly == null || assembly.DefinedTypes == null)
                 {
                     continue;
@@ -95,7 +64,7 @@ namespace UploadDaemon.SymbolAnalysis
                 string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
                 string embeddedRevision = teamscaleResourceManager.GetString("Revision");
                 string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
-                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, embeddedUploadTargets, assembly.FullName);
+                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, uploadTargets, assembly.FullName);
             }
         }
 
@@ -155,5 +124,7 @@ namespace UploadDaemon.SymbolAnalysis
             }
             return assembly;
         }
+
+
     }
 }

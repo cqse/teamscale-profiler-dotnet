@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
 using NLog;
+using UploadDaemon.Report;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Upload
@@ -68,18 +70,25 @@ namespace UploadDaemon.Upload
             return $"file system directory {targetDirectory}";
         }
 
-        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.simple");
-            string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}.metadata");
 
             try
             {
                 EnsureTargetDirectoryExists(targetDirectory);
+                List<string> reports = coverageReport.ToStringList();
+                int index = 1;
+                foreach (string report in reports)
+                {
+                    string filePath = Path.Combine(targetDirectory, $"{unixSeconds}_{index}.{coverageReport.FileExtension}");
+                    fileSystem.File.WriteAllText(filePath, report);
 
-                fileSystem.File.WriteAllText(filePath, lineCoverageReport);
-                fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
+                    string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}_{index}.{coverageReport.FileExtension}.metadata");
+                    fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
+                    index++;
+                }
                 return Task.FromResult(true);
             }
             catch (Exception e)

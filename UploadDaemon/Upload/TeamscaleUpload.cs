@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.Configuration;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Report;
+using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
+using System.Linq;
+using System.Runtime.Serialization.Json;
+using Newtonsoft.Json;
 
 namespace UploadDaemon.Upload
 {
@@ -89,7 +95,8 @@ namespace UploadDaemon.Upload
             return server.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             string timestampParameter;
             if (revisionOrTimestamp.IsRevision)
@@ -114,11 +121,8 @@ namespace UploadDaemon.Upload
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
-                using (MemoryStream stream = new MemoryStream(reportBytes))
-                {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
-                }
+                List<string> reports = coverageReport.ToStringList();
+                return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, reports);
             }
             catch (Exception e)
             {
@@ -128,11 +132,11 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, List<string> reports)
         {
             try
             {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartList(client, url, "report", reports, "report.simple"))
                 {
                     if (response.IsSuccessStatusCode)
                     {

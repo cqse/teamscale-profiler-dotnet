@@ -134,9 +134,20 @@ namespace UploadDaemon.Configuration
             public bool? MergeLineCoverage { get; set; }
 
             /// <summary>
+            /// Whether testwise coverage reports should be marked as partial.
+            /// This means existing coverage on the Teamscale server in the same partition is not deleted.
+            /// </summary>
+            public bool? PartialCoverageReport { get; set; }
+
+            /// <summary>
             /// An optional prefix to prepend to the version before the upload.
             /// </summary>
             public string VersionPrefix { get; set; }
+
+            /// <summary>
+            /// Prefix of the test path in case of testwise coverage.
+            /// </summary>
+            public string TestPathPrefix { get; set; }
 
             /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.

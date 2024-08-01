@@ -1,5 +1,10 @@
-﻿using System.Linq;
+﻿using NLog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using UploadDaemon.Report;
+using UploadDaemon.Report.Simple;
 
 namespace UploadDaemon.Scanning
 {
@@ -8,12 +13,21 @@ namespace UploadDaemon.Scanning
     /// </summary>
     public class TraceFile
     {
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
-        private static readonly Regex ProcessRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
+        private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// The lines of text contained in the trace.
+        /// </summary>
+        public string[] Lines
+        {
+            get; 
+            private set;
+        }
 
         /// <summary>
         /// Returns true if the given file name looks like a trace file.
-        /// </summary>
         public static bool IsTraceFile(string fileName)
         {
             return TraceFileRegex.IsMatch(fileName);
@@ -23,11 +37,6 @@ namespace UploadDaemon.Scanning
         /// The path to the file.
         /// </summary>
         public string FilePath { get; private set; }
-
-        /// <summary>
-        /// The lines of text contained in the trace.
-        /// </summary>
-        public string[] Lines { get; private set; }
 
         public TraceFile(string filePath, string[] lines)
         {
@@ -46,6 +55,11 @@ namespace UploadDaemon.Scanning
             return matchingLine?.Groups[1]?.Value;
         }
 
+        public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver, Dictionary<uint, (string name, string path)> assemblies)
+        {
+            return new TraceFileParser(FilePath, Lines, assemblies, traceResolver).ParseTraceFile();
+        }
+
         /// <summary>
         /// Given the lines of text in a trace file, returns the process that was profiled or null if no process can be found.
         /// </summary>
@@ -53,7 +67,7 @@ namespace UploadDaemon.Scanning
         {
             foreach (string line in Lines)
             {
-                Match match = ProcessRegex.Match(line);
+                Match match = ProcessLineRegex.Match(line);
                 if (match.Success)
                 {
                     return match.Groups[1].Value;
@@ -67,7 +81,7 @@ namespace UploadDaemon.Scanning
         /// </summary>
         public bool IsEmpty()
         {
-            return !Lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined="));
+            return !Lines.Any(line => line.StartsWith("Jitted=") || line.StartsWith("Inlined=") || line.StartsWith("Called="));
         }
     }
 }
