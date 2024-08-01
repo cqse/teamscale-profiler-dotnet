@@ -6,7 +6,7 @@
 /// Set that can only contain functionIDs, which are just unsigned ints.
 /// This is based on an array and is a lot faster than the default set implementation of the standard library for this use case.
 /// </summary>
-class functionId_set final
+class function_id_set final
 {
 private:
 	const static unsigned int DEFAULT_SIZE = 131'072;
@@ -72,7 +72,7 @@ private:
 
 public:
 
-	~functionId_set() {
+	~function_id_set() {
 		delete set;
 	}
 

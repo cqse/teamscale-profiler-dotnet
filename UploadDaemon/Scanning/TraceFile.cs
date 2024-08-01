@@ -1,13 +1,10 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
 using UploadDaemon.Report.Simple;
-using UploadDaemon.Report.Testwise;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Scanning
 {
@@ -17,11 +14,8 @@ namespace UploadDaemon.Scanning
     public class TraceFile
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
-        private static readonly Regex TestCaseStartRegex = new Regex(@"^Test=Start:(?<date>[^:]+):(?<testname>.+)");
-        private static readonly Regex TestCaseEndRegex = new Regex(@"^Test=End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
 
         /// <summary>
         /// The lines of text contained in the trace.
@@ -63,113 +57,7 @@ namespace UploadDaemon.Scanning
 
         public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver, Dictionary<uint, (string name, string path)> assemblies)
         {
-            DateTime traceStart = default;
-            bool isTestwiseTrace = false;
-            Trace noTestTrace = new Trace();
-            string noTestName = "No Test";
-            string currentTestName = noTestName;
-            DateTime currentTestStart = default;
-            Trace currentTestTrace = noTestTrace;
-            DateTime currentTestEnd;
-            long testDuration = 0;
-            string currentTestResult;
-            IList<Test> tests = new List<Test>();
-
-            foreach (string line in Lines)
-            {
-                string[] keyValuePair = line.Split(new[] { '=' }, count: 2);
-                if (keyValuePair.Length < 2)
-                {
-                    logger.Warn("Invalid line in trace file {}: {}", FilePath, line);
-                    continue;
-                }
-                string key = keyValuePair[0];
-                string value = keyValuePair[1];
-
-                switch (key)
-                {
-                    case "Started":
-                        traceStart = ParseProfilerDateTimeString(value);
-                        break;
-
-                    case "Info":
-                        isTestwiseTrace |= value.StartsWith("TIA enabled");
-                        break;
-
-                    case "Test":
-                        if (value.StartsWith("Start"))
-                        {
-                            Match testCaseMatch = TestCaseStartRegex.Match(line);
-                            currentTestName = testCaseMatch.Groups["testname"].Value;
-                            currentTestStart = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
-                            currentTestTrace = new Trace() { OriginTraceFilePath = this.FilePath };
-                        }
-                        else
-                        {
-                            Match testCaseMatch = TestCaseEndRegex.Match(line);
-                            if (currentTestTrace == noTestTrace)
-                            {
-                                throw new InvalidTraceFileException($"encountered end of test that did not start: {line}");
-                            }
-                            currentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
-                            currentTestResult = testCaseMatch.Groups["testresult"].Value;
-                            Int64.TryParse(testCaseMatch.Groups["duration"].Value, out testDuration);
-                            tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
-                            {
-                                Start = currentTestStart,
-                                End = currentTestEnd,
-                                DurationMillis = testDuration,
-                                Result = currentTestResult
-                            });
-                            currentTestName = noTestName;
-                            currentTestTrace = noTestTrace;
-                        }
-                        break;
-
-                    case "Inlined":
-                    case "Jitted":
-                    case "Called":
-                        String[] coverageMatch = line.Split(new[] { '=', ':' }, count: 3);
-                        uint assemblyId = Convert.ToUInt32(coverageMatch[1]);
-                        if (!assemblies.TryGetValue(assemblyId, out (string, string) entry))
-                        {
-                            logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
-                                " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
-                            continue;
-                        }
-                        currentTestTrace.CoveredMethods.Add((entry.Item1, Convert.ToUInt32(coverageMatch[2])));
-                        break;
-
-                    case "Stopped":
-                        if (currentTestTrace.IsEmpty)
-                        {
-                            break;
-                        }
-                        if (currentTestTrace == noTestTrace)
-                        {
-                            currentTestStart = traceStart;
-                        }
-                        currentTestEnd = ParseProfilerDateTimeString(value);
-                        currentTestResult = "SKIPPED";
-                        tests.Add(new Test(currentTestName, traceResolver(currentTestTrace))
-                        {
-                            Start = currentTestStart,
-                            End = currentTestEnd,
-                            Result = currentTestResult
-                        });
-                        currentTestTrace = noTestTrace;
-                        break;
-                }
-            }
-
-            if (isTestwiseTrace)
-            {
-                return new TestwiseCoverageReport(tests.ToArray());
-            }
-            else
-            {
-                return traceResolver(noTestTrace);
-            }
+            return new TraceFileParser(FilePath, Lines, assemblies, traceResolver).ParseTraceFile();
         }
 
         /// <summary>
@@ -186,13 +74,6 @@ namespace UploadDaemon.Scanning
                 }
             }
             return null;
-        }
-
-        private DateTime ParseProfilerDateTimeString(string dateTimeString)
-        {
-            // 20210129_1026440836
-            string format = "yyyyMMdd_HHmmss0fff";
-            return DateTime.ParseExact(dateTimeString, format, CultureInfo.InvariantCulture);
         }
 
         /// <summary>

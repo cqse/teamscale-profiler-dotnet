@@ -23,7 +23,7 @@ public:
 		for (int i = 0; i < 10'000'000; i++) {
 			vec.push_back((std::rand() + 1) * (std::rand() + 1));
 		}
-		functionId_set testSet;
+		function_id_set testSet;
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 		for (int i : vec) {
 			testSet.insert(i);

@@ -83,7 +83,7 @@ private:
 	 * Keeps track of inlined methods.
 	 * We use the set to efficiently determine if we already noticed an inlined method.
 	 */
-	functionId_set inlinedMethodIds;
+	function_id_set inlinedMethodIds;
 
 	/**
 	 * Keeps track of inlined methods.
@@ -113,7 +113,7 @@ private:
 	 * Keeps track of called methods.
 	 * We use the set to efficiently determine if we already noticed an called method.
 	 */
-	functionId_set calledMethodIds;
+	function_id_set calledMethodIds;
 
 	/**
 	 * Keeps track of called methods.

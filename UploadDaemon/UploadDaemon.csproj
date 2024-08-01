@@ -148,6 +148,7 @@
     <Compile Include="Scanning\InvalidTraceFileException.cs" />
     <Compile Include="Scanning\Trace.cs" />
     <Compile Include="Configuration\Artifactory.cs" />
+    <Compile Include="Scanning\TraceFileParser.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolver.cs" />
     <Compile Include="Upload\LineCoverageMerger.cs" />
     <Compile Include="Upload\MessageFormatter.cs" />
