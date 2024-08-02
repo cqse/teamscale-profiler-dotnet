@@ -23,12 +23,14 @@ namespace UploadDaemon.Scanning
         private readonly Func<Trace, SimpleCoverageReport> TraceResolver;
         private readonly Dictionary<uint, (string name, string path)> Assemblies;
 
-        private Trace TraceOutsideTestExecution = new Trace();
-        private IList<Test> Tests = new List<Test>();
+        private readonly Trace TraceOutsideTestExecution = new Trace();
+        private readonly IList<Test> Tests = new List<Test>();
 
         private DateTime TraceStart = default;
         private string CurrentTestName = "No Test";
-        private Trace CurrentTestTrace = new Trace();
+        private bool Testwise = false;
+        private Trace CurrentTestTrace;
+
 
         private DateTime CurrentTestStart = default;
         private DateTime CurrentTestEnd;
@@ -42,6 +44,8 @@ namespace UploadDaemon.Scanning
             Lines = lines;
             Assemblies = assemblies;
             TraceResolver = traceResolver;
+
+            CurrentTestTrace = TraceOutsideTestExecution;
         }
 
         public ICoverageReport ParseTraceFile()
@@ -60,7 +64,7 @@ namespace UploadDaemon.Scanning
                         HandleTraceFileEnd(value);
                         break;
                     case "Test":
-                        HandleTestStartOrEnd(value);
+                        HandleTestEvent(value);
                         break;
 
                     case "Inlined":
@@ -68,10 +72,15 @@ namespace UploadDaemon.Scanning
                     case "Called":
                         HandleCoverageLine(value);
                         break;
+                    case "Info":
+                        if (value.StartsWith("TIA enabled")) {
+                            Testwise = true;
+                        }
+                        break;
                 }
             }
 
-            if (Tests.Count > 0)
+            if (Testwise)
             {
                 return new TestwiseCoverageReport(Tests.ToArray());
             }
@@ -107,7 +116,7 @@ namespace UploadDaemon.Scanning
             CurrentTestTrace = TraceOutsideTestExecution;
         }
 
-        private void HandleTestStartOrEnd(string testMessage)
+        private void HandleTestEvent(string testMessage)
         {
             if (testMessage.StartsWith("Start"))
             {
@@ -140,15 +149,15 @@ namespace UploadDaemon.Scanning
 
         private void HandleCoverageLine(string coverage)
         {
-            String[] coverageMatch = coverage.Split(new[] {':' }, count: 2);
-            uint assemblyId = Convert.ToUInt32(coverageMatch[1]);
+            String[] coverageMatch = coverage.Split(new[] {':'}, count: 2);
+            uint assemblyId = Convert.ToUInt32(coverageMatch[0]);
             if (!Assemblies.TryGetValue(assemblyId, out (string, string) entry))
             {
                 logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                     " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
                 return;
             }
-            CurrentTestTrace.CoveredMethods.Add((entry.Item1, Convert.ToUInt32(coverageMatch[2])));
+            CurrentTestTrace.CoveredMethods.Add((entry.Item1, Convert.ToUInt32(coverageMatch[1])));
         }
 
         private DateTime ParseProfilerDateTimeString(string dateTimeString)
