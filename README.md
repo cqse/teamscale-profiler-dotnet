@@ -1,8 +1,8 @@
-Teamscale Ephemeral .NET Profiler
+Teamscale .NET Profiler
 [![Build status](https://github.com/cqse/teamscale-profiler-dotnet/actions/workflows/actions.yml/badge.svg)](https://github.com/cqse/teamscale-profiler-dotnet/actions/workflows/actions.yml)
 ===================================
 
-Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
+Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://teamscale.com/test-gap-analysis) in Teamscale.
 
 ## System Requirements
 
@@ -27,6 +27,8 @@ During development, always build the `Win32` variant as this is configured to al
 This way, the integration tests are run correctly against both variants.
 
 Automatic build and testing is performed in a GitHub action.
+
+For debugging tipps, please have a look [here](./documentation/userguide.md).
 
 ### Linking against System Libraries
 
