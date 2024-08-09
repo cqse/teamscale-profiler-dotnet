@@ -1,10 +1,13 @@
 ﻿namespace SampleDebuggingApp
 {
     /// <summary>
-    /// Main entry of the debugging app.
+    /// The debugging app. Does nothing but print out a message once in a while.
     /// </summary>
     public class DebuggingApp
     {
+        /// <summary>
+        ///  Main entry point for the debugging app.
+        /// </summary>
         public static void Main()
         {
             Console.WriteLine("Hello, World!");
