@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Sample_Debugging_App": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "CORECLR_ENABLE_PROFILING": "1",
+        "CORECLR_PROFILER": "{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}",
+        "CORECLR_PROFILER_PATH_64": "..\\..\\..\\..\\Profiler\\bin\\Debug\\Profiler64.dll"
+      },
+      "nativeDebugging": true
+    }
+  }
+}
