@@ -8,6 +8,9 @@ Please prefix each entry with one of:
 
 # Next Release
 
+# v24.5.1
+- [fix] Upload Daemon uploaded to Artifactory in the wrong format
+
 # v24.5.0
 - [fix] Updated legacy API calls in Upload Daemon
 

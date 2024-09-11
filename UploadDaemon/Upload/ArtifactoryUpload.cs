@@ -61,7 +61,7 @@ namespace UploadDaemon.Upload
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-            string fileName = $"{artifactory.Partition}/report.simple";
+            string fileName = $"{artifactory.Partition}/report.txt";
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
 
