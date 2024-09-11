@@ -110,5 +110,19 @@ namespace UploadDaemon.Upload
                 return await client.PutAsync(url, content);
             }
         }
+
+        /// <summary>
+        /// Uploads the given file in a put request.
+        /// </summary>
+        /// <returns>The HTTP response. The caller must dispose of it.</returns>
+        /// <exception cref="IOException">In case there are network or file system errors.</exception>
+        /// <exception cref="HttpRequestException">In case there are network errors.</exception>
+        public static async Task<HttpResponseMessage> UploadPut(HttpClient client, string url, byte[] stream)
+        {
+            using (ByteArrayContent content = new ByteArrayContent(stream))
+            {
+                return await client.PutAsync(url, content);
+            }
+        }
     }
 }

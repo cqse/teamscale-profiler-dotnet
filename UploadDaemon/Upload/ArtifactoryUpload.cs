@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using System.IO.Compression;
+using System.Reflection;
 
 namespace UploadDaemon.Upload
 {
@@ -54,23 +56,23 @@ namespace UploadDaemon.Upload
             }
             string[] branchAndTimestamp = revisionOrTimestamp.Value.Split(':');
             string url = $"{artifactory.Url}/uploads/{branchAndTimestamp[0]}/{branchAndTimestamp[1]}";
-            url = $"{url}/{artifactory.Partition}/simple";
             if (artifactory.PathSuffix != null)
             {
                 string encodedPathSuffix = HttpUtility.UrlEncode(artifactory.PathSuffix);
                 url = $"{url}/{encodedPathSuffix}";
             }
-            url = $"{url}/report.simple";
+            string fileName = $"{artifactory.Partition}/report.txt";
 
             logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), url);
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
-                using (MemoryStream stream = new MemoryStream(reportBytes))
-                {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, url, stream);
-                }
+                byte[] reportBytes = CreateZipFile(lineCoverageReport, fileName);
+
+                string reportName = $"report.zip";
+                string reportUrl = $"{url}/{reportName}";
+
+                return await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes);
             }
             catch (Exception e)
             {
@@ -80,9 +82,9 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, MemoryStream stream)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampValue, string url, byte[] stream)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartPut(client, url, "report", stream, "report.simple"))
+            using (HttpResponseMessage response = await HttpClientUtils.UploadPut(client, url, stream))
             {
                 if (response.IsSuccessStatusCode)
                 {
@@ -98,6 +100,24 @@ namespace UploadDaemon.Upload
                     return false;
                 }
             }
+        }
+
+        private static byte[] CreateZipFile(string lineCoverageReport, string entryName)
+        {
+            byte[] compressedBytes;
+            byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
+            using (var outStream = new MemoryStream())
+            using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
+            {
+                var fileInArchive = archive.CreateEntry(entryName);
+                using (var entryStream = fileInArchive.Open())
+                using (var fileToCompressStream = new MemoryStream(reportBytes))
+                {
+                    fileToCompressStream.CopyTo(entryStream);
+                }
+                compressedBytes = outStream.ToArray();
+            }
+            return compressedBytes;
         }
 
         /// <inheritdoc/>
