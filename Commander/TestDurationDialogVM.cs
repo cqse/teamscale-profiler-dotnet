@@ -100,11 +100,6 @@ namespace Cqse.Teamscale.Profiler.Commander
             int hours = ParseNumberFromMatchGroup(match, "hours");
             int minutes = ParseNumberFromMatchGroup(match, "minutes");
             int seconds = ParseNumberFromMatchGroup(match, "seconds");
-            if (minutes >= 60 || seconds >= 60)
-            {
-                // this is most likely a typo that we want the user to fix, so we don't allow it
-                return null;
-            }
 
             long milliseconds = hours * 3_600_000 + minutes * 60_000 + seconds * 1000;
             if (milliseconds <= 0)

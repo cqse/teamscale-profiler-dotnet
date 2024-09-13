@@ -20,6 +20,9 @@ namespace Cqse.Teamscale.Profiler.Commander
             viewModel = new TestDurationDialogVM(durationMs);
             DataContext = viewModel;
             InitializeComponent();
+
+            Duration.Focus();
+            Duration.SelectAll();
         }
 
         private void SaveClicked(object sender, RoutedEventArgs e)
