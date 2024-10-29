@@ -37,11 +37,6 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
         /// <summary>
-        /// The name of the Resource .resx file that holed information about embedded upload targets.
-        /// </summary>
-        private const String TeamscaleResourceName = "Teamscale";
-
-        /// <summary>
         /// The uploads targets (revision/timestamp and optionally teamscale project) that are retrieved from resource files that are embedded into assemblies referenced in the trace file.
         /// </summary>
         public readonly List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
