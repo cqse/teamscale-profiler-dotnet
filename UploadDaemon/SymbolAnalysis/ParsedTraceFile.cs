@@ -57,7 +57,6 @@ namespace UploadDaemon.SymbolAnalysis
                     match => (name: match.Groups["name"].Value, path: match.Groups["path"].Value)
                 );
             this.LoadedAssemblies = assemblyTokens.Values.ToList();
-            SearchForEmbeddedUploadTargets();
             IEnumerable<Match> coverageMatches = lines.Select(line => CoverageLineRegex.Match(line))
                             .Where(match => match.Success);
             foreach (Match match in coverageMatches)
@@ -70,32 +69,6 @@ namespace UploadDaemon.SymbolAnalysis
                     continue;
                 }
                 CoveredMethods.Add((assembly.name, Convert.ToUInt32(match.Groups[2].Value)));
-            }
-        }
-
-        /// <summary>
-        /// Checks the loaded assemblies for resources that contain information about target revision or teamscale projects.
-        /// </summary>
-        private void SearchForEmbeddedUploadTargets()
-        {
-            foreach ((_, string path) in this.LoadedAssemblies)
-            {
-                Assembly assembly = LoadAssemblyFromPath(path);
-                if (assembly == null || assembly.DefinedTypes == null)
-                {
-                    continue;
-                }
-                TypeInfo teamscaleResourceType = assembly.DefinedTypes.FirstOrDefault(x => x.Name == TeamscaleResourceName) ?? null;
-                if (teamscaleResourceType == null)
-                {
-                    continue;
-                }
-                logger.Info("Found embedded Teamscale resource in {assembly} that can be used to identify upload targets.", assembly);
-                ResourceManager teamscaleResourceManager = new ResourceManager(teamscaleResourceType.FullName, assembly);
-                string embeddedTeamscaleProject = teamscaleResourceManager.GetString("Project");
-                string embeddedRevision = teamscaleResourceManager.GetString("Revision");
-                string embeddedTimestamp = teamscaleResourceManager.GetString("Timestamp");
-                AddUploadTarget(embeddedRevision, embeddedTimestamp, embeddedTeamscaleProject, embeddedUploadTargets, assembly.FullName);
             }
         }
 
@@ -129,31 +102,6 @@ namespace UploadDaemon.SymbolAnalysis
             {
                 uploadTargets.Add((project, new RevisionOrTimestamp(timestamp, false)));
             }
-        }
-
-        private Assembly LoadAssemblyFromPath(string path)
-        {
-            if (String.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-            Assembly assembly;
-            try
-            {
-                assembly = Assembly.LoadFrom(path);
-                // Check that defined types can actually be loaded
-                if (assembly == null)
-                {
-                    return null;
-                }
-                IEnumerable<TypeInfo> ignored = assembly.DefinedTypes;
-            }
-            catch (Exception e)
-            {
-                logger.Debug("Could not load {assembly}. Skipping upload resource discovery. {e}", path, e);
-                return null;
-            }
-            return assembly;
         }
     }
 }
