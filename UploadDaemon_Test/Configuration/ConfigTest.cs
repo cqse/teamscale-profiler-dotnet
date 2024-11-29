@@ -455,7 +455,7 @@ namespace UploadDaemon.Configuration
                         exclude: [ 'Bar' ]
             ").CreateConfigForProcess("foo.exe");
 
-            Assert.That(config.AssemblyPatterns.Describe(), Is.EqualTo("include=* exclude=Bar"));
+            Assert.That(config.AssemblyPatterns.Describe(), Is.EqualTo("[Pattern include=^.*$ exclude=^Bar$]"));
         }
 
         [Test]
@@ -473,7 +473,7 @@ namespace UploadDaemon.Configuration
                         include: [ 'Bar' ]
             ").CreateConfigForProcess("foo.exe");
 
-            Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("include=Bar exclude=").And.Contains("mscorlib"));
+            Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("[Pattern include=^Bar$ exclude=").And.Contains("^mscorlib$"));
         }
 
         [Test]
