@@ -7,6 +7,8 @@ Please prefix each entry with one of:
 
 
 # Next Release
+
+# v24.5.2
 - [fix] Assembly patterns could not match on full assembly name when using `@AssemblyDir` as PDB directory
 
 # v24.5.1
