@@ -8,7 +8,7 @@ using UploadDaemon.Configuration;
 namespace UploadDaemon.SymbolAnalysis
 {
     [TestFixture]
-    class SymbolCollectionResolverTest
+    internal class SymbolCollectionResolverTest
     {
         private static readonly string TestSymbolDirectory = Path.Combine(Path.GetTempPath(), TestUtils.SolutionRoot.FullName, TestUtils.GetSanitizedTestClassName());
         private static readonly string TestSymbolFilePath = $"{TestSymbolDirectory}\\Cqse.Teamscale.Profiler.Commons.pdb";
@@ -36,37 +36,32 @@ namespace UploadDaemon.SymbolAnalysis
         public void ConsidersSymbolFileIncludesFromSymbolDirectory()
         {
             SymbolCollection collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
-                   new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> {}));
-
+                   new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> { }));
             Assert.That(collection.IsEmpty, Is.True);
 
-			collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
-				   new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
+            collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
+                   new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
+            Assert.That(collection.IsEmpty, Is.False);
+        }
 
-			Assert.That(collection.IsEmpty, Is.False);
-		}
+        [Test]
+        public void ConsidersSymbolFileIncludesFromTraceFile()
+        {
+            ParsedTraceFile traceFile = new ParsedTraceFile(new string[]
+            {
+            $"Assembly=Cqse.Teamscale.Profiler.Commons:2 Version:1.0.0.0 Path:{TestSymbolFilePath}",
+            }, "cov.txt");
 
-		[Test]
-		public void ConsidersSymbolFileIncludesFromTraceFile()
-		{
+            SymbolCollection collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+                   new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> { }));
+            Assert.That(collection.IsEmpty, Is.True);
 
-			ParsedTraceFile traceFile = new ParsedTraceFile(new string[]
-			{
-			$"Assembly=Cqse.Teamscale.Profiler.Commons:2 Version:1.0.0.0 Path:{TestSymbolFilePath}",
-			}, "cov.txt");
+            collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+                   new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
+            Assert.That(collection.IsEmpty, Is.False);
+        }
 
-			SymbolCollection collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
-				   new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> { }));
-
-			Assert.That(collection.IsEmpty, Is.True);
-
-			collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
-				   new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
-
-			Assert.That(collection.IsEmpty, Is.False);
-		}
-
-		[Test]
+        [Test]
         public void ConsidersSymbolFileExcludes()
         {
             SymbolCollection collection = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory,
@@ -151,6 +146,5 @@ namespace UploadDaemon.SymbolAnalysis
             DateTime newLastWriteDate = originalLastWriteDate.AddDays(1);
             File.SetLastWriteTime(symbolFileName, newLastWriteDate);
         }
-
     }
 }
