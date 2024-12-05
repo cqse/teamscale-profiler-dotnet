@@ -121,13 +121,15 @@ namespace UploadDaemon.SymbolAnalysis
         private static ICollection<SymbolFileInfo> FindRelevantSymbolFiles(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             return new HashSet<SymbolFileInfo>(Directory.EnumerateFiles(symbolDirectory, "*.pdb", SearchOption.AllDirectories)
-                .Where(file => MatchesAssemblyPattern(assemblyPatterns, file))
+                .Where(file => MatchesAssemblyPattern(assemblyPatterns, Path.GetFileNameWithoutExtension(file)))
                 .Select(file => new SymbolFileInfo { Path = file, LastWriteTime = File.GetLastWriteTimeUtc(file) }));
         }
 
         private static bool MatchesAssemblyPattern(GlobPatternList assemblyPatterns, string file)
         {
-            return assemblyPatterns.Matches(Path.GetFileNameWithoutExtension(file));
+            bool isMatch = assemblyPatterns.Matches(file);
+            logger.Trace("Testing {file} against {assemblyPatterns}: match is {isMatch}", file, assemblyPatterns.Describe(), isMatch);
+            return isMatch;
         }
     }
 }
