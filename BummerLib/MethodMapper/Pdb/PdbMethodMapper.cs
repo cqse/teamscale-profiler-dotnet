@@ -139,7 +139,7 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 
 			foreach (string magicString in MagicTypes)
 			{
-				if (magicString.Zip(magicBytes, (magicChar, magicByte) => magicChar == magicByte).All(result => result == true))
+				if (magicString.Zip(magicBytes, (magicChar, magicByte) => magicChar == magicByte).All(result => result))
 				{
 					return magicString;
 				}

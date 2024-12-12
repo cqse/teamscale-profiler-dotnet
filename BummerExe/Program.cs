@@ -19,10 +19,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Fclp;
 using Newtonsoft.Json;
-using System.Linq;
 
 namespace Cqse.ConQAT.Dotnet.Bummer
 {
@@ -65,7 +63,7 @@ namespace Cqse.ConQAT.Dotnet.Bummer
             }
             if (!commandLineParseResult.HasErrors)
             {
-                List<AssemblyMethodMappings> methodMappings = GetMethodMappings(filenames, assemblyNames);
+                List<AssemblyMethodMappings> methodMappings = Bummer.GetMethodMappings(filenames, assemblyNames);
                 OutputMethodMappings(methodMappings);
             }
             else
@@ -74,28 +72,6 @@ namespace Cqse.ConQAT.Dotnet.Bummer
                 commandLineParser.HelpOption.ShowHelp(commandLineParser.Options);
             }
             return 0;
-        }
-
-        /// <summary>
-        /// Gets the method mappings for the specified list of file names.
-        /// </summary>
-        /// <param name="filenames">The list of symbol filenames to analyze.</param>
-        private static List<AssemblyMethodMappings> GetMethodMappings(List<string> filenames, List<string> assemblyNames)
-        {
-            var methodMappings = new List<AssemblyMethodMappings>();
-            var methodMapper = new MethodMapper();
-            // TODO (FS) please don't use 1-letter variable names
-            foreach (var pair in filenames.Zip(assemblyNames, (f, s) => new { filename = f, assemblyName = s }))
-            {
-                if (!File.Exists(pair.filename))
-                {
-                    Console.WriteLine("File does not exist: " + pair.filename);
-                    continue;
-                }
-
-                methodMappings.Add(methodMapper.GetMethodMappings(pair.filename, pair.assemblyName));
-            }
-            return methodMappings;
         }
 
         /// <summary>

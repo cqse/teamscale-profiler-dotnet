@@ -23,8 +23,14 @@ using System.IO;
 
 namespace Cqse.ConQAT.Dotnet.Bummer
 {
+    /// <summary>
+    /// Test base class for Bummer tests
+    /// </summary>
     public class TestBase
     {
+        /// <summary>
+        /// Returns the FileInfo for a resource file in the TestData folder.
+        /// </summary>
         protected FileInfo GetGlobalTestFile(string resource) {
             string path = Path.Combine(TestContext.CurrentContext.TestDirectory, "../..", "TestData", resource);
             return new FileInfo(path);

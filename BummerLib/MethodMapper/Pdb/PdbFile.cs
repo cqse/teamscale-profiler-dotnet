@@ -168,11 +168,11 @@ namespace Cqse.ConQAT.Dotnet.Bummer
         {
             Dictionary<uint, object> tokenToSourceMapping = null;
             string sourceServerData = null;
-            const int Age = 0;
+            const int age = 0;
             Guid guid = Guid.Empty;
 
             object loadedPdbFunctions = PdbFileLoadFunctionsMethodInfo
-                .Invoke(null, new object[] { pdbStream, tokenToSourceMapping, sourceServerData, Age, guid });
+                .Invoke(null, new object[] { pdbStream, tokenToSourceMapping, sourceServerData, age, guid });
 
             foreach (object pdbFunction in loadedPdbFunctions as Array)
             {
