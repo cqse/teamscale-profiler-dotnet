@@ -63,9 +63,9 @@
     <Content Include="TestData\UnusedLibraryRenamedInVersion8.pdb" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bummer\Bummer.csproj">
+    <ProjectReference Include="..\BummerLib\BummerLib.csproj">
       <Project>{721fdfc9-6da9-4159-a54e-e448dfb9097d}</Project>
-      <Name>Bummer</Name>
+      <Name>BummerLib</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
