@@ -36,11 +36,6 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
         private static readonly Regex CoverageLineRegex = new Regex(@"^(?:Inlined|Jitted)=(\d+):(?:\d+:)?(\d+)");
 
-        /// <summary>
-        /// The uploads targets (revision/timestamp and optionally teamscale project) that are retrieved from resource files that are embedded into assemblies referenced in the trace file.
-        /// </summary>
-        public readonly List<(string project, RevisionOrTimestamp revisionOrTimestamp)> embeddedUploadTargets = new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
-
         public ParsedTraceFile(string[] lines, string filePath)
         {
             this.FilePath = filePath;

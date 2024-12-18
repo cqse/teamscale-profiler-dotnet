@@ -179,7 +179,6 @@ namespace UploadDaemon.Configuration
             }, "coverage_1_1.txt");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
-            Assert.That(traceFile.embeddedUploadTargets.Count, Is.AtLeast(1));
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
         }
