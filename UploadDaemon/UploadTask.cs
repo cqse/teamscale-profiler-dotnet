@@ -164,7 +164,6 @@ namespace UploadDaemon
                     LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
             }
             List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = ParseRevisionFile(parsedTraceFile, processConfig);
-            uploadTargets.AddRange(parsedTraceFile.embeddedUploadTargets);
             if (uploadTargets.Any())
             {
                 ProcessUploadTargets(uploadTargets, parsedTraceFile, archive, coverageMerger, processConfig, upload, lineCoverage);
