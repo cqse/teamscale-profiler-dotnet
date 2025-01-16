@@ -132,8 +132,8 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		}
 		catch (...) {
 			traceLog.error("Failed to start UploadDaemon");
+			config.setStartUploadDaemon(false);
 		}
-		config.setStartUploadDaemon(false);
 	}
 
 	char appPool[BUFFER_SIZE];
