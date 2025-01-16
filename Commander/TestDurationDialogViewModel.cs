@@ -11,7 +11,7 @@ namespace Cqse.Teamscale.Profiler.Commander
     /// <summary>
     /// View model for TestDurationDialog.xaml
     /// </summary>
-    public class TestDurationDialogVM : INotifyPropertyChanged
+    public class TestDurationDialogViewModel : INotifyPropertyChanged
     {
         /// <summary>
         /// Event for view binding changes.
@@ -38,7 +38,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         /// </summary>
         public bool IsValid => DurationMs != null;
 
-        public TestDurationDialogVM(long duration)
+        public TestDurationDialogViewModel(long duration)
         {
             durationString = MillisecondsToString(duration);
         }

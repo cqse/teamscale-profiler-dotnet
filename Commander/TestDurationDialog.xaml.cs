@@ -10,14 +10,14 @@ namespace Cqse.Teamscale.Profiler.Commander
     {
 
         private readonly App app;
-        private readonly TestDurationDialogVM viewModel;
+        private readonly TestDurationDialogViewModel viewModel;
         private readonly TestExecutionResult result;
 
         public TestDurationDialog(long durationMs, TestExecutionResult result)
         {
             this.result = result;
             app = Application.Current as App;
-            viewModel = new TestDurationDialogVM(durationMs);
+            viewModel = new TestDurationDialogViewModel(durationMs);
             DataContext = viewModel;
             InitializeComponent();
 
