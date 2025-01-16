@@ -26,6 +26,10 @@ public:
 	/** Loads the config from the given YAML stream and applies all sections that apply to the given profiled process path. */
 	void EXPOSE_TO_CPP_TESTS load(std::istream& configFileContents, std::string processPath);
 
+	void setStartUploadDaemon(bool startUploadDaemonNew) {
+		startUploadDaemon = startUploadDaemonNew;
+	}
+
 	/** Returns any problems encountered while loading the config, e.g. to log them. */
 	std::vector<std::string> getProblems() {
 		return problems;
