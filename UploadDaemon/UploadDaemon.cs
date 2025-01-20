@@ -72,6 +72,10 @@ namespace UploadDaemon
 
         private static void ParseCommandline(string[] args)
         {
+            if (Environment.GetEnvironmentVariable("COR_PROFILER_CONFIG") != null)
+            {
+                ConfigFilePath = Environment.GetEnvironmentVariable("COR_PROFILER_CONFIG");
+            }
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
@@ -82,9 +86,6 @@ namespace UploadDaemon
                             ConfigFilePath = args[i + 1];
                             i++;
                         }
-                        break;
-                    case "--config-from-env":
-                        ConfigFilePath = Environment.GetEnvironmentVariable("COR_PROFILER_CONFIG");
                         break;
                 }
             }
