@@ -82,11 +82,9 @@ namespace UploadDaemon
                             ConfigFilePath = args[i + 1];
                             i++;
                         }
-                        logger.Debug("Reading config from {configFile}", ConfigFilePath);
                         break;
                     case "--config-from-env":
                         ConfigFilePath = Environment.GetEnvironmentVariable("COR_PROFILER_CONFIG");
-                        logger.Debug("Reading config from {configFile}", ConfigFilePath);
                         break;
                 }
             }
