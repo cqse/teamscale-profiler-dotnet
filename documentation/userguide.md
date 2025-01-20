@@ -146,7 +146,7 @@ The profiler has several configuration options that can either be set as environ
 
 | Environment variable              | Value                                    | Description                              |
 | :-------------------------------- | :--------------------------------------- | :--------------------------------------- |
-| COR_PROFILER_CONFIG               | Path                                     | Path to the profiler configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
+| COR_PROFILER_CONFIG               | Path                                     | Path to the profiler and upload daemon configuration file, e.g. `C:\Program Files\Coverage Profiler\profiler.yml` |
 | COR_PROFILER_TARGETDIR            | Path, default `c:/users/public/`         | Target directory for the trace files, e.g. `C:\Users\Public\Traces` |
 | COR_PROFILER_LIGHT_MODE           | `1` or `0`, default `1`                  | Enable ultra-light mode by disabling re-jitting of assemblies. Light mode must be disabled if you use the Native Image Cache. |
 | COR_PROFILER_ASSEMBLY_FILE_VERSION | `1` or `0`, default `0`                  | Print the file and product version of loaded assemblies in the trace file. |
@@ -160,7 +160,7 @@ Please note that the profiler is **also** configured with variables starting wit
 
 ## Configuration file
 
-By default, the profiler will look for a YAML configuration file called `Profiler.yml` in the same directory as the profiler DLLs.
+By default, the profiler and upload daemon will look for a YAML configuration file called `Profiler.yml` in the same directory as the profiler DLLs.
 
 Example:
 
@@ -297,8 +297,7 @@ Please check the log files for errors and warnings after configuring the uploade
 producing your first traces.
 
 Note: The upload daemon can also be installed as Windows service or invoked manually.
-In that case it accepts two command line flags:
-- `--config-from-env` will use the profiler config file as specified in the `COR_PROFILER_CONFIG` environment variable
+In that case it accepts the command line flag:
 - `--config path/to/config.yml` will use the specified config file
 
 ## Locally converting to method-accurate coverage and then uploading
