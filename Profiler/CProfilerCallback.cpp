@@ -132,6 +132,7 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		}
 		catch (const std::exception& e) {
 			traceLog.error("Failed to start UploadDaemon: " + std::string(e.what()));
+			traceLog.error("Last windows Error: " + WindowsUtils::getLastErrorAsString());
 		}
 	}
 
