@@ -130,9 +130,8 @@ HRESULT CProfilerCallback::InitializeImplementation(IUnknown* pICorProfilerInfoU
 		try {
 			createDaemon().launch(traceLog);
 		}
-		catch (...) {
-			traceLog.error("Failed to start UploadDaemon");
-			config.setStartUploadDaemon(false);
+		catch (const std::exception& e) {
+			traceLog.error("Failed to start UploadDaemon: " + std::string(e.what()));
 		}
 	}
 
