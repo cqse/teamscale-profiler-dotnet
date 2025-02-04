@@ -65,7 +65,7 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Describe()
         {
-            return $"include={string.Join(",", includePatterns)} exclude={string.Join(",", excludePatterns)}";
+            return $"[Pattern include={string.Join(",", includeRegexes)} exclude={string.Join(",", excludeRegexes)}]";
         }
 
         /// <summary>
@@ -82,5 +82,5 @@ namespace UploadDaemon.Configuration
 
         /// <inheritdoc/>
         public override int GetHashCode() => (includePatterns, excludePatterns).GetHashCode();
-    }
+	}
 }
