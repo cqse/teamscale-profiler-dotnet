@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Cqse.Teamscale.Profiler.Commander
 {
-    internal class MainWindowVM : INotifyPropertyChanged
+    internal class MainWindowViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -18,39 +18,26 @@ namespace Cqse.Teamscale.Profiler.Commander
             set
             {
                 SetField(ref testName, value);
-                OnPropertyChanged(nameof(CanStart));
+                OnPropertyChanged(nameof(CanTestStart));
             }
         }
 
-        private string buttonText = null;
+        private bool isTestRunning = false;
 
-        public string ButtonText
+        public bool IsTestRunning
         {
-            get => buttonText;
-            set => SetField(ref buttonText, value);
-        }
-
-        private bool isStopped = false;
-
-        public bool IsStopped
-        {
-            get => isStopped;
+            get => isTestRunning;
             set
             {
-                SetField(ref isStopped, value);
-                OnPropertyChanged(nameof(IsRunning));
-                OnPropertyChanged(nameof(CanStart));
+                SetField(ref isTestRunning, value);
+                OnPropertyChanged(nameof(IsTestRunning));
+                OnPropertyChanged(nameof(CanTestStart));
             }
         }
 
-        public bool IsRunning
+        public bool CanTestStart
         {
-            get => !IsStopped;
-        }
-
-        public bool CanStart
-        {
-            get => IsStopped && !string.IsNullOrEmpty(testName) && IsValidTestName();
+            get => !IsTestRunning && !string.IsNullOrEmpty(testName) && IsValidTestName();
         }
 
         private bool IsValidTestName()

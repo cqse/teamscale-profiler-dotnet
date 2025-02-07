@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:commander="clr-namespace:Cqse.Teamscale.Profiler.Commander"
-        d:DataContext="{d:DesignInstance Type=commander:TestDurationDialogVM}"
+        d:DataContext="{d:DesignInstance Type=commander:TestDurationDialogViewModel}"
         mc:Ignorable="d"
         Title="Confirm Test Duration" Height="179.532" Width="567.074" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
     <Grid>

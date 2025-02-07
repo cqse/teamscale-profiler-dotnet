@@ -282,17 +282,6 @@ The different options can be found in the Commander directory. Each of them prov
 
 This is a simple gui application that allows a user to start and stop test cases. The primary use case of this is manual testing. It requires no further setup and test can easily be triggered with the according buttons.
 
-### CLI
-
-The command line client is intended for use with for example a CI build to automatically start and stop test cases. It provides an interactive interface that expects test start and stops interchanging.
-The available Commands are:
-
-| Command          | Description                                                                                                                     |   |
-|------------------|---------------------------------------------------------------------------------------------------------------------------------|---|
-| start {testName} | Starts profiling for the test with the given name.                                                                              |   |
-| stop {result}    | Stops profiling for the active test with the given result. Possible result values are passed, ignored, skipped, failure, error. |   |
-| exit             | stops the CLI                                                                                                                   |   |
-
 ### Server
 
 The server is a simple web server that accepts HTTP Requests and forwards the commands to the profiler accordingly.

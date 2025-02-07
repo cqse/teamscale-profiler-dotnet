@@ -11,7 +11,7 @@ namespace Cqse.Teamscale.Profiler.Commander
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MainWindowVM viewModel = new MainWindowVM();
+        private readonly MainWindowViewModel viewModel = new MainWindowViewModel();
         private readonly App app;
         private long startTimestamp = 0;
 
@@ -19,8 +19,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             app = Application.Current as App;
             DataContext = viewModel;
-            viewModel.ButtonText = "Start Test";
-            viewModel.IsStopped = true;
+            viewModel.IsTestRunning = false;
             InitializeComponent();
             string pattern = ConfigurationManager.AppSettings["testNamePattern"];
             if (pattern != null)
@@ -32,7 +31,7 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         private void OnStartClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsStopped = false;
+            viewModel.IsTestRunning = true;
             app.StartTest(viewModel.TestName);
             startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
@@ -58,7 +57,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             long duration = endTimestamp - startTimestamp;
             if (new TestDurationDialog(duration, result).ShowDialog() == true)
             {
-                viewModel.IsStopped = true;
+                viewModel.IsTestRunning = false;
             }
         }
     }

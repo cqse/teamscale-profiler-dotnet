@@ -118,7 +118,7 @@
     <Compile Include="TestDurationDialog.xaml.cs">
       <DependentUpon>TestDurationDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TestDurationDialogVM.cs" />
+    <Compile Include="TestDurationDialogViewModel.cs" />
     <Page Include="TestDurationDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -137,7 +137,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainWindowVM.cs" />
+    <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

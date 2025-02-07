@@ -11,7 +11,7 @@ namespace Cqse.Teamscale.Profiler.Commander
     /// <summary>
     /// View model for TestDurationDialog.xaml
     /// </summary>
-    public class TestDurationDialogVM : INotifyPropertyChanged
+    public class TestDurationDialogViewModel : INotifyPropertyChanged
     {
         /// <summary>
         /// Event for view binding changes.
@@ -38,7 +38,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         /// </summary>
         public bool IsValid => DurationMs != null;
 
-        public TestDurationDialogVM(long duration)
+        public TestDurationDialogViewModel(long duration)
         {
             durationString = MillisecondsToString(duration);
         }
@@ -100,11 +100,6 @@ namespace Cqse.Teamscale.Profiler.Commander
             int hours = ParseNumberFromMatchGroup(match, "hours");
             int minutes = ParseNumberFromMatchGroup(match, "minutes");
             int seconds = ParseNumberFromMatchGroup(match, "seconds");
-            if (minutes >= 60 || seconds >= 60)
-            {
-                // this is most likely a typo that we want the user to fix, so we don't allow it
-                return null;
-            }
 
             long milliseconds = hours * 3_600_000 + minutes * 60_000 + seconds * 1000;
             if (milliseconds <= 0)

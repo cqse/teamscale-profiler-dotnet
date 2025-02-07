@@ -56,7 +56,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             }
             if (this.TestName != string.Empty)
             {
-                logger.Info("Starting a new test while a test is still active. Ending active Test with result Skipped since actual result is unknown.");
+                logger.Info("Starting a new test while a test {testName} is still active. Ending active Test with result Skipped since actual result is unknown.", this.TestName);
                 this.EndTest(TestExecutionResult.Skipped);
             }
             String cleanedTestName = testName.Replace("\n", " ").Replace("\r", " ");
