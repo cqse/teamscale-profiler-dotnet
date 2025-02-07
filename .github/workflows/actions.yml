@@ -65,6 +65,7 @@ jobs:
       - name: Test
         run: >
           vstest.console.exe /parallel
+          CommanderTests/bin/Release/CommanderTests.dll
           Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
           Profiler_Test/bin/Release/Profiler_Test.dll
           UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll

@@ -33,8 +33,6 @@ namespace Cqse.Teamscale.Profiler.Commander.Tests
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("12 1m"));
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("m"));
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("m 12s"));
-            Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("60m"));
-            Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("60s"));
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("-1s"));
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("0s"));
             Assert.AreEqual(null, TestDurationDialogViewModel.StringToMilliseconds("0m"));
@@ -45,7 +43,9 @@ namespace Cqse.Teamscale.Profiler.Commander.Tests
         public void StringToMillisecondsTest()
         {
             Assert.AreEqual(1000, TestDurationDialogViewModel.StringToMilliseconds("1s"));
+            Assert.AreEqual(1000 * 60, TestDurationDialogViewModel.StringToMilliseconds("60s"));
             Assert.AreEqual(1000 * 60, TestDurationDialogViewModel.StringToMilliseconds("1m"));
+            Assert.AreEqual(1000 * 60 * 60, TestDurationDialogViewModel.StringToMilliseconds("60m"));
             Assert.AreEqual(1000 * 60 * 60, TestDurationDialogViewModel.StringToMilliseconds("1h"));
             Assert.AreEqual(1000 * 60 * 60 + 2 * 1000 * 60 + 3 * 1000, TestDurationDialogViewModel.StringToMilliseconds("1h 2m 3s"));
             Assert.AreEqual(1000 * 60 * 60 + 2 * 1000 * 60 + 3 * 1000, TestDurationDialogViewModel.StringToMilliseconds("1h2m3s"));
