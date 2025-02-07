@@ -18,26 +18,26 @@ namespace Cqse.Teamscale.Profiler.Commander
             set
             {
                 SetField(ref testName, value);
-                OnPropertyChanged(nameof(CanStart));
+                OnPropertyChanged(nameof(CanTestStart));
             }
         }
 
-        private bool isRunning = false;
+        private bool isTestRunning = false;
 
-        public bool IsRunning
+        public bool IsTestRunning
         {
-            get => isRunning;
+            get => isTestRunning;
             set
             {
-                SetField(ref isRunning, value);
-                OnPropertyChanged(nameof(IsRunning));
-                OnPropertyChanged(nameof(CanStart));
+                SetField(ref isTestRunning, value);
+                OnPropertyChanged(nameof(IsTestRunning));
+                OnPropertyChanged(nameof(CanTestStart));
             }
         }
 
-        public bool CanStart
+        public bool CanTestStart
         {
-            get => !IsRunning && !string.IsNullOrEmpty(testName) && IsValidTestName();
+            get => !IsTestRunning && !string.IsNullOrEmpty(testName) && IsValidTestName();
         }
 
         private bool IsValidTestName()

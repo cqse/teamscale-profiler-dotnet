@@ -19,7 +19,7 @@ namespace Cqse.Teamscale.Profiler.Commander
         {
             app = Application.Current as App;
             DataContext = viewModel;
-            viewModel.IsRunning = false;
+            viewModel.IsTestRunning = false;
             InitializeComponent();
             string pattern = ConfigurationManager.AppSettings["testNamePattern"];
             if (pattern != null)
@@ -31,7 +31,7 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         private void OnStartClicked(object sender, RoutedEventArgs e)
         {
-            viewModel.IsRunning = true;
+            viewModel.IsTestRunning = true;
             app.StartTest(viewModel.TestName);
             startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
@@ -57,7 +57,7 @@ namespace Cqse.Teamscale.Profiler.Commander
             long duration = endTimestamp - startTimestamp;
             if (new TestDurationDialog(duration, result).ShowDialog() == true)
             {
-                viewModel.IsRunning = false;
+                viewModel.IsTestRunning = false;
             }
         }
     }
