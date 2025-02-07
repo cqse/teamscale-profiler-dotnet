@@ -16,7 +16,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
 
-        private Dictionary<int, Tuple<string, RequestSocket>> clients = new Dictionary<int, Tuple<string, RequestSocket>>();
+        private Dictionary<int, ProfilerClient> pidToClient = new Dictionary<int, ProfilerClient>();
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -58,24 +58,24 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             poller.RunAsync("Profiler IPC", true);
         }
 
-        private  void RegisterClient(string message)
+        private void RegisterClient(string message)
         {
             int pid = Int32.Parse(message.Split(':')[1]);
-            lock (clients)
+            lock (pidToClient)
             {
                 string clientAddress;
-                if (clients.ContainsKey(pid))
+                if (pidToClient.ContainsKey(pid))
                 {
-                    clientAddress = clients[pid].Item1;
+                    clientAddress = pidToClient[pid].ClientAddress;
                     responseSocket.SendFrame(clientAddress);
                     return;
                 }
-                portOffset++;
                 RequestSocket clientRequestSocket = new RequestSocket();
                 clientAddress = config.RequestSocket + ":" + ((config.StartPortNumber + portOffset) % 65535);
+                portOffset++;
                 clientRequestSocket.Connect(clientAddress);
 
-                clients.Add(pid, Tuple.Create(clientAddress, clientRequestSocket));
+                pidToClient.Add(pid, new ProfilerClient(clientAddress, clientRequestSocket));
                 responseSocket.SendFrame(clientAddress);
                 logger.Info($"Registered profiler on address {clientAddress}");
             }
@@ -84,34 +84,33 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// <summary>
         /// Sends the given test event to all connected profiler instances.
         /// </summary>
-        /// <param name="testEvent"></param>
         public void SendTestEvent(string testEvent)
         {
             HashSet<int> clientsToRemove = new HashSet<int>();
-            System.Threading.Tasks.Parallel.ForEach(clients, entry =>
+            System.Threading.Tasks.Parallel.ForEach(pidToClient, entry =>
             {
-                entry.Value.Item2.SendFrame(Encoding.UTF8.GetBytes(testEvent));
-                if (entry.Value.Item2.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
+                entry.Value.Socket.SendFrame(Encoding.UTF8.GetBytes(testEvent));
+                if (entry.Value.Socket.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
                 {
-                    logger.Info($"Got Response from {entry.Value.Item1}: {response}");
+                    logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
                 } else
                 {
                     lock(clientsToRemove)
                     {
                         clientsToRemove.Add(entry.Key);
                     }
-                    logger.Error($"Got no response from Profiler with Socket {entry.Key}");
+                    logger.Error($"Got no response from Profiler with PID {entry.Key} with address {entry.Value.ClientAddress}, removing from clients");
                 }
             });
-            lock (clients)
+            lock (pidToClient)
             {
                 foreach (var client in clientsToRemove)
                 {
-                    if (!clients.ContainsKey(client)) {
+                    if (!pidToClient.ContainsKey(client)) {
                         continue;
                     }
-                    clients[client].Item2.Close();
-                    clients.Remove(client);
+                    pidToClient[client].Socket.Close();
+                    pidToClient.Remove(client);
                 }
             }
         }
@@ -120,9 +119,9 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             this.poller?.Dispose();
             this.responseSocket?.Dispose();
-            foreach (var client in clients)
+            foreach (var client in pidToClient)
             {
-                client.Value.Item2.Dispose();
+                client.Value.Socket.Dispose();
             }
             NetMQConfig.Cleanup(false);
         }

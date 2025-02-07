@@ -10,11 +10,13 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
     public class ProfilerTestController : ControllerBase
     {
         private readonly ProfilerIpc profilerIpc;
+        private readonly ProfilerTestControllerState state;
         private readonly ILogger logger;
 
-        public ProfilerTestController(ProfilerIpc profilerIpc, ILogger<ProfilerTestController> logger)
+        public ProfilerTestController(ProfilerIpc profilerIpc, ProfilerTestControllerState state, ILogger<ProfilerTestController> logger)
         {
             this.profilerIpc = profilerIpc;
+            this.state = state;
             this.logger = logger;
         }
 
@@ -26,7 +28,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
 
         public long GetStart()
         {
-            return profilerIpc.TestStartMS;
+            return state.TestStartMS;
         }
 
         [HttpPost("start/{testName}")]
@@ -38,7 +40,7 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             }
 
             logger.LogInformation("Starting test: {}", testName);
-            profilerIpc.TestStartMS = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            state.TestStartMS = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             profilerIpc.StartTest(HttpUtility.UrlDecode(testName));
             return HttpStatusCode.NoContent;
         }

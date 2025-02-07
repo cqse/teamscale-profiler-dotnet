@@ -15,8 +15,6 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public string TestName { get; private set; } = String.Empty;
 
-        public long TestStartMS { get; set; } = 0;
-
         public IpcConfig Config { get; }
 
         public ProfilerIpc(IpcConfig config)
