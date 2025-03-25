@@ -14,7 +14,7 @@
 
 /**
  * Serializes access to the singleton profiler instance when trying to shut it down.
- * This prevents race conditions that can result in deadlocks that freeze the profiled process. Test change
+ * This prevents race conditions that can result in deadlocks that freeze the profiled process.
  */
 class ShutdownGuard {
 public:
