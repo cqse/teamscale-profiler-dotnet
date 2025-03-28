@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Cqse.ConQAT.Dotnet.Bummer;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cqse.ConQAT.Dotnet.Bummer;
-using NLog;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -66,6 +66,10 @@ namespace UploadDaemon.SymbolAnalysis
                     };
                 }
 
+                foreach (var item in assemblyMap)
+                {
+                    logger.Debug("Method ID: '{key}'; SourceFile: '{SourceFile}'; StartLine: '{StartLine}'; EndLine: '{EndLine}'", item.Key, item.Value.SourceFile, item.Value.StartLine, item.Value.EndLine);
+                }
                 this.mappings[mapping.AssemblyName] = assemblyMap;
             }
         }
@@ -100,6 +104,18 @@ namespace UploadDaemon.SymbolAnalysis
                 return null;
             }
             return location;
+        }
+
+        /// <summary>
+        /// Returns all know source location for an assembly or null if the assembly cannot be resolved.
+        /// </summary>
+        public Dictionary<uint, SourceLocation> GetAssemblySourceLocations(string assemblyName)
+        {
+            if (!mappings.TryGetValue(assemblyName, out Dictionary<uint, SourceLocation> assemblyMappings))
+            {
+                return null;
+            }
+            return assemblyMappings;
         }
 
         /// <summary>
@@ -140,7 +156,7 @@ namespace UploadDaemon.SymbolAnalysis
                     mergedCollection.SymbolFilePaths.Add(path);
                 }
 
-                foreach(KeyValuePair<string, Dictionary<uint, SourceLocation>> entry in collection.mappings)
+                foreach (KeyValuePair<string, Dictionary<uint, SourceLocation>> entry in collection.mappings)
                 {
                     // in case of duplicate mappings we merge the mappings by reusing the existing dictionary here
                     if (!mergedCollection.mappings.TryGetValue(entry.Key, out Dictionary<uint, SourceLocation> assemblyMap))
