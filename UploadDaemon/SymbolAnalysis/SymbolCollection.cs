@@ -107,18 +107,6 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <summary>
-        /// Returns all know source location for an assembly or null if the assembly cannot be resolved.
-        /// </summary>
-        public Dictionary<uint, SourceLocation> GetAssemblySourceLocations(string assemblyName)
-        {
-            if (!mappings.TryGetValue(assemblyName, out Dictionary<uint, SourceLocation> assemblyMappings))
-            {
-                return null;
-            }
-            return assemblyMappings;
-        }
-
-        /// <summary>
         /// Creates a symbol collection from the given PDB files.
         /// </summary>
         public static SymbolCollection CreateFromFiles(IEnumerable<string> pdbFilePaths)
