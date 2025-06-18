@@ -3,11 +3,11 @@
 #include <chrono>
 #include <cor.h>
 #include <corprof.h>
-#include "utils/functionID_set/functionID_set.h"
+#include "utils/FunctionIdSet/FunctionIdSet.h"
 #include <iostream>
 #include <set>
 #include <vector>
-
+using namespace Profiler;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 TEST_CLASS(FunctionIDSetTest)
@@ -23,7 +23,7 @@ public:
 		for (int i = 0; i < 10'000'000; i++) {
 			vec.push_back((std::rand() + 1) * (std::rand() + 1));
 		}
-		function_id_set testSet;
+		FunctionIdSet testSet;
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 		for (int i : vec) {
 			testSet.insert(i);

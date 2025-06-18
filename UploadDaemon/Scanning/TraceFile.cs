@@ -13,7 +13,6 @@ namespace UploadDaemon.Scanning
     /// </summary>
     public class TraceFile
     {
-        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private static readonly Regex TraceFileRegex = new Regex(@"^coverage_\d*_\d*.txt$");
         private static readonly Regex ProcessLineRegex = new Regex(@"^Process=(.*)", RegexOptions.IgnoreCase);
 

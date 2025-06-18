@@ -281,7 +281,7 @@
     <ClInclude Include="utils\robin_hood\robin_hood.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\functionID_set\functionId_set.h">
+    <ClInclude Include="utils\FunctionIdSet\FunctionIdSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

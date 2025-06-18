@@ -12,8 +12,8 @@ namespace UploadDaemon.Scanning
 {
     internal class TraceFileParser
     {
-        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-        private readonly string NO_TEST = "No Test";
+        private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
+        private const string NO_TEST = "No Test";
 
         private static readonly Regex TestCaseStartRegex = new Regex(@"Start:(?<date>[^:]+):(?<testname>.+)");
         private static readonly Regex TestCaseEndRegex = new Regex(@"End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
@@ -153,7 +153,7 @@ namespace UploadDaemon.Scanning
             uint assemblyId = Convert.ToUInt32(coverageMatch[0]);
             if (!Assemblies.TryGetValue(assemblyId, out (string, string) entry))
             {
-                logger.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
+                LOGGER.Warn("Invalid trace file {traceFile}: could not resolve assembly ID {assemblyId}. This is a bug in the profiler." +
                     " Please report it to CQSE. Coverage for this assembly will be ignored.", FilePath, assemblyId);
                 return;
             }

@@ -27,6 +27,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             base.RegisterOn(processInfo, bitness);
             
             processInfo.Environment["COR_PROFILER_TIA"] = "true";
+            processInfo.Environment["COR_PROFILER_TGA"] = "true";
             processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.PublishSocket; // REQ-REP
         }
 

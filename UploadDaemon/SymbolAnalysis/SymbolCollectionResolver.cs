@@ -32,7 +32,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private long lastAssemblyCheckTime;
 
-        private readonly long ONE_HOUR = 3600;
+        private const long ONE_HOUR = 3600;
 
         /// <summary>
         /// Resolves the symbol collection either from PDBs stored in the passed symbol directory or the assembly directory.

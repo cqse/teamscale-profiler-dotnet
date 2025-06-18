@@ -150,7 +150,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             RunTestCase("A", testeeProcess, profilerIpc);
             Stop(testeeProcess);
 
-            //Assert.That(oldProfilerIpc.ReceivedRequests, Is.Empty);
             Assert.That(profilerIpc.ReceivedRequests, Is.EquivalentTo(new[] { "profiler_disconnected", "testname" }));
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));

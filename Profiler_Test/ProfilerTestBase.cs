@@ -42,13 +42,13 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Field holding the build configuration, either 'Release' or 'Debug'
         /// </summary>
-        protected static readonly string Configuration = "Debug";
+        protected const string Configuration = "Debug";
 
 #else
         /// <summary>
         /// Field holding the build configuration, either 'Release' or 'Debug'
         /// </summary>
-        protected static readonly string Configuration = "Release";
+        protected const string Configuration = "Release";
 #endif
 
         /// <summary>

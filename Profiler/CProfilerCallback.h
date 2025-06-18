@@ -9,176 +9,179 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <utils/functionID_set/functionID_set.h>
+#include <utils/FunctionIdSet/FunctionIdSet.h>
 #include "UploadDaemon.h"
 #include "utils/Ipc.h"
 /**
  * Coverage profiler class. Implements JIT event hooks to record method
  * coverage.
  */
-class CProfilerCallback : public CProfilerCallbackBase {
-public:
 
-	/** Shuts down the profiler from the DllMain function on Dll detach if it is still running. */
-	static void ShutdownFromDllMainDetach();
+namespace Profiler {
+	class CProfilerCallback : public CProfilerCallbackBase {
+	public:
 
-	/** Constructor. */
-	CProfilerCallback();
+		/** Shuts down the profiler from the DllMain function on Dll detach if it is still running. */
+		static void ShutdownFromDllMainDetach();
 
-	/** Destructor. */
-	virtual ~CProfilerCallback();
+		/** Constructor. */
+		CProfilerCallback();
 
-	/** Initializer. Called at profiler startup. */
-	STDMETHOD(Initialize)(IUnknown* pICorProfilerInfoUnk);
+		/** Destructor. */
+		~CProfilerCallback() override;
 
-	/** Write coverage information to log file at shutdown. */
-	STDMETHOD(Shutdown)();
+		/** Initializer. Called at profiler startup. */
+		STDMETHOD(Initialize)(IUnknown* pICorProfilerInfoUnk);
 
-	/** Store information about jitted method. */
-	STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
+		/** Write coverage information to log file at shutdown. */
+		STDMETHOD(Shutdown)();
 
-	/** Write loaded assembly to log file. */
-	STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
+		/** Store information about jitted method. */
+		STDMETHOD(JITCompilationFinished)(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
 
-	/** Record inlining of method, but generally allow it. */
-	STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
+		/** Write loaded assembly to log file. */
+		STDMETHOD(AssemblyLoadFinished)(AssemblyID assemblyID, HRESULT hrStatus);
 
-	/**
-	 * Implements the actual shutdown procedure. Must only be called once.
-	 * If clrIsAvailable is true, also tries to force a GC.
-	 * Note that forcing a GC after the CLR has shut down can result in deadlocks so this
-	 * should be set only when calling from a CLR callback.
-	 */
-	void CProfilerCallback::ShutdownOnce(bool clrIsAvailable);
+		/** Record inlining of method, but generally allow it. */
+		STDMETHOD(JITInlining)(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
 
-private:
-	/** Synchronizes profiling callbacks. */
-	CRITICAL_SECTION callbackSynchronization;
+		/**
+		 * Implements the actual shutdown procedure. Must only be called once.
+		 * If clrIsAvailable is true, also tries to force a GC.
+		 * Note that forcing a GC after the CLR has shut down can result in deadlocks so this
+		 * should be set only when calling from a CLR callback.
+		 */
+		void CProfilerCallback::ShutdownOnce(bool clrIsAvailable);
 
-	CRITICAL_SECTION methodSetSynchronization;
+	private:
+		/** Synchronizes profiling callbacks. */
+		CRITICAL_SECTION callbackSynchronization;
 
-	/** Default size for arrays. */
-	static const int BUFFER_SIZE = 2048;
+		CRITICAL_SECTION methodSetSynchronization;
 
-	/** Counts the number of assemblies loaded. */
-	int assemblyCounter = 1;
+		/** Default size for arrays. */
+		static const int BUFFER_SIZE = 2048;
 
-	bool isTestCaseRecording = false;
-	CProfilerCallback* callbackInstance = NULL;
+		/** Counts the number of assemblies loaded. */
+		int assemblyCounter = 1;
 
-	Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
+		bool isTestCaseRecording = false;
+		CProfilerCallback* callbackInstance = nullptr;
 
-	/**
-	 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
-	 * It is used to identify the declaring assembly for functions.
-	 */
-	std::map<AssemblyID, int> assemblyMap;
+		Config config = Config(WindowsUtils::getConfigValueFromEnvironment);
 
-	/**
-	 * Info object that keeps track of jitted methods.
-	 */
-	std::vector<FunctionInfo> jittedMethods;
+		/**
+		 * Maps from assembly IDs to assemblyNumbers (determined by assemblyCounter).
+		 * It is used to identify the declaring assembly for functions.
+		 */
+		std::map<AssemblyID, int> assemblyMap;
 
-	/**
-	 * Keeps track of inlined methods.
-	 * We use the set to efficiently determine if we already noticed an inlined method.
-	 */
-	function_id_set inlinedMethodIds;
+		/**
+		 * Info object that keeps track of jitted methods.
+		 */
+		std::vector<FunctionInfo> jittedMethods;
 
-	/**
-	 * Keeps track of inlined methods.
-	 * We use the vector to uniquely store the information about inlined methods.
-	 */
-	std::vector<FunctionInfo> inlinedMethods;
+		/**
+		 * Keeps track of inlined methods.
+		 * We use the set to efficiently determine if we already noticed an inlined method.
+		 */
+		FunctionIdSet inlinedMethodIds;
 
-	/** Smart pointer to the .NET framework profiler info. */
-	CComQIPtr<ICorProfilerInfo8> profilerInfo;
+		/**
+		 * Keeps track of inlined methods.
+		 * We use the vector to uniquely store the information about inlined methods.
+		 */
+		std::vector<FunctionInfo> inlinedMethods;
 
-	/** The log to write all results and messages to. */
-	TraceLog traceLog;
+		/** Smart pointer to the .NET framework profiler info. */
+		CComQIPtr<ICorProfilerInfo8> profilerInfo;
 
-	/** The log to write attach and detatch events to */
-	AttachLog attachLog;
+		/** The log to write all results and messages to. */
+		TraceLog traceLog;
 
-	/** Inter-process connection for TIA communication. null if not in TIA mode. */
-	Ipc* ipc = NULL;
+		/** The log to write attach and detatch events to */
+		AttachLog attachLog;
 
-	/** Callback that is being called when a testcase starts. */
-	void onTestStart(std::string testName);
+		/** Inter-process connection for TIA communication. null if not in TIA mode. */
+		std::unique_ptr<Ipc> ipc{};
 
-	/** Callback that is being called when a testcase ends. */
-	void onTestEnd(std::string result = "", std::string duration = "");
+		/** Callback that is being called when a testcase starts. */
+		void onTestStart(const std::string& testName);
 
-	/**
-	 * Keeps track of called methods.
-	 * We use the set to efficiently determine if we already noticed an called method.
-	 */
-	function_id_set calledMethodIds;
+		/** Callback that is being called when a testcase ends. */
+		void onTestEnd(const std::string& result = "", const std::string& duration = "");
 
-	/**
-	 * Keeps track of called methods.
-	 * We use the vector to uniquely store the information about called methods.
-	 */
-	std::vector<FunctionInfo> calledMethods;
-private:
+		/**
+		 * Keeps track of called methods.
+		 * We use the set to efficiently determine if we already noticed an called method.
+		 */
+		FunctionIdSet calledMethodIds;
 
-	/**
-	* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
-	* to. We enable JIT compilation and assembly loads for coverage profiling. In
-	* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
-	* code, in order to make coverage information independent of pre-jitted code.
-	*/
-	DWORD getEventMask();
+		/**
+		 * Keeps track of called methods.
+		 * We use the vector to uniquely store the information about called methods.
+		 */
+		std::vector<FunctionInfo> calledMethods;
 
-	/**
-	* Defines whether the given function should trigger a callback everytime it is executed.
-	*
-	* We do not register a single function callback in order to not affect
-	* performance. In effect, we disable this feature here. It has been tested via
-	* a performance benchmark, that this implementation does not impact call
-	* performance.
-	*
-	* For coverage profiling, we do not need this callback. However, the event is
-	* enabled in the event mask in order to force JIT-events for each first call to
-	* a function, independent of whether a pre-jitted version exists.)
-	*/
-	static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL* pbHookFunction) throw(...);
-	void adjustEventMask();
+		/**
+		* Returns the event mask which tells the CLR which callbacks the profiler wants to subscribe
+		* to. We enable JIT compilation and assembly loads for coverage profiling. In
+		* addition if light mode is disabled, EnterLeave hooks are enabled to force re-jitting of pre-jitted
+		* code, in order to make coverage information independent of pre-jitted code.
+		*/
+		DWORD getEventMask();
 
-	/** Dumps all environment variables to the log file. */
-	void dumpEnvironment();
+		/**
+		* Defines whether the given function should trigger a callback everytime it is executed.
+		*
+		* We do not register a single function callback in order to not affect
+		* performance. In effect, we disable this feature here. It has been tested via
+		* a performance benchmark, that this implementation does not impact call
+		* performance.
+		*
+		* For coverage profiling, we do not need this callback. However, the event is
+		* enabled in the event mask in order to force JIT-events for each first call to
+		* a function, independent of whether a pre-jitted version exists.)
+		*/
+		static UINT_PTR _stdcall functionMapper(FunctionID functionId, BOOL* pbHookFunction) throw(...);
+		void adjustEventMask();
 
-	void initializeConfig();
+		/** Dumps all environment variables to the log file. */
+		void dumpEnvironment();
 
-	/** Returns a proxy for the upload daemon process */
-	UploadDaemon createDaemon();
+		void initializeConfig();
 
-	/** Create method info object for a function id. */
-	HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo* info);
+		/** Returns a proxy for the upload daemon process */
+		static UploadDaemon createDaemon();
 
-	/**  Store assembly counter for id. */
-	int registerAssembly(AssemblyID assemblyId);
+		/** Create method info object for a function id. */
+		HRESULT getFunctionInfo(FunctionID functionID, FunctionInfo& info);
 
-	/** Stores the assmebly name, path and metadata in the passed variables.*/
-	void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* moduleId);
+		/**  Store assembly counter for id. */
+		int registerAssembly(AssemblyID assemblyId);
 
-	/** Triggers eagerly writing of function infos to log. */
-	void recordFunctionInfo(std::vector<FunctionInfo>* list, FunctionID calleeId);
+		/** Stores the assmebly name, path and metadata in the passed variables.*/
+		void getAssemblyInfo(AssemblyID assemblyId, WCHAR* assemblyName, WCHAR* assemblyPath, ASSEMBLYMETADATA* moduleId);
 
-	/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
-	bool shouldWriteEagerly();
+		/** Triggers eagerly writing of function infos to log. */
+		void recordFunctionInfo(std::vector<FunctionInfo>& list, FunctionID calleeId);
 
-	/** Write all information about the recorded functions to the log and clears the log. */
-	void writeFunctionInfosToLog();
+		/** Returns whether eager mode is enabled and amount of recorded method calls reached eagerness threshold. */
+		bool shouldWriteEagerly();
 
-	/** Writes the fileVersionInfo into the provided buffer. */
-	int writeFileVersionInfo(LPCWSTR moduleFileName, char* buffer, size_t bufferSize);
+		/** Write all information about the recorded functions to the log and clears the log. */
+		void writeFunctionInfosToLog();
 
-	HRESULT JITCompilationFinishedImplementation(FunctionID functionID, HRESULT hrStatus, BOOL fIsSafeToBlock);
-	HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID, HRESULT hrStatus);
-	HRESULT JITInliningImplementation(FunctionID callerID, FunctionID calleeID, BOOL* pfShouldInline);
-	HRESULT InitializeImplementation(IUnknown* pICorProfilerInfoUnk);
+		/** Writes the fileVersionInfo into the provided buffer. */
+		void writeFileVersionInfo(LPCWSTR assemblyPath, std::wostringstream&);
 
-	/** Logs a stack trace. May rethrow the caught exception. */
-	void handleException(std::string context);
-};
+		HRESULT JITCompilationFinishedImplementation(FunctionID functionID);
+		HRESULT AssemblyLoadFinishedImplementation(AssemblyID assemblyID);
+		HRESULT JITInliningImplementation(FunctionID calleeID, BOOL* pfShouldInline);
+		HRESULT InitializeImplementation(IUnknown* pICorProfilerInfoUnk);
+
+		/** Logs a stack trace. May rethrow the caught exception. */
+		void handleException(const std::string& context);
+	};
+
+}

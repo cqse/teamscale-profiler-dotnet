@@ -5,28 +5,34 @@
 #include <atomic>
 #include <functional>
 
-class Ipc
-{
-public:
-	Ipc(Config* config, std::function<void(std::string)> testStartCallback, std::function<void(std::string, std::string)> testEndCallback, std::function<void(std::string)> errorCallback);
-	~Ipc();
-	std::string getCurrentTestName();
-private:
-	int zmqTimeout;
-	int zmqLinger;
-	void* zmqContext = NULL;
-	void* zmqRequestSocket = NULL;
-	void* zmqReplySocket = NULL;
-	Config* config = NULL;
-	std::thread* handlerThread = NULL;
-	std::function<void(std::string)> testStartCallback;
-	std::function<void(std::string, std::string)> testEndCallback;
-	std::function<void(std::string)> errorCallback;
-	std::atomic<bool> shutdown = false;
-	void sendDisconnect();
-	void handlerThreadLoop();
-	void handleMessage(std::string message);
-	bool initRequestSocket();
-	void logError(std::string message);
-	std::string request(std::string message);
-};
+namespace Profiler {
+	/*
+	* Inter Process Communication class that handles communication between the commander and the profiler.
+	*/
+	class Ipc
+	{
+	public:
+		Ipc(Config* config, const std::function<void(std::string)>& testStartCallback, const std::function<void(std::string, std::string)>& testEndCallback, const std::function<void(std::string)>& errorCallback);
+		~Ipc();
+		/*
+		 * Returns the name of the currently running test when in testwise coverage mode.
+		 */
+		std::string getCurrentTestName();
+	private:
+		void* zmqContext = nullptr;
+		void* zmqRequestSocket = nullptr;
+		void* zmqReplySocket = nullptr;
+		Config* config = nullptr;
+		std::unique_ptr<std::thread> handlerThread;
+		std::function<void(std::string)> testStartCallback;
+		std::function<void(std::string, std::string)> testEndCallback;
+		std::function<void(std::string)> errorCallback;
+		std::atomic<bool> shutdown = false;
+		void handlerThreadLoop();
+		void handleMessage(const std::string& message);
+		bool initRequestSocket();
+		void logError(const std::string& message);
+		std::string request(const std::string& message);
+	};
+
+}

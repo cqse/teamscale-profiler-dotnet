@@ -4,91 +4,88 @@
 #include <winuser.h>
 #include "version.h"
 
-FileLogBase::FileLogBase()
-{
-	InitializeCriticalSection(&criticalSection);
-}
 
-
-FileLogBase::~FileLogBase()
-{
-	DeleteCriticalSection(&criticalSection);
-}
-
-void FileLogBase::createLogFile(std::string directory, std::string name, bool overwriteIfExists) {
-	const std::string fallbackDirectory = "c:\\users\\public\\";
-	if (directory.empty()) {
-		// c:\users\public is usually writable for everyone
-		// we must use backslashes here or the WinAPI path manipulation functions will fail
-		// to split the path correctly
-		directory = fallbackDirectory;
+namespace Profiler {
+	FileLogBase::FileLogBase()
+	{
+		InitializeCriticalSection(&criticalSection);
 	}
 
-	if (!WindowsUtils::ensureDirectoryExists(directory)) {
-		Debug::getInstance().log("Cannot create directory '" + directory + "', falling back to: " + fallbackDirectory);
-		directory = fallbackDirectory;
-	}
-	if (!WindowsUtils::isDirectoryWritable(directory)) {
-		Debug::getInstance().log("Cannot write to directory '" + directory + "', falling back to: " + fallbackDirectory);
-		directory = fallbackDirectory;
+
+	FileLogBase::~FileLogBase()
+	{
+		DeleteCriticalSection(&criticalSection);
 	}
 
-	std::string logFilePath = directory + "\\" + name;
-
-	DWORD creationPolicy = OPEN_ALWAYS;
-	if (overwriteIfExists) {
-		creationPolicy = CREATE_ALWAYS;
-	}
-
-	logFile = CreateFile(logFilePath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
-		NULL, creationPolicy, FILE_ATTRIBUTE_NORMAL, NULL);
-}
-
-void FileLogBase::shutdown()
-{
-	EnterCriticalSection(&criticalSection);
-	if (logFile != INVALID_HANDLE_VALUE) {
-		CloseHandle(logFile);
-	}
-	LeaveCriticalSection(&criticalSection);
-}
-
-
-int FileLogBase::writeToFile(const char* string) {
-	int retVal = 0;
-	DWORD dwWritten = 0;
-
-	if (logFile != INVALID_HANDLE_VALUE) {
-		EnterCriticalSection(&criticalSection);
-		if (TRUE == WriteFile(logFile, string,
-			(DWORD)strlen(string), &dwWritten, NULL)) {
-			retVal = dwWritten;
+	void FileLogBase::createLogFile(std::string directory, std::string name) {
+		const std::string fallbackDirectory = "c:\\users\\public\\";
+		if (directory.empty()) {
+			// c:\users\public is usually writable for everyone
+			// we must use backslashes here or the WinAPI path manipulation functions will fail
+			// to split the path correctly
+			directory = fallbackDirectory;
 		}
-		else {
-			retVal = 0;
+
+		if (!WindowsUtils::ensureDirectoryExists(directory)) {
+			Debug::getInstance().log("Cannot create directory '" + directory + "', falling back to: " + fallbackDirectory);
+			directory = fallbackDirectory;
+		}
+		if (!WindowsUtils::isDirectoryWritable(directory)) {
+			Debug::getInstance().log("Cannot write to directory '" + directory + "', falling back to: " + fallbackDirectory);
+			directory = fallbackDirectory;
+		}
+
+		std::string logFilePath = directory + "\\" + name;
+
+		logFile = std::wofstream(logFilePath);
+	}
+
+	void FileLogBase::shutdown()
+	{
+		EnterCriticalSection(&criticalSection);
+		if (logFile.is_open()) {
+			logFile.close();
 		}
 		LeaveCriticalSection(&criticalSection);
 	}
 
-	return retVal;
+	void FileLogBase::writeWideToFile(const std::wstring& string) {
+		if (logFile.is_open()) {
+			EnterCriticalSection(&criticalSection);
+			logFile << string;
+			LeaveCriticalSection(&criticalSection);
+		}
+	}
+
+	void FileLogBase::writeWideTupleToFile(const std::wstring& key, const std::wstring& value) {
+		const std::wstring entry = key + L"=" + value + L"\n";
+		writeWideToFile(entry);
+	}
+
+
+	void FileLogBase::writeToFile(const std::string& string) {
+		std::wstring wide = converter.from_bytes(string);
+		writeWideToFile(wide);
+	}
+
+	void FileLogBase::writeTupleToFile(const std::string& key, const std::string& value) {
+		const std::string entry = key + "=" + value + "\n";
+		writeToFile(entry);
+	}
+
+	std::string FileLogBase::getFormattedCurrentTime() {
+		char formattedTime[BUFFER_SIZE];
+		SYSTEMTIME time;
+		GetSystemTime(&time);
+		// Four digits for milliseconds means we always have a leading 0 there.
+		// We consider this legacy and keep it here for compatibility reasons.
+		sprintf_s(formattedTime, sizeof(formattedTime), "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
+			time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
+			time.wMilliseconds);
+
+		std::string result(formattedTime);
+		return result;
+	}
 }
 
-void FileLogBase::writeTupleToFile(const char* key, const char* value) {
-	char buffer[BUFFER_SIZE];
-	sprintf_s(buffer, "%s=%s\r\n", key, value);
-	writeToFile(buffer);
-}
 
-std::string FileLogBase::getFormattedCurrentTime() {
-	char formattedTime[BUFFER_SIZE];
-	SYSTEMTIME time;
-	GetSystemTime(&time);
-	// Four digits for milliseconds means we always have a leading 0 there.
-	// We consider this legacy and keep it here for compatibility reasons.
-	sprintf_s(formattedTime, sizeof(formattedTime), "%04d%02d%02d_%02d%02d%02d%04d", time.wYear,
-		time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
-		time.wMilliseconds);
-
-	std::string result(formattedTime);
-	return result;
-}

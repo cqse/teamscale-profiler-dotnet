@@ -27,7 +27,6 @@ namespace UploadDaemon.Report.Testwise
         [JsonProperty(PropertyName = "duration")]
         public double Duration
         {
-
             get {
                 if (DurationMillis != 0)
                 {

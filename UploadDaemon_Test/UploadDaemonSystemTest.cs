@@ -13,7 +13,7 @@ namespace UploadDaemon
     {
         // 100663427 corresponds to MainViewModel#get_SelectedBitnessIndex in ProfilerGUI.pdb
         // obtained with cvdump.exe
-        private static readonly uint ExistingMethodToken = 100663427;
+        private const uint ExistingMethodToken = 100663427;
 
         private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
         private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");

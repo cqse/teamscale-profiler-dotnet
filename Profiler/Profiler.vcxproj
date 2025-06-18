@@ -266,7 +266,7 @@
     <ClCompile Include="utils\Ipc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="utils\functionID_set\functionId_set.h" />
+    <ClInclude Include="utils\FunctionIdSet\FunctionIdSet.h" />
     <ClInclude Include="log\AttachLog.h" />
     <ClInclude Include="CClassFactory.h" />
     <ClInclude Include="config\Config.h" />
