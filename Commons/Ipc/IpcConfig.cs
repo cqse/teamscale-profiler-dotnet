@@ -21,13 +21,14 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         public string RequestSocket { get; } = "tcp://127.0.0.1";
 
         /// <summary>
-        /// The intial port number. As new .Net Profiler instances are registered, this is changed so each one has its own port.
+        /// The initial port number. As new .Net Profiler instances are registered, this is changed so each one has its own port.
         /// </summary>
+        // TODO this StartPortNumber can be deleted if we make the client address configurable
         public int StartPortNumber { get; } = 7146;
 
-        public IpcConfig()
+        public IpcConfig(string publishSocket)
         {
-            // defaults
+            PublishSocket = publishSocket;
         }
 
         public IpcConfig(string publishSocket, string requestSocket)

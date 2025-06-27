@@ -12,7 +12,7 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            profilerIpc = new ProfilerIpc(new IpcConfig());
+            profilerIpc = new ProfilerIpc(new IpcConfig("tcp://0.0.0.0:7145"));
         }
 
         protected override void OnExit(ExitEventArgs e)

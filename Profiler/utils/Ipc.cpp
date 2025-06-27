@@ -45,7 +45,7 @@ Ipc::~Ipc()
 void Ipc::handlerThreadLoop() {
 	std::string address = "";
 	while (address == "" && !this->shutdown) {
-		address = this->request("register:" + std::to_string(GetCurrentProcessId()));
+		address = this->request("register:" + std::to_string(GetCurrentProcessId()) + ":" + this->config->getTiaClientAddress().c_str());
 		if (address == "") {
 			std::this_thread::sleep_for(3000ms);
 			logError("Connection failed, trying again.");

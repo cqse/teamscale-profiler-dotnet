@@ -3,6 +3,7 @@ using NetMQ.Sockets;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
@@ -16,7 +17,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
 
-        private Dictionary<int, ProfilerClient> pidToClient = new Dictionary<int, ProfilerClient>();
+        private Dictionary<string, ProfilerClient> idToClient = new Dictionary<string, ProfilerClient>();
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -24,8 +25,6 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         private readonly IpcConfig config;
         private readonly RequestHandler requestHandler;
-
-        private int portOffset = 0;
 
         public ZmqIpcServer(IpcConfig config, RequestHandler requestHandler)
         {
@@ -60,22 +59,28 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         private void RegisterClient(string message)
         {
-            int pid = Int32.Parse(message.Split(':')[1]);
-            lock (pidToClient)
+            string[] splitMessage = message.Split(':');
+            if (splitMessage.Length != 5)
             {
-                string clientAddress;
-                if (pidToClient.ContainsKey(pid))
+                logger.Error("Couldn't register client with message " + message + ", please check the format of the client address (tcp://1.2.3.4:1234).");
+                return;
+            }
+            int pid = Int32.Parse(splitMessage[1]);
+            string clientAddress = splitMessage[2] + ":" + splitMessage[3] + ":" + splitMessage[4];
+
+            string clientId = pid + ":" + clientAddress;
+            lock (idToClient)
+            {
+                if (idToClient.ContainsKey(clientId))
                 {
-                    clientAddress = pidToClient[pid].ClientAddress;
+                    clientAddress = idToClient[clientId].ClientAddress;
                     responseSocket.SendFrame(clientAddress);
                     return;
                 }
                 RequestSocket clientRequestSocket = new RequestSocket();
-                clientAddress = config.RequestSocket + ":" + ((config.StartPortNumber + portOffset) % 65535);
-                portOffset++;
                 clientRequestSocket.Connect(clientAddress);
 
-                pidToClient.Add(pid, new ProfilerClient(clientAddress, clientRequestSocket));
+                idToClient.Add(clientId, new ProfilerClient(clientAddress, clientRequestSocket));
                 responseSocket.SendFrame(clientAddress);
                 logger.Info($"Registered profiler on address {clientAddress}");
             }
@@ -86,11 +91,11 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public void SendTestEvent(string testEvent)
         {
-            HashSet<int> clientsToRemove = new HashSet<int>();
-            System.Threading.Tasks.Parallel.ForEach(pidToClient, entry =>
+            HashSet<string> clientsToRemove = new HashSet<string>();
+            System.Threading.Tasks.Parallel.ForEach(idToClient, entry =>
             {
                 entry.Value.Socket.SendFrame(Encoding.UTF8.GetBytes(testEvent));
-                if (entry.Value.Socket.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
+                if (entry.Value.Socket.TryReceiveFrameString(TimeSpan.FromSeconds(10.0), out string? response))
                 {
                     logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
                 } else
@@ -102,15 +107,15 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                     logger.Error($"Got no response from Profiler with PID {entry.Key} with address {entry.Value.ClientAddress}, removing from clients");
                 }
             });
-            lock (pidToClient)
+            lock (idToClient)
             {
                 foreach (var client in clientsToRemove)
                 {
-                    if (!pidToClient.ContainsKey(client)) {
+                    if (!idToClient.ContainsKey(client)) {
                         continue;
                     }
-                    pidToClient[client].Socket.Close();
-                    pidToClient.Remove(client);
+                    idToClient[client].Socket.Close();
+                    idToClient.Remove(client);
                 }
             }
         }
@@ -119,7 +124,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             this.poller?.Dispose();
             this.responseSocket?.Dispose();
-            foreach (var client in pidToClient)
+            foreach (var client in idToClient)
             {
                 client.Value.Socket.Dispose();
             }

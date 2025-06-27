@@ -157,7 +157,8 @@ The profiler has several configuration options that can either be set as environ
 | COR_PROFILER_IGNORE_EXCEPTIONS    | `1` or `0`, default `0`                  | Causes all exceptions in the profiler code to be swallowed. For debugging only. |
 | COR_PROFILER_TGA                  | `1` or `0`, default `1`                  | Activates regular test coverage collection. This means, method coverage will be collected at all times. |
 | COR_PROFILER_TIA                  | `1` or `0`, default `0`                  | Activates TIA coverage mode which means coverage can be collected per test case. |
-| COR_PROFILER_TIA_SUBSCRIBE_SOCKET | Address, default `tcp://127.0.0.1:7145`  | Socket address used for communicating test events to the profiler. |
+| COR_PROFILER_TIA_REQUEST_SOCKET | Address, default `tcp://127.0.0.1:7145`  | Socket address used for communicating test events to the profiler. This is used to connect from the profiler to the Commander Server. |
+| COR_PROFILER_TIA_CLIENT_ADDRESS | Address, default `tcp://127.0.0.1:7146`  | Socket address used for communicating test events to the profiler. This is used to connect from the Commander Server to the profiler. |
 Please note that the profiler is **also** configured with variables starting with the `COR_PROFILER_` prefix in case of .NET Core applications.
 
 ## Configuration file

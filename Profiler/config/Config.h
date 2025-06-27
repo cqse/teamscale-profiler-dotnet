@@ -95,6 +95,10 @@ public:
 		return tiaRequestSocket;
 	}
 
+	std::string getTiaClientAddress() {
+		return tiaClientAddress;
+	}
+
 private:
 
 	std::string processPath;
@@ -115,6 +119,7 @@ private:
 	bool tgaEnabled;
 	bool tiaEnabled;
 	std::string tiaRequestSocket;
+	std::string tiaClientAddress;
 
 	void apply(ConfigFile configFile);
 	std::string getOption(std::string key);

@@ -1,6 +1,7 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Text.Json.Serialization;
 using System.Web;
 
 namespace Cqse.Teamscale.Profiler.Commander.Server
@@ -52,6 +53,26 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
             logger.LogInformation("Stopping test: {}; Result: {}; Duration: {}", GetCurrent(), result, testEnd - GetStart());
             profilerIpc.EndTest(result, durationMs: testEnd - GetStart());
             return HttpStatusCode.NoContent;
+        }
+
+        /// <summary>
+        /// Legacy end test to match the JaCoCo API. Used by Chrome Plugin.
+        /// </summary>
+        [HttpPost("end/{name}")]
+        public HttpStatusCode EndTest(string name, [FromBody] TestResultDto result)
+        {
+            long testEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            logger.LogInformation("Stopping test (JaCoCo endpoint): {}; Result: {}; duration: {}", name, result.Result, testEnd - GetStart());
+            profilerIpc.EndTest(result.Result, durationMs: testEnd - GetStart());
+
+            return HttpStatusCode.NoContent;
+        }
+
+        public class TestResultDto
+        {
+            [JsonConverter(typeof(JsonStringEnumConverter))]
+            public TestExecutionResult Result { get; set; }
+            public string? Message { get; set; }
         }
     }
 }

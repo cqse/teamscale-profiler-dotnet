@@ -83,6 +83,11 @@ void Config::setOptions()
 	if (tiaRequestSocket.empty()) {
 		tiaRequestSocket = "tcp://127.0.0.1:7145";
 	}
+	tiaClientAddress = getOption("tia_client_address");
+	if (tiaClientAddress.empty()) {
+		tiaClientAddress = "tcp://127.0.0.1:7146";
+	}
+
 	std::string eagernessValue = getOption("eagerness");
 	if (eagernessValue.empty()) {
 		eagerness = 0;
