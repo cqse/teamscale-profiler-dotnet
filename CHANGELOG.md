@@ -7,6 +7,7 @@ Please prefix each entry with one of:
 
 
 # Next Release
+- [feature] Removed `--config-from-env` option from the Upload Daemon: now it defaults to the `COR_PROFILER_CONFIG` environment variable
 
 # v24.5.2
 - [fix] Assembly patterns could not match on full assembly name when using `@AssemblyDir` as PDB directory
