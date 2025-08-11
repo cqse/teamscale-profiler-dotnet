@@ -5,8 +5,9 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-
 # Next Release
+
+# v25.08.0
 - [feature] Removed `--config-from-env` option from the Upload Daemon: now it defaults to the `COR_PROFILER_CONFIG` environment variable
 
 # v24.5.2
