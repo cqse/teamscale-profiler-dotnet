@@ -16,12 +16,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// </summary>
         public class RevisionOrTimestamp
         {
-            public RevisionOrTimestamp(string value, bool isRevision)
-            {
-                this.Value = value;
-                this.IsRevision = isRevision;
-            }
-
             /// <summary>
             /// The timestamp or revision.
             /// </summary>
@@ -72,15 +66,23 @@ namespace UploadDaemon.SymbolAnalysis
                     " found neither a timestamp nor a revision entry." +
                     " Examples: 'timestamp: 1234567890' or 'revision: 123456'");
             }
-            (string type, string value) = matches.First();
 
+            (string type, string value) = matches.First();
             switch (type.ToLower())
             {
                 case "timestamp":
-                    return new RevisionOrTimestamp(value, false);
+                    return new RevisionOrTimestamp
+                    {
+                        Value = value,
+                        IsRevision = false,
+                    };
 
                 case "revision":
-                    return new RevisionOrTimestamp(value, true);
+                    return new RevisionOrTimestamp
+                    {
+                        Value = value,
+                        IsRevision = true,
+                    };
 
                 default:
                     throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +

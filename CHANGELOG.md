@@ -6,6 +6,7 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+- [fix] Removed feature to upload coverage to multiple Teamscale projects via embedded resources, as it unexpectedly locked DLL files
 
 # v25.08.0
 - [feature] Removed `--config-from-env` option from the Upload Daemon: now it defaults to the `COR_PROFILER_CONFIG` environment variable
@@ -21,7 +22,7 @@ Please prefix each entry with one of:
 
 # v24.2.0
 - [fix] Log message when trace directory is not writable
-- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions. 
+- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions.
 
 # v23.6.0
 - [feature] Support for uploading to artifactory with the Teamscale default artifact storage schema.
