@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
-using UploadDaemon_Test.Upload;
 using static UploadDaemon.Configuration.Config;
 
 namespace UploadDaemon
