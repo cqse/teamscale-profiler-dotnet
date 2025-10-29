@@ -107,7 +107,7 @@ namespace UploadDaemon.Upload
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
             string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format=SIMPLE" +
-                $"&message={encodedMessage}&partition={encodedPartition}&movetolastcommit=true" +
+                $"&message={encodedMessage}&partition={encodedPartition}" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
             logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, server.ToString(), url);
@@ -163,3 +163,4 @@ namespace UploadDaemon.Upload
         }
     }
 }
+
