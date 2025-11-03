@@ -42,9 +42,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnyOf, Version=0.3.0.0, Culture=neutral, PublicKeyToken=b35e6abbb527c6b1, processorArchitecture=MSIL">
-      <HintPath>..\packages\AnyOf.0.3.0\lib\net45\AnyOf.dll</HintPath>
-    </Reference>
     <Reference Include="bummer, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Cqse.Bummer.1.0.3\lib\netstandard2.0\bummer.dll</HintPath>
     </Reference>
@@ -424,7 +421,6 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="TestableIO.System.IO.Abstractions, Version=20.0.0.0, Culture=neutral, PublicKeyToken=96bf224d23c43e59, processorArchitecture=MSIL">
@@ -468,11 +464,11 @@
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionResolverTest.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollectionTest.cs" />
+    <Compile Include="SymbolAnalysis\RevisionFileUtilsTest.cs" />
     <Compile Include="TestUtils.cs" />
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Configuration\ConfigTest.cs" />
     <Compile Include="Configuration\ConfigParserTest.cs" />
-    <Compile Include="Upload\TeamscaleMockServer.cs" />
     <Compile Include="Upload\LineCoverageMergerTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
     <Compile Include="Archiving\ArchiveTest.cs" />
@@ -506,7 +502,4 @@
     <Error Condition="!Exists('..\packages\NUnit.4.0.1\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.4.0.1\build\NUnit.props'))" />
     <Error Condition="!Exists('..\packages\NUnit3TestAdapter.4.5.0\build\net462\NUnit3TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit3TestAdapter.4.5.0\build\net462\NUnit3TestAdapter.props'))" />
   </Target>
-  <Import Project="..\packages\Microsoft.Extensions.Configuration.UserSecrets.2.2.0\build\netstandard2.0\Microsoft.Extensions.Configuration.UserSecrets.targets" Condition="Exists('..\packages\Microsoft.Extensions.Configuration.UserSecrets.2.2.0\build\netstandard2.0\Microsoft.Extensions.Configuration.UserSecrets.targets')" />
-  <Import Project="..\packages\Microsoft.AspNetCore.Server.IIS.2.2.6\build\netstandard2.0\Microsoft.AspNetCore.Server.IIS.targets" Condition="Exists('..\packages\Microsoft.AspNetCore.Server.IIS.2.2.6\build\netstandard2.0\Microsoft.AspNetCore.Server.IIS.targets')" />
-  <Import Project="..\packages\Microsoft.AspNetCore.Server.IISIntegration.2.2.0\build\netstandard2.0\Microsoft.AspNetCore.Server.IISIntegration.targets" Condition="Exists('..\packages\Microsoft.AspNetCore.Server.IISIntegration.2.2.0\build\netstandard2.0\Microsoft.AspNetCore.Server.IISIntegration.targets')" />
 </Project>
