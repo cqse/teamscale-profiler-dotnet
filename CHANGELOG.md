@@ -6,6 +6,9 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+
+
+# v25.12.0
 - [fix] Removed feature to upload coverage to multiple Teamscale projects via embedded resources, as it unexpectedly locked DLL files
 
 # v25.08.0

@@ -42,7 +42,7 @@ So please don't add any linked libraries to the solution configuration unless ab
 
 The release process is automated with GitHub Releases and Appveyor:
 
-We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
+We use `YY.MM.revision` version scheme, e.g. `v18.2.0`.
 
 1. Edit `CHANGELOG.md` and create a new release section with all changes in the release.
 2. Commit the changes to master directly.
