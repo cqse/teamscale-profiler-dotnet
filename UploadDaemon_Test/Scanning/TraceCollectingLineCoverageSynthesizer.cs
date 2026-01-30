@@ -1,4 +1,5 @@
-﻿using UploadDaemon.Report.Simple;
+﻿using System.Collections.Generic;
+using UploadDaemon.Report.Simple;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
@@ -11,7 +12,7 @@ namespace UploadDaemon.Scanning
         {
             LastTrace = trace;
 
-            return null;
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
         }
     }
 }

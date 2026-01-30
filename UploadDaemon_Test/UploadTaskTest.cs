@@ -289,7 +289,7 @@ Inlined=1:33555646" },
         {
             string[] files = fileSystem.Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
             IEnumerable<string> relativePaths = files.Select(path => path.Substring(directory.Length + 1));
-            CollectionAssert.AreEquivalent(relativePaths, expectedFileNames);
+            CollectionAssert.AreEquivalent(expectedFileNames, relativePaths);
         }
     }
 }

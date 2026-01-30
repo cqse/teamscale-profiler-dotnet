@@ -198,10 +198,5 @@ namespace UploadDaemon.Scanning
             Assert.That(trace.CoveredMethods, Contains.Item(("A", 456)));
             Assert.That(trace.CoveredMethods, Contains.Item(("A", 789)));
         }
-
-        private SimpleCoverageReport SomeSimpleCoverageReport()
-        {
-            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
-        }
     }
 }

@@ -23,18 +23,15 @@ namespace UploadDaemon.SymbolAnalysis
         public LineCoverageSynthesizer(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             this.symbolCollectionResolver = new SymbolCollectionResolver();
+            this.assemblyExtractor = assemblyExtractor;
+            this.symbolDirectory = symbolDirectory;
+            this.assemblyPatterns = assemblyPatterns;
         }
 
         /// <inheritdoc/>
         public SimpleCoverageReport ConvertToLineCoverage(Trace trace)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(assemblyExtractor, symbolDirectory, assemblyPatterns);
-
-            if (symbolCollection.IsEmpty)
-            {
-                throw new LineCoverageConversionFailedException($"Failed to convert {trace.OriginTraceFilePath} to line coverage." +
-                    $" Found no symbols in {symbolDirectory} matching {assemblyPatterns.Describe()}");
-            }
 
             return ConvertToLineCoverage(trace, symbolCollection, symbolDirectory, assemblyPatterns);
         }
@@ -61,6 +58,12 @@ namespace UploadDaemon.SymbolAnalysis
             string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             logger.Debug("Converting trace {traceFile} to line coverage", trace);
+            if (symbolCollection.IsEmpty)
+            {
+                throw new LineCoverageConversionFailedException($"Failed to convert {trace.OriginTraceFilePath} to line coverage." +
+                    $" Found no symbols in {symbolDirectory} matching {assemblyPatterns.Describe()}");
+            }
+
             Dictionary<string, AssemblyResolutionCount> resolutionCounts = new Dictionary<string, AssemblyResolutionCount>();
             Dictionary<string, FileCoverage> lineCoverageByFile = new Dictionary<string, FileCoverage>();
             HashSet<string> includedAssemblies = new HashSet<string>();

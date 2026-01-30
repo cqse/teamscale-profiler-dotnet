@@ -154,6 +154,10 @@ namespace UploadDaemon
         {
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", traceFile.FilePath, upload.Describe());
             ICoverageReport coverageReport = ConvertTraceToCoverageReport(traceFile, archive, processConfig, assemblyExtractor);
+            if (coverageReport == null)
+            {
+                return;
+            }
             if (config.ArchiveLineCoverage)
             {
                 archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);

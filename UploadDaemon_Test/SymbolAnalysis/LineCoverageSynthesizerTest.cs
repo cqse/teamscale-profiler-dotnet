@@ -20,19 +20,27 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TestSynthesizing()
         {
-            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
-                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
-                @"Inlined=2:{ExistingMethodToken}",
-            });
             Trace trace = new Trace() { CoveredMethods = new[] { ("ProfilerGUI", ExistingMethodToken) }.ToList() };
 
-            AssemblyExtractor extractor = new AssemblyExtractor();
-            extractor.ExtractAssemblies(traceFile.Lines);
+            string sourceFilePath = @"\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs";
 
-            SimpleCoverageReport report = Convert(trace, extractor, TestUtils.TestDataDirectory,
+
+            AssemblyMethodMappings mappings = new AssemblyMethodMappings
+            {
+                AssemblyName = "ProfilerGUI",
+                SymbolFileName = "Test.pdb",
+            };
+            mappings.MethodMappings.Add(new MethodMapping
+            {
+                MethodToken = ExistingMethodToken,
+                SourceFile = sourceFilePath,
+                StartLine = 37,
+                EndLine = 39,
+            });
+
+            SimpleCoverageReport report = Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings> { mappings }), TestUtils.TestDataDirectory,
                 new GlobPatternList(new List<string> { "*" }, new List<string> { }));
 
-            string sourceFilePath = @"\\VBOXSVR\proj\teamscale-profiler-dotnet\ProfilerGUI\Source\Configurator\MainViewModel.cs";
             Assert.That(report.FileNames, Is.EquivalentTo(new[] { sourceFilePath }));
             Assert.That(report[sourceFilePath], Is.EqualTo(new FileCoverage((37, 39))));
         }
@@ -40,16 +48,24 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void TracesWithoutCoverageShouldResultInEmptyReport()
         {
-            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
-                @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
-                @"Inlined=2:{ExistingMethodToken}",
-            });
             Trace trace = new Trace() { CoveredMethods = new List<(string, uint)>() };
-            AssemblyExtractor extractor = new AssemblyExtractor();
-            extractor.ExtractAssemblies(traceFile.Lines);
 
-            SimpleCoverageReport report = new LineCoverageSynthesizer(extractor, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { })).ConvertToLineCoverage(trace);
+            // mapping content is irrelevant as only the empty trace file matters
+            AssemblyMethodMappings mappings = new AssemblyMethodMappings
+            {
+                AssemblyName = "ProfilerGUI",
+                SymbolFileName = "Test.pdb",
+            };
+            mappings.MethodMappings.Add(new MethodMapping
+            {
+                MethodToken = ExistingMethodToken,
+                SourceFile = "File.cs",
+                StartLine = 37,
+                EndLine = 39,
+            });
+
+            SimpleCoverageReport report = Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings> { mappings }), TestUtils.TestDataDirectory,
+                            new GlobPatternList(new List<string> { "*" }, new List<string> { }));
             Assert.That(report.IsEmpty, Is.True);
         }
 
@@ -67,7 +83,7 @@ namespace UploadDaemon.SymbolAnalysis
 
             Exception exception = Assert.Throws<LineCoverageSynthesizer.LineCoverageConversionFailedException>(() =>
             {
-                Convert(trace, extractor, TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
+                Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings>()), TestUtils.TestDataDirectory, new GlobPatternList(new List<string> { "xx" }, new List<string> { "*" }));
             });
 
             Assert.That(exception.Message, Contains.Substring("no symbols"));
@@ -106,9 +122,9 @@ namespace UploadDaemon.SymbolAnalysis
             Assert.That(coverage.IsEmpty, Is.True);
         }
 
-        private static SimpleCoverageReport Convert(Trace trace, AssemblyExtractor extractor, string symbolDirectory, GlobPatternList assemlyPatterns)
+        private static SimpleCoverageReport Convert(Trace trace, SymbolCollection symbolCollection, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer(extractor, symbolDirectory, assemlyPatterns).ConvertToLineCoverage(trace);
+            return LineCoverageSynthesizer.ConvertToLineCoverage(trace, symbolCollection, symbolDirectory, assemlyPatterns);
         }
     }
 }
