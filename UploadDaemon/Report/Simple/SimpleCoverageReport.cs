@@ -84,7 +84,7 @@ namespace UploadDaemon.Report.Simple
         /// </summary>
         public List<string> ToStringList()
         {
-            List<String> result = new List<string>();
+            List<string> result = new List<string>();
 
             StringBuilder report = new StringBuilder();
             bool newReport = true;

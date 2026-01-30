@@ -5,6 +5,9 @@
     /// </summary>
     public class ProfilerTestControllerState
     {
+        /// <summary>
+        /// Start timestamp of the last test case.
+        /// </summary>
         public long TestStartMS { get; set; } = 0;
     }
 }

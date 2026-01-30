@@ -21,14 +21,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
             this.LightMode = true;
         }
          
-        /// <inheridDoc/>
-        public override void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
+        public override void RegisterOn(ProcessStartInfo processInfo, Bitness bitness = Bitness.x64)
         {
             base.RegisterOn(processInfo, bitness);
             
             processInfo.Environment["COR_PROFILER_TIA"] = "true";
-            processInfo.Environment["COR_PROFILER_TGA"] = "true";
-            processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.PublishSocket; // REQ-REP
+            processInfo.Environment["COR_PROFILER_TIA_REQUEST_SOCKET"] = ipcConfig.PublishSocket;
         }
 
         /// <summary>
@@ -38,8 +36,8 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
         {
                 get
                 {
-                    FileInfo actualTrace = GetSingleTraceFile();
-                    TiaTestResult testResult = new TiaTestResult(File.ReadAllLines(actualTrace.FullName));
+                    string[] actualTrace = GetSingleTrace();
+                    TiaTestResult testResult = new TiaTestResult(actualTrace);
                     Assert.That(testResult.TraceLines, Has.One.EqualTo($"Info=TIA enabled. REQ Socket: {ipcConfig.RequestSocket}:{ipcConfig.StartPortNumber - 1}"));
                     Assert.That(testResult.TraceLines, Has.One.StartsWith("Stopped="));
                     return testResult;

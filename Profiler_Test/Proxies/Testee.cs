@@ -9,31 +9,27 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
     {
         private FileInfo executable;
 
-        public Bitness? bitness;
+        public Bitness bitness;
 
-        public Testee(FileInfo exectable, Bitness? bitness = Bitness.x64)
+        public Testee(FileInfo executable, Bitness bitness = Bitness.x64)
         {
             this.bitness = bitness;
-            this.executable = exectable;
+            this.executable = executable;
         }
 
         /// <summary>
         /// Starts a process running this executable and waits till the process terminates successfully.
         /// </summary>
-        public void Run(string arguments = null, IProfiler profiler = null)
+        public void Run(IProfiler profiler, string arguments = null)
         {
-            Start(arguments, profiler).WaitForExit();
+            Start(profiler, arguments).WaitForExit();
         }
 
         /// <summary>
         /// Starts a process running this executable and returns it.
         /// </summary>
-        public virtual TesteeProcess Start(string arguments = null, IProfiler profiler = null)
+        public virtual TesteeProcess Start(IProfiler profiler, string arguments)
         {
-            if (profiler == null)
-            {
-                profiler = new NoProfiler();
-            }
 
             ProcessStartInfo startInfo = new ProcessStartInfo(executable.FullName, arguments)
             {

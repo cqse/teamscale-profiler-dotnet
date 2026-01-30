@@ -12,7 +12,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
     /// </summary>
     public abstract class ProfilerTestBase
     {
-        /** Label with which jitted methods are prefixed */
+        /// <summary>
+        /// Label with which jitted methods are prefixed
+        /// </summary>
         public const string LABEL_JITTED = "Jitted";
 
         /// <summary>
@@ -65,13 +67,14 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// <summary>
         /// Asserts that the trace file written by the profiler has the same contents as the given reference trace, modulo some normalization.
         /// </summary>
-        protected void AssertNormalizedTraceFileEqualsReference(FileInfo actual, int[] assembliesToCompare)
+        protected void AssertNormalizedTraceFileEqualsReference(string[] actualTraceContent, int[] assembliesToCompare)
         {
             FileInfo referenceTraceFile = new FileInfo(GetTestDataPath("reference-traces", GetSanitizedTestName() + ".txt"));
+            string[] referenceTraceFileContent = File.ReadAllLines(referenceTraceFile.FullName);
 
-            var assmeblyIds = new HashSet<int>(assembliesToCompare);
-            Assert.AreEqual(ReadNormalizedTraceContent(referenceTraceFile, assmeblyIds),
-                        ReadNormalizedTraceContent(actual, assmeblyIds),
+            var assemblyIds = new HashSet<int>(assembliesToCompare);
+            Assert.AreEqual(ReadNormalizedTraceContent(referenceTraceFileContent, assemblyIds),
+                        ReadNormalizedTraceContent(actualTraceContent, assemblyIds),
                         "The normalized contents of the trace files did not match");
         }
 
@@ -82,7 +85,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet
             => Path.Combine(SolutionRoot.FullName, "test-data", Path.Combine(path));
 
         /// <summary>
-        /// An executabel file in the TestProgramsDirectory.
+        /// An executable file in the TestProgramsDirectory.
         /// </summary>
         protected FileInfo GetTestProgram(string executableName) => new FileInfo(Path.Combine(TestProgramsDirectory.FullName, executableName));
 
@@ -135,11 +138,9 @@ namespace Cqse.Teamscale.Profiler.Dotnet
         /// trace file content may vary across machines or versions of the.NET
         /// framework, including the number of actually jitted methods(in mscorlib).
         /// </summary>
-        private static string ReadNormalizedTraceContent(FileInfo traceFile, HashSet<int> assembliesToCompare)
+        private static string ReadNormalizedTraceContent(string[] traceFileContent, HashSet<int> assembliesToCompare)
         {
-            string[] content = File.ReadAllLines(traceFile.FullName);
-
-            ILookup<string, string> traceMap = KeyValuesMapFor(content);
+            ILookup<string, string> traceMap = KeyValuesMapFor(traceFileContent);
 
             IEnumerable<string> inlined = FilterMethodInvocationsByAssemblyNumber(traceMap[LABEL_INLINED], assembliesToCompare);
             IEnumerable<string> jitted = FilterMethodInvocationsByAssemblyNumber(traceMap[LABEL_JITTED], assembliesToCompare);

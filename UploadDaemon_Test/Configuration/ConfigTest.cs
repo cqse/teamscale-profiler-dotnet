@@ -1,13 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using UploadDaemon.Report;
-using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
-using UploadDaemon.SymbolAnalysis;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.Configuration
 {

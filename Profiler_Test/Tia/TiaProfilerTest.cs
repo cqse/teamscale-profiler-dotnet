@@ -158,7 +158,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 
         private static TesteeProcess Start(Testee testee, IProfiler profiler)
         {
-            TesteeProcess process = testee.Start(arguments: "interactive", profiler);
+            TesteeProcess process = testee.Start(profiler, arguments: "interactive");
             Assert.That(process.Output.ReadLine(), Is.EqualTo("interactive"));
             Assert.That(process.HasExited, Is.False);
             return process;
@@ -182,28 +182,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             // process terminates on "empty" input
             process.Input.WriteLine();
             process.WaitForExit();
-        }
-
-        private Dictionary<string, List<string>> GroupEventsByTest(string[] lines)
-        {
-            var eventsByTest = new Dictionary<string, List<string>>();
-            string currentTest = string.Empty;
-            foreach (var line in lines)
-            {
-                if (line.StartsWith("Test="))
-                {
-                    currentTest = line.Substring("Test=".Length);
-                }
-
-                if (!eventsByTest.ContainsKey(currentTest))
-                {
-                    eventsByTest[currentTest] = new List<string>();
-                }
-
-                eventsByTest[currentTest].Add(line);
-            }
-
-            return eventsByTest;
         }
     }
 }

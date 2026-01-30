@@ -10,6 +10,6 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
         /// <summary>
         /// Registers this profiler on the given process.
         /// </summary>
-        void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null);
+        void RegisterOn(ProcessStartInfo processInfo, Bitness bitness = Bitness.x64);
     }
 }

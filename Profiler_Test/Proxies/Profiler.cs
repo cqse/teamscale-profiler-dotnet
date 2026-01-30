@@ -97,12 +97,12 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
         }
 
         /// <inheritDoc/>
-        public virtual void RegisterOn(ProcessStartInfo processInfo, Bitness? bitness = null)
+        public virtual void RegisterOn(ProcessStartInfo processInfo, Bitness bitness = Bitness.x64)
         {
             ClearProfilerRegistration(processInfo);
 
             // set environment variables for the profiler
-            processInfo.Environment[PROFILER_PATH_KEY] = GetProfilerDll(bitness ?? Bitness.x64);
+            processInfo.Environment[PROFILER_PATH_KEY] = GetProfilerDll(bitness);
             processInfo.Environment[PROFILER_TARGETDIR_KEY] = targetDir.FullName;
             processInfo.Environment[PROFILER_CLASS_ID_KEY] = PROFILER_CLASS_ID;
             processInfo.Environment[PROFILER_ENABLE_KEY] = "1";
@@ -153,7 +153,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Proxies
         /// <summary>
         /// Asserts that the profiler produced a single trace file and returns it.
         /// </summary>
-        public FileInfo GetSingleTraceFile()
+        private FileInfo GetSingleTraceFile()
         {
             List<FileInfo> traces = GetTraceFiles();
             Assert.That(traces, Has.Count.GreaterThan(0), "No coverage trace was written.");
