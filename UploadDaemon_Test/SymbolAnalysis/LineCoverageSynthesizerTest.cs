@@ -48,8 +48,8 @@ namespace UploadDaemon.SymbolAnalysis
             AssemblyExtractor extractor = new AssemblyExtractor();
             extractor.ExtractAssemblies(traceFile.Lines);
 
-            SimpleCoverageReport report = new LineCoverageSynthesizer().ConvertToLineCoverage(trace, extractor, TestUtils.TestDataDirectory,
-                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
+            SimpleCoverageReport report = new LineCoverageSynthesizer(extractor, TestUtils.TestDataDirectory,
+                new GlobPatternList(new List<string> { "*" }, new List<string> { })).ConvertToLineCoverage(trace);
             Assert.That(report.IsEmpty, Is.True);
         }
 
@@ -108,7 +108,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         private static SimpleCoverageReport Convert(Trace trace, AssemblyExtractor extractor, string symbolDirectory, GlobPatternList assemlyPatterns)
         {
-            return new LineCoverageSynthesizer().ConvertToLineCoverage(trace, extractor, symbolDirectory, assemlyPatterns);
+            return new LineCoverageSynthesizer(extractor, symbolDirectory, assemlyPatterns).ConvertToLineCoverage(trace);
         }
     }
 }

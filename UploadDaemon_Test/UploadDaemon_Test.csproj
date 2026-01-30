@@ -476,6 +476,7 @@
     <Compile Include="Archiving\PurgeArchiveTaskTest.cs" />
     <Compile Include="Report\SimpleCoverageReportTest.cs" />
     <Compile Include="Report\TestwiseCoverageReportTest.cs" />
+    <Compile Include="Scanning\TraceCollectingLineCoverageSynthesizer.cs" />
     <Compile Include="Scanning\TraceFileTest.cs" />
     <Compile Include="Configuration\GlobPatternListTest.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizerTest.cs" />

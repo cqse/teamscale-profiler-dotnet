@@ -26,13 +26,11 @@ namespace UploadDaemon
 
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
-        private readonly ILineCoverageSynthesizer lineCoverageSynthesizer;
 
-        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizer lineCoverageSynthesizer)
+        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory)
         {
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
-            this.lineCoverageSynthesizer = lineCoverageSynthesizer;
         }
 
         /// <summary>
@@ -161,9 +159,9 @@ namespace UploadDaemon
                 archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);
             }
 
+            // TODO As we pass in the processConfig to the ConvertTraceToCoverageReport, could we just set these there instead of reinstantiating the whole thing?
             if (coverageReport is TestwiseCoverageReport testwiseCoverageReport)
             {
-                PrefixTestPaths(processConfig, testwiseCoverageReport);
                 if (processConfig.PartialCoverageReport)    
                 {
                     coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests);
@@ -252,17 +250,6 @@ namespace UploadDaemon
             }
         }
 
-        private static void PrefixTestPaths(Config.ConfigForProcess processConfig, TestwiseCoverageReport testwiseCoverageReport)
-        {
-            if (!string.IsNullOrEmpty(processConfig.TestPathPrefix))
-            {
-                foreach (Test test in testwiseCoverageReport.Tests)
-                {
-                    test.UniformPath = processConfig.TestPathPrefix + test.UniformPath;
-                }
-            }
-        }
-
         /// <summary>
         /// Tries to read the revision file. Logs and returns null if this fails.
         /// </summary>
@@ -289,7 +276,8 @@ namespace UploadDaemon
             ICoverageReport report;
             try
             {
-                report = traceFile.ToReport((trace) => lineCoverageSynthesizer.ConvertToLineCoverage(trace, assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns), assemblyExtractor.Assemblies);
+                LineCoverageSynthesizer lineCoverageSynthesizer = new LineCoverageSynthesizer(assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, lineCoverageSynthesizer).ParseTraceFile();
             }
             catch (Exception e)
             {

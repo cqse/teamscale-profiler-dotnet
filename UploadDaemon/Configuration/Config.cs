@@ -105,11 +105,6 @@ namespace UploadDaemon.Configuration
             public string VersionPrefix { get; set; } = string.Empty;
 
             /// <summary>
-            /// Prefix of the test path in case of testwise coverage.
-            /// </summary>
-            public string TestPathPrefix { get; set; } = string.Empty;
-
-            /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
             /// Defaults to null;
             /// </summary>
@@ -150,7 +145,6 @@ namespace UploadDaemon.Configuration
                 Artifactory = section.Artifactory ?? Artifactory;
                 Enabled = section.Enabled ?? Enabled;
                 VersionPrefix = section.VersionPrefix ?? VersionPrefix;
-                TestPathPrefix = section.TestPathPrefix ?? TestPathPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;

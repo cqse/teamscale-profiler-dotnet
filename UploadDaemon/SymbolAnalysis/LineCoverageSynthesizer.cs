@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -17,14 +16,17 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly SymbolCollectionResolver symbolCollectionResolver;
+        private readonly AssemblyExtractor assemblyExtractor;
+        private readonly string symbolDirectory;
+        private readonly GlobPatternList assemblyPatterns;
 
-        public LineCoverageSynthesizer()
+        public LineCoverageSynthesizer(AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             this.symbolCollectionResolver = new SymbolCollectionResolver();
         }
 
         /// <inheritdoc/>
-        public SimpleCoverageReport ConvertToLineCoverage(Trace trace, AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns)
+        public SimpleCoverageReport ConvertToLineCoverage(Trace trace)
         {
             SymbolCollection symbolCollection = symbolCollectionResolver.Resolve(assemblyExtractor, symbolDirectory, assemblyPatterns);
 

@@ -24,6 +24,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// Returns either the line coverage to upload or null in case the conversion resulted in an
         /// empty report.
         /// </summary>
-        SimpleCoverageReport ConvertToLineCoverage(Trace trace, AssemblyExtractor assemblyExtractor, string symbolDirectory, GlobPatternList assemblyPatterns);
+        SimpleCoverageReport ConvertToLineCoverage(Trace trace);
     }
 }

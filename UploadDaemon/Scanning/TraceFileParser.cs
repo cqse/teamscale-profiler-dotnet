@@ -5,12 +5,12 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UploadDaemon.Report;
-using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Scanning
 {
-    internal class TraceFileParser
+    public class TraceFileParser
     {
         private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
         private const string NO_TEST = "No Test";
@@ -20,7 +20,7 @@ namespace UploadDaemon.Scanning
 
         private readonly string FilePath;
         private readonly string[] Lines;
-        private readonly Func<Trace, SimpleCoverageReport> TraceResolver;
+        private readonly ILineCoverageSynthesizer LineCoverageSynthesizer;
         private readonly Dictionary<uint, (string name, string path)> Assemblies;
 
         private readonly Trace TraceOutsideTestExecution = new Trace();
@@ -28,6 +28,7 @@ namespace UploadDaemon.Scanning
 
         private DateTime TraceStart = default;
         private string CurrentTestName = "No Test";
+        //TODO can we move this to a member variable, or do we reuse this info?
         private bool Testwise = false;
         private Trace CurrentTestTrace;
 
@@ -38,12 +39,12 @@ namespace UploadDaemon.Scanning
         private long TestDuration = 0;
         private string CurrentTestResult;
 
-        public TraceFileParser(string filePath, string[] lines, Dictionary<uint, (string name, string path)> assemblies, Func<Trace, SimpleCoverageReport> traceResolver)
+        public TraceFileParser(TraceFile traceFile, Dictionary<uint, (string name, string path)> assemblies, ILineCoverageSynthesizer lineCoverageSynthesizer)
         {
-            FilePath = filePath;
-            Lines = lines;
+            FilePath = traceFile.FilePath;
+            Lines = traceFile.Lines;
             Assemblies = assemblies;
-            TraceResolver = traceResolver;
+            LineCoverageSynthesizer = lineCoverageSynthesizer;
 
             CurrentTestTrace = TraceOutsideTestExecution;
         }
@@ -82,11 +83,12 @@ namespace UploadDaemon.Scanning
 
             if (Testwise)
             {
+                //TODO why do we need a traceresolver in the other case when we can just save the tests here? is it resolved on another path?
                 return new TestwiseCoverageReport(Tests.ToArray());
             }
             else
             {
-                return TraceResolver(TraceOutsideTestExecution);
+                return LineCoverageSynthesizer.ConvertToLineCoverage(TraceOutsideTestExecution);
             }
         }
 
@@ -107,7 +109,7 @@ namespace UploadDaemon.Scanning
             }
             CurrentTestEnd = ParseProfilerDateTimeString(endTime);
             CurrentTestResult = "SKIPPED";
-            Tests.Add(new Test(CurrentTestName, TraceResolver(CurrentTestTrace))
+            Tests.Add(new Test(CurrentTestName, LineCoverageSynthesizer.ConvertToLineCoverage(CurrentTestTrace))
             {
                 Start = CurrentTestStart,
                 End = CurrentTestEnd,
@@ -134,8 +136,8 @@ namespace UploadDaemon.Scanning
                 }
                 CurrentTestEnd = ParseProfilerDateTimeString(testCaseMatch.Groups["date"].Value);
                 CurrentTestResult = testCaseMatch.Groups["testresult"].Value;
-                Int64.TryParse(testCaseMatch.Groups["duration"].Value, out TestDuration);
-                Tests.Add(new Test(CurrentTestName, TraceResolver(CurrentTestTrace))
+                long.TryParse(testCaseMatch.Groups["duration"].Value, out TestDuration);
+                Tests.Add(new Test(CurrentTestName, LineCoverageSynthesizer.ConvertToLineCoverage(CurrentTestTrace))
                 {
                     Start = CurrentTestStart,
                     End = CurrentTestEnd,

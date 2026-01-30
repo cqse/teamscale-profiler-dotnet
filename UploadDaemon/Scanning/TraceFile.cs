@@ -54,11 +54,6 @@ namespace UploadDaemon.Scanning
             return matchingLine?.Groups[1]?.Value;
         }
 
-        public ICoverageReport ToReport(Func<Trace, SimpleCoverageReport> traceResolver, Dictionary<uint, (string name, string path)> assemblies)
-        {
-            return new TraceFileParser(FilePath, Lines, assemblies, traceResolver).ParseTraceFile();
-        }
-
         /// <summary>
         /// Given the lines of text in a trace file, returns the process that was profiled or null if no process can be found.
         /// </summary>
