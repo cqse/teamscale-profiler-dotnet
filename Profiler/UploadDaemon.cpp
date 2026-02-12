@@ -35,14 +35,9 @@ bool UploadDaemon::execute()
 		WindowsUtils::reportError("UploadDaemon could not be started", "Failed to launch upload daemon to upload coverages into Teamscale as UploadDaemon.exe was not found.");
 		return false;
 	}
-	// We need to unset COR_ENABLE_PROFILING so the upload daemon process is not
-	// profiled as well. See https://docs.microsoft.com/en-us/windows/desktop/procthread/changing-environment-variables
-	SetEnvironmentVariable("COR_ENABLE_PROFILING", "0");
 
 	SHELLEXECUTEINFO shExecInfo;
-
 	shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-
 	shExecInfo.fMask = NULL;
 	shExecInfo.hwnd = NULL;
 	shExecInfo.lpVerb = NULL;
@@ -52,8 +47,12 @@ bool UploadDaemon::execute()
 	shExecInfo.nShow = SW_NORMAL;
 	shExecInfo.hInstApp = NULL;
 
-	return ShellExecuteEx(&shExecInfo);
-
+	// We need to unset COR_ENABLE_PROFILING so the upload daemon process is not
+	// profiled as well. See https://docs.microsoft.com/en-us/windows/desktop/procthread/changing-environment-variables
+	SetEnvironmentVariable("COR_ENABLE_PROFILING", "0");
+	bool started = ShellExecuteEx(&shExecInfo);
 	// We reset the environment of this process. This does not affect the launched child process
 	SetEnvironmentVariable("COR_ENABLE_PROFILING", "1");
+
+	return started;
 }
