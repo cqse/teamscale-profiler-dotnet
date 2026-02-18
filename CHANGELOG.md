@@ -6,7 +6,7 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
-
+- [fix] .NET Framework subprocesses were not traced when UploadDaemon was active
 
 # v25.12.0
 - [fix] Removed feature to upload coverage to multiple Teamscale projects via embedded resources, as it unexpectedly locked DLL files
