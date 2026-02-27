@@ -269,8 +269,8 @@ This may, however, be a rather large file since the entire program's heap will b
 
 # Automatic Trace Upload
 
-The profiler can automatically upload all produced trace files to Teamscale,
-move them to a file system directory (e.g. a network share) or upload them to an Azure cloud storage.
+The profiler can automatically convert the traces to method-accurate coverage using your application's PDB files,
+then upload all produced coverage files to Teamscale, move them to a file system directory (e.g. a network share) or upload them to an Azure cloud storage.
 
 To configure this
 
@@ -279,13 +279,6 @@ To configure this
 2.  configure the uploader process via the YAML config file.
 3. __You must also specify the `targetdir` option of the profiler in the YAML config file.
    Otherwise, the upload daemon will not know where to find your trace files and nothing will be uploaded.__
-
-You have two options for configuring the upload:
-
-1. Convert the trace to method-accurate coverage locally with your application's PDB files and then upload to Teamscale
-2. Upload the trace to Teamscale as-is and let Teamscale do the resolution to method-accurate coverage
-
-The first option is highly recommended.
 
 When properly configured, the uploader process will run in the background after the
 profiler is launched for the first time and regularly upload all produced traces.
@@ -300,7 +293,7 @@ Note: The upload daemon can also be installed as Windows service or invoked manu
 In that case it accepts the command line flag:
 - `--config path/to/config.yml` will use the specified config file
 
-## Locally converting to method-accurate coverage and then uploading
+## Converting to method-accurate coverage
 
 You must configure a `pdbDirectory` in which all PDB files for your application code are stored.
 The uploader will read these files and use them to convert the trace files to method-accurate coverage.
@@ -308,22 +301,24 @@ In most cases the PDB files are deployed in the same folder as the application a
 In this case the configuration can be simplified as `pdbDirectory: '@AssemblyDir'`.
 This approach also works if assemblies are spread in multiple directories.
 
+## Adding a `revision.txt` file
+
 Since the generated coverage must be matched to the correct code revision (otherwise you get
-incorrect coverage results),
-you must declare the target revision in the `revision.txt`.
+incorrect coverage results), you must declare the target revision in the `revision.txt`.
 
-#### Adding a `revision.txt` file
+The revision file consists of a single line of text.
+You can set it using one of these options:
+1. `revision: REVISION`, where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
+2. `timestamp: 123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the timestamp of the revision which contains the application's code, and will upload to the default branch specified in Teamscale.
+3. `timestamp: master:123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the branch and the timestamp of the revision which contains the application's code.
 
-The revision file consists of a single line of text: 
-
-    revision: REVISION
-
-where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
-Similarly to the PDB directory, you can specify the revision file relative to the loaded assemblies like `pdbDirectory: '@AssemblyDir\revision.txt'`.
+Similarly to the PDB directory, you can specify the revision file relative to the loaded assemblies like `revisionFile: '@AssemblyDir\revision.txt'`.
 This will scan the assembly directories in the order of loading for the first found revision file.
 
-Finally, please configure sensible `assemblyPatterns` in order to only include your application's
-assemblies in the coverage analysis. This prevents lots of useless error log entries both in the
+## Setting coverage analysis only for relevant assemblies
+
+You should configure `assemblyPatterns` in order to only include your application's
+assemblies in the coverage analysis. This prevents lots of error log entries both in the
 uploader and in Teamscale. Patterns are glob patterns: `*` matches any number of characters,
 `?` matches any single character. The patterns must match the assembly name without the file extension.
 
@@ -331,21 +326,7 @@ uploader and in Teamscale. Patterns are glob patterns: `*` matches any number of
       include: [ "*YourAssembly*" ]
       exclude: [ "*DoNotProfileThisAssembly*" ]
 
-## Uploading traces as-is
-
-In order for this to work, you must upload your PDB files to Teamscale __before__ you
-upload the first trace file.
-
-In the profiler config file you must specify an assembly from which to read the program version via
-the `versionAssembly` YAML config option.
-This will be used to select the correct PDB files to map the trace file contents
-back to their methods in the original source code.
-
-Futher config options for the uploader in this mode:
-
-- `versionPrefix`: optional prefix to prepend to the assembly version when uploading to Teamscale
-
-## Example: Teamscale upload with local method-accurate coverage conversion
+## Example: Teamscale upload with method-accurate coverage conversion
 
 **Profiler.yml:**
 
@@ -375,29 +356,6 @@ match: [{
 This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
 If this is not the case, simply replace by absolute paths.
 
-## Example: Teamscale upload without local method-accurate coverage conversion
-
-**Profiler.yml:**
-
-```yaml
-match: {
-  executableName: foo.exe,
-  profiler: {
-    targetdir: C:\output
-  },
-  uploader: {
-    versionAssembly: YourAssembly,
-    teamscale: {
-      url: http://localhost:8080,
-      username: build,
-      accessKey: u7a9abc32r45r2uiig3vvv,
-      project: your_project,
-      partition: Manual Tests
-    }
-  }
-}
-```
-
 ## Example: Artifactory Upload with username and password
 
 **Profiler.yml:**
@@ -409,7 +367,8 @@ match: {
     targetdir: C:\output
   },
   uploader: {
-    versionAssembly: YourAssembly,
+    pdbDirectory: '@AssemblyDir',
+    revisionFile: '@AssemblyDir\revision.txt',
     artifactory: {
       url: https://yourinstance.jfrog.io/artifactory/some/generic/path,
       username: someuser,
@@ -431,7 +390,8 @@ match: {
     targetdir: C:\output
   },
   uploader: {
-    versionAssembly: YourAssembly,
+    pdbDirectory: '@AssemblyDir',
+    revisionFile: '@AssemblyDir\revision.txt',
     artifactory: {
       url: https://yourinstance.jfrog.io/artifactory/some/generic/path,
       apiKey: somekey,
@@ -452,7 +412,8 @@ match: {
     targetdir: C:\output
   },
   uploader: {
-    versionAssembly: YourAssembly,
+    pdbDirectory: '@AssemblyDir',
+    revisionFile: '@AssemblyDir\revision.txt',
     directory: \\yourserver.localdomain\some\directory
     }
 }
@@ -471,7 +432,8 @@ match: {
     targetdir: C:\output
   },
   uploader: {
-    versionAssembly: YourAssembly,
+    pdbDirectory: '@AssemblyDir',
+    revisionFile: '@AssemblyDir\revision.txt',
     azureFileStorage: {
       connectionString: "DefaultEndpointsProtocol=https;AccountName=storagesample;AccountKey=<account-key>;EndpointSuffix=core.chinacloudapi.cn;",
       shareName: my-share,
