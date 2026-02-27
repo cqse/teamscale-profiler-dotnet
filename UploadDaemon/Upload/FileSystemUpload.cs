@@ -23,32 +23,6 @@ namespace UploadDaemon.Upload
             this.fileSystem = fileSystem;
         }
 
-        /// <summary>
-        /// Performs the upload asynchronously.
-        /// </summary>
-        /// <param name="filePath">Path to the file to upload.</param>
-        /// <param name="version">The application version (read from a version assembly).</param>
-        /// <returns>Whether the upload was successful.</returns>
-        public Task<bool> UploadAsync(string filePath, string version)
-        {
-            string fileName = Path.GetFileName(filePath);
-            string targetPath = Path.Combine(targetDirectory, fileName);
-
-            try
-            {
-                EnsureTargetDirectoryExists(targetDirectory);
-
-                logger.Debug("Copying {tracePath} to {targetDirectory}", filePath, targetDirectory);
-                fileSystem.File.Copy(filePath, targetPath);
-                return Task.FromResult(true);
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Failed to upload {tracePath} to {targetDirectory}. Will retry later", filePath, targetDirectory);
-                return Task.FromResult(false);
-            }
-        }
-
         private void EnsureTargetDirectoryExists(string targetDirectory)
         {
             if (File.Exists(targetDirectory))

@@ -6,6 +6,7 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+- [breaking change] Removed feature to upload raw .NET trace files
 - [fix] .NET Framework subprocesses were not traced when UploadDaemon was active
 
 # v25.12.0

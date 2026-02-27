@@ -30,50 +30,6 @@ namespace UploadDaemon.Upload
             HttpClientUtils.SetUpBasicAuthentication(client, server);
         }
 
-        /// <summary>
-        /// Performs the upload asynchronously.
-        /// </summary>
-        /// <param name="filePath">Path to the file to upload.</param>
-        /// <param name="version">The application version (read from a version assembly).</param>
-        /// <returns>Whether the upload was successful.</returns>
-        public async Task<bool> UploadAsync(string filePath, string version)
-        {
-            logger.Debug("Uploading {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
-
-            string message = messageFormatter.Format(version);
-            string encodedMessage = HttpUtility.UrlEncode(message);
-            string encodedProject = HttpUtility.UrlEncode(server.Project);
-            string encodedVersion = HttpUtility.UrlEncode(version);
-            string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/dotnet-ephemeral-trace?version={encodedVersion}" +
-                $"&message={encodedMessage}&partition={encodedPartition}";
-
-            try
-            {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", filePath))
-                {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        logger.Info("Successfully uploaded {trace} with version {version} to {teamscale}", filePath, version, server.ToString());
-                        return true;
-                    }
-                    else
-                    {
-                        string body = await response.Content.ReadAsStringAsync();
-                        logger.Error("Upload of {trace} to {teamscale} failed with status code {statusCode}\n{responseBody}",
-                            filePath, server.ToString(), response.StatusCode, body);
-                        return false;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Upload of {trace} to {teamscale} failed due to an exception",
-                    filePath, server.ToString());
-                return false;
-            }
-        }
-
         public string Describe()
         {
             return server.ToString();
@@ -91,7 +47,7 @@ namespace UploadDaemon.Upload
                 timestampParameter = "t";
             }
 
-            string message = messageFormatter.Format(timestampParameter);
+            string message = messageFormatter.Format(revisionOrTimestamp);
             string encodedMessage = HttpUtility.UrlEncode(message);
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);

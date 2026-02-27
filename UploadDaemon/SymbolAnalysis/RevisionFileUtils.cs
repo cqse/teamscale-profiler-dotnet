@@ -64,7 +64,7 @@ namespace UploadDaemon.SymbolAnalysis
             {
                 throw new InvalidRevisionFileException($"The revision file {filePath} is not valid:" +
                     " found neither a timestamp nor a revision entry." +
-                    " Examples: 'timestamp: 1234567890' or 'revision: 123456'");
+                    " Examples: 'timestamp: 1234567890', 'timestamp: master:1234567890' or 'revision: 123456'");
             }
 
             (string type, string value) = matches.First();
