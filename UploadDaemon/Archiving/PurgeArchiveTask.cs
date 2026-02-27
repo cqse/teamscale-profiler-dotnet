@@ -35,7 +35,6 @@ namespace UploadDaemon.Archiving
             if (threshold != null)
             {
                 archive.PurgeFilesWithoutProcess((TimeSpan) threshold);
-                archive.PurgeFilesWithoutVersionAssembly((TimeSpan)threshold);
             }
         }
 

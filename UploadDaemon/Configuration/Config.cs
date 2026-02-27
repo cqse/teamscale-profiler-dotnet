@@ -55,11 +55,6 @@ namespace UploadDaemon.Configuration
             private readonly string ProcessPath;
 
             /// <summary>
-            /// The assembly from which to read the version number.
-            /// </summary>
-            public string VersionAssembly { get; private set; } = null;
-
-            /// <summary>
             /// The Teamscale server to upload to.
             /// </summary>
             public TeamscaleServer Teamscale { get; private set; } = null;
@@ -88,13 +83,6 @@ namespace UploadDaemon.Configuration
             /// Whether the uploader should merge line coverage before uploading it.
             /// </summary>
             public bool MergeLineCoverage { get; private set; } = true;
-
-            /// <summary>
-            /// An optional prefix to prepend to the version before the upload.
-            /// Defaults to the empty string in case no prefix should be prepended.
-            /// This property is never null.
-            /// </summary>
-            public string VersionPrefix { get; set; } = string.Empty;
 
             /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
@@ -130,13 +118,11 @@ namespace UploadDaemon.Configuration
             /// </summary>
             public void ApplySection(ConfigParser.UploaderSubsection section)
             {
-                VersionAssembly = section.VersionAssembly ?? VersionAssembly;
                 Teamscale = section.Teamscale ?? Teamscale;
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
                 Artifactory = section.Artifactory ?? Artifactory;
                 Enabled = section.Enabled ?? Enabled;
-                VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
@@ -168,21 +154,13 @@ namespace UploadDaemon.Configuration
                         @" or an Artifactory (property ""artifactory"")" +
                         @" to upload coverage files to.";
                 }
-                if (VersionAssembly != null && PdbDirectory != null)
+                if (PdbDirectory == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You configured both method coverage upload (via property ""versionAssembly"")" +
-                        @" and line coverage upload (via property ""pdbDirectory""). Please decide which you would" +
-                        @" like to use and remove the other.";
+                        @" You must provide the properties ""pdbDirectory"" and ""revisionFile""" +
+                        @" to configure line coverage upload.";
                 }
-                if (VersionAssembly == null && PdbDirectory == null)
-                {
-                    yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You must provide an assembly name (property ""versionAssembly""," +
-                        @" without the file extension) to read the program version from in order to upload method coverage." +
-                        @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
-                }
-                if (PdbDirectory != null && RevisionFile == null)
+                if (RevisionFile == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
                         @" You provided a path to PDB files but no revision file (property ""revisionFile"")." +

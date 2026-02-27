@@ -99,11 +99,6 @@ namespace UploadDaemon.Configuration
         public class UploaderSubsection
         {
             /// <summary>
-            /// The assembly from which to read the version number.
-            /// </summary>
-            public string VersionAssembly { get; set; }
-
-            /// <summary>
             /// The Teamscale server to upload to.
             /// </summary>
             public TeamscaleServer Teamscale { get; set; }
@@ -132,11 +127,6 @@ namespace UploadDaemon.Configuration
             /// Whether the uploader should merge line coverage before uploading it.
             /// </summary>
             public bool? MergeLineCoverage { get; set; }
-
-            /// <summary>
-            /// An optional prefix to prepend to the version before the upload.
-            /// </summary>
-            public string VersionPrefix { get; set; }
 
             /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
@@ -181,7 +171,7 @@ namespace UploadDaemon.Configuration
         /// <exception cref="System.Exception">Thrown if parsing fails (the deserializer library doesn't specify which exceptions may be thrown)</exception>
         public static YamlConfig Parse(string yaml)
         {
-            var deserializer = new DeserializerBuilder().WithNamingConvention(new CamelCaseNamingConvention()).Build();
+            var deserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             YamlConfig result = deserializer.Deserialize<YamlConfig>(yaml);
             foreach (ProcessSection section in result.Match)
             {
