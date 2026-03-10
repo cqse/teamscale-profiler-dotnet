@@ -309,8 +309,8 @@ incorrect coverage results), you must declare the target revision in the `revisi
 The revision file consists of a single line of text.
 You can set it using one of these options:
 1. `revision: REVISION`, where `REVISION` is the VCS revision (e.g. Git SHA1 or TFS changeset ID) of your application's code.
-2. `timestamp: 123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the timestamp of the revision which contains the application's code, and will upload to the default branch specified in Teamscale.
-3. `timestamp: master:123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the branch and the timestamp of the revision which contains the application's code.
+2. `timestamp: master:123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the branch and the timestamp of the revision for which coverage is being recorded.
+3. Not recommended: `timestamp: 123456789000`, where the numeric value is a Unix timestamp in milliseconds. This should match the timestamp of the revision for which coverage is being recorded, and will upload to the default branch specified in Teamscale.
 
 Similarly to the PDB directory, you can specify the revision file relative to the loaded assemblies like `revisionFile: '@AssemblyDir\revision.txt'`.
 This will scan the assembly directories in the order of loading for the first found revision file.
@@ -318,15 +318,15 @@ This will scan the assembly directories in the order of loading for the first fo
 ## Setting coverage analysis only for relevant assemblies
 
 You should configure `assemblyPatterns` in order to only include your application's
-assemblies in the coverage analysis. This prevents lots of error log entries both in the
-uploader and in Teamscale. Patterns are glob patterns: `*` matches any number of characters,
+assemblies in the coverage analysis. This prevents logging errors about missing assemblies in the
+uploader. Patterns are glob patterns: `*` matches any number of characters,
 `?` matches any single character. The patterns must match the assembly name without the file extension.
 
     assemblyPatterns:
       include: [ "*YourAssembly*" ]
       exclude: [ "*DoNotProfileThisAssembly*" ]
 
-## Example: Teamscale upload with method-accurate coverage conversion
+## Example: (Method-accurate) Coverage conversion and Teamscale upload
 
 **Profiler.yml:**
 

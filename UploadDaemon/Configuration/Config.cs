@@ -157,7 +157,7 @@ namespace UploadDaemon.Configuration
                 if (PdbDirectory == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You must provide the properties ""pdbDirectory"" and ""revisionFile""" +
+                        @" You must provide the property ""pdbDirectory""" +
                         @" to configure line coverage upload.";
                 }
                 if (RevisionFile == null)
