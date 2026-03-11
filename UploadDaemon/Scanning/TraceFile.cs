@@ -36,17 +36,6 @@ namespace UploadDaemon.Scanning
         }
 
         /// <summary>
-        /// Given the lines of text in a trace file and a version assembly (without the file extension), returns the version of that assembly in the trace file
-        /// or null if the assembly cannot be found in the trace.
-        /// </summary>
-        public string FindVersion(string versionAssembly)
-        {
-            Regex versionAssemblyRegex = new Regex(@"^Assembly=" + Regex.Escape(versionAssembly) + @".*Version:([^ ]*).*", RegexOptions.IgnoreCase);
-            Match matchingLine = Lines.Select(line => versionAssemblyRegex.Match(line)).Where(match => match.Success).FirstOrDefault();
-            return matchingLine?.Groups[1]?.Value;
-        }
-
-        /// <summary>
         /// Given the lines of text in a trace file, returns the process that was profiled or null if no process can be found.
         /// </summary>
         public string FindProcessPath()

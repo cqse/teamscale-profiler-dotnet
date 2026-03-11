@@ -18,16 +18,6 @@ namespace UploadDaemon.Archiving
         void PurgeUploadedFiles(TimeSpan maximumAge);
 
         /// <summary>
-        /// Archives a file that has no version assembly.
-        /// </summary>
-        void ArchiveFileWithoutVersionAssembly(string tracePath);
-
-        /// <summary>
-        /// Deletes all files without version assembly that are older than the given maximum age from the archive.
-        /// </summary>
-        void PurgeFilesWithoutVersionAssembly(TimeSpan maximumAge);
-
-        /// <summary>
         /// Archives a file that has no profiled process path.
         /// </summary>
         void ArchiveFileWithoutProcess(string tracePath);

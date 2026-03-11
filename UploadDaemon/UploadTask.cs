@@ -139,14 +139,7 @@ namespace UploadDaemon
             Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath, parsedTraceFile);
             IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
 
-            if (processConfig.PdbDirectory == null)
-            {
-                ProcessMethodCoverage(trace, archive, processConfig, upload);
-            }
-            else
-            {
-                ProcessLineCoverage(parsedTraceFile, archive, config, processConfig, upload, coverageMerger);
-            }
+            ProcessLineCoverage(parsedTraceFile, archive, config, processConfig, upload, coverageMerger);
         }
 
         private void ProcessLineCoverage(ParsedTraceFile parsedTraceFile, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
@@ -251,30 +244,6 @@ namespace UploadDaemon
             }
 
             return lineCoverage;
-        }
-
-        private static void ProcessMethodCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
-        {
-            string version = trace.FindVersion(processConfig.VersionAssembly);
-            if (version == null)
-            {
-                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}",
-                    trace.FilePath, processConfig.VersionAssembly);
-                archive.ArchiveFileWithoutVersionAssembly(trace.FilePath);
-                return;
-            }
-
-            string prefixedVersion = processConfig.VersionPrefix + version;
-            logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
-
-            if (RunSync(upload.UploadAsync(trace.FilePath, prefixedVersion)))
-            {
-                archive.ArchiveUploadedFile(trace.FilePath);
-            }
-            else
-            {
-                logger.Error("Upload of {trace} to {upload} failed. Will retry later", trace.FilePath, upload.Describe());
-            }
         }
 
         /// <summary>

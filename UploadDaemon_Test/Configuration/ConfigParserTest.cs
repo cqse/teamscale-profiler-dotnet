@@ -17,7 +17,8 @@ namespace UploadDaemon.Configuration
                     profiler:
                       foo: 1
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\blapdbs
+                      revisionFile: C:\revision.txt
             ");
 
             Assert.That(config, Is.Not.Null, "config not null");
@@ -31,7 +32,8 @@ namespace UploadDaemon.Configuration
                 Assert.That(config.Match[0].Profiler, Contains.Key("foo"), "section 0 profiler option 'foo'");
                 Assert.That(config.Match[0].Profiler["foo"], Is.EqualTo("1"), "section 0 profiler option 'foo' value");
                 Assert.That(config.Match[0].Uploader, Is.Not.Null, "section 0 uploader options");
-                Assert.That(config.Match[0].Uploader.VersionAssembly, Is.EqualTo("Bla"), "section 0 version assembly");
+                Assert.That(config.Match[0].Uploader.PdbDirectory, Is.EqualTo("C:\\blapdbs"), "section 0 pdb directory");
+                Assert.That(config.Match[0].Uploader.RevisionFile, Is.EqualTo("C:\\revision.txt"), "section 0 revision file");
             });
         }
 
@@ -74,7 +76,8 @@ namespace UploadDaemon.Configuration
             ConfigParser.YamlConfig config = ConfigParser.Parse(@"
                 match:
                   - uploader:
-                      versionAssembly: foo
+                      pdbDirectory: C:\foopdbs
+                      revisionFile: C:\revision.txt
                   - uploader:
                       enabled: false
             ");
@@ -87,13 +90,13 @@ namespace UploadDaemon.Configuration
                 Assert.That(config.Match[0].Uploader.Enabled, Is.Null, "section 0 enabled");
                 Assert.That(config.Match[0].Uploader.AzureFileStorage, Is.Null, "section 0 azure");
                 Assert.That(config.Match[0].Uploader.Teamscale, Is.Null, "section 0 teamscale");
-                Assert.That(config.Match[0].Uploader.VersionPrefix, Is.Null, "section 0 version prefix");
                 Assert.That(config.Match[0].Uploader.Directory, Is.Null, "section 0 directory");
-                Assert.That(config.Match[0].Uploader.PdbDirectory, Is.Null, "section 0 pdb directory");
-                Assert.That(config.Match[0].Uploader.RevisionFile, Is.Null, "section 0 revision file");
+                Assert.That(config.Match[0].Uploader.PdbDirectory, Is.Not.Null, "section 0 pdb directory");
+                Assert.That(config.Match[0].Uploader.RevisionFile, Is.Not.Null, "section 0 revision file");
                 Assert.That(config.Match[0].Uploader.AssemblyPatterns, Is.Null, "section 0 assembly patterns");
                 Assert.That(config.Match[0].Uploader.MergeLineCoverage, Is.Null, "section 0 merge line coverage");
-                Assert.That(config.Match[1].Uploader.VersionAssembly, Is.Null, "section 1 version assembly");
+                Assert.That(config.Match[1].Uploader.RevisionFile, Is.Null, "section 1 revision file");
+                Assert.That(config.Match[1].Uploader.PdbDirectory, Is.Null, "section 1 pdb directory");
                 Assert.That(config.Match[1].Uploader.Enabled, Is.False, "section 1 enabled");
             });
         }

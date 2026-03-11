@@ -26,20 +26,17 @@ namespace UploadDaemon.Archiving
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
             {
                 { FileInTraceDirectory("coverage_1_1.txt"), @"uploaded" },
-                { FileInTraceDirectory("coverage_1_2.txt"), @"missing version" },
-                { FileInTraceDirectory("coverage_1_3.txt"), @"empty trace" },
+                { FileInTraceDirectory("coverage_1_2.txt"), @"empty trace" },
             });
 
             new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveUploadedFile(FileInTraceDirectory("coverage_1_1.txt"));
-            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveFileWithoutVersionAssembly(FileInTraceDirectory("coverage_1_2.txt"));
-            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_3.txt"));
+            new Archive(TraceDirectory, fileSystem, dateTimeProvider.Object).ArchiveEmptyFile(FileInTraceDirectory("coverage_1_2.txt"));
 
             string[] files = fileSystem.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);
 
             Assert.That(files, Is.EquivalentTo(new string[] {
                 FileInTraceDirectory(@"uploaded\coverage_1_1.txt"),
-                FileInTraceDirectory(@"missing-version\coverage_1_2.txt"),
-                FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"),
+                FileInTraceDirectory(@"empty-traces\coverage_1_2.txt"),
             }));
         }
 
@@ -68,12 +65,10 @@ namespace UploadDaemon.Archiving
                 { FileInTraceDirectory(@"uploaded\coverage_1_1.txt"), FileCreatedOn(2019, 5, 1) },
                 { FileInTraceDirectory(@"uploaded\coverage_1_2.txt"), FileCreatedOn(2019, 5, 2) },
                 { FileInTraceDirectory(@"uploaded\coverage_1_3.txt"), FileCreatedOn(2019, 5, 3) },
-                { FileInTraceDirectory(@"missing-version\coverage_1_2.txt"), FileCreatedOn(2019, 4, 1) },
                 { FileInTraceDirectory(@"empty-traces\coverage_1_3.txt"), FileCreatedOn(2019, 5, 1) },
             });
 
             new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(2));
-            new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(2));
             new Archive(TraceDirectory, fileSystemMock, dateTimeProvider.Object).PurgeUploadedFiles(TimeSpan.FromDays(5));
 
             string[] remainingFiles = fileSystemMock.Directory.GetFiles(TraceDirectory, "*.txt", SearchOption.AllDirectories);

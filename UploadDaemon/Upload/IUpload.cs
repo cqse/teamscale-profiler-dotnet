@@ -9,15 +9,6 @@ namespace UploadDaemon.Upload
     public interface IUpload
     {
         /// <summary>
-        /// Performs the upload asynchronously (may also be synchronous).
-        /// Must not throw any exceptions.
-        /// </summary>
-        /// <param name="filePath">The path of the file to upload.</param>
-        /// <param name="version">The parsed version number.</param>
-        /// <returns>Whether the upload succeeded</returns>
-        Task<bool> UploadAsync(string filePath, string version);
-
-        /// <summary>
         /// Performs the upload of line coverage to a VCS revision asynchronously (may also be synchronous).
         /// Must not throw any exceptions.
         /// </summary>

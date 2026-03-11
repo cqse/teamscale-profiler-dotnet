@@ -71,7 +71,6 @@ namespace UploadDaemon.Archiving
             new PurgeArchiveTask(archiveFactory.Object).Run(config);
 
             archive.Verify(a => a.PurgeFilesWithoutProcess(TimeSpan.FromDays(3)));
-            archive.Verify(a => a.PurgeFilesWithoutVersionAssembly(TimeSpan.FromDays(3)));
             archive.VerifyNoOtherCalls();
         }
 

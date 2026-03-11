@@ -20,16 +20,6 @@ namespace UploadDaemon
         private const string TraceDirectoryWithSpace = @"C:\users\user with spaces\traces";
         private const string PdbDirectory = @"C:\pdbs";
         private const string RevisionFile = @"C:\revision.txt";
-        private const string VersionAssembly = "VersionAssembly";
-
-        private static readonly Config config = Config.Read($@"
-        match:
-          - uploader:
-              versionAssembly: {VersionAssembly}
-              directory: C:\store
-            profiler:
-              targetdir: {TraceDirectory}
-    ");
 
         private static readonly Config lineCoverageConfig = Config.Read($@"
         match:
@@ -54,22 +44,6 @@ namespace UploadDaemon
     ");
 
         [Test]
-        public void TracesShouldBeArchivedAfterASuccessfulUpload()
-
-        {
-            IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Process=foo.exe
-Inlined=1:33555646:100678050" },
-        });
-
-            new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(config);
-
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
-        }
-
-        [Test]
         public void TracesShouldBeArchivedAfterASuccessfulLineCoverageUpload()
         {
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -84,21 +58,6 @@ Inlined=1:33555646:100678050" },
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
-        }
-
-        [Test]
-        public void TracesShouldNotBeArchivedAfterAFailedUpload()
-        {
-            IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Process=foo.exe
-Inlined=1:33555646:100678050" },
-        });
-
-            new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
-
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
         }
 
         [Test]
@@ -153,21 +112,6 @@ Inlined=1:33555646:100678050" },
         }
 
         [Test]
-        public void TestArchivingTraceWithMissingVersion()
-        {
-            IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectory("coverage_1_1.txt"), @"Assembly=OtherAssembly:1 Version:4.0.0.0
-Process=foo.exe
-Inlined=1:33555646:100678050" },
-        });
-
-            new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
-
-            AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-version\coverage_1_1.txt");
-        }
-
-        [Test]
         public void TestArchivingTraceWithMissingProcess()
         {
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
@@ -176,7 +120,7 @@ Inlined=1:33555646:100678050" },
 Inlined=1:33555646:100678050" },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(config);
+            new UploadTask(fileSystem, new MockUploadFactory(false), new MockLineCoverageSynthesizer()).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
         }
@@ -190,7 +134,7 @@ Inlined=1:33555646:100678050" },
 Process=foo.exe" },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(config);
+            new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
         }
@@ -198,17 +142,20 @@ Process=foo.exe" },
         [Test]
         public void TestPathsWithSpaces()
         {
+            string mockedRevisionFile = FileInTraceDirectoryWithSpace("revision.txt");
             IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
 Inlined=1:33555646:100678050" },
+            { mockedRevisionFile, "timestamp: 123456" }
         });
 
             Config configWithSpaceInTraceDirectory = Config.Read($@"
             match:
               - uploader:
-                  versionAssembly: {VersionAssembly}
+                  pdbDirectory: {PdbDirectory}
+                  revisionFile: {mockedRevisionFile}
                   directory: C:\store
                 profiler:
                   targetdir: {TraceDirectoryWithSpace}
@@ -216,46 +163,18 @@ Inlined=1:33555646:100678050" },
 
             new UploadTask(fileSystem, new MockUploadFactory(true), new MockLineCoverageSynthesizer()).Run(configWithSpaceInTraceDirectory);
 
-            AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt");
-        }
-
-        [Test]
-        public void TestVersionPrefix()
-        {
-            Config config = Config.Read($@"
-            match:
-              - uploader:
-                  versionAssembly: {VersionAssembly}
-                  versionPrefix: prefix_
-                  directory: C:\store
-                profiler:
-                  targetdir: {TraceDirectoryWithSpace}
-        ");
-
-            IFileSystem fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>()
-        {
-            { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Process=foo.exe
-Inlined=1:33555646:100678050" },
-        });
-
-            MockUploadFactory uploadFactory = new MockUploadFactory(true);
-            new UploadTask(fileSystem, uploadFactory, new MockLineCoverageSynthesizer()).Run(config);
-
-            uploadFactory.uploadMock.Verify(upload => upload.UploadAsync(It.IsAny<string>(), "prefix_4.0.0.0"));
+            AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt", "revision.txt");
         }
 
         private class MockUploadFactory : IUploadFactory
         {
             public readonly Mock<IUpload> uploadMock;
 
-            public MockUploadFactory(bool successfull)
+            public MockUploadFactory(bool successful)
             {
                 this.uploadMock = new Mock<IUpload>();
-                uploadMock.Setup(upload => upload.UploadAsync(It.IsAny<string>(), It.IsAny<string>()))
-                    .Returns(Task.FromResult(successfull));
                 uploadMock.Setup(upload => upload.UploadLineCoverageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RevisionFileUtils.RevisionOrTimestamp>()))
-                    .Returns(Task.FromResult(successfull));
+                    .Returns(Task.FromResult(successful));
             }
 
             /// <inheritdoc/>

@@ -74,17 +74,6 @@ namespace UploadDaemon.Upload
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
         /// <exception cref="HttpRequestException">In case there are network errors.</exception>
-        public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, string filePath)
-        {
-            return await UploadMultiPart(client, url, multipartParameterName, new FileStream(filePath, FileMode.Open), Path.GetFileName(filePath));
-        }
-
-        /// <summary>
-        /// Uploads the given file in a multi-part request.
-        /// </summary>
-        /// <returns>The HTTP response. The caller must dispose of it.</returns>
-        /// <exception cref="IOException">In case there are network or file system errors.</exception>
-        /// <exception cref="HttpRequestException">In case there are network errors.</exception>
         public static async Task<HttpResponseMessage> UploadMultiPart(HttpClient client, string url, string multipartParameterName, Stream stream, string fileName)
         {
             using (MultipartFormDataContent content = new MultipartFormDataContent("Upload----" + DateTime.Now.Ticks.ToString("x")))

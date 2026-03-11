@@ -23,29 +23,6 @@ namespace UploadDaemon.Upload
             storage = azureFileStorage;
         }
 
-        public async Task<bool> UploadAsync(string filePath, string version)
-        {
-            try
-            {
-                CloudStorageAccount account = GetStorageAccount();
-
-                logger.Debug("Uploading {trace} to {azure}/{directory}/", filePath, account.FileStorageUri, storage.Directory);
-
-                CloudFileShare share = await GetOrCreateShareAsync(account);
-                CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
-                await UploadFileAsync(filePath, directory);
-
-                logger.Info("Successfully uploaded {trace} to {azure}/{directory}", filePath, account.FileStorageUri, storage.Directory);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Upload of {trace} to Azure File Storage failed: {message}", filePath, e.Message);
-                return false;
-            }
-        }
-
         private CloudStorageAccount GetStorageAccount()
         {
             try
@@ -94,13 +71,6 @@ namespace UploadDaemon.Upload
                 await CreateRecursiveIfNotExistsAsync(directory.Parent);
                 await directory.CreateAsync();
             }
-        }
-
-        private static async Task UploadFileAsync(string sourceFilePath, CloudFileDirectory targetDirectory)
-        {
-            string fileName = Path.GetFileName(sourceFilePath);
-            CloudFile file = targetDirectory.GetFileReference(fileName);
-            await file.UploadFromFileAsync(sourceFilePath);
         }
 
         private static async Task UploadTextAsync(string fileContent, string fileName, CloudFileDirectory targetDirectory)

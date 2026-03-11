@@ -42,7 +42,8 @@ namespace UploadDaemon
                   - profiler:
                       targetdir: {TargetDir}
                     uploader:
-                      versionAssembly: VersionAssembly
+                      pdbDirectory: {PdbDirectory}
+                      revisionFile: {RevisionFile}
                       directory: {UploadDir}
                       teamscale:
                         url: http://localhost:8080/
@@ -55,38 +56,14 @@ namespace UploadDaemon
                   - profiler:
                       targetdir: {TargetDir}
                     uploader:
-                      versionAssembly: VersionAssembly
+                      pdbDirectory: {PdbDirectory}
+                      revisionFile: {RevisionFile}
                       directory: {UploadDir}
                       teamscale:
                         url: http://localhost:8080
             ").CreateConfigForProcess("test.exe");
 
             Assert.That(configWithoutTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));
-        }
-
-        [Test]
-        public void TestSimpleDirectoryUpload()
-        {
-            string coverageFileName = "coverage_1_1.txt";
-            File.WriteAllText(Path.Combine(TargetDir, coverageFileName), @"Assembly=VersionAssembly:1 Version:4.0.0.0
-Process=foo.exe
-Inlined=1:33555646:100678050");
-
-            new UploadDaemon().RunOnce(Config.Read($@"
-            match:
-              - profiler:
-                  targetdir: {TargetDir}
-                uploader:
-                  versionAssembly: VersionAssembly
-                  directory: {UploadDir}
-        "));
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(File.Exists(Path.Combine(UploadDir, coverageFileName)), Is.True, "file was uploaded successfully");
-                Assert.That(File.Exists(Path.Combine(TargetDir, coverageFileName)), Is.False, "file was removed from profiler output dir");
-                Assert.That(File.Exists(Path.Combine(TargetDir, "uploaded", coverageFileName)), Is.True, "file was archived");
-            });
         }
 
         [Test]
@@ -135,7 +112,8 @@ Inlined=1:33555646:100678050");
               - profiler:
                   targetdir: {TargetDir}
                 uploader:
-                  versionAssembly: VersionAssembly
+                  pdbDirectory: {PdbDirectory}
+                  revisionFile: {RevisionFile}
                   directory: {UploadDir}
         "));
 

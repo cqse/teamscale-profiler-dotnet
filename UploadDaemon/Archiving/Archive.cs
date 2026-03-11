@@ -15,7 +15,6 @@ namespace UploadDaemon.Archiving
         private readonly IFileSystem fileSystem;
         private readonly IDateTimeProvider dateTimeProvider;
         private readonly string uploadedDirectory;
-        private readonly string missingVersionDirectory;
         private readonly string emptyFileDirectory;
         private readonly string missingProcessDirectory;
         private readonly string noLineCoverageDirectory;
@@ -26,7 +25,6 @@ namespace UploadDaemon.Archiving
             this.fileSystem = fileSystem;
             this.dateTimeProvider = dateTimeProvider;
             this.uploadedDirectory = Path.Combine(traceDirectory, "uploaded");
-            this.missingVersionDirectory = Path.Combine(traceDirectory, "missing-version");
             this.emptyFileDirectory = Path.Combine(traceDirectory, "empty-traces");
             this.missingProcessDirectory = Path.Combine(traceDirectory, "missing-process");
             this.noLineCoverageDirectory = Path.Combine(traceDirectory, "no-line-coverage");
@@ -64,18 +62,6 @@ namespace UploadDaemon.Archiving
         public void PurgeUploadedFiles(TimeSpan maximumAge)
         {
             PurgeFiles(uploadedDirectory, maximumAge);
-        }
-
-        /// <inheritdoc/>
-        public void ArchiveFileWithoutVersionAssembly(string tracePath)
-        {
-            MoveFileToArchive(tracePath, missingVersionDirectory);
-        }
-
-        /// <inheritdoc/>
-        public void PurgeFilesWithoutVersionAssembly(TimeSpan maximumAge)
-        {
-            PurgeFiles(missingVersionDirectory, maximumAge);
         }
 
         /// <inheritdoc/>
