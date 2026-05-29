@@ -79,15 +79,13 @@ namespace UploadDaemon.Upload
             {
                 EnsureTargetDirectoryExists(targetDirectory);
                 List<string> reports = coverageReport.ToStringList();
-                int index = 1;
-                foreach (string report in reports)
+                for (int i = 0; i < reports.Count; i++)
                 {
-                    string filePath = Path.Combine(targetDirectory, $"{unixSeconds}_{index}.{coverageReport.FileExtension}");
-                    fileSystem.File.WriteAllText(filePath, report);
+                    string filePath = Path.Combine(targetDirectory, $"{unixSeconds}_{i + 1}.{coverageReport.FileExtension}");
+                    fileSystem.File.WriteAllText(filePath, reports[i]);
 
-                    string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}_{index}.{coverageReport.FileExtension}.metadata");
+                    string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}_{i + 1}.{coverageReport.FileExtension}.metadata");
                     fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
-                    index++;
                 }
                 return Task.FromResult(true);
             }

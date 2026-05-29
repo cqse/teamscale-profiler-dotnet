@@ -11,7 +11,6 @@ using UploadDaemon.Scanning;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 using UploadDaemon.Report;
-using UploadDaemon.Report.Testwise;
 using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 using File = System.IO.File;
 
@@ -163,15 +162,6 @@ namespace UploadDaemon
                 archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);
             }
 
-            // TODO As we pass in the processConfig to the ConvertTraceToCoverageReport, could we just set these there instead of reinstantiating the whole thing?
-            if (coverageReport is TestwiseCoverageReport testwiseCoverageReport)
-            {
-                if (processConfig.PartialCoverageReport)    
-                {
-                    coverageReport = new TestwiseCoverageReport(true, testwiseCoverageReport.Tests);
-                }
-            }
-
             List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = ParseRevisionFile(traceFile.FilePath, processConfig, assemblyExtractor);
             uploadTargets.AddRange(assemblyExtractor.EmbeddedUploadTargets);
 
@@ -281,7 +271,7 @@ namespace UploadDaemon
             try
             {
                 LineCoverageSynthesizer lineCoverageSynthesizer = new LineCoverageSynthesizer(assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
-                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, lineCoverageSynthesizer).ParseTraceFile();
+                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, lineCoverageSynthesizer, processConfig.PartialCoverageReport).ParseTraceFile();
             }
             catch (Exception e)
             {

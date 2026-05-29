@@ -60,6 +60,37 @@ namespace UploadDaemon.Report
         }
 
         [Test]
+        public void MergesKeepsReportedDurationOfLongerTest()
+        {
+            TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { DurationMillis = 5000 } });
+            TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { DurationMillis = 2000 } });
+
+            TestwiseCoverageReport mergedReport = report1.Union(report2) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(5));
+
+            mergedReport = report2.Union(report1) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Duration, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void MergesTakesMessageAndContentFromExecutedTest()
+        {
+            TestwiseCoverageReport skippedReport = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "SKIPPED" } });
+            TestwiseCoverageReport executedReport = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Result = "FAILED", Message = "Expected 5 but was 4", Content = "abc" } });
+
+            TestwiseCoverageReport mergedReport = skippedReport.Union(executedReport) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("FAILED"));
+            Assert.That(mergedReport.Tests[0].Message, Is.EqualTo("Expected 5 but was 4"));
+            Assert.That(mergedReport.Tests[0].Content, Is.EqualTo("abc"));
+        }
+
+        [Test]
         public void MergesConflictingResultsKeepsFirstOperand()
         {
             TestwiseCoverageReport passedReport = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" } });

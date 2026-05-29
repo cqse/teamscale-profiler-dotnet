@@ -22,6 +22,7 @@ namespace UploadDaemon.Scanning
         private readonly string[] Lines;
         private readonly ILineCoverageSynthesizer LineCoverageSynthesizer;
         private readonly Dictionary<uint, (string name, string path)> Assemblies;
+        private readonly bool Partial;
 
         private readonly Trace TraceOutsideTestExecution = new Trace();
         private readonly IList<Test> Tests = new List<Test>();
@@ -37,12 +38,13 @@ namespace UploadDaemon.Scanning
         private long TestDuration = 0;
         private string CurrentTestResult;
 
-        public TraceFileParser(TraceFile traceFile, Dictionary<uint, (string name, string path)> assemblies, ILineCoverageSynthesizer lineCoverageSynthesizer)
+        public TraceFileParser(TraceFile traceFile, Dictionary<uint, (string name, string path)> assemblies, ILineCoverageSynthesizer lineCoverageSynthesizer, bool partial = false)
         {
             FilePath = traceFile.FilePath;
             Lines = traceFile.Lines;
             Assemblies = assemblies;
             LineCoverageSynthesizer = lineCoverageSynthesizer;
+            Partial = partial;
 
             CurrentTestTrace = TraceOutsideTestExecution;
         }
@@ -82,8 +84,7 @@ namespace UploadDaemon.Scanning
 
             if (testwise)
             {
-                //TODO why do we need a traceresolver in the other case when we can just save the tests here? is it resolved on another path?
-                return new TestwiseCoverageReport(Tests.ToArray());
+                return new TestwiseCoverageReport(Partial, Tests.ToArray());
             }
             else
             {

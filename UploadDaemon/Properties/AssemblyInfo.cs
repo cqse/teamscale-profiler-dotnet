@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("UploadDaemon_Test")]
 [assembly: AssemblyProduct("CQSE .NET Profiler Upload Daemon")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]

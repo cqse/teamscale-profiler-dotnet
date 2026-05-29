@@ -67,27 +67,25 @@ namespace UploadDaemon.Upload
             {
                 bool result = true;
                 List<string> reports = coverageReport.ToStringList();
-                int index = 1;
-                foreach (string report in reports)
+                for (int i = 0; i < reports.Count; i++)
                 {
                     string covFileName = "";
                     if (coverageReport.UploadFormat == "SIMPLE")
                     {
-                        covFileName = $"{artifactory.Partition}/simple_{index}.txt";
+                        covFileName = $"{artifactory.Partition}/simple_{i + 1}.txt";
                     }
                     else
                     {
-                        covFileName = $"{artifactory.Partition}/testwise_{index}.json";
+                        covFileName = $"{artifactory.Partition}/testwise_{i + 1}.json";
                     }
-                    byte[] reportBytes = CreateZipFile(report, covFileName);
+                    byte[] reportBytes = CreateZipFile(reports[i], covFileName);
 
-                    String reportName = $"report_{index}.zip";
+                    String reportName = $"report_{i + 1}.zip";
                     string reportUrl = $"{url}/{reportName}";
 
                     logger.Debug("Uploading line coverage from {trace} to {artifactory} ({url})", originalTraceFilePath, artifactory.ToString(), reportUrl);
 
                     result = result && await PerformLineCoverageUpload(originalTraceFilePath, revisionOrTimestamp.Value, reportUrl, reportBytes);
-                    index++;
                 }
                 return result;
             }
@@ -119,18 +117,20 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private static byte[] CreateZipFile(string lineCoverageReport, string entryName)
+        public static byte[] CreateZipFile(string lineCoverageReport, string entryName)
         {
             byte[] compressedBytes;
             byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
             using (var outStream = new MemoryStream())
-            using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
             {
-                var fileInArchive = archive.CreateEntry(entryName);
-                using (var entryStream = fileInArchive.Open())
-                using (var fileToCompressStream = new MemoryStream(reportBytes))
+                using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
                 {
-                    fileToCompressStream.CopyTo(entryStream);
+                    var fileInArchive = archive.CreateEntry(entryName);
+                    using (var entryStream = fileInArchive.Open())
+                    using (var fileToCompressStream = new MemoryStream(reportBytes))
+                    {
+                        fileToCompressStream.CopyTo(entryStream);
+                    }
                 }
                 compressedBytes = outStream.ToArray();
             }

@@ -130,12 +130,10 @@ namespace UploadDaemon.Upload
 
                 List<String> reports = coverageReport.ToStringList();
                 long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                int index = 0;
-                foreach (var report in reports)
+                for (int i = 0; i < reports.Count; i++)
                 {
-                    await UploadTextAsync(report, $"{unixSeconds}_{index}.{coverageReport.FileExtension}", directory);
-                    await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}_{index}.metadata", directory);
-                    index++;
+                    await UploadTextAsync(reports[i], $"{unixSeconds}_{i}.{coverageReport.FileExtension}", directory);
+                    await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}_{i}.metadata", directory);
                 }
 
                 logger.Info("Successfully uploaded line coverage from {trace} to {azure}/{directory}", originalTraceFilePath,

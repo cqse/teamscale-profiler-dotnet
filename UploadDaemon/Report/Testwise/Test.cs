@@ -74,30 +74,24 @@ namespace UploadDaemon.Report.Testwise
 
         public Test Union(Test other)
         {
-            long thisTimeInterval = End.Ticks - Start.Ticks;
-            long otherTimeInterval = other.End.Ticks - other.Start.Ticks;
+            // When merging coverage from different test cases, we keep the timing of the test case with
+            // the longest duration. Using the earliest start and latest end has issues with repeated
+            // execution. We carry over the whole timing (Start, End and DurationMillis) so we don't
+            // accidentally switch the duration source and lose the reported DurationMillis.
+            Test longerTest = Duration > other.Duration ? this : other;
 
-            // When merging coverage from different test cases, we use the longest time for a testcase.
-            // Using the earliest start and latest end has issues with repeated execution.
-            DateTime newStart;
-            DateTime newEnd;
-            if (thisTimeInterval > otherTimeInterval)
-            {
-                newStart = Start;
-                newEnd = End;
-            } else
-            {
-                newStart = other.Start;
-                newEnd = other.End;
-            }
+            // A SKIPPED test is a placeholder without real execution data, so we prefer the result,
+            // message and content of the other (executed) test in that case.
+            Test executedTest = Result.Equals("SKIPPED") ? other : this;
 
             return new Test(UniformPath, (SimpleCoverageReport)ToSimpleCoverageReport().Union(other.ToSimpleCoverageReport()))
             {
-                Start = newStart,
-                End = newEnd,
-                Result = Result.Equals("SKIPPED") ? other.Result : Result,
-                Message = Message,
-                Content = Content,
+                Start = longerTest.Start,
+                End = longerTest.End,
+                DurationMillis = longerTest.DurationMillis,
+                Result = executedTest.Result,
+                Message = executedTest.Message,
+                Content = executedTest.Content,
             };
         }
 

@@ -98,7 +98,7 @@ namespace UploadDaemon.Upload
         }
 
         /// <summary>
-        /// Uploads the given list of streams in a multi-part request.
+        /// Uploads the given list of report contents in a multi-part request.
         /// </summary>
         /// <returns>The HTTP response. The caller must dispose of it.</returns>
         /// <exception cref="IOException">In case there are network or file system errors.</exception>
