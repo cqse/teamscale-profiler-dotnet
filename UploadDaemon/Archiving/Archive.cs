@@ -49,11 +49,9 @@ namespace UploadDaemon.Archiving
             try
             {
                 List<string> reports = report.ToStringList();
-                int i = 1;
-                foreach (string covReport in reports)
+                for (int i = 0; i < reports.Count; i++)
                 {
-                    fileSystem.File.WriteAllText($"{targetPath}_{i}.{report.FileExtension}", covReport);
-                    i++;
+                    fileSystem.File.WriteAllText($"{targetPath}_{i + 1}.{report.FileExtension}", reports[i]);
                 }
             }
             catch (Exception e)

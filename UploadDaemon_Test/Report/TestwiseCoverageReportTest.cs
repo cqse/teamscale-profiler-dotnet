@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UploadDaemon.Report.Testwise;
@@ -56,6 +57,23 @@ namespace UploadDaemon.Report
 
             Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
             Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
+        }
+
+        [Test]
+        public void MergesConflictingResultsKeepsFirstOperand()
+        {
+            TestwiseCoverageReport passedReport = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" } });
+            TestwiseCoverageReport failedReport = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Result = "FAILED" } });
+
+            TestwiseCoverageReport mergedReport = passedReport.Union(failedReport) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("PASSED"));
+
+            mergedReport = failedReport.Union(passedReport) as TestwiseCoverageReport;
+
+            Assert.That(mergedReport.Tests, Has.Length.EqualTo(1));
+            Assert.That(mergedReport.Tests[0].Result, Is.EqualTo("FAILED"));
         }
 
         [Test]
@@ -136,6 +154,31 @@ namespace UploadDaemon.Report
                     }
                 ]
             }".Replace(" ", "").Replace("\r\n", "")));
+        }
+
+        [Test]
+        public void SplitsIntoMultipleReportsWhenExceedingMaxSize()
+        {
+            TestwiseCoverageReport report = new TestwiseCoverageReport(new Test[]
+            {
+                new Test("Test1", new File("file1.cs", (10, 20))),
+                new Test("Test2", new File("file2.cs", (10, 20))),
+                new Test("Test3", new File("file3.cs", (10, 20))),
+            });
+
+            Assert.That(report.ToStringList(1), Has.Count.EqualTo(3));
+        }
+
+        [Test]
+        public void DoesNotSplitWhenUnderMaxSize()
+        {
+            TestwiseCoverageReport report = new TestwiseCoverageReport(new Test[]
+            {
+                new Test("Test1", new File("file1.cs", (10, 20))),
+                new Test("Test2", new File("file2.cs", (10, 20))),
+            });
+
+            Assert.That(report.ToStringList(), Has.Count.EqualTo(1));
         }
 
         [Test]

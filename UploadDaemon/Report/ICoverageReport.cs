@@ -29,12 +29,8 @@ namespace UploadDaemon.Report
         ICoverageReport Union(ICoverageReport coverageReport);
 
         /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        string ToString();
-
-        /// <summary>
-        /// <inheritdoc/>
+        /// Converts this report into a list of serialized reports.
+        /// Reports are split to avoid too large strings (around 1GB) which cause OutOfMemoryErrors.
         /// </summary>
         List<string> ToStringList();
     }

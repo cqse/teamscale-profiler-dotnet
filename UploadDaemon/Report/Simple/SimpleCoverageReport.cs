@@ -55,9 +55,20 @@ namespace UploadDaemon.Report.Simple
                 throw new NotSupportedException();
             }
 
-            return new SimpleCoverageReport(new[] { lineCoverageByFile, other.lineCoverageByFile }.SelectMany(dict => dict)
-                .ToLookup(pair => pair.Key, pair => pair.Value)
-                .ToDictionary(group => group.Key, group => group.Aggregate((fc1, fc2) => new FileCoverage(fc1.CoveredLineRanges.Union(fc2.CoveredLineRanges)))));
+            IDictionary<string, FileCoverage> mergedCoverage = new Dictionary<string, FileCoverage>();
+            foreach (KeyValuePair<string, FileCoverage> fileCoverage in lineCoverageByFile.Concat(other.lineCoverageByFile))
+            {
+                if (mergedCoverage.ContainsKey(fileCoverage.Key))
+                {
+                    mergedCoverage[fileCoverage.Key] = new FileCoverage(mergedCoverage[fileCoverage.Key].CoveredLineRanges.Union(fileCoverage.Value.CoveredLineRanges));
+                }
+                else
+                {
+                    mergedCoverage[fileCoverage.Key] = fileCoverage.Value;
+                }
+            }
+
+            return new SimpleCoverageReport(mergedCoverage);
         }
 
         /// <summary>

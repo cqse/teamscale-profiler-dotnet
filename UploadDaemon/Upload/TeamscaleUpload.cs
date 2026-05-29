@@ -113,7 +113,8 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format=SIMPLE" +
+            string encodedFormat = HttpUtility.UrlEncode(coverageReport.UploadFormat);
+            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format={encodedFormat}" +
                 $"&message={encodedMessage}&partition={encodedPartition}&movetolastcommit=true" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
@@ -122,7 +123,8 @@ namespace UploadDaemon.Upload
             try
             {
                 List<string> reports = coverageReport.ToStringList();
-                return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, reports);
+                string reportFileName = $"report.{coverageReport.FileExtension}";
+                return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, reports, reportFileName);
             }
             catch (Exception e)
             {
@@ -132,11 +134,11 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, List<string> reports)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, List<string> reports, string reportFileName)
         {
             try
             {
-                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartList(client, url, "report", reports, "report.simple"))
+                using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartList(client, url, "report", reports, reportFileName))
                 {
                     if (response.IsSuccessStatusCode)
                     {

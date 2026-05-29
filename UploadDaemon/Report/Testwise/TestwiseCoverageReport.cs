@@ -66,17 +66,16 @@ namespace UploadDaemon.Report.Testwise
 
         /// <summary>
         /// Converts this report into a TESTWISE format report for Teamscale.
+        /// We build the JSON envelope manually and serialize the tests one by one (freeing each via
+        /// <c>Tests[i] = null</c>) instead of calling <c>JsonConvert.SerializeObject(this)</c>. This keeps
+        /// peak memory low for very large reports (around 1GB) which would otherwise cause OutOfMemoryErrors,
+        /// since serializing the whole object graph at once holds both the graph and the full string in memory.
         /// </summary>
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            
-            sb.Append("{");
-            if (Partial)
-            {
-                sb.Append("\"partial\":true,");
-            }
-            sb.Append("\"tests\":[");
+
+            AddReportStart(sb);
             JsonSerializerSettings settings = new JsonSerializerSettings() { DefaultValueHandling = DefaultValueHandling.Ignore };
             for (int i = 0; i < Tests.Length; i++)
             {
@@ -86,7 +85,7 @@ namespace UploadDaemon.Report.Testwise
                 }
                 Tests[i] = null;
             }
-            sb.Append("]}");
+            AddReportEnd(sb);
 
             return sb.ToString();
         }
@@ -96,6 +95,16 @@ namespace UploadDaemon.Report.Testwise
         /// Reports are split to avoid too large strings (around 1GB) which cause OutOfMemoryErrors.
         /// </summary>
         public List<string> ToStringList()
+        {
+            return ToStringList(MAX_REPORT_STRING_SIZE);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="ToStringList()"/>
+        /// The <paramref name="maxReportStringSize"/> overload exposes the split threshold so tests can
+        /// exercise the splitting logic with a small size instead of building gigabyte-sized reports.
+        /// </summary>
+        public List<string> ToStringList(int maxReportStringSize)
         {
             List<string> result = new List<string>();
             StringBuilder sb = new StringBuilder();
@@ -113,13 +122,13 @@ namespace UploadDaemon.Report.Testwise
                 {
                     sb.Append(',');
                 }
-                
+
                 sb.Append(JsonConvert.SerializeObject(Tests[i], settings));
                 Tests[i] = null;
 
-                if (sb.Length > MAX_REPORT_STRING_SIZE || i == Tests.Length - 1)
+                if (sb.Length > maxReportStringSize || i == Tests.Length - 1)
                 {
-                    sb.Append("]}");
+                    AddReportEnd(sb);
                     result.Add(sb.ToString());
                     sb = new StringBuilder();
                     newReport = true;
@@ -137,6 +146,11 @@ namespace UploadDaemon.Report.Testwise
                 sb.Append("\"partial\":true,");
             }
             sb.Append("\"tests\":[");
+        }
+
+        private void AddReportEnd(StringBuilder sb)
+        {
+            sb.Append("]}");
         }
     }
 }

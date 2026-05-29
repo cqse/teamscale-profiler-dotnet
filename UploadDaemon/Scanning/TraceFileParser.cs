@@ -28,8 +28,6 @@ namespace UploadDaemon.Scanning
 
         private DateTime TraceStart = default;
         private string CurrentTestName = "No Test";
-        //TODO can we move this to a member variable, or do we reuse this info?
-        private bool Testwise = false;
         private Trace CurrentTestTrace;
 
 
@@ -51,6 +49,7 @@ namespace UploadDaemon.Scanning
 
         public ICoverageReport ParseTraceFile()
         {
+            bool testwise = false;
             foreach (string line in Lines)
             {
                 string[] keyValuePair = line.Split(new[] { '=' }, count: 2);
@@ -75,13 +74,13 @@ namespace UploadDaemon.Scanning
                         break;
                     case "Info":
                         if (value.StartsWith("TIA enabled")) {
-                            Testwise = true;
+                            testwise = true;
                         }
                         break;
                 }
             }
 
-            if (Testwise)
+            if (testwise)
             {
                 //TODO why do we need a traceresolver in the other case when we can just save the tests here? is it resolved on another path?
                 return new TestwiseCoverageReport(Tests.ToArray());
