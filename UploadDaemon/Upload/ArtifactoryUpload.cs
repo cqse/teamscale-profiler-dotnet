@@ -10,6 +10,7 @@ using UploadDaemon.Configuration;
 using UploadDaemon.Report;
 using System.IO.Compression;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace UploadDaemon.Upload
 {
@@ -29,18 +30,6 @@ namespace UploadDaemon.Upload
             this.artifactory = artifactory;
 
             HttpClientUtils.SetUpArtifactoryAuthentication(client, artifactory);
-        }
-
-        /// <summary>
-        /// Performs the upload asynchronously.
-        /// </summary>
-        /// <param name="filePath">Path to the file to upload.</param>
-        /// <param name="version">The application version (read from a version assembly).</param>
-        /// <returns>Whether the upload was successful.</returns>
-        public async Task<bool> UploadAsync(string filePath, string version)
-        {
-            logger.Error("Default schema upload to artifactory is only supported for local conversion");
-            return false;
         }
 
         public string Describe()

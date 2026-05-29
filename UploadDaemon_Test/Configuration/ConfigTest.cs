@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UploadDaemon.Scanning;
+using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -19,7 +20,8 @@ namespace UploadDaemon.Configuration
                     - profiler:
                         targetdir: C:\test1
                     - uploader:
-                        versionAssembly: assembly
+                        pdbDirectory: C:\blapdbs
+                        revisionFile: C:\revision
                     - executableName: foo.exe
                       uploader:
                         directory: dir
@@ -41,10 +43,9 @@ namespace UploadDaemon.Configuration
                 Assert.That(fooConfig.PartialCoverageReport, Is.False);
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
-                Assert.That(fooConfig.VersionPrefix, Is.Empty);
-                Assert.That(fooConfig.PdbDirectory, Is.Null);
+                Assert.That(fooConfig.PdbDirectory, Is.Not.Null);
                 Assert.That(fooConfig.AssemblyPatterns, Is.Not.Null);
-                Assert.That(fooConfig.RevisionFile, Is.Null);
+                Assert.That(fooConfig.RevisionFile, Is.Not.Null);
                 Assert.That(barConfig.Directory, Is.Null);
             });
             Assert.Multiple(() =>
@@ -65,13 +66,14 @@ namespace UploadDaemon.Configuration
                       targetdir: C:\test1
                   - executableName: FoO.exe
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\pdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\pdbs"));
         }
 
         [Test]
@@ -83,17 +85,19 @@ namespace UploadDaemon.Configuration
                       targetdir: C:\test1
                   - executableName: foo.exe
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\blapdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
                   - executableName: foo.exe
                     uploader:
-                      versionAssembly: Blu
+                      pdbDirectory: C:\blupdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Blu"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\blupdbs"));
         }
 
         [Test]
@@ -105,17 +109,19 @@ namespace UploadDaemon.Configuration
                       targetdir: C:\test1
                   - executableName: foo.exe
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\blapdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
                   - executableName: bar.exe
                     uploader:
-                      versionAssembly: Blu
+                      pdbDirectory: C:\blupdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\blapdbs"));
         }
 
         [Test]
@@ -127,17 +133,19 @@ namespace UploadDaemon.Configuration
                       targetdir: C:\test1
                   - executablePathRegex: .*foo.exe
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\blapdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
                   - executablePathRegex: .*bar.exe
                     uploader:
-                      versionAssembly: Blu
+                      pdbDirectory: C:\blupdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\blapdbs"));
         }
 
         [Test]
@@ -150,7 +158,8 @@ namespace UploadDaemon.Configuration
                   - loadedAssemblyPathRegex: .*\\foo.dll
                     uploader:
                       directory: C:\upload\foo
-                      versionAssembly: foo
+                      pdbDirectory: C:\foopdbs
+                      revisionFile: C:\revision
             ");
 
             TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
@@ -163,34 +172,7 @@ namespace UploadDaemon.Configuration
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies);
             Assert.That(fooConfig, Is.Not.Null);
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
-        }
-
-        [Test]
-        public void TestEmbeddedUploadInformation()
-        {
-            Config config = Config.Read(@"
-                match:
-                  - profiler:
-                      targetdir: C:\test1
-                  - loadedAssemblyPathRegex: .*\\NetFrameworkEmbeddedLibrary.dll
-                    uploader:
-                      directory: C:\upload\foo
-                      versionAssembly: foo
-            ");
-            string targetAssembly = Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs", "NetFrameworkEmbeddedLibrary.dll");
-            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
-                $@"Assembly=foo:2 Version:1.0.0.0 Path:{targetAssembly}",
-                $@"Inlined=2:{ExistingMethodToken}",
-            });
-
-            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
-            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
-
-            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies);
-            Assert.That(assemblyExtractor.EmbeddedUploadTargets.Count, Is.AtLeast(1));
-            Assert.That(fooConfig, Is.Not.Null);
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foo"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\foopdbs"));
         }
 
         [Test]
@@ -203,7 +185,8 @@ namespace UploadDaemon.Configuration
                   - loadedAssemblyPathRegex: .*\\foo.dll
                     uploader:
                       directory: C:\upload\foo
-                      versionAssembly: foo
+                      pdbDirectory: C:\pdbs
+                      revisionFile: C:\revision
             ");
 
             TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
@@ -226,12 +209,14 @@ namespace UploadDaemon.Configuration
                       targetdir: C:\test1
                   - loadedAssemblyPathRegex: .*\\foo.dll
                     uploader:
+                      pdbDirectory: C:\foopdbs
+                      revisionFile: C:\revision
                       directory: C:\upload\foo
-                      versionAssembly: foo
                   - loadedAssemblyPathRegex: .*\\bar.dll
                     uploader:
+                      pdbDirectory: C:\barpdbs
+                      revisionFile: C:\revision
                       directory: C:\upload\bar
-                      versionAssembly: bar
             ");
 
             TraceFile traceFile1 = new TraceFile("coverage_1_1.txt", new[] {
@@ -251,14 +236,14 @@ namespace UploadDaemon.Configuration
 
             Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config1, Is.Not.Null);
-            Assert.That(config1.VersionAssembly, Is.EqualTo("bar"));
+            Assert.That(config1.PdbDirectory, Is.EqualTo("C:\\barpdbs"));
 
             AssemblyExtractor assemblyExtractor2 = new AssemblyExtractor();
             assemblyExtractor2.ExtractAssemblies(traceFile2.Lines);
 
             Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config2, Is.Not.Null);
-            Assert.That(config2.VersionAssembly, Is.EqualTo("bar"));
+            Assert.That(config2.PdbDirectory, Is.EqualTo("C:\\barpdbs"));
         }
 
         [Test]
@@ -271,23 +256,26 @@ namespace UploadDaemon.Configuration
                     - executablePathRegex: .*foo.exe
                       executableName: foo.exe
                       uploader:
-                        versionAssembly: foofoo
+                        pdbDirectory: C:\foofoopdbs
+                        revisionFile: C:\revision
                         directory: C:\upload
                     - executablePathRegex: .*bar.exe
                       executableName: foo.exe
                       uploader:
-                        versionAssembly: barfoo
+                        pdbDirectory: C:\barfoopdbs
+                        revisionFile: C:\revision
                         directory: C:\upload
                     - executablePathRegex: .*foo.exe
                       executableName: bar.exe
                       uploader:
-                        versionAssembly: foobar
+                        pdbDirectory: C:\foobarpdbs
+                        revisionFile: C:\revision
                         directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("foofoo"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\foofoopdbs"));
         }
 
         [Test]
@@ -298,13 +286,14 @@ namespace UploadDaemon.Configuration
                   - profiler:
                       targetdir: C:\test1
                     uploader:
-                      versionAssembly: Bla
+                      pdbDirectory: C:\blapdbs
+                      revisionFile: C:\revision
                       directory: C:\upload
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");
             Assert.That(fooConfig, Is.Not.Null, "foo config not null");
-            Assert.That(fooConfig.VersionAssembly, Is.EqualTo("Bla"));
+            Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\blapdbs"));
         }
 
         [Test]
@@ -324,15 +313,17 @@ namespace UploadDaemon.Configuration
         [Test]
         public void MustSpecifyAtLeastOneTargetDir()
         {
-            Assert.Throws<Config.InvalidConfigException>(() =>
+            Config.InvalidConfigException exception = Assert.Throws<Config.InvalidConfigException>(() =>
             {
                 Config config = Config.Read(@"
                     match:
                       - uploader:
-                          versionAssembly: Bla
+                          pdbDirectory: C:\pdbs
+                          revisionFile: C:\revision
                           directory: C:\upload
                 ");
             });
+            Assert.That(exception.Message, Does.Contain("targetdir"));
         }
 
         [Test]
@@ -343,7 +334,8 @@ namespace UploadDaemon.Configuration
                   - profiler:
                       targetdir: C:\test1
                     uploader:
-                      versionAssembly: Assembly
+                      pdbDirectory: C:\pdbs
+                      revisionFile: C:\revision
                       teamscale:
                         url: url
                         username: user
@@ -363,7 +355,8 @@ namespace UploadDaemon.Configuration
                   - profiler:
                       targetdir: C:\test1
                   - uploader:
-                      versionAssembly: Assembly
+                      pdbDirectory: C:\pdbs
+                      revisionFile: C:\revision
                       azureFileStorage:
                         connectionString: connection-string
                         shareName: share
@@ -381,7 +374,8 @@ namespace UploadDaemon.Configuration
                   - profiler:
                       targetdir: C:\test1
                   - uploader:
-                      versionAssembly: Assembly
+                      pdbDirectory: C:\pdbs
+                      revisionFile: C:\revision
                       directory: .
             ").CreateConfigForProcess("foo.exe").Validate();
 
@@ -398,28 +392,12 @@ namespace UploadDaemon.Configuration
                       - profiler:
                           targetdir: C:\test1
                       - uploader:
-                          versionAssembly: Assembly
+                          pdbDirectory: C:\pdbs
+                          revisionFile: C:\revision
                 ").CreateConfigForProcess("foo.exe");
             });
 
-            Assert.That(exception.Message, Contains.Substring("teamscale"));
-        }
-
-        [Test]
-        public void MissingVersionAssembly()
-        {
-            Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
-            {
-                Config.Read(@"
-                    match:
-                      - profiler:
-                          targetdir: C:\test1
-                      - uploader:
-                          directory: .
-                ").CreateConfigForProcess("foo.exe");
-            });
-
-            Assert.That(exception.Message, Contains.Substring("versionAssembly"));
+            Assert.That(exception.Message, Does.Contain("Teamscale server"));
         }
 
         [Test]
@@ -458,7 +436,7 @@ namespace UploadDaemon.Configuration
         }
 
         [Test]
-        public void BothVersionAssemblyAndPdbDirectoryConfigured()
+        public void MissingRevisionFile()
         {
             Exception exception = Assert.Throws<Config.InvalidConfigException>(() =>
             {
@@ -469,12 +447,10 @@ namespace UploadDaemon.Configuration
                     - uploader:
                         directory: C:\target
                         pdbDirectory: C:\pdbs
-                        versionAssembly: Assembly
-                        revisionFile: C:\revision.txt
                 ").CreateConfigForProcess("foo.exe");
             });
 
-            Assert.That(exception.Message, Contains.Substring("pdbDirectory").And.Contains("versionAssembly"));
+            Assert.That(exception.Message, Contains.Substring("revisionFile"));
         }
 
         [Test]
@@ -492,7 +468,7 @@ namespace UploadDaemon.Configuration
                         exclude: [ 'Bar' ]
             ").CreateConfigForProcess("foo.exe");
 
-            Assert.That(config.AssemblyPatterns.Describe(), Is.EqualTo("include=* exclude=Bar"));
+            Assert.That(config.AssemblyPatterns.Describe(), Is.EqualTo("[Pattern include=^.*$ exclude=^Bar$]"));
         }
 
         [Test]
@@ -510,7 +486,7 @@ namespace UploadDaemon.Configuration
                         include: [ 'Bar' ]
             ").CreateConfigForProcess("foo.exe");
 
-            Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("include=Bar exclude=").And.Contains("mscorlib"));
+            Assert.That(config.AssemblyPatterns.Describe(), Does.StartWith("[Pattern include=^Bar$ exclude=").And.Contains("^mscorlib$"));
         }
 
         [Test]

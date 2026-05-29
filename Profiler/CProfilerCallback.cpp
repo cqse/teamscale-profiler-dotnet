@@ -107,7 +107,7 @@ namespace Profiler {
 			return S_OK;
 		}
 
-		// Place the attach log next to the config and profiler dll
+		// Place the attach log next to the config
 		std::string configPath = StringUtils::removeLastPartOfPath(config.getConfigPath());
 		attachLog.createLogFile(configPath);
 		attachLog.logAttach();

@@ -5,15 +5,28 @@ Please prefix each entry with one of:
 - [fix]
 - [documentation]
 
-
 # Next Release
+- [breaking change] Removed feature to upload raw .NET trace files
+- [fix] .NET Framework subprocesses were not traced when UploadDaemon was active
+
+# v25.12.0
+- [fix] Removed feature to upload coverage to multiple Teamscale projects via embedded resources, as it unexpectedly locked DLL files
+
+# v25.08.0
+- [feature] Removed `--config-from-env` option from the Upload Daemon: now it defaults to the `COR_PROFILER_CONFIG` environment variable
+
+# v24.5.2
+- [fix] Assembly patterns could not match on full assembly name when using `@AssemblyDir` as PDB directory
+
+# v24.5.1
+- [fix] Upload Daemon uploaded to Artifactory in the wrong format
 
 # v24.5.0
 - [fix] Updated legacy API calls in Upload Daemon
 
 # v24.2.0
 - [fix] Log message when trace directory is not writable
-- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions. 
+- [feature] Added support to upload coverage to multiple Teamscale projects with different revisions.
 
 # v23.6.0
 - [feature] Support for uploading to artifactory with the Teamscale default artifact storage schema.

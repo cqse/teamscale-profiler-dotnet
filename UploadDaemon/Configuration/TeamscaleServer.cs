@@ -43,24 +43,6 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Message { get; set; } = "Test coverage for version %v from %p created at %t";
 
-        public TeamscaleServer(string targetProject, TeamscaleServer other)
-        {
-            Url = other.Url;
-            Project = targetProject;
-            Partition = other.Partition;
-            Username = other.Username;
-            AccessKey = other.AccessKey;
-            Message = other.Message;
-        }
-
-        /// <summary>
-        /// Needed only for automatic creation via yaml file.
-        /// </summary>
-        public TeamscaleServer()
-        {
-            // intentionally left blank.
-        }
-
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";
@@ -75,6 +57,10 @@ namespace UploadDaemon.Configuration
             if (Url == null)
             {
                 yield return @"You must provide a valid URL to connect to Teamscale";
+            }
+            if (Project == null)
+            {
+                yield return @"You must provide a project into which the coverage will be uploaded";
             }
             if (Username == null)
             {

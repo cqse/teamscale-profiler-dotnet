@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UploadDaemon.Scanning;
+using System.Linq;
 using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
@@ -57,11 +58,6 @@ namespace UploadDaemon.Configuration
             private readonly string ProcessPath;
 
             /// <summary>
-            /// The assembly from which to read the version number.
-            /// </summary>
-            public string VersionAssembly { get; private set; } = null;
-
-            /// <summary>
             /// The Teamscale server to upload to.
             /// </summary>
             public TeamscaleServer Teamscale { get; private set; } = null;
@@ -98,13 +94,6 @@ namespace UploadDaemon.Configuration
             public bool PartialCoverageReport { get; private set; } = false;
 
             /// <summary>
-            /// An optional prefix to prepend to the version before the upload.
-            /// Defaults to the empty string in case no prefix should be prepended.
-            /// This property is never null.
-            /// </summary>
-            public string VersionPrefix { get; set; } = string.Empty;
-
-            /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
             /// Defaults to null;
             /// </summary>
@@ -138,13 +127,11 @@ namespace UploadDaemon.Configuration
             /// </summary>
             public void ApplySection(ConfigParser.UploaderSubsection section)
             {
-                VersionAssembly = section.VersionAssembly ?? VersionAssembly;
                 Teamscale = section.Teamscale ?? Teamscale;
                 Directory = section.Directory ?? Directory;
                 AzureFileStorage = section.AzureFileStorage ?? AzureFileStorage;
                 Artifactory = section.Artifactory ?? Artifactory;
                 Enabled = section.Enabled ?? Enabled;
-                VersionPrefix = section.VersionPrefix ?? VersionPrefix;
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
@@ -177,19 +164,18 @@ namespace UploadDaemon.Configuration
                         @" or an Artifactory (property ""artifactory"")" +
                         @" to upload coverage files to.";
                 }
-                if (VersionAssembly != null && PdbDirectory != null)
+                if (PdbDirectory == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You configured both method coverage upload (via property ""versionAssembly"")" +
-                        @" and line coverage upload (via property ""pdbDirectory""). Please decide which you would" +
-                        @" like to use and remove the other.";
+                        @" You must provide the property ""pdbDirectory""" +
+                        @" to configure line coverage upload.";
                 }
-                if (VersionAssembly == null && PdbDirectory == null)
+                if (RevisionFile == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
-                        @" You must provide an assembly name (property ""versionAssembly""," +
-                        @" without the file extension) to read the program version from in order to upload method coverage." +
-                        @" Alternatively, you can configure line coverage upload (properties ""pdbDirectory"" and ""revisionFile"").";
+                        @" You provided a path to PDB files but no revision file (property ""revisionFile"")." +
+                        @" This file must contain the ID of the commit in your VCS from which the profiled code" +
+                        @" was built (e.g. for TFS: the changeset number, for Git: the SHA1) in the format `revision: COMMIT_ID`.";
                 }
             }
         }
@@ -292,6 +278,7 @@ namespace UploadDaemon.Configuration
                 throw new InvalidConfigException($"{e.Message}: The uploader will only watch for trace files in the targetdir" +
                     $" directories configured in {configFilePath}");
             }
+
         }
 
         /// <summary>
@@ -321,6 +308,7 @@ namespace UploadDaemon.Configuration
                 MatchesExecutablePathRegex(section, profiledProcessPath),
                 MatchesLoadedAssemblyPathRegex(section, assemblies),
             };
+
 
             // The section applies if at least one of the check criteria is set (!= null) and all of these are true.
             return checks.Where(check => check != null).All(check => check == true);

@@ -1,8 +1,8 @@
-Teamscale Ephemeral .NET Profiler
+Teamscale .NET Profiler
 [![Build status](https://github.com/cqse/teamscale-profiler-dotnet/actions/workflows/actions.yml/badge.svg)](https://github.com/cqse/teamscale-profiler-dotnet/actions/workflows/actions.yml)
 ===================================
 
-Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://www.cqse.eu/en/consulting/software-test-control/) in Teamscale.
+Lightweight profiler for .NET applications that provides method-level coverage information to support [Test Gap Analysis](https://teamscale.com/test-gap-analysis) in Teamscale.
 
 ## System Requirements
 
@@ -28,6 +28,8 @@ This way, the integration tests are run correctly against both variants.
 
 Automatic build and testing is performed in a GitHub action.
 
+For debugging tipps, please have a look [here](./documentation/userguide.md).
+
 ### Linking against System Libraries
 
 We use `#pragma comment(lib, "LIBRARYNAME.lib")` to specify link-time dependencies directly in the source file
@@ -40,7 +42,7 @@ So please don't add any linked libraries to the solution configuration unless ab
 
 The release process is automated with GitHub Releases and Appveyor:
 
-We use `YY.MM.revison` version scheme, e.g. `v18.2.0`.
+We use `YY.MM.revision` version scheme, e.g. `v18.2.0`.
 
 1. Edit `CHANGELOG.md` and create a new release section with all changes in the release.
 2. Commit the changes to master directly.

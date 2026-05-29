@@ -1,14 +1,15 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
 using UploadDaemon.Archiving;
+using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Scanning;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 using UploadDaemon.Report;
 using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
@@ -136,105 +137,35 @@ namespace UploadDaemon
             AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
             assemblyExtractor.ExtractAssemblies(traceFile.Lines);
             Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath, assemblyExtractor.Assemblies);
-
             IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
 
-            if (processConfig.PdbDirectory == null)
-            {
-                ProcessMethodCoverage(traceFile, archive, processConfig, upload);
-            }
-            else
-            {
-                ProcessLineCoverage(traceFile, assemblyExtractor, archive, config, processConfig, upload, coverageMerger);
-            }
+            ProcessLineCoverage(traceFile, assemblyExtractor, archive, config, processConfig, upload, coverageMerger);
         }
 
         private void ProcessLineCoverage(TraceFile traceFile, AssemblyExtractor assemblyExtractor, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", traceFile.FilePath, upload.Describe());
+            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(parsedTraceFile, processConfig, assemblyExtractor);
             ICoverageReport coverageReport = ConvertTraceToCoverageReport(traceFile, archive, processConfig, assemblyExtractor);
-            if (coverageReport == null)
+            if (timestampOrRevision == null || coverageReport == null)
             {
                 return;
             }
+
             if (config.ArchiveLineCoverage)
             {
                 archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);
             }
 
-            List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets = ParseRevisionFile(traceFile.FilePath, processConfig, assemblyExtractor);
-            uploadTargets.AddRange(assemblyExtractor.EmbeddedUploadTargets);
-
-
-            
-            if (uploadTargets.Any())
-            {
-                ProcessUploadTargets(uploadTargets, traceFile, archive, coverageMerger, processConfig, upload, coverageReport);
-            }
-            else
-            {
-                logger.Error("Could not identify any revision target for {traceFile}.", traceFile.FilePath);
-            }
-        }
-
-        /// <summary>
-        /// Tries to read the revision or upload target file based on the config (absolute path, or relative to loaded assemblies).
-        /// </summary>
-        private List<(string project, RevisionOrTimestamp revisionOrTimestamp)> ParseRevisionFile(string traceFilePath, Config.ConfigForProcess processConfig, AssemblyExtractor assemblyExtractor)
-        {
-            string revisionFile = processConfig.RevisionFile;
-            if (revisionFile == null)
-            {
-                logger.Info("No revision file found.");
-                return new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>();
-            }
-            if (Config.IsAssemblyRelativePath(revisionFile))
-            {
-                foreach (KeyValuePair<uint, (string, string)> entry in assemblyExtractor.Assemblies)
-                {
-                    string resolvedRevisionFile = Config.ResolveAssemblyRelativePath(revisionFile, entry.Value.Item2);
-                    if (File.Exists(resolvedRevisionFile))
-                    {
-                        logger.Info("Using revision file {revisionFile} while processing {traceFile}.", resolvedRevisionFile, traceFilePath);
-                        revisionFile = resolvedRevisionFile;
-                        break;
-                    }
-                }
-            }
-            return new List<(string project, RevisionOrTimestamp revisionOrTimestamp)>()
-                {
-                    ("", ParseRevisionFile(revisionFile, traceFilePath))
-                };
-        }
-
-        private void ProcessUploadTargets(List<(string project, RevisionOrTimestamp revisionOrTimestamp)> uploadTargets, TraceFile traceFile, Archive archive, LineCoverageMerger coverageMerger, Config.ConfigForProcess processConfig, IUpload upload, ICoverageReport coverageReport)
-        {
-            foreach ((string project, RevisionOrTimestamp revisionOrTimestamp) in uploadTargets)
-            {
-                if (revisionOrTimestamp == null)
-                {
-                    logger.Error("Invalid revision for {traceFile}.", traceFile.FilePath);
-                    continue;
-                }
-                if (!String.IsNullOrEmpty(project))
-                {
-                    upload = (upload as TeamscaleUpload).CopyWithNewProject(project);
-                }
-                ProcessForRevisionOrTimestamp(revisionOrTimestamp, traceFile, archive, coverageMerger, processConfig, upload, coverageReport);
-            }
-        }
-
-        private void ProcessForRevisionOrTimestamp(RevisionOrTimestamp revisionOrTimestamp, TraceFile parsedTraceFile, Archive archive, LineCoverageMerger coverageMerger, Config.ConfigForProcess processConfig, IUpload upload, ICoverageReport coverageReport)
-        {
             if (processConfig.MergeLineCoverage)
             {
                 logger.Debug("Merging line coverage from {traceFile} into previous line coverage", parsedTraceFile.FilePath);
-                coverageMerger.AddLineCoverage(parsedTraceFile.FilePath, revisionOrTimestamp, upload, coverageReport);
+                coverageMerger.AddLineCoverage(parsedTraceFile.FilePath, timestampOrRevision, upload, coverageReport);
                 return;
             }
 
             logger.Debug("Uploading line coverage from {traceFile} to {upload}", parsedTraceFile.FilePath, upload.Describe());
-            if (RunSync(upload.UploadLineCoverageAsync(parsedTraceFile.FilePath, coverageReport, revisionOrTimestamp)))
+            if (RunSync(upload.UploadLineCoverageAsync(parsedTraceFile.FilePath, coverageReport, timestampOrRevision)))
             {
                 archive.ArchiveUploadedFile(parsedTraceFile.FilePath);
             }
@@ -244,14 +175,66 @@ namespace UploadDaemon
             }
         }
 
+
+        /// <summary>
+        /// Tries to read the revision or upload target file based on the config (absolute path, or relative to loaded assemblies).
+        /// </summary>
+        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(string traceFilePath, Config.ConfigForProcess processConfig, AssemblyExtractor assemblyExtractor)
+        {
+            string revisionFile = processConfig.RevisionFile;
+            if (revisionFile == null)
+            {
+                logger.Info("No revision file found.");
+                return null;
+            }
+            if (Config.IsAssemblyRelativePath(revisionFile))
+            {
+                foreach (KeyValuePair<uint, (string, string)> entry in assemblyExtractor.Assemblies)
+                {
+                    string resolvedRevisionFile = Config.ResolveAssemblyRelativePath(revisionFile, entry.Value.Item2);
+                    if (File.Exists(resolvedRevisionFile))
+                    {
+                        logger.Info("Using revision file {revisionFile} while processing {traceFile}.", resolvedRevisionFile, traceFilePath);
+                        return ParseRevisionFile(resolvedRevisionFile, traceFilePath);
+                    }
+                }
+            }
+            return ParseRevisionFile(revisionFile, traceFilePath);
+        }
+
+        /// <summary>
+        /// Tries to read the revision file based on the config (absolute path, or relative to loaded assemblies).
+        /// Logs and returns null if this fails.
+        /// </summary>
+        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(ParsedTraceFile parsedTraceFile, Config.ConfigForProcess processConfig)
+        {
+            if (!Config.IsAssemblyRelativePath(processConfig.RevisionFile))
+            {
+                return ParseRevisionFile(processConfig.RevisionFile, parsedTraceFile.FilePath);
+            }
+
+            foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
+            {
+                string revisionFile = Config.ResolveAssemblyRelativePath(processConfig.RevisionFile, path);
+                if (File.Exists(revisionFile))
+                {
+                    logger.Info("Using revision file {revisionFile} while processing {traceFile}.", revisionFile, parsedTraceFile.FilePath);
+                    return ParseRevisionFile(revisionFile, parsedTraceFile.FilePath);
+                }
+            }
+
+            logger.Error("Failed to find revision file {revisionFile} while processing {traceFile}.", processConfig.RevisionFile, parsedTraceFile.FilePath);
+            return null;
+        }
+
         /// <summary>
         /// Tries to read the revision file. Logs and returns null if this fails.
         /// </summary>
-        private RevisionOrTimestamp ParseRevisionFile(string revisionFile, string traceFile)
+        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(string revisionFile, string traceFile)
         {
             try
             {
-                return Parse(fileSystem.File.ReadAllLines(revisionFile), revisionFile);
+                return RevisionFileUtils.Parse(fileSystem.File.ReadAllLines(revisionFile), revisionFile);
             }
             catch (Exception e)
             {
@@ -289,37 +272,13 @@ namespace UploadDaemon
             return report;
         }
 
-        private static void ProcessMethodCoverage(TraceFile trace, Archive archive, Config.ConfigForProcess processConfig, IUpload upload)
-        {
-            string version = trace.FindVersion(processConfig.VersionAssembly);
-            if (version == null)
-            {
-                logger.Info("Archiving {trace} because it does not contain the version assembly {versionAssembly}",
-                    trace.FilePath, processConfig.VersionAssembly);
-                archive.ArchiveFileWithoutVersionAssembly(trace.FilePath);
-                return;
-            }
-
-            string prefixedVersion = processConfig.VersionPrefix + version;
-            logger.Info("Uploading {trace} to {upload} with version {version}", trace.FilePath, upload.Describe(), prefixedVersion);
-
-            if (RunSync(upload.UploadAsync(trace.FilePath, prefixedVersion)))
-            {
-                archive.ArchiveUploadedFile(trace.FilePath);
-            }
-            else
-            {
-                logger.Error("Upload of {trace} to {upload} failed. Will retry later", trace.FilePath, upload.Describe());
-            }
-        }
-
         /// <summary>
         /// Runs a task synchronously. We want to be blocking until uploads finish, because otherwise uploads may not
         /// finish before the daemon terminates or may happen in parallel. This was always our intention, but we kept
         /// forgetting awaits all over the place. Therefore, we explicitly wait for uploads now here and there's no
         /// need to await anything further up the call stack.
         /// </summary>
-        private static T RunSync<T>(Task<T> task)
+        static T RunSync<T>(Task<T> task)
         {
             task.Wait();
             return task.Result;
