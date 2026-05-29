@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UploadDaemon.Report;
-using UploadDaemon.Report.Simple;
 using UploadDaemon.Report.Testwise;
 
 namespace UploadDaemon.Scanning

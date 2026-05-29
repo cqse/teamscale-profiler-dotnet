@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using UploadDaemon.Configuration;
-using UploadDaemon.Report.Simple;
+﻿using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
-using static UploadDaemon.SymbolAnalysis.RevisionFileUtils;
 
 namespace UploadDaemon.SymbolAnalysis
 {

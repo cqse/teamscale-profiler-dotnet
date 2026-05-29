@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Timers;
 using UploadDaemon.Archiving;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 using UploadDaemon.Configuration;
 

@@ -1,15 +1,11 @@
-﻿using NLog;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace UploadDaemon.Scanning
 {
     public class AssemblyExtractor
     {
-        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
         private static readonly Regex AssemblyLineRegex = new Regex(@"^Assembly=(?<name>[^:]+):(?<id>\d+).*?(?: Path:(?<path>.*))?$");
 
         public readonly Dictionary<uint, (string name, string path)> Assemblies = new Dictionary<uint, (string name, string path)>();

@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using UploadDaemon.Scanning;
 using System.Linq;
-using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {

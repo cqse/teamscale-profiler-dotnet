@@ -1,17 +1,11 @@
 using NLog;
 using System;
-using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Report;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.ComTypes;
-using System.Linq;
-using System.Runtime.Serialization.Json;
-using Newtonsoft.Json;
 using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Upload

@@ -10,7 +10,6 @@ using UploadDaemon.Configuration;
 using UploadDaemon.Report;
 using System.IO.Compression;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace UploadDaemon.Upload
 {

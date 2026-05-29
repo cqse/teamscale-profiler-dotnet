@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -47,16 +48,17 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ConsidersSymbolFileIncludesFromTraceFile()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[]
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(new string[]
             {
             $"Assembly=Cqse.Teamscale.Profiler.Commons:2 Version:1.0.0.0 Path:{TestSymbolFilePath}",
-            }, "cov.txt");
+            });
 
-            SymbolCollection collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+            SymbolCollection collection = resolver.ResolveFromTraceFile(assemblyExtractor, "@AssemblyDir",
                    new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> { }));
             Assert.That(collection.IsEmpty, Is.True);
 
-            collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+            collection = resolver.ResolveFromTraceFile(assemblyExtractor, "@AssemblyDir",
                    new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
             Assert.That(collection.IsEmpty, Is.False);
         }

@@ -2,7 +2,6 @@
 using Microsoft.Azure.Storage.File;
 using NLog;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;

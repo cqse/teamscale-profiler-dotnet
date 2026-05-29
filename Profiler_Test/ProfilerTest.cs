@@ -2,7 +2,6 @@
 using Cqse.Teamscale.Profiler.Dotnet.Proxies;
 using Cqse.Teamscale.Profiler.Dotnet.Tia;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
