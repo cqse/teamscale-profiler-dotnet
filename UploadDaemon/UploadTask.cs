@@ -147,8 +147,15 @@ namespace UploadDaemon
             logger.Debug("Preparing line coverage from {traceFile} for {upload}", traceFile.FilePath, upload.Describe());
             RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(traceFile.FilePath, processConfig, assemblyExtractor);
             ICoverageReport coverageReport = ConvertTraceToCoverageReport(traceFile, archive, processConfig, assemblyExtractor);
-            if (timestampOrRevision == null || coverageReport == null)
+            if (timestampOrRevision == null)
             {
+                logger.Debug("No timestamp or revision found for {traceFile}, will retry", traceFile.FilePath);
+                return;
+            }
+                
+            if (coverageReport == null)
+            {
+                logger.Debug("Failed to parse {traceFile}, will retry", traceFile.FilePath);
                 return;
             }
 

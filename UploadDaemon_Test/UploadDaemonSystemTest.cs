@@ -17,7 +17,6 @@ namespace UploadDaemon
         private static string TargetDir => Path.Combine(TestUtils.TestTempDirectory, "targetdir");
         private static string UploadDir => Path.Combine(TestUtils.TestTempDirectory, "upload");
         private static string RevisionFile => Path.Combine(TestUtils.TestTempDirectory, "revision.txt");
-        private static string TestProgramRoot => Path.Combine(TestUtils.SolutionRoot.FullName, "test-data", "test-programs");
         private static string PdbDirectory => TestUtils.TestDataDirectory;
 
         [SetUp]
@@ -99,9 +98,10 @@ Inlined=2:{ExistingMethodToken}");
         [Test]
         public void TestArchivePurging()
         {
+            File.WriteAllText(RevisionFile, @"revision: 12345");
             File.WriteAllText(Path.Combine(TargetDir, "coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050");
+Inlined=33555646:100678050");
             File.WriteAllText(Path.Combine(TargetDir, "coverage_1_2.txt"), @"");
 
             new UploadDaemon().RunOnce(Config.Read($@"

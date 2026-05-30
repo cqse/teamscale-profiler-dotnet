@@ -41,7 +41,6 @@ namespace UploadDaemon.Report
         [Test]
         public void MergesSameTestsResult()
         {
-            DateTime now = DateTime.Now;
             TestwiseCoverageReport report1 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file1.cs", (10, 20))) { Result = "PASSED" } });
             TestwiseCoverageReport report2 = new TestwiseCoverageReport(new Test[] { new Test("Test1", new File("file2.cs", (10, 20))) { Result = "SKIPPED" } });
 

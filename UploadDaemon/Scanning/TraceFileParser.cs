@@ -151,7 +151,7 @@ namespace UploadDaemon.Scanning
 
         private void HandleCoverageLine(string coverage)
         {
-            String[] coverageMatch = coverage.Split(new[] {':'}, count: 2);
+            string[] coverageMatch = coverage.Split(new[] {':'}, count: 2);
             uint assemblyId = Convert.ToUInt32(coverageMatch[0]);
             if (!Assemblies.TryGetValue(assemblyId, out (string, string) entry))
             {

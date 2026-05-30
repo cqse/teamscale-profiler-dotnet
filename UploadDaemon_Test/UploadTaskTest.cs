@@ -151,7 +151,7 @@ Process=foo.exe" },
         {
             { FileInTraceDirectoryWithSpace("coverage_1_1.txt"), @"Assembly=VersionAssembly:1 Version:4.0.0.0
 Process=foo.exe
-Inlined=1:33555646:100678050" },
+Inlined=33555646:100678050" },
             { mockedRevisionFile, "timestamp: 123456" }
         });
 
