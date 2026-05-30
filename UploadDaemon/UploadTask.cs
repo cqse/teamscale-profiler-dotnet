@@ -24,11 +24,13 @@ namespace UploadDaemon
 
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
+        private readonly ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory;
 
-        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory)
+        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory)
         {
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
+            this.lineCoverageSynthesizerFactory = lineCoverageSynthesizerFactory;
         }
 
         /// <summary>
@@ -226,8 +228,8 @@ namespace UploadDaemon
             ICoverageReport report;
             try
             {
-                LineCoverageSynthesizer lineCoverageSynthesizer = new LineCoverageSynthesizer(assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
-                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, lineCoverageSynthesizer, processConfig.PartialCoverageReport).ParseTraceFile();
+                ILineCoverageSynthesizer synthesizer = lineCoverageSynthesizerFactory.Create(assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, synthesizer, processConfig.PartialCoverageReport).ParseTraceFile();
             }
             catch (Exception e)
             {

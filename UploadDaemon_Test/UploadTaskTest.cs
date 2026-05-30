@@ -59,7 +59,7 @@ Inlined=1:33555646" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(true)).Run(lineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(true), SynthesizerReturning(NonEmptyLineCoverage())).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt");
         }
@@ -76,7 +76,7 @@ Inlined=1:33555646" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(false)).Run(lineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(false), SynthesizerReturning(NonEmptyLineCoverage())).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"coverage_1_1.txt");
         }
@@ -93,7 +93,7 @@ Inlined=1:33555646" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(true)).Run(lineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(true), SynthesizerReturning(EmptyLineCoverage())).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"no-line-coverage\coverage_1_1.txt");
         }
@@ -110,7 +110,7 @@ Inlined=1:33555646" },
             { PdbDirectory, new MockDirectoryData() },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(true)).Run(archiveLineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(true), SynthesizerReturning(NonEmptyLineCoverage())).Run(archiveLineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"uploaded\coverage_1_1.txt", @"converted-coverage\coverage_1_1.txt_1.simple");
         }
@@ -124,7 +124,7 @@ Inlined=1:33555646" },
 Inlined=1:33555646" },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(false)).Run(lineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(false), new LineCoverageSynthesizerFactory()).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"missing-process\coverage_1_1.txt");
         }
@@ -138,7 +138,7 @@ Inlined=1:33555646" },
 Process=foo.exe" },
         });
 
-            new UploadTask(fileSystem, new MockUploadFactory(true)).Run(lineCoverageConfig);
+            new UploadTask(fileSystem, new MockUploadFactory(true), new LineCoverageSynthesizerFactory()).Run(lineCoverageConfig);
 
             AssertFilesInDirectory(fileSystem, TraceDirectory, @"empty-traces\coverage_1_1.txt");
         }
@@ -165,7 +165,7 @@ Inlined=1:33555646:100678050" },
                   targetdir: {TraceDirectoryWithSpace}
         ");
 
-            new UploadTask(fileSystem, new MockUploadFactory(true)).Run(configWithSpaceInTraceDirectory);
+            new UploadTask(fileSystem, new MockUploadFactory(true), SynthesizerReturning(NonEmptyLineCoverage())).Run(configWithSpaceInTraceDirectory);
 
             AssertFilesInDirectory(fileSystem, TraceDirectoryWithSpace, @"uploaded\coverage_1_1.txt", "revision.txt");
         }
@@ -186,6 +186,31 @@ Inlined=1:33555646:100678050" },
             {
                 return uploadMock.Object;
             }
+        }
+
+        /// <summary>
+        /// A line coverage synthesizer factory whose synthesizer always returns the given report, so tests can
+        /// control the synthesis outcome without scanning real PDB files.
+        /// </summary>
+        private static ILineCoverageSynthesizerFactory SynthesizerReturning(SimpleCoverageReport report)
+        {
+            Mock<ILineCoverageSynthesizer> synthesizer = new Mock<ILineCoverageSynthesizer>();
+            synthesizer.Setup(s => s.ConvertToLineCoverage(It.IsAny<Trace>())).Returns(report);
+
+            Mock<ILineCoverageSynthesizerFactory> factory = new Mock<ILineCoverageSynthesizerFactory>();
+            factory.Setup(f => f.Create(It.IsAny<AssemblyExtractor>(), It.IsAny<string>(), It.IsAny<GlobPatternList>()))
+                .Returns(synthesizer.Object);
+            return factory.Object;
+        }
+
+        private static SimpleCoverageReport NonEmptyLineCoverage()
+        {
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage> { { "File1.cs", new FileCoverage((1, 2)) } });
+        }
+
+        private static SimpleCoverageReport EmptyLineCoverage()
+        {
+            return new SimpleCoverageReport(new Dictionary<string, FileCoverage>());
         }
 
         /// <summary>

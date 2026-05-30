@@ -155,8 +155,10 @@
     <Compile Include="Report\Simple\FileCoverage.cs" />
     <Compile Include="Archiving\PurgeArchiveTask.cs" />
     <Compile Include="SymbolAnalysis\ILineCoverageSynthesizer.cs" />
+    <Compile Include="SymbolAnalysis\ILineCoverageSynthesizerFactory.cs" />
     <Compile Include="SymbolAnalysis\RevisionFileUtils.cs" />
     <Compile Include="SymbolAnalysis\LineCoverageSynthesizer.cs" />
+    <Compile Include="SymbolAnalysis\LineCoverageSynthesizerFactory.cs" />
     <Compile Include="SymbolAnalysis\SymbolCollection.cs" />
     <Compile Include="UploadTask.cs" />
     <Compile Include="Scanning\TraceFile.cs" />
