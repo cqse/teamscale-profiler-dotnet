@@ -60,11 +60,11 @@ namespace UploadDaemon.Upload
                     string covFileName = "";
                     if (coverageReport.UploadFormat == "SIMPLE")
                     {
-                        covFileName = $"{artifactory.Partition}/simple_{i + 1}.txt";
+                        covFileName = $"{artifactory.Partition}/SIMPLE/simple_{i + 1}.txt";
                     }
                     else
                     {
-                        covFileName = $"{artifactory.Partition}/testwise_{i + 1}.json";
+                        covFileName = $"{artifactory.Partition}/TESTWISE_COVERAGE/testwise_{i + 1}.json";
                     }
                     byte[] reportBytes = CreateZipFile(reports[i], covFileName);
 

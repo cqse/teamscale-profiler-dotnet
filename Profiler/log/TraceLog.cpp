@@ -39,7 +39,7 @@ namespace Profiler {
 
 	void TraceLog::writeFunctionInfosToLog(const std::string& key, const std::vector<FunctionInfo>& functions) {
 		std::stringstream stream;
-		const std::string endLine = "\r\n";
+		const std::string endLine = "\n";
 		for (const FunctionInfo& function : functions) {
 			stream << key << '=' << function.assemblyNumber << ':' << function.functionToken << endLine;
 		}

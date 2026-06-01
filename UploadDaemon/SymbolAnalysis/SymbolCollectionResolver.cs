@@ -106,9 +106,9 @@ namespace UploadDaemon.SymbolAnalysis
 
         private bool IsValid(SymbolCollection collection, string symbolDirectory, GlobPatternList assemblyPatterns)
         {
-            // For performance reasony, we only recheck every hour.
+            // For performance reasons, we only recheck every hour.
             long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (lastAssemblyCheckTime - now > ONE_HOUR)
+            if (now - lastAssemblyCheckTime > ONE_HOUR)
             {
                 lastAssemblyCheckTime = now;
                 ICollection<SymbolFileInfo> relevantSymbolFiles = FindRelevantSymbolFiles(symbolDirectory, assemblyPatterns);

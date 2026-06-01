@@ -54,6 +54,7 @@ namespace UploadDaemon.Scanning
             bool testwise = false;
             foreach (string line in Lines)
             {
+                if (string.IsNullOrEmpty(line)) continue;
                 string[] keyValuePair = line.Split(new[] { '=' }, count: 2);
                 string key = keyValuePair[0];
                 string value = keyValuePair[1];

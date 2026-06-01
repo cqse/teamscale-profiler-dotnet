@@ -109,6 +109,18 @@ namespace UploadDaemon.SymbolAnalysis
                     continue;
                 }
 
+                // TODO This only skips invalid source locations as a workaround. The root cause (start line greater than
+                // end line for methods whose PDB sequence points are non-contiguous) should be fixed with TS-46522.
+                else if (sourceLocation.StartLine > sourceLocation.EndLine)
+                {
+                    logger.Error("Resolved an invalid source location for method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
+                        " with symbols from {symbolDirectory} with {assemblyPatterns}: the start line {startLine} is greater than the end line {endLine} in source file {sourceFile}." +
+                        " This indicates broken or inconsistent PDB symbol information. Skipping this method; it will not be included in the coverage report.",
+                        methodId, assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe(),
+                        sourceLocation.StartLine, sourceLocation.EndLine, sourceLocation.SourceFile);
+                    continue;
+                }
+
                 count.resolvedMethods += 1;
                 AddToLineCoverage(lineCoverageByFile, sourceLocation);
             }
