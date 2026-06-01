@@ -13,7 +13,7 @@ namespace UploadDaemon.Scanning
     public class TraceFileParser
     {
         private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
-        private const string NO_TEST = "No Test";
+        private const string NO_TEST = "Coverage Outside Tests";
 
         private static readonly Regex TestCaseStartRegex = new Regex(@"Start:(?<date>[^:]+):(?<testname>.+)");
         private static readonly Regex TestCaseEndRegex = new Regex(@"End:(?<date>[^:]+):(?<testresult>[^:]+)(?::(?<duration>\d+))?");
@@ -28,7 +28,7 @@ namespace UploadDaemon.Scanning
         private readonly IList<Test> Tests = new List<Test>();
 
         private DateTime TraceStart = default;
-        private string CurrentTestName = "No Test";
+        private string CurrentTestName = NO_TEST;
         private Trace CurrentTestTrace;
 
 

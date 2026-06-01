@@ -188,7 +188,7 @@ namespace UploadDaemon.Scanning
             Assert.That(report, Is.InstanceOf<TestwiseCoverageReport>());
             TestwiseCoverageReport testwiseReport = (TestwiseCoverageReport)report;
             Assert.That(testwiseReport.Tests, Has.Length.EqualTo(3));
-            Assert.That(testwiseReport.Tests[2].UniformPath, Is.EqualTo("No Test"));
+            Assert.That(testwiseReport.Tests[2].UniformPath, Is.EqualTo("Coverage Outside Tests"));
             Assert.That(testwiseReport.Tests[2].Result, Is.EqualTo("SKIPPED"));
             Assert.That(testwiseReport.Tests[2].Duration, Is.EqualTo(6));
             Assert.That(trace.CoveredMethods, Has.Count.EqualTo(3));
