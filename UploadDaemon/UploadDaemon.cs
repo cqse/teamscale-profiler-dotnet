@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Timers;
 using UploadDaemon.Archiving;
-using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 using UploadDaemon.Configuration;
 
@@ -137,7 +136,7 @@ namespace UploadDaemon
             lock (SequentialUploadsLock)
             {
                 var fileSystem = new FileSystem();
-                new UploadTask(fileSystem, new UploadFactory(), new LineCoverageSynthesizer()).Run(config);
+                new UploadTask(fileSystem, new UploadFactory(), new SymbolAnalysis.LineCoverageSynthesizerFactory()).Run(config);
                 new PurgeArchiveTask(new ArchiveFactory(fileSystem, new DefaultDateTimeProvider())).Run(config);
             }
         }

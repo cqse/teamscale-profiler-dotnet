@@ -1,11 +1,11 @@
 using NLog;
 using System;
-using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Report;
+using System.Collections.Generic;
 using UploadDaemon.Configuration;
 
 namespace UploadDaemon.Upload
@@ -35,7 +35,8 @@ namespace UploadDaemon.Upload
             return server.ToString();
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             string timestampParameter;
             if (revisionOrTimestamp.IsRevision)
@@ -52,7 +53,8 @@ namespace UploadDaemon.Upload
             string encodedProject = HttpUtility.UrlEncode(server.Project);
             string encodedTimestamp = HttpUtility.UrlEncode(revisionOrTimestamp.Value);
             string encodedPartition = HttpUtility.UrlEncode(server.Partition);
-            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format=SIMPLE" +
+            string encodedFormat = HttpUtility.UrlEncode(coverageReport.UploadFormat);
+            string url = $"{server.Url}/api/projects/{encodedProject}/external-analysis/session/auto-create/report?format={encodedFormat}" +
                 $"&message={encodedMessage}&partition={encodedPartition}" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
@@ -60,11 +62,9 @@ namespace UploadDaemon.Upload
 
             try
             {
-                byte[] reportBytes = Encoding.UTF8.GetBytes(lineCoverageReport);
-                using (MemoryStream stream = new MemoryStream(reportBytes))
-                {
-                    return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, stream);
-                }
+                List<string> reports = coverageReport.ToStringList();
+                string reportFileName = $"report.{coverageReport.FileExtension}";
+                return await PerformLineCoverageUpload(originalTraceFilePath, timestampParameter, revisionOrTimestamp.Value, url, reports, reportFileName);
             }
             catch (Exception e)
             {
@@ -74,9 +74,9 @@ namespace UploadDaemon.Upload
             }
         }
 
-        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, MemoryStream stream)
+        private async Task<bool> PerformLineCoverageUpload(string originalTraceFilePath, string timestampParameter, string timestampValue, string url, List<string> reports, string reportFileName)
         {
-            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPart(client, url, "report", stream, "report.simple"))
+            using (HttpResponseMessage response = await HttpClientUtils.UploadMultiPartList(client, url, "report", reports, reportFileName))
             {
                 if (response.IsSuccessStatusCode)
                 {

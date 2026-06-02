@@ -2,10 +2,11 @@
 using Microsoft.Azure.Storage.File;
 using NLog;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
+using UploadDaemon.Report;
+using System.Collections.Generic;
 
 namespace UploadDaemon.Upload
 {
@@ -84,7 +85,8 @@ namespace UploadDaemon.Upload
             return $"Azure share {storage.ShareName}, directory {storage.Directory}";
         }
 
-        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, string lineCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        /// <inheritDoc/>
+        public async Task<bool> UploadLineCoverageAsync(string originalTraceFilePath, ICoverageReport coverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
         {
             try
             {
@@ -94,9 +96,14 @@ namespace UploadDaemon.Upload
 
                 CloudFileShare share = await GetOrCreateShareAsync(account);
                 CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
+
+                List<String> reports = coverageReport.ToStringList();
                 long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await UploadTextAsync(lineCoverageReport, $"{unixSeconds}.simple", directory);
-                await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}.metadata", directory);
+                for (int i = 0; i < reports.Count; i++)
+                {
+                    await UploadTextAsync(reports[i], $"{unixSeconds}_{i}.{coverageReport.FileExtension}", directory);
+                    await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}_{i}.metadata", directory);
+                }
 
                 logger.Info("Successfully uploaded line coverage from {trace} to {azure}/{directory}", originalTraceFilePath,
                     account.FileStorageUri, storage.Directory);

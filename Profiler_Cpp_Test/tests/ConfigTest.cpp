@@ -2,6 +2,7 @@
 #include "CppUnitTest.h"
 #include "config/Config.h"
 
+using namespace Profiler;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 TEST_CLASS(ConfigTest)

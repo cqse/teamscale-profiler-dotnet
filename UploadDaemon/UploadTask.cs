@@ -10,7 +10,8 @@ using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Configuration;
 using UploadDaemon.Scanning;
 using UploadDaemon.Upload;
-using System.Diagnostics;
+using UploadDaemon.Report;
+using File = System.IO.File;
 
 namespace UploadDaemon
 {
@@ -23,13 +24,13 @@ namespace UploadDaemon
 
         private readonly IFileSystem fileSystem;
         private readonly IUploadFactory uploadFactory;
-        private readonly ILineCoverageSynthesizer lineCoverageSynthesizer;
+        private readonly ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory;
 
-        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizer lineCoverageSynthesizer)
+        public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory)
         {
             this.fileSystem = fileSystem;
             this.uploadFactory = uploadFactory;
-            this.lineCoverageSynthesizer = lineCoverageSynthesizer;
+            this.lineCoverageSynthesizerFactory = lineCoverageSynthesizerFactory;
         }
 
         /// <summary>
@@ -53,16 +54,16 @@ namespace UploadDaemon
 
             IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
             List<string> errorTraceFilePaths = new List<string>();
-            foreach (TraceFile trace in traces)
+            foreach (TraceFile traceFile in traces)
             {
                 try
                 {
-                    ProcessTraceFile(trace, archive, config, coverageMerger);
+                    ProcessTraceFile(traceFile, archive, config, coverageMerger);
                 }
                 catch (Exception e)
                 {
-                    logger.Debug(e, "Failed to process trace file {trace}. Will retry later", trace.FilePath);
-                    errorTraceFilePaths.Add(trace.FilePath);
+                    logger.Debug(e, "Failed to process trace file {trace}. Will retry later", traceFile.FilePath);
+                    errorTraceFilePaths.Add(traceFile.FilePath);
                 }
             }
             if (errorTraceFilePaths.Count > 0)
@@ -95,14 +96,14 @@ namespace UploadDaemon
         {
             logger.Debug("Uploading merged line coverage from {traceFile} to {upload}",
                                 string.Join(", ", batch.TraceFilePaths), batch.Upload.Describe());
-            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(batch.LineCoverage);
+            ICoverageReport report = batch.AggregatedCoverageReport;
 
             string traceFilePaths = string.Join(", ", batch.TraceFilePaths);
 
             if (config.ArchiveLineCoverage)
             {
                 long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                archive.ArchiveLineCoverage($"merged_{timestamp}.simple", report);
+                archive.ArchiveCoverageReport($"merged_{timestamp}", report);
             }
 
             if (RunSync(batch.Upload.UploadLineCoverageAsync(traceFilePaths, report, batch.RevisionOrTimestamp)))
@@ -118,88 +119,94 @@ namespace UploadDaemon
             }
         }
 
-        private void ProcessTraceFile(TraceFile trace, Archive archive, Config config, LineCoverageMerger coverageMerger)
+        private void ProcessTraceFile(TraceFile traceFile, Archive archive, Config config, LineCoverageMerger coverageMerger)
         {
-            if (trace.IsEmpty())
+            if (traceFile.IsEmpty())
             {
-                logger.Info("Archiving {trace} because it does not contain any coverage", trace.FilePath);
-                archive.ArchiveEmptyFile(trace.FilePath);
+                logger.Info("Archiving {trace} because it does not contain any coverage", traceFile.FilePath);
+                archive.ArchiveEmptyFile(traceFile.FilePath);
                 return;
             }
-
-            string processPath = trace.FindProcessPath();
+            string processPath = traceFile.FindProcessPath();
             if (processPath == null)
             {
-                logger.Info("Archiving {trace} because it does not contain a Process= line", trace.FilePath);
-                archive.ArchiveFileWithoutProcess(trace.FilePath);
+                logger.Info("Archiving {trace} because it does not contain a Process= line", traceFile.FilePath);
+                archive.ArchiveFileWithoutProcess(traceFile.FilePath);
                 return;
             }
-
-            ParsedTraceFile parsedTraceFile = new ParsedTraceFile(trace.Lines, trace.FilePath);
-            Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath, parsedTraceFile);
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
+            Config.ConfigForProcess processConfig = config.CreateConfigForProcess(processPath, assemblyExtractor.Assemblies);
             IUpload upload = uploadFactory.CreateUpload(processConfig, fileSystem);
 
-            ProcessLineCoverage(parsedTraceFile, archive, config, processConfig, upload, coverageMerger);
+            ProcessLineCoverage(traceFile, assemblyExtractor, archive, config, processConfig, upload, coverageMerger);
         }
 
-        private void ProcessLineCoverage(ParsedTraceFile parsedTraceFile, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
+        private void ProcessLineCoverage(TraceFile traceFile, AssemblyExtractor assemblyExtractor, Archive archive, Config config, Config.ConfigForProcess processConfig, IUpload upload, LineCoverageMerger coverageMerger)
         {
-            logger.Debug("Preparing line coverage from {traceFile} for {upload}", parsedTraceFile.FilePath, upload.Describe());
-            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(parsedTraceFile, processConfig);
-            Dictionary<string, FileCoverage> lineCoverage = ConvertTraceFileToLineCoverage(parsedTraceFile, archive, processConfig);
-            if (timestampOrRevision == null || lineCoverage == null)
+            logger.Debug("Preparing line coverage from {traceFile} for {upload}", traceFile.FilePath, upload.Describe());
+            RevisionFileUtils.RevisionOrTimestamp timestampOrRevision = ParseRevisionFile(traceFile.FilePath, processConfig, assemblyExtractor);
+            ICoverageReport coverageReport = ConvertTraceToCoverageReport(traceFile, archive, processConfig, assemblyExtractor);
+            if (timestampOrRevision == null)
             {
+                logger.Debug("No timestamp or revision found for {traceFile}, will retry", traceFile.FilePath);
+                return;
+            }
+                
+            if (coverageReport == null)
+            {
+                logger.Debug("Failed to parse {traceFile}, will retry", traceFile.FilePath);
                 return;
             }
 
             if (config.ArchiveLineCoverage)
             {
-                archive.ArchiveLineCoverage(Path.GetFileName(parsedTraceFile.FilePath) + ".simple",
-                    LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage));
+                archive.ArchiveCoverageReport(Path.GetFileName(traceFile.FilePath), coverageReport);
             }
 
             if (processConfig.MergeLineCoverage)
             {
-                logger.Debug("Merging line coverage from {traceFile} into previous line coverage", parsedTraceFile.FilePath);
-                coverageMerger.AddLineCoverage(parsedTraceFile.FilePath, timestampOrRevision, upload, lineCoverage);
+                logger.Debug("Merging line coverage from {traceFile} into previous line coverage", traceFile.FilePath);
+                coverageMerger.AddLineCoverage(traceFile.FilePath, timestampOrRevision, upload, coverageReport);
                 return;
             }
 
-            logger.Debug("Uploading line coverage from {traceFile} to {upload}", parsedTraceFile.FilePath, upload.Describe());
-            string report = LineCoverageSynthesizer.ConvertToLineCoverageReport(lineCoverage);
-            if (RunSync(upload.UploadLineCoverageAsync(parsedTraceFile.FilePath, report, timestampOrRevision)))
+            logger.Debug("Uploading line coverage from {traceFile} to {upload}", traceFile.FilePath, upload.Describe());
+            if (RunSync(upload.UploadLineCoverageAsync(traceFile.FilePath, coverageReport, timestampOrRevision)))
             {
-                archive.ArchiveUploadedFile(parsedTraceFile.FilePath);
+                archive.ArchiveUploadedFile(traceFile.FilePath);
             }
             else
             {
-                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", parsedTraceFile.FilePath, upload.Describe());
+                logger.Error("Failed to upload line coverage from {traceFile} to {upload}. Will retry later", traceFile.FilePath, upload.Describe());
             }
         }
 
-        /// <summary>
-        /// Tries to read the revision file based on the config (absolute path, or relative to loaded assemblies).
-        /// Logs and returns null if this fails.
-        /// </summary>
-        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(ParsedTraceFile parsedTraceFile, Config.ConfigForProcess processConfig)
-        {
-            if (!Config.IsAssemblyRelativePath(processConfig.RevisionFile))
-            {
-                return ParseRevisionFile(processConfig.RevisionFile, parsedTraceFile.FilePath);
-            }
 
-            foreach ((_, string path) in parsedTraceFile.LoadedAssemblies)
+        /// <summary>
+        /// Tries to read the revision or upload target file based on the config (absolute path, or relative to loaded assemblies).
+        /// </summary>
+        private RevisionFileUtils.RevisionOrTimestamp ParseRevisionFile(string traceFilePath, Config.ConfigForProcess processConfig, AssemblyExtractor assemblyExtractor)
+        {
+            string revisionFile = processConfig.RevisionFile;
+            if (revisionFile == null)
             {
-                string revisionFile = Config.ResolveAssemblyRelativePath(processConfig.RevisionFile, path);
-                if (File.Exists(revisionFile))
+                logger.Info("No revision file found.");
+                return null;
+            }
+            if (Config.IsAssemblyRelativePath(revisionFile))
+            {
+                foreach (KeyValuePair<uint, (string, string)> entry in assemblyExtractor.Assemblies)
                 {
-                    logger.Info("Using revision file {revisionFile} while processing {traceFile}.", revisionFile, parsedTraceFile.FilePath);
-                    return ParseRevisionFile(revisionFile, parsedTraceFile.FilePath);
+                    string resolvedRevisionFile = Config.ResolveAssemblyRelativePath(revisionFile, entry.Value.Item2);
+                    if (File.Exists(resolvedRevisionFile))
+                    {
+                        logger.Info("Using revision file {revisionFile} while processing {traceFile}.", resolvedRevisionFile, traceFilePath);
+                        return ParseRevisionFile(resolvedRevisionFile, traceFilePath);
+                    }
                 }
             }
-
-            logger.Error("Failed to find revision file {revisionFile} while processing {traceFile}.", processConfig.RevisionFile, parsedTraceFile.FilePath);
-            return null;
+            return ParseRevisionFile(revisionFile, traceFilePath);
         }
 
         /// <summary>
@@ -223,27 +230,28 @@ namespace UploadDaemon
         /// Tries to read and convert the trace file. Logs and returns null if this fails.
         /// Empty trace files are archived and null is returned as well.
         /// </summary>
-        private Dictionary<string, FileCoverage> ConvertTraceFileToLineCoverage(ParsedTraceFile parsedTraceFile, Archive archive, Config.ConfigForProcess processConfig)
+        private ICoverageReport ConvertTraceToCoverageReport(TraceFile traceFile, Archive archive, Config.ConfigForProcess processConfig, AssemblyExtractor assemblyExtractor)
         {
-            Dictionary<string, FileCoverage> lineCoverage;
+            ICoverageReport report;
             try
             {
-                lineCoverage = lineCoverageSynthesizer.ConvertToLineCoverage(parsedTraceFile, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                ILineCoverageSynthesizer synthesizer = lineCoverageSynthesizerFactory.Create(assemblyExtractor, processConfig.PdbDirectory, processConfig.AssemblyPatterns);
+                report = new TraceFileParser(traceFile, assemblyExtractor.Assemblies, synthesizer, processConfig.PartialCoverageReport).ParseTraceFile();
             }
             catch (Exception e)
             {
-                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", parsedTraceFile.FilePath);
+                logger.Error(e, "Failed to convert {traceFile} to line coverage. Will retry later", traceFile.FilePath);
                 return null;
             }
 
-            if (lineCoverage == null)
+            if (report.IsEmpty)
             {
-                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", parsedTraceFile.FilePath);
-                archive.ArchiveFileWithoutLineCoverage(parsedTraceFile.FilePath);
+                logger.Info("Archiving {trace} because it did not produce any line coverage after conversion", traceFile.FilePath);
+                archive.ArchiveFileWithoutLineCoverage(traceFile.FilePath);
                 return null;
             }
 
-            return lineCoverage;
+            return report;
         }
 
         /// <summary>

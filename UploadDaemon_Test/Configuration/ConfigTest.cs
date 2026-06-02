@@ -1,13 +1,15 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using UploadDaemon.SymbolAnalysis;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.Configuration
 {
     [TestFixture]
     public class ConfigTest
     {
+        private const uint ExistingMethodToken = 100663427;
+
         [Test]
         public void TestDefaultValues()
         {
@@ -36,6 +38,7 @@ namespace UploadDaemon.Configuration
             {
                 Assert.That(fooConfig.Enabled, Is.True);
                 Assert.That(fooConfig.MergeLineCoverage, Is.True);
+                Assert.That(fooConfig.PartialCoverageReport, Is.False);
                 Assert.That(fooConfig.AzureFileStorage, Is.Null);
                 Assert.That(fooConfig.Teamscale, Is.Null);
                 Assert.That(fooConfig.PdbDirectory, Is.Not.Null);
@@ -157,12 +160,15 @@ namespace UploadDaemon.Configuration
                       revisionFile: C:\revision
             ");
 
-            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
-                @"Inlined=2:{ExistingMethodToken}",
-            }, "coverage_1_1.txt");
+                $@"Inlined=2:{ExistingMethodToken}",
+            });
 
-            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile);
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
+
+            Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies);
             Assert.That(fooConfig, Is.Not.Null);
             Assert.That(fooConfig.PdbDirectory, Is.EqualTo("C:\\foopdbs"));
         }
@@ -181,12 +187,15 @@ namespace UploadDaemon.Configuration
                       revisionFile: C:\revision
             ");
 
-            ParsedTraceFile traceFile = new ParsedTraceFile(new[] {
+            TraceFile traceFile = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=nomatch:2 Version:1.0.0.0 Path:C:\bla\nomatch.dll",
                 @"Inlined=2:{ExistingMethodToken}",
-            }, "coverage_1_1.txt");
+            });
 
-            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile));
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(traceFile.Lines);
+
+            Assert.Throws<Config.InvalidConfigException>(() => config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor.Assemblies));
         }
 
         [Test]
@@ -208,23 +217,29 @@ namespace UploadDaemon.Configuration
                       directory: C:\upload\bar
             ");
 
-            ParsedTraceFile traceFile1 = new ParsedTraceFile(new[] {
+            TraceFile traceFile1 = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=foo:1 Version:1.0.0.0 Path:C:\bla\foo.dll",
                 @"Assembly=bar:2 Version:1.0.0.0 Path:C:\bla\bar.dll",
-                @"Inlined=2:{ExistingMethodToken}",
-            }, "coverage_1_1.txt");
+                $@"Inlined=2:{ExistingMethodToken}",
+            });
 
-            ParsedTraceFile traceFile2 = new ParsedTraceFile(new[] {
+            TraceFile traceFile2 = new TraceFile("coverage_1_1.txt", new[] {
                 @"Assembly=bar:1 Version:1.0.0.0 Path:C:\bla\bar.dll",
                 @"Assembly=foo:2 Version:1.0.0.0 Path:C:\bla\foo.dll",
-                @"Inlined=2:{ExistingMethodToken}",
-            }, "coverage_1_1.txt");
+                $@"Inlined=2:{ExistingMethodToken}",
+            });
 
-            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile1);
+            AssemblyExtractor assemblyExtractor1 = new AssemblyExtractor();
+            assemblyExtractor1.ExtractAssemblies(traceFile1.Lines);
+
+            Config.ConfigForProcess config1 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config1, Is.Not.Null);
             Assert.That(config1.PdbDirectory, Is.EqualTo("C:\\barpdbs"));
 
-            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", traceFile2);
+            AssemblyExtractor assemblyExtractor2 = new AssemblyExtractor();
+            assemblyExtractor2.ExtractAssemblies(traceFile2.Lines);
+
+            Config.ConfigForProcess config2 = config.CreateConfigForProcess("C:\\test\\foo.exe", assemblyExtractor1.Assemblies);
             Assert.That(config2, Is.Not.Null);
             Assert.That(config2.PdbDirectory, Is.EqualTo("C:\\barpdbs"));
         }
@@ -397,6 +412,25 @@ namespace UploadDaemon.Configuration
             ").CreateConfigForProcess("foo.exe").Validate();
 
             Assert.That(errors, Is.Empty, "valid configuration must not raise any errors");
+        }
+
+
+        [Test]
+        public void TestPartialCoverage()
+        {
+            Config.ConfigForProcess config = Config.Read(@"
+                match:
+                    - profiler:
+                        targetdir: C:\test1
+                    - uploader:
+                        directory: C:\target
+                        pdbDirectory: C:\pdbs
+                        revisionFile: C:\revision
+                        partialCoverageReport: true
+
+            ").CreateConfigForProcess("foo.exe");
+
+            Assert.That(config.PartialCoverageReport, Is.True);
         }
 
         [Test]

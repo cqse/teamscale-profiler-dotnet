@@ -1,9 +1,8 @@
-using System.IO;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
-using UploadDaemon.SymbolAnalysis;
 
 namespace UploadDaemon.Configuration
 {
@@ -85,6 +84,12 @@ namespace UploadDaemon.Configuration
             public bool MergeLineCoverage { get; private set; } = true;
 
             /// <summary>
+            /// Whether testwise coverage reports should be marked as partial.
+            /// This means existing coverage on the Teamscale server in the same partition is not deleted.
+            /// </summary>
+            public bool PartialCoverageReport { get; private set; } = false;
+
+            /// <summary>
             /// Directory from which to read PDB files to resolve method IDs in the trace files.
             /// Defaults to null;
             /// </summary>
@@ -126,6 +131,7 @@ namespace UploadDaemon.Configuration
                 PdbDirectory = section.PdbDirectory ?? PdbDirectory;
                 RevisionFile = section.RevisionFile ?? RevisionFile;
                 MergeLineCoverage = section.MergeLineCoverage ?? MergeLineCoverage;
+                PartialCoverageReport = section.PartialCoverageReport ?? PartialCoverageReport;
 
                 if (section.AssemblyPatterns != null)
                 {
@@ -233,12 +239,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Creates the configuration that should be applied to the given profiled process.
         /// </summary>
-        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, ParsedTraceFile traceFile = null)
+        public ConfigForProcess CreateConfigForProcess(string profiledProcessPath, Dictionary<uint, (string name, string path)> assemblies = null)
         {
             ConfigForProcess config = new ConfigForProcess(profiledProcessPath);
             foreach (ConfigParser.ProcessSection section in Sections)
             {
-                if (SectionApplies(section, profiledProcessPath, traceFile))
+                if (SectionApplies(section, profiledProcessPath, assemblies))
                 {
                     config.ApplySection(section.Uploader);
                 }
@@ -291,12 +297,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Returns true if the given section applies to the given profiled process.
         /// </summary>
-        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, ParsedTraceFile traceFile = null)
+        private static bool SectionApplies(ConfigParser.ProcessSection section, string profiledProcessPath, Dictionary<uint, (string name, string path)> assemblies = null)
         {
             bool?[] checks = new[] {
                 MatchesExecutableName(section, profiledProcessPath),
                 MatchesExecutablePathRegex(section, profiledProcessPath),
-                MatchesLoadedAssemblyPathRegex(section, traceFile),
+                MatchesLoadedAssemblyPathRegex(section, assemblies),
             };
 
 
@@ -334,15 +340,15 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// If loaded assembly path regex is set, at least one of the loaded assembly's path must match
         /// </summary>
-        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, ParsedTraceFile traceFile = null)
+        private static bool? MatchesLoadedAssemblyPathRegex(ConfigParser.ProcessSection section, Dictionary<uint, (string name, string path)> assemblies = null)
         {
-            if (section.LoadedAssemblyPathRegex == null || traceFile == null)
+            if (section.LoadedAssemblyPathRegex == null || assemblies == null)
             {
                 return null;
             }
 
             Regex regex = new Regex($"^{section.LoadedAssemblyPathRegex}$");
-            return traceFile.LoadedAssemblies.Any(assembly => regex.IsMatch(assembly.path));
+            return assemblies.Any(assembly => regex.IsMatch(assembly.Value.Item2));
         }
 
         /// <summary>

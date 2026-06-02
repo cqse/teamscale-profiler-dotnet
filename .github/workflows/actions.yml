@@ -65,6 +65,7 @@ jobs:
       - name: Test
         run: >
           vstest.console.exe /parallel
+          CommanderTests/bin/Release/CommanderTests.dll
           Profiler_Cpp_Test/bin/Release/x86/Profiler_Cpp_Test.dll
           Profiler_Test/bin/Release/Profiler_Test.dll
           UploadDaemon_Test/bin/Release/UploadDaemon_Test.dll
@@ -75,7 +76,10 @@ jobs:
       - name: Convert documentation
         run: node_modules/.bin/markdown-pdf -c documentation -s documentation/pdf.css -f A4 documentation/userguide.md
 
-      - uses: GuillaumeFalourd/setup-rsync@v1.2
+      - name: Setup rsync
+        uses: GuillaumeFalourd/setup-rsync@v1.2
+        env:
+            OSTYPE: msys
 
       - name: Create release zip
         shell: bash

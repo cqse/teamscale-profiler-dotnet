@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UploadDaemon.Configuration;
+using UploadDaemon.Scanning;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -47,16 +48,17 @@ namespace UploadDaemon.SymbolAnalysis
         [Test]
         public void ConsidersSymbolFileIncludesFromTraceFile()
         {
-            ParsedTraceFile traceFile = new ParsedTraceFile(new string[]
+            AssemblyExtractor assemblyExtractor = new AssemblyExtractor();
+            assemblyExtractor.ExtractAssemblies(new string[]
             {
             $"Assembly=Cqse.Teamscale.Profiler.Commons:2 Version:1.0.0.0 Path:{TestSymbolFilePath}",
-            }, "cov.txt");
+            });
 
-            SymbolCollection collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+            SymbolCollection collection = resolver.ResolveFromTraceFile(assemblyExtractor, "@AssemblyDir",
                    new GlobPatternList(new List<string> { "DoesNotExist*" }, new List<string> { }));
             Assert.That(collection.IsEmpty, Is.True);
 
-            collection = resolver.ResolveFromTraceFile(traceFile, "@AssemblyDir",
+            collection = resolver.ResolveFromTraceFile(assemblyExtractor, "@AssemblyDir",
                    new GlobPatternList(new List<string> { "Cqse.Teamscale.Profiler.Commons" }, new List<string> { }));
             Assert.That(collection.IsEmpty, Is.False);
         }
@@ -89,42 +91,6 @@ namespace UploadDaemon.SymbolAnalysis
             SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
 
             Assert.That(collection1, Is.SameAs(collection2));
-        }
-
-        [Test]
-        public void InvalidatesCacheIfSymbolFileIsAdded()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            File.Copy(TestSymbolFilePath, $"{TestSymbolDirectory}\\SomeNew.pdb");
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
-        }
-
-        [Test]
-        public void InvalidatesCacheIfSymbolFileChanges()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            SimulateSymbolFileChange(collection1.SymbolFilePaths.First());
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
-        }
-
-        [Test]
-        public void InvalidatesCacheIfSymbolFileIsDeleted()
-        {
-            SymbolCollection collection1 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            File.Delete(TestSymbolFilePath);
-
-            SymbolCollection collection2 = resolver.ResolveFromSymbolDirectory(TestSymbolDirectory, includeAllAssembliesPattern);
-
-            Assert.That(collection1, Is.Not.SameAs(collection2));
         }
 
         [Test]

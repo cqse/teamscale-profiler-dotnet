@@ -10,7 +10,7 @@ namespace UploadDaemon.SymbolAnalysis
 
         // 100663427 corresponds to MainViewModel#get_SelectedBitnessIndex in ProfilerGUI.pdb
         // obtained with cvdump.exe
-        private static readonly uint ExistingMethodToken = 100663427;
+        private const uint ExistingMethodToken = 100663427;
 
         [Test]
         public void TestPdbParsing()
