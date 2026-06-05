@@ -8,6 +8,7 @@ Please prefix each entry with one of:
 # Next Release
 - [breaking change] Removed feature to upload raw .NET trace files
 - [feature] Support for recording and uploading Testwise Coverage
+- [feature] Added `pathPrefix` option to the `teamscale` uploader config, sent to Teamscale as the `path-prefix` parameter for both line and Testwise Coverage uploads
 - [fix] .NET Framework subprocesses were not traced when UploadDaemon was active
 
 # v25.12.0

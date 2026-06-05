@@ -43,6 +43,14 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Message { get; set; } = "Test coverage for version %v from %p created at %t";
 
+        /// <summary>
+        /// The path prefix for the uploaded artifacts, passed to Teamscale as the "path-prefix" parameter.
+        /// For coverage reports the covered paths are only matched against those files that have the specified
+        /// prefix within the Teamscale project. This can be used if the same package structures and classes
+        /// appear in multiple subfolders of a project.
+        /// </summary>
+        public string PathPrefix { get; set; } = null;
+
         public override string ToString()
         {
             return $"Teamscale {Url} project {Project} with user {Username}, partition {Partition}";

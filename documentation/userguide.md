@@ -384,6 +384,24 @@ match: [{
 This assumes that the PDB files and `revision.txt` are stored in the same directory as `foo.exe`.
 If this is not the case, simply replace by absolute paths.
 
+### Prefixing uniform paths
+
+You can set an optional `pathPrefix` inside the `teamscale` block.
+It is passed to Teamscale as the `path-prefix` parameter and applies to both line and Testwise Coverage uploads.
+If it is set, the covered paths are only matched against those files that have the specified prefix within the Teamscale project.
+This is useful when the same package structures and classes appear in multiple subfolders of a project.
+
+```yaml
+teamscale: {
+  url: http://localhost:8080,
+  username: build,
+  accessKey: u7a9abc32r45r2uiig3vvv,
+  project: your_project,
+  partition: Manual Tests,
+  pathPrefix: my-app/
+}
+```
+
 ## Example: Artifactory Upload with username and password
 
 **Profiler.yml:**

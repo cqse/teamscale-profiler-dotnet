@@ -58,6 +58,11 @@ namespace UploadDaemon.Upload
                 $"&message={encodedMessage}&partition={encodedPartition}" +
                 $"&{timestampParameter}={encodedTimestamp}";
 
+            if (!string.IsNullOrEmpty(server.PathPrefix))
+            {
+                url += $"&path-prefix={HttpUtility.UrlEncode(server.PathPrefix)}";
+            }
+
             logger.Debug("Uploading line coverage from {trace} to {teamscale} ({url})", originalTraceFilePath, server.ToString(), url);
 
             try
