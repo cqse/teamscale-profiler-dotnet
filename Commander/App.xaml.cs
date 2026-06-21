@@ -1,4 +1,5 @@
 ﻿using Cqse.Teamscale.Profiler.Commons.Ipc;
+using System.Configuration;
 using System.Windows;
 
 namespace Cqse.Teamscale.Profiler.Commander
@@ -12,7 +13,9 @@ namespace Cqse.Teamscale.Profiler.Commander
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            profilerIpc = new ProfilerIpc(new IpcConfig());
+            string publishSocket = ConfigurationManager.AppSettings["publishSocket"];
+            string requestSocket = ConfigurationManager.AppSettings["requestSocket"];
+            profilerIpc = new ProfilerIpc(new IpcConfig(publishSocket, requestSocket));
         }
 
         protected override void OnExit(ExitEventArgs e)
