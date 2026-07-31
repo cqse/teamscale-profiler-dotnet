@@ -8,6 +8,12 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        /// <summary>
+        /// The profiler only acknowledges a dump once the coverage has been handed over to the operating
+        /// system, so we allow more time for it than for a test event.
+        /// </summary>
+        private static readonly TimeSpan DumpTimeout = TimeSpan.FromSeconds(30);
+
         private readonly ZmqIpcServer ipcServer;
 
         /// <summary>
@@ -73,6 +79,17 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             logger.Info("Broadcasting end of test {testName} with result {result}", TestName, result);
             this.TestName = string.Empty;
             ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}:{durationMs}");
+        }
+
+        /// <summary>
+        /// Asks all connected profilers to write the coverage they collected so far to disk.
+        /// Returns once the profilers have done so, which makes it safe to kill the profiled
+        /// applications afterwards without losing their coverage.
+        /// </summary>
+        public void DumpCoverage()
+        {
+            logger.Info("Requesting a coverage dump from all connected profilers");
+            ipcServer.Broadcast("dump", DumpTimeout);
         }
 
         public void Dispose()

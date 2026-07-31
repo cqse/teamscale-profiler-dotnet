@@ -138,19 +138,33 @@ namespace Profiler {
 			createDaemon().launch(traceLog);
 		}
 
+		// The profiler always connects to the commander, even in TGA mode, where it is used to request
+		// that the collected coverage is written to disk.
 		if (config.isTiaEnabled()) {
+			// This exact wording is used by the upload daemon to detect testwise traces. Do not change it.
 			traceLog.info("TIA enabled. REQ Socket: " + config.getTiaRequestSocket());
-			std::function<void(std::string)> testStartCallback = [this](std::string testName) {
-				this->onTestStart(testName);
-				};
-			std::function<void(std::string, std::string)> testEndCallback = [this](std::string result, std::string duration) {
-				this->onTestEnd(result, duration);
-				};
-			std::function<void(std::string)> errorCallback = [this](std::string message) {
-				this->traceLog.error(message);
-				};
-			this->ipc = std::make_unique<Ipc>(&this->config, testStartCallback, testEndCallback, errorCallback);
+		}
+		else {
+			traceLog.info("IPC REQ Socket: " + config.getTiaRequestSocket());
+		}
+		std::function<void(std::string)> testStartCallback = [this](std::string testName) {
+			this->onTestStart(testName);
+			};
+		std::function<void(std::string, std::string)> testEndCallback = [this](std::string result, std::string duration) {
+			this->onTestEnd(result, duration);
+			};
+		std::function<void()> dumpCallback = [this]() {
+			this->onDumpRequest();
+			};
+		std::function<void(std::string)> infoCallback = [this](std::string message) {
+			this->traceLog.info(message);
+			};
+		std::function<void(std::string)> errorCallback = [this](std::string message) {
+			this->traceLog.error(message);
+			};
+		this->ipc = std::make_unique<Ipc>(&this->config, testStartCallback, testEndCallback, dumpCallback, infoCallback, errorCallback);
 
+		if (config.isTiaEnabled()) {
 			setCriticalSection(&methodSetSynchronization);
 			setCalledMethodsSet(&calledMethodIds);
 		}
@@ -531,6 +545,22 @@ namespace Profiler {
 			<< version[1] << "."
 			<< version[2] << "."
 			<< version[3];
+	}
+
+	void CProfilerCallback::onDumpRequest()
+	{
+		if (!config.isProfilingEnabled()) {
+			return;
+		}
+		EnterCriticalSection(&callbackSynchronization);
+		EnterCriticalSection(&methodSetSynchronization);
+		writeFunctionInfosToLog();
+		traceLog.info("Dumped coverage on request");
+		// the trace file stays open, so we must force the buffered writes out to make the
+		// coverage survive a hard kill of the profiled process
+		traceLog.flush();
+		LeaveCriticalSection(&methodSetSynchronization);
+		LeaveCriticalSection(&callbackSynchronization);
 	}
 
 	void CProfilerCallback::onTestStart(const std::string& testName)

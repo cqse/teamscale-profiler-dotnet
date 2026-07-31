@@ -102,7 +102,7 @@ namespace Profiler {
 		/** The log to write attach and detatch events to */
 		AttachLog attachLog;
 
-		/** Inter-process connection for TIA communication. null if not in TIA mode. */
+		/** Inter-process connection to the commander. null if profiling is disabled. */
 		std::unique_ptr<Ipc> ipc{};
 
 		/** Callback that is being called when a testcase starts. */
@@ -110,6 +110,14 @@ namespace Profiler {
 
 		/** Callback that is being called when a testcase ends. */
 		void onTestEnd(const std::string& result = "", const std::string& duration = "");
+
+		/**
+		 * Callback that is being called when a dump of the collected coverage is requested.
+		 * Writes everything recorded so far to the trace file and flushes it to disk. The trace file
+		 * remains open, i.e. profiling continues into the same file.
+		 * This is intended for applications that are hard-killed and therefore never shut down the profiler.
+		 */
+		void onDumpRequest();
 
 		/**
 		 * Keeps track of called methods.

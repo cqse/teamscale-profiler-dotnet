@@ -20,7 +20,12 @@ namespace Profiler {
 		/** Closes the log. Further calls to logging methods will be ignored. */
 		void shutdown();
 
-		
+		/**
+		 * Forces everything that was written to the log so far to be handed over to the operating system.
+		 * Without this, writes may linger in the stream's buffer and be lost if the process is killed.
+		 */
+		void flush();
+
 
 	protected:
 		/** File into which results are written. INVALID_HANDLE if the file has not been opened yet. */

@@ -49,6 +49,15 @@ namespace Profiler {
 		LeaveCriticalSection(&criticalSection);
 	}
 
+	void FileLogBase::flush()
+	{
+		EnterCriticalSection(&criticalSection);
+		if (logFile.is_open()) {
+			logFile.flush();
+		}
+		LeaveCriticalSection(&criticalSection);
+	}
+
 	void FileLogBase::writeWideToFile(const std::wstring& string) {
 		if (logFile.is_open()) {
 			EnterCriticalSection(&criticalSection);

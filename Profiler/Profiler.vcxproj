@@ -23,7 +23,15 @@
     <RootNamespace>Profiler</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <PlatformToolset>v143</PlatformToolset>
+    <!-- Toolset used to build the profiler. Defaults to v143 (VS 2022), which is what CI uses.
+         To build with a newer toolset (e.g. the one shipped with VS 2026), set the ProfilerToolset
+         environment variable or MSBuild property instead of editing this file:
+           msbuild Profiler\Profiler.vcxproj /p:ProfilerToolset=v145
+           $env:ProfilerToolset = 'v145'; devenv Cqse.Teamscale.Profiler.Dotnet.sln
+         The libzmq wiring at the bottom of this file is toolset-agnostic, so the prebuilt v143
+         libzmq links into a newer toolset as well. See the comment there for why that is safe. -->
+    <ProfilerToolset Condition="'$(ProfilerToolset)' == ''">v143</ProfilerToolset>
+    <PlatformToolset>$(ProfilerToolset)</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -322,9 +330,34 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets" Condition="Exists('..\packages\libzmq_vc143.4.3.2\build\native\libzmq_vc143.targets')" />
-  </ImportGroup>
+  <!-- libzmq wiring, replacing the libzmq_vc143.targets that ships in the NuGet package. That file
+       gates every include path and library on '$(PlatformToolset)' == 'v143', so with any other
+       toolset it silently contributes nothing and the build fails with unresolved zmq_* symbols.
+       We therefore set the same flags ourselves, without the toolset condition.
+
+       Linking the prebuilt v143 libzmq into a newer toolset is safe here: the MSVC v14x runtimes are
+       binary compatible, both sides use the static CRT (/MT, /MTd) as configured above, and libzmq is
+       consumed purely through its C API (zmq.h), so no C++ standard library types cross the boundary.
+       Only static linkage is wired up, which is all this project has ever used. -->
+  <PropertyGroup>
+    <LibzmqDir>$(MSBuildThisFileDirectory)..\packages\libzmq_vc143.4.3.2\build\native\</LibzmqDir>
+    <LibzmqArch Condition="'$(Platform)' == 'Win32'">x86</LibzmqArch>
+    <LibzmqArch Condition="'$(Platform)' == 'x64'">x64</LibzmqArch>
+    <LibzmqVariant Condition="'$(Configuration)' == 'Debug'">sgd</LibzmqVariant>
+    <LibzmqVariant Condition="'$(Configuration)' == 'Release'">s</LibzmqVariant>
+    <LibzmqLib>libzmq-$(LibzmqArch)-v143-mt-$(LibzmqVariant)-4_3_2_0.lib</LibzmqLib>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Linkage-libzmq)' == 'static'">
+    <ClCompile>
+      <!-- ZMQ_USE_TWEETNACL is defined in the packaged build and must be defined by consumers too. -->
+      <PreprocessorDefinitions>ZMQ_STATIC;ZMQ_USE_TWEETNACL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(LibzmqDir)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(LibzmqLib);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LibzmqDir)bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
   <Target Name="Build64" AfterTargets="Build">
     <MSBuild Condition="'$(Platform)'=='Win32'" Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
   </Target>

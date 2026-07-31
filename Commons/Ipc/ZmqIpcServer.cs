@@ -3,6 +3,8 @@ using NetMQ.Sockets;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Cqse.Teamscale.Profiler.Commons.Ipc
@@ -13,10 +15,21 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     public class ZmqIpcServer : IDisposable
     {
         private const string REGISTER_CLIENT = "register";
+
+        /// <summary>
+        /// How long to wait for a profiler to acknowledge a broadcast message.
+        /// </summary>
+        public static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromSeconds(3.0);
+
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
 
         private Dictionary<int, ProfilerClient> pidToClient = new Dictionary<int, ProfilerClient>();
+
+        /// <summary>
+        /// Serializes broadcasts so that no two threads use the same client socket at the same time.
+        /// </summary>
+        private readonly object broadcastLock = new object();
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -86,22 +99,48 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public void SendTestEvent(string testEvent)
         {
-            HashSet<int> clientsToRemove = new HashSet<int>();
-            System.Threading.Tasks.Parallel.ForEach(pidToClient, entry =>
+            Broadcast(testEvent, DefaultResponseTimeout);
+        }
+
+        /// <summary>
+        /// Sends the given message to all connected profiler instances and waits for their acknowledgement.
+        /// Profilers that don't answer within the given timeout are considered gone and are removed.
+        /// </summary>
+        public void Broadcast(string message, TimeSpan responseTimeout)
+        {
+            RemoveClientsOfDeadProcesses();
+
+            KeyValuePair<int, ProfilerClient>[] clients;
+            lock (pidToClient)
             {
-                entry.Value.Socket.SendFrame(Encoding.UTF8.GetBytes(testEvent));
-                if (entry.Value.Socket.TryReceiveFrameString(TimeSpan.FromSeconds(3.0), out string? response))
+                // take a snapshot so a profiler that registers while we are sending doesn't
+                // invalidate the enumeration
+                clients = pidToClient.ToArray();
+            }
+
+            HashSet<int> clientsToRemove = new HashSet<int>();
+            // each client has its own socket, but a socket must not be used by two threads at once,
+            // so only one broadcast may be in flight at a time
+            lock (broadcastLock)
+            {
+                System.Threading.Tasks.Parallel.ForEach(clients, entry =>
                 {
-                    logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
-                } else
-                {
-                    lock(clientsToRemove)
+                    entry.Value.Socket.SendFrame(Encoding.UTF8.GetBytes(message));
+                    if (entry.Value.Socket.TryReceiveFrameString(responseTimeout, out string? response))
                     {
-                        clientsToRemove.Add(entry.Key);
+                        logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
                     }
-                    logger.Error($"Got no response from Profiler with PID {entry.Key} with address {entry.Value.ClientAddress}, removing from clients");
-                }
-            });
+                    else
+                    {
+                        lock (clientsToRemove)
+                        {
+                            clientsToRemove.Add(entry.Key);
+                        }
+                        logger.Error($"Got no response from Profiler with PID {entry.Key} with address {entry.Value.ClientAddress}, removing from clients");
+                    }
+                });
+            }
+
             lock (pidToClient)
             {
                 foreach (var client in clientsToRemove)
@@ -112,6 +151,44 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
                     pidToClient[client].Socket.Close();
                     pidToClient.Remove(client);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Drops all clients whose profiled process has ended. Profiled applications are often killed
+        /// instead of being shut down gracefully, in which case they never tell us that they are gone.
+        /// Without this, every broadcast would have to wait for the response timeout of each of them.
+        /// </summary>
+        private void RemoveClientsOfDeadProcesses()
+        {
+            lock (pidToClient)
+            {
+                foreach (int pid in pidToClient.Keys.ToList())
+                {
+                    if (IsProcessRunning(pid))
+                    {
+                        continue;
+                    }
+                    logger.Info($"Profiled process with PID {pid} has ended, removing from clients");
+                    pidToClient[pid].Socket.Close();
+                    pidToClient.Remove(pid);
+                }
+            }
+        }
+
+        private static bool IsProcessRunning(int pid)
+        {
+            try
+            {
+                using (Process process = Process.GetProcessById(pid))
+                {
+                    return !process.HasExited;
+                }
+            }
+            catch (ArgumentException)
+            {
+                // thrown if no process with that id is running
+                return false;
             }
         }
 

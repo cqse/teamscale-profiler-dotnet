@@ -222,6 +222,39 @@ Configuration options from environment variables always override configuration o
 Please note that you **cannot** register the profiler itself via the config file (`COR_PROFILER`, `COR_ENABLE_PROFILING`).
 
 
+# Dumping Coverage on Request
+
+The profiler normally writes the collected coverage to the trace file when the profiled process shuts down. If the
+process is hard-killed instead (e.g. because a test harness terminates the application under test once the test is
+over), no shutdown hook runs and the coverage recorded since the last write is lost.
+
+For these cases, the coverage collected so far can be written to disk on request, by sending a POST request to the
+`profiler/dump` endpoint of the commander server:
+
+```
+curl -X POST http://<commander-host>:<commander-port>/profiler/dump
+```
+
+Every connected profiler then appends everything it has recorded so far to its trace file and flushes it to disk. The
+trace file stays open and profiling continues into the same file, so the applications can be killed at any point
+afterwards without losing the dumped coverage. The request only returns once the profilers have written their
+coverage, i.e. it is safe to kill the applications as soon as it comes back.
+
+This requires no configuration: the profiler always connects to the commander, in TGA mode as well as in TIA mode. If
+no commander is running, the profiler notes that once in the trace file and keeps looking for one in the background,
+at negligible cost. It connects as soon as a commander shows up, even if that is long after the application started,
+and records this in the trace file as well:
+
+```
+Info=No commander is listening at tcp://127.0.0.1:7145. Looking for one in the background.
+Info=Connected to the commander at tcp://127.0.0.1:7145
+```
+
+The alternative to this is the `COR_PROFILER_EAGERNESS` option, which writes the trace continuously after a given
+number of recorded methods. Requesting a dump is preferable when you know the points in time at which the coverage
+must be safe, as it does not write during normal operation.
+
+
 # Troubleshooting
 
 You must ensure that the profiled application has read permissions to the location of the profiler DLL and write permissions in the target directory (`COR_PROFILER_TARGETDIR`). If the target directory is not set, does not exist, or is not writable by the process, no trace file can be created. Profiling can also be tested by starting any .NET application from the console. However, in this case a new shell must be started for the new environment variables to take effect. 
@@ -293,6 +326,7 @@ It provides the following endpoints:
 | test/start/{testName} | POST   | Starts the test with the given name                                                                                                                                                        |
 | test/stop/{result}    | POST   | Stops the currently active test with the given result. Possible values are Passed, Ignored, Skipped, Failure, Error                                                                        |
 | test/end/{testName}   | POST   | Stops the test with the given name if it is currently active. This is a legacy endpoint and the test/stop endpoint should be preferred. Expects a test result in the body with key Result. |
+| profiler/dump         | POST   | Writes the coverage collected so far to disk in all connected profilers. Unlike the endpoints above this is not tied to a test and also works in TGA mode. See "Dumping Coverage on Request". |
 
 
 # Automatic Trace Upload
