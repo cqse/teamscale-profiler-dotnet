@@ -6,6 +6,8 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+- [feature] The Teamscale username and access key can be provided via the `TEAMSCALE_USERNAME` and `TEAMSCALE_ACCESS_KEY` environment variables, which take precedence over the `username` and `accessKey` options in the config file
+- [fix] The `teamscale` section of the config file is now validated: previously an incomplete section was accepted and the upload failed later with an authentication error
 - [breaking change] Removed feature to upload raw .NET trace files
 - [feature] Support for recording and uploading Testwise Coverage
 - [fix] .NET Framework subprocesses were not traced when UploadDaemon was active

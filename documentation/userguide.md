@@ -354,6 +354,33 @@ uploader. Patterns are glob patterns: `*` matches any number of characters,
       include: [ "*YourAssembly*" ]
       exclude: [ "*DoNotProfileThisAssembly*" ]
 
+## Providing the Teamscale credentials via environment variables
+
+Instead of writing the Teamscale credentials into the configuration file, you can supply them via environment variables.
+This is useful if you do not want to store the access key on disk, e.g. when the configuration file is checked into a repository or when the credentials are injected by a CI system or a secret store.
+
+| Environment variable  | Description                              |
+| :-------------------- | :--------------------------------------- |
+| TEAMSCALE_USERNAME    | Username to authenticate with, i.e. the `username` option of the `teamscale` section. |
+| TEAMSCALE_ACCESS_KEY  | Access key to authenticate with, i.e. the `accessKey` option of the `teamscale` section. Obtain it from _Access Keys_ in Teamscale. |
+
+If an environment variable is set, it takes precedence over the corresponding option in the configuration file.
+If it is not set (or set to an empty value), the value from the configuration file is used.
+Both variables are resolved independently of each other, so you can for example keep the `username` in the configuration file and provide only the access key via the environment.
+
+When both variables are set, the `teamscale` section may omit `username` and `accessKey` entirely.
+All other options of the section are still required:
+
+```yaml
+teamscale: {
+  url: http://localhost:8080,
+  project: your_project,
+  partition: Manual Tests
+}
+```
+
+The variables must be visible to the **upload daemon** process, not to the profiled application.
+
 ## Example: (Method-accurate) Coverage conversion and Teamscale upload
 
 **Profiler.yml:**

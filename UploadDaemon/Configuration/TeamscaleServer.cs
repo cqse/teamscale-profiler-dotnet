@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UploadDaemon.Configuration
@@ -7,7 +8,19 @@ namespace UploadDaemon.Configuration
     /// </summary>
     public class TeamscaleServer
     {
+        /// <summary>
+        /// Environment variable that may be used to provide the username instead of the YAML config.
+        /// </summary>
+        public const string UsernameEnvironmentVariable = "TEAMSCALE_USERNAME";
+
+        /// <summary>
+        /// Environment variable that may be used to provide the access key instead of the YAML config.
+        /// </summary>
+        public const string AccessKeyEnvironmentVariable = "TEAMSCALE_ACCESS_KEY";
+
         private string url;
+        private string username;
+        private string accessKey;
 
         /// <summary>
         /// URL of the Teamscale server.
@@ -24,14 +37,24 @@ namespace UploadDaemon.Configuration
         public string Project { get; set; }
 
         /// <summary>
-        /// Username to authenticate with.
+        /// Username to authenticate with. The environment variable TEAMSCALE_USERNAME takes
+        /// precedence over the value configured in the YAML config.
         /// </summary>
-        public string Username { get; set; }
+        public string Username
+        {
+            get { return ReadEnvironmentVariable(UsernameEnvironmentVariable) ?? username; }
+            set { username = value; }
+        }
 
         /// <summary>
-        /// Access key to authenticate with.
+        /// Access key to authenticate with. The environment variable TEAMSCALE_ACCESS_KEY takes
+        /// precedence over the value configured in the YAML config.
         /// </summary>
-        public string AccessKey { get; set; }
+        public string AccessKey
+        {
+            get { return ReadEnvironmentVariable(AccessKeyEnvironmentVariable) ?? accessKey; }
+            set { accessKey = value; }
+        }
 
         /// <summary>
         /// Partition within the Teamscale project to which to upload.
@@ -64,16 +87,29 @@ namespace UploadDaemon.Configuration
             }
             if (Username == null)
             {
-                yield return @"You must provide a username to connect to Teamscale";
+                yield return $@"You must provide a username to connect to Teamscale, either in the config file or via the environment variable {UsernameEnvironmentVariable}";
             }
             if (AccessKey == null)
             {
-                yield return @"You must provide an access key to connect to Teamscale. Obtain it from the user's profile in Teamscale";
+                yield return $@"You must provide an access key to connect to Teamscale, either in the config file or via the environment variable {AccessKeyEnvironmentVariable}. Obtain it from Access Keys in Teamscale";
             }
             if (Partition == null)
             {
                 yield return @"You must provide a partition into which the coverage will be uploaded";
             }
+        }
+
+        /// <summary>
+        /// Returns the value of the given environment variable or null if it is not set or blank.
+        /// </summary>
+        private static string ReadEnvironmentVariable(string name)
+        {
+            string value = Environment.GetEnvironmentVariable(name);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+            return value;
         }
     }
 }
