@@ -7,10 +7,10 @@ namespace UploadDaemon.Configuration
     [TestFixture]
     public class TeamscaleServerTest
     {
-        private const string YamlUser = "yaml-user";
-        private const string YamlAccessKey = "yaml-access-key";
-        private const string EnvironmentUser = "environment-user";
-        private const string EnvironmentAccessKey = "environment-access-key";
+        private const string YAML_USER = "yaml-user";
+        private const string YAML_ACCESS_KEY = "yaml-access-key";
+        private const string ENVIRONMENT_USER = "environment-user";
+        private const string ENVIRONMENT_ACCESS_KEY = "environment-access-key";
 
         private string originalUsername;
         private string originalAccessKey;
@@ -22,8 +22,8 @@ namespace UploadDaemon.Configuration
         [SetUp]
         public void ClearEnvironmentVariables()
         {
-            originalUsername = Environment.GetEnvironmentVariable(TeamscaleServer.UsernameEnvironmentVariable);
-            originalAccessKey = Environment.GetEnvironmentVariable(TeamscaleServer.AccessKeyEnvironmentVariable);
+            originalUsername = Environment.GetEnvironmentVariable(TeamscaleServer.USERNAME_ENVIRONMENT_VARIABLE);
+            originalAccessKey = Environment.GetEnvironmentVariable(TeamscaleServer.ACCESS_KEY_ENVIRONMENT_VARIABLE);
             SetEnvironmentVariables(null, null);
         }
 
@@ -36,13 +36,13 @@ namespace UploadDaemon.Configuration
         [Test]
         public void EnvironmentVariablesProvideTheCredentialsIfTheYamlDoesNotContainThem()
         {
-            SetEnvironmentVariables(EnvironmentUser, EnvironmentAccessKey);
+            SetEnvironmentVariables(ENVIRONMENT_USER, ENVIRONMENT_ACCESS_KEY);
 
             TeamscaleServer server = ServerWithoutCredentials();
             Assert.Multiple(() =>
             {
-                Assert.That(server.Username, Is.EqualTo(EnvironmentUser), "username");
-                Assert.That(server.AccessKey, Is.EqualTo(EnvironmentAccessKey), "access key");
+                Assert.That(server.Username, Is.EqualTo(ENVIRONMENT_USER), "username");
+                Assert.That(server.AccessKey, Is.EqualTo(ENVIRONMENT_ACCESS_KEY), "access key");
             });
 
             IEnumerable<string> errors = server.Validate();
@@ -52,14 +52,14 @@ namespace UploadDaemon.Configuration
         [Test]
         public void EnvironmentVariablesTakePrecedenceOverTheYamlProperties()
         {
-            SetEnvironmentVariables(EnvironmentUser, EnvironmentAccessKey);
+            SetEnvironmentVariables(ENVIRONMENT_USER, ENVIRONMENT_ACCESS_KEY);
 
             TeamscaleServer server = ServerWithCredentials();
 
             Assert.Multiple(() =>
             {
-                Assert.That(server.Username, Is.EqualTo(EnvironmentUser), "username");
-                Assert.That(server.AccessKey, Is.EqualTo(EnvironmentAccessKey), "access key");
+                Assert.That(server.Username, Is.EqualTo(ENVIRONMENT_USER), "username");
+                Assert.That(server.AccessKey, Is.EqualTo(ENVIRONMENT_ACCESS_KEY), "access key");
             });
         }
 
@@ -72,8 +72,8 @@ namespace UploadDaemon.Configuration
 
             Assert.Multiple(() =>
             {
-                Assert.That(server.Username, Is.EqualTo(YamlUser), "username");
-                Assert.That(server.AccessKey, Is.EqualTo(YamlAccessKey), "access key");
+                Assert.That(server.Username, Is.EqualTo(YAML_USER), "username");
+                Assert.That(server.AccessKey, Is.EqualTo(YAML_ACCESS_KEY), "access key");
             });
         }
 
@@ -95,15 +95,15 @@ namespace UploadDaemon.Configuration
 
             Assert.Multiple(() =>
             {
-                Assert.That(exception.Message, Does.Contain(TeamscaleServer.UsernameEnvironmentVariable), "username error hints at the environment variable");
-                Assert.That(exception.Message, Does.Contain(TeamscaleServer.AccessKeyEnvironmentVariable), "access key error hints at the environment variable");
+                Assert.That(exception.Message, Does.Contain(TeamscaleServer.USERNAME_ENVIRONMENT_VARIABLE), "username error hints at the environment variable");
+                Assert.That(exception.Message, Does.Contain(TeamscaleServer.ACCESS_KEY_ENVIRONMENT_VARIABLE), "access key error hints at the environment variable");
             });
         }
 
         private static void SetEnvironmentVariables(string username, string accessKey)
         {
-            Environment.SetEnvironmentVariable(TeamscaleServer.UsernameEnvironmentVariable, username);
-            Environment.SetEnvironmentVariable(TeamscaleServer.AccessKeyEnvironmentVariable, accessKey);
+            Environment.SetEnvironmentVariable(TeamscaleServer.USERNAME_ENVIRONMENT_VARIABLE, username);
+            Environment.SetEnvironmentVariable(TeamscaleServer.ACCESS_KEY_ENVIRONMENT_VARIABLE, accessKey);
         }
 
         /// <summary>
@@ -112,8 +112,8 @@ namespace UploadDaemon.Configuration
         private static TeamscaleServer ServerWithCredentials()
         {
             TeamscaleServer server = ServerWithoutCredentials();
-            server.Username = YamlUser;
-            server.AccessKey = YamlAccessKey;
+            server.Username = YAML_USER;
+            server.AccessKey = YAML_ACCESS_KEY;
             return server;
         }
 

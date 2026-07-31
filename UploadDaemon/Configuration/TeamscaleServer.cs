@@ -11,12 +11,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Environment variable that may be used to provide the username instead of the YAML config.
         /// </summary>
-        public const string UsernameEnvironmentVariable = "TEAMSCALE_USERNAME";
+        public const string USERNAME_ENVIRONMENT_VARIABLE = "TEAMSCALE_USERNAME";
 
         /// <summary>
         /// Environment variable that may be used to provide the access key instead of the YAML config.
         /// </summary>
-        public const string AccessKeyEnvironmentVariable = "TEAMSCALE_ACCESS_KEY";
+        public const string ACCESS_KEY_ENVIRONMENT_VARIABLE = "TEAMSCALE_ACCESS_KEY";
 
         private string url;
         private string username;
@@ -42,7 +42,7 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string Username
         {
-            get { return ReadEnvironmentVariable(UsernameEnvironmentVariable) ?? username; }
+            get { return ReadEnvironmentVariable(USERNAME_ENVIRONMENT_VARIABLE) ?? username; }
             set { username = value; }
         }
 
@@ -52,7 +52,7 @@ namespace UploadDaemon.Configuration
         /// </summary>
         public string AccessKey
         {
-            get { return ReadEnvironmentVariable(AccessKeyEnvironmentVariable) ?? accessKey; }
+            get { return ReadEnvironmentVariable(ACCESS_KEY_ENVIRONMENT_VARIABLE) ?? accessKey; }
             set { accessKey = value; }
         }
 
@@ -87,11 +87,11 @@ namespace UploadDaemon.Configuration
             }
             if (Username == null)
             {
-                yield return $@"You must provide a username to connect to Teamscale, either in the config file or via the environment variable {UsernameEnvironmentVariable}";
+                yield return $@"You must provide a username to connect to Teamscale, either in the config file or via the environment variable {USERNAME_ENVIRONMENT_VARIABLE}";
             }
             if (AccessKey == null)
             {
-                yield return $@"You must provide an access key to connect to Teamscale, either in the config file or via the environment variable {AccessKeyEnvironmentVariable}. Obtain it from Access Keys in Teamscale";
+                yield return $@"You must provide an access key to connect to Teamscale, either in the config file or via the environment variable {ACCESS_KEY_ENVIRONMENT_VARIABLE}. Obtain it from Access Keys in Teamscale";
             }
             if (Partition == null)
             {
