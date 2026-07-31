@@ -26,6 +26,12 @@ namespace UploadDaemon
         private readonly IUploadFactory uploadFactory;
         private readonly ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory;
 
+        /// <summary>
+        /// Configuration problems already reported during this run, to avoid logging the same
+        /// problem once per affected trace file.
+        /// </summary>
+        private readonly ISet<string> reportedConfigErrors = new HashSet<string>();
+
         public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory)
         {
             this.fileSystem = fileSystem;
@@ -59,6 +65,16 @@ namespace UploadDaemon
                 try
                 {
                     ProcessTraceFile(traceFile, archive, config, coverageMerger);
+                }
+                catch (Config.InvalidConfigException e)
+                {
+                    // The same invalid configuration applies to every trace file of that process, hence we report
+                    // each distinct problem only once instead of once per affected trace file.
+                    if (reportedConfigErrors.Add(e.Message))
+                    {
+                        logger.Error(e, "Invalid configuration. No coverage will be uploaded until this is fixed");
+                    }
+                    errorTraceFilePaths.Add(traceFile.FilePath);
                 }
                 catch (Exception e)
                 {
