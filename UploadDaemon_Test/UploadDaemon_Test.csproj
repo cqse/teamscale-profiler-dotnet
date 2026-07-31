@@ -132,6 +132,7 @@
     <Compile Include="UploadDaemonSystemTest.cs" />
     <Compile Include="Configuration\ConfigTest.cs" />
     <Compile Include="Configuration\ConfigParserTest.cs" />
+    <Compile Include="Configuration\TeamscaleServerTest.cs" />
     <Compile Include="Upload\ArtifactoryUploadTest.cs" />
     <Compile Include="Upload\LineCoverageMergerTest.cs" />
     <Compile Include="UploadTaskTest.cs" />
