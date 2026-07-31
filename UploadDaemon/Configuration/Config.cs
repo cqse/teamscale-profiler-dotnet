@@ -160,6 +160,13 @@ namespace UploadDaemon.Configuration
                         @" or an Artifactory (property ""artifactory"")" +
                         @" to upload coverage files to.";
                 }
+                if (Teamscale != null)
+                {
+                    foreach (string error in Teamscale.Validate())
+                    {
+                        yield return error;
+                    }
+                }
                 if (PdbDirectory == null)
                 {
                     yield return $"Invalid configuration for process {ProcessPath}." +
