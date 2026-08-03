@@ -39,11 +39,11 @@
                 # Upload to this Teamscale instance
                 teamscale: {
                     url: "http://localhost:8080",
-                    # May also be provided via the TEAMSCALE_USERNAME environment
+                    # May also be provided via the TEAMSCALE_USER environment
                     # variable, which takes precedence over this option
                     username: "build",
                     # Obtain the access key from Admin > Users
-                    # May also be provided via the TEAMSCALE_ACCESS_KEY environment
+                    # May also be provided via the TEAMSCALE_ACCESSKEY environment
                     # variable, which takes precedence over this option
                     accessKey: "u7a9abc32r45r2uiig3vvv",
                     # The ID or the alias of the project

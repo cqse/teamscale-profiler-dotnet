@@ -11,12 +11,12 @@ namespace UploadDaemon.Configuration
         /// <summary>
         /// Environment variable that may be used to provide the username instead of the YAML config.
         /// </summary>
-        public const string USERNAME_ENVIRONMENT_VARIABLE = "TEAMSCALE_USERNAME";
+        public const string USERNAME_ENVIRONMENT_VARIABLE = "TEAMSCALE_USER";
 
         /// <summary>
         /// Environment variable that may be used to provide the access key instead of the YAML config.
         /// </summary>
-        public const string ACCESS_KEY_ENVIRONMENT_VARIABLE = "TEAMSCALE_ACCESS_KEY";
+        public const string ACCESS_KEY_ENVIRONMENT_VARIABLE = "TEAMSCALE_ACCESSKEY";
 
         private string url;
         private string username;
@@ -37,7 +37,7 @@ namespace UploadDaemon.Configuration
         public string Project { get; set; }
 
         /// <summary>
-        /// Username to authenticate with. The environment variable TEAMSCALE_USERNAME takes
+        /// Username to authenticate with. The environment variable TEAMSCALE_USER takes
         /// precedence over the value configured in the YAML config.
         /// </summary>
         public string Username
@@ -47,7 +47,7 @@ namespace UploadDaemon.Configuration
         }
 
         /// <summary>
-        /// Access key to authenticate with. The environment variable TEAMSCALE_ACCESS_KEY takes
+        /// Access key to authenticate with. The environment variable TEAMSCALE_ACCESSKEY takes
         /// precedence over the value configured in the YAML config.
         /// </summary>
         public string AccessKey

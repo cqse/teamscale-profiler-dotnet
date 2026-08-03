@@ -361,8 +361,8 @@ This is useful if you do not want to store the access key on disk, e.g. when the
 
 | Environment variable  | Description                              |
 | :-------------------- | :--------------------------------------- |
-| TEAMSCALE_USERNAME    | Username to authenticate with, i.e. the `username` option of the `teamscale` section. |
-| TEAMSCALE_ACCESS_KEY  | Access key to authenticate with, i.e. the `accessKey` option of the `teamscale` section. Obtain it from _Access Keys_ in Teamscale. |
+| TEAMSCALE_USER        | Username to authenticate with, i.e. the `username` option of the `teamscale` section. |
+| TEAMSCALE_ACCESSKEY   | Access key to authenticate with, i.e. the `accessKey` option of the `teamscale` section. Obtain it from _Access Keys_ in Teamscale. |
 
 If an environment variable is set, it takes precedence over the corresponding option in the configuration file.
 If it is not set (or set to an empty value), the value from the configuration file is used.
