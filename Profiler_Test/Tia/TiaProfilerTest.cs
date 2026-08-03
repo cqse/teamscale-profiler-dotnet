@@ -145,8 +145,7 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             TesteeProcess testeeProcess = Start(testee, profilerUnderTest);
 
             profilerIpc = CreateProfilerIpc(profilerIpc.Config);
-            // Wait until the IPC server has started up. Not ideal but it fixes the test case.
-            Thread.Sleep(500);
+            WaitForProfilerToRegister(profilerIpc);
             RunTestCase("A", testeeProcess, profilerIpc);
             Stop(testeeProcess);
 
@@ -154,6 +153,18 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
             TiaTestResult testResult = profilerUnderTest.Result;
             Assert.That(testResult.TestCaseNames, Is.EquivalentTo(new[] { string.Empty, "A" }));
             Assert.That(testResult.TestCases[1].TraceLines, Has.Some.Matches("^(Inlines|Jitted|Called)"));
+        }
+
+        /// <summary>
+        /// Waits until the profiler has registered at the given IPC server. A profiler that starts
+        /// without a commander looks for one in the background, so it only notices an IPC server that
+        /// starts later on its next attempt.
+        /// </summary>
+        private static void WaitForProfilerToRegister(RecordingProfilerIpc profilerIpc)
+        {
+            // the profiler asks for the currently running test right after it registered
+            Assert.That(() => profilerIpc.ReceivedRequests, Contains.Item("testname").After(delayInMilliseconds: 10000, pollingInterval: 100),
+                "The profiler did not register at the IPC server");
         }
 
         private static TesteeProcess Start(Testee testee, IProfiler profiler)
