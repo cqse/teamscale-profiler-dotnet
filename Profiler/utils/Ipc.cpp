@@ -62,7 +62,7 @@ namespace Profiler {
 		zmq_ctx_term(this->zmqContext);
 	}
 
-	void Ipc::handlerThreadLoop() {
+	std::string Ipc::registerAtCommander() {
 		std::string address = "";
 		bool connectionErrorLogged = false;
 		while (address.empty() && !this->shutdown) {
@@ -89,15 +89,20 @@ namespace Profiler {
 			}
 			waitForRetry(nextRetryInterval());
 		}
+		if (!address.empty() && connectionErrorLogged) {
+			// we reported that we couldn't reach the commander, so report that we eventually did
+			infoCallback("Connected to the commander at " + this->config->getTiaRequestSocket());
+		}
+		return address;
+	}
+
+	void Ipc::handlerThreadLoop() {
+		std::string address = registerAtCommander();
 		if (address.empty()) {
 			// we are shutting down before we ever reached the commander
 			return;
 		}
 		this->isRegistered = true;
-		if (connectionErrorLogged) {
-			// we reported that we couldn't reach the commander, so report that we eventually did
-			infoCallback("Connected to the commander at " + this->config->getTiaRequestSocket());
-		}
 		handleMessage(getCurrentTestName());
 
 		this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);

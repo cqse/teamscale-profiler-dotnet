@@ -157,7 +157,6 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// <summary>
         /// Drops all clients whose profiled process has ended. Profiled applications are often killed
         /// instead of being shut down gracefully, in which case they never tell us that they are gone.
-        /// Without this, every broadcast would have to wait for the response timeout of each of them.
         /// </summary>
         private void RemoveClientsOfDeadProcesses()
         {
@@ -180,14 +179,12 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         {
             try
             {
-                using (Process process = Process.GetProcessById(pid))
-                {
-                    return !process.HasExited;
-                }
+                using Process process = Process.GetProcessById(pid);
+                return !process.HasExited;
             }
             catch (ArgumentException)
             {
-                // thrown if no process with that id is running
+                // if no process with that id is running
                 return false;
             }
         }

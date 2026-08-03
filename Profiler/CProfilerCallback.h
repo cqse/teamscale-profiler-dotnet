@@ -115,7 +115,6 @@ namespace Profiler {
 		 * Callback that is being called when a dump of the collected coverage is requested.
 		 * Writes everything recorded so far to the trace file and flushes it to disk. The trace file
 		 * remains open, i.e. profiling continues into the same file.
-		 * This is intended for applications that are hard-killed and therefore never shut down the profiler.
 		 */
 		void onDumpRequest();
 

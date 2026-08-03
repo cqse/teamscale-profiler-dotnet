@@ -51,6 +51,14 @@ namespace Profiler {
 		std::unique_ptr<std::thread> handlerThread;
 
 		void handlerThreadLoop();
+
+		/**
+		 * Repeatedly tries to register at the commander until that succeeds or the profiler shuts down.
+		 * Returns the address at which the commander expects us to listen for its messages, or an empty
+		 * string if we shut down before ever reaching it.
+		 */
+		std::string registerAtCommander();
+
 		void handleMessage(const std::string& message);
 		bool initRequestSocket();
 		void logError(const std::string& message);
