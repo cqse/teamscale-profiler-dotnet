@@ -170,12 +170,6 @@ match:
       tga: true
       eagerness: 0
     uploader:
-      teamscale:
-        url: http://localhost:8080
-        username: build
-        accessKey: some-access-key
-        project: some-project
-        partition: Manual Tests
       pdbDirectory: '@AssemblyDir'
       assemblyPatterns:
         include:
