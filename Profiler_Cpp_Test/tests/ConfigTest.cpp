@@ -1,4 +1,5 @@
 #include <sstream>
+#include <vector>
 #include "CppUnitTest.h"
 #include "config/Config.h"
 
@@ -224,7 +225,94 @@ match:
 		Assert::AreEqual(false, config.shouldUseLightMode(), L"should not use light mode when overwritten in config file");
 	}
 
+	TEST_METHOD(MustWarnAboutUnknownProfilerOption)
+	{
+		Config config = parse(R"(
+match:
+  - executablePathRegex: ".*"
+    profiler:
+      light_mdoe: false
+)", emptyEnvironment);
+
+		Assert::AreEqual(size_t(1), config.getWarnings().size(), L"number of warnings");
+		Assert::AreEqual(size_t(0), config.getProblems().size(), L"a misspelled option must not be fatal");
+		Assert::AreEqual(true, config.shouldUseLightMode(), L"the misspelled option must still be ignored");
+	}
+
+	TEST_METHOD(MustNotWarnAboutKnownProfilerOptions)
+	{
+		Config config = parse(R"(
+match:
+  - executablePathRegex: ".*"
+    profiler:
+      LIGHT_MODE: false
+      Ignore_Exceptions: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(size_t(0), config.getWarnings().size(), L"options must be recognized regardless of their casing");
+		Assert::AreEqual(false, config.shouldUseLightMode(), L"should not use light mode");
+	}
+
+	TEST_METHOD(MustWarnOnlyOnceAboutTheSameUnknownOption)
+	{
+		Config config = parse(R"(
+match:
+  - executablePathRegex: ".*"
+    profiler:
+      light_mdoe: false
+  - executablePathRegex: ".*\\program.exe"
+    profiler:
+      light_mdoe: true
+)", emptyEnvironment);
+
+		Assert::AreEqual(size_t(1), config.getWarnings().size(), L"the same option must not be reported per section");
+	}
+
+	TEST_METHOD(MustNotWarnAboutUnknownOptionsInNonMatchingSections)
+	{
+		Config config = parse(R"(
+match:
+  - executableName: "other.exe"
+    profiler:
+      light_mdoe: false
+)", emptyEnvironment);
+
+		Assert::AreEqual(size_t(0), config.getWarnings().size(), L"sections of other processes must not be inspected");
+	}
+
+	TEST_METHOD(AllSupportedOptionsMustBeRecognized)
+	{
+		// This list documents all options the profiler supports. It is deliberately duplicated here and
+		// not in the profiler itself: the profiler derives the supported options from the ones it queries,
+		// so it can never go stale. This test detects when an option is no longer queried unconditionally
+		// from Config::setOptions, which would make the profiler warn about a perfectly valid option.
+		const std::vector<std::string> supportedOptions = {
+			"targetdir", "enabled", "light_mode", "assembly_file_version", "assembly_paths",
+			"dump_environment", "ignore_exceptions", "upload_daemon", "tga", "tia",
+			"tia_request_socket", "eagerness"
+		};
+
+		std::stringstream yaml;
+		yaml << "match:\n  - executablePathRegex: \".*\"\n    profiler:\n";
+		for (const std::string& option : supportedOptions) {
+			yaml << "      " << option << ": \"1\"\n";
+		}
+
+		Config config = parse(yaml.str(), emptyEnvironment);
+
+		Assert::AreEqual(size_t(0), config.getWarnings().size(), describe(config.getWarnings()).c_str());
+	}
+
 private:
+
+	/** Turns the given messages into an assertion message so a failure names the offending options. */
+	static std::wstring describe(const std::vector<std::string>& messages) {
+		std::string description = "unexpected warnings:";
+		for (const std::string& message : messages) {
+			description += " " + message;
+		}
+		return std::wstring(description.begin(), description.end());
+	}
 
 	Config parse(std::string yaml, EnvironmentVariableReader* reader) {
 		Config config(reader);

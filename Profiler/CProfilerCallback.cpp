@@ -114,6 +114,10 @@ namespace Profiler {
 
 		traceLog.createLogFile(config.getTargetDir());
 		traceLog.info("looking for configuration options in: " + config.getConfigPath());
+		// must happen before the problems are logged as those terminate the process
+		for (const std::string& warning : config.getWarnings()) {
+			traceLog.warn(warning);
+		}
 		for (const std::string& problem : config.getProblems()) {
 			traceLog.error(problem);
 			std::cerr << problem;

@@ -98,6 +98,28 @@ namespace Profiler {
 		}
 
 		disableProfilerIfProcessSuffixDoesntMatch();
+
+		// must happen last so all supported options have been queried by now
+		warnAboutUnknownOptions();
+	}
+
+	void Config::warnAboutUnknownOptions() {
+		// We only inspect the sections that apply to the profiled process. Typos in the sections of other
+		// processes are not reported as every process would otherwise warn about every other process's options.
+		CaseInsensitiveStringSet unknownOptionNames;
+		for (ProcessSection& section : relevantConfigFileSections) {
+			for (const auto& option : section.profilerOptions) {
+				if (queriedOptionNames.find(option.first) == queriedOptionNames.end()) {
+					unknownOptionNames.insert(option.first);
+				}
+			}
+		}
+
+		// the same option may be misspelled in several matching sections, so we warn only once per option name
+		for (const std::string& optionName : unknownOptionNames) {
+			warnings.push_back("Unknown profiler option '" + optionName
+				+ "' in the config file. Please check the spelling. This option is ignored.");
+		}
 	}
 
 	void Config::disableProfilerIfProcessSuffixDoesntMatch() {
@@ -108,6 +130,11 @@ namespace Profiler {
 	}
 
 	std::string Config::getOption(std::string optionName) {
+		// Remembering the queried options here relieves us of maintaining a separate list of all supported
+		// option names, which would silently go stale. warnAboutUnknownOptions reports everything that's left.
+		// This requires that setOptions queries every supported option unconditionally.
+		queriedOptionNames.insert(optionName);
+
 		std::string value = environmentVariableReader(optionName);
 		if (!value.empty()) {
 			return value;
