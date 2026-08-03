@@ -280,6 +280,24 @@ match:
 		Assert::AreEqual(size_t(0), config.getWarnings().size(), L"sections of other processes must not be inspected");
 	}
 
+	TEST_METHOD(MustNotWarnAboutUploaderSection)
+	{
+		// The uploader section is consumed by the UploadDaemon and not by the profiler,
+		// so none of its options may be reported as unknown.
+		Config config = parse(R"(
+match:
+  - executablePathRegex: ".*"
+    profiler:
+      light_mode: false
+    uploader:
+      pdbDirectory: '@AssemblyDir'
+      revisionFile: '@AssemblyDir\revision.txt'
+)", emptyEnvironment);
+
+		Assert::AreEqual(size_t(0), config.getWarnings().size(), L"the uploader section must not be inspected");
+		Assert::AreEqual(false, config.shouldUseLightMode(), L"the profiler section must still be applied");
+	}
+
 	TEST_METHOD(AllSupportedOptionsMustBeRecognized)
 	{
 		// This list documents all options the profiler supports. It is deliberately duplicated here and
