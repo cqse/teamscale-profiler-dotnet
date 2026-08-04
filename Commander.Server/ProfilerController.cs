@@ -17,9 +17,8 @@ namespace Cqse.Teamscale.Profiler.Commander.Server
         }
 
         /// <summary>
-        /// Asks all connected profilers to write the coverage they collected so far to disk. This only
-        /// returns once they have done so, i.e. the profiled applications may be killed afterwards
-        /// without losing their coverage.
+        /// Asks all connected profilers to write the coverage they collected so far to disk. 
+        /// This is a blocking call and only returns once they are done.
         /// </summary>
         [HttpPost("dump")]
         public IActionResult DumpCoverage()

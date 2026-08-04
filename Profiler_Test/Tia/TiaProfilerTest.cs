@@ -157,12 +157,10 @@ namespace Cqse.Teamscale.Profiler.Dotnet.Tia
 
         /// <summary>
         /// Waits until the profiler has registered at the given IPC server. A profiler that starts
-        /// without a commander looks for one in the background, so it only notices an IPC server that
-        /// starts later on its next attempt.
+        /// without a commander running already looks for one in the background.
         /// </summary>
         private static void WaitForProfilerToRegister(RecordingProfilerIpc profilerIpc)
         {
-            // the profiler asks for the currently running test right after it registered
             Assert.That(() => profilerIpc.ReceivedRequests, Contains.Item("testname").After(delayInMilliseconds: 10000, pollingInterval: 100),
                 "The profiler did not register at the IPC server");
         }

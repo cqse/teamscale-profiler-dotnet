@@ -1,5 +1,6 @@
 #include "Ipc.h"
 #include "zmq.h"
+#include <array>
 #include <chrono>
 
 namespace Profiler {
@@ -15,24 +16,18 @@ namespace Profiler {
 	/** How often to look for the commander while we are not registered yet. */
 	constexpr auto REGISTRATION_RETRY_INTERVAL = 1000ms;
 
-	/** Upper bound of the random amount that is added to the interval between two registration attempts. */
-	constexpr int REGISTRATION_RETRY_JITTER_MS = 500;
-
 	// Message signaling test start event
 	const std::string TEST_START = "start:";
 	const std::string TEST_END = "end:";
 	// Message requesting that the coverage collected so far is written to disk
 	const std::string DUMP = "dump";
+	// Message the commander sends before a request to check whether we are still responsive
+	const std::string ALIVE_CHECK = "alive";
 
-	Ipc::Ipc(Config* config, const std::function<void(std::string)>& testStartCallback, const std::function<void(std::string, std::string)>& testEndCallback, const std::function<void()>& dumpCallback, const std::function<void(std::string)>& infoCallback, const std::function<void(std::string)>& errorCallback) :
+	Ipc::Ipc(const std::string& requestSocketAddress, Callbacks callbacks) :
 		zmqContext(zmq_ctx_new()),
-		config(config),
-		testStartCallback(testStartCallback),
-		testEndCallback(testEndCallback),
-		dumpCallback(dumpCallback),
-		infoCallback(infoCallback),
-		errorCallback(errorCallback),
-		randomEngine(GetCurrentProcessId()),
+		requestSocketAddress(requestSocketAddress),
+		callbacks(std::move(callbacks)),
 		// starts the handler thread, so this must stay last
 		handlerThread(std::make_unique<std::thread>(&Ipc::handlerThreadLoop, this))
 	{
@@ -51,8 +46,6 @@ namespace Profiler {
 			this->handlerThread->join();
 		}
 		if (this->isRegistered) {
-			// if we never reached a commander there is nobody to tell, and trying would only wait
-			// for the connect timeout again
 			this->request("profiler_disconnected");
 		}
 		if (this->zmqRequestSocket != nullptr) {
@@ -64,34 +57,32 @@ namespace Profiler {
 
 	std::string Ipc::registerAtCommander() {
 		std::string address = "";
-		bool connectionErrorLogged = false;
-		while (address.empty() && !this->shutdown) {
+		bool connectionHintLogged = false;
+		while (!this->shutdown) {
 			std::string addressRequest = "register:" + std::to_string(GetCurrentProcessId());
-			bool commanderWasReachable = false;
-			address = this->request(addressRequest, &commanderWasReachable);
-			if (!address.empty()) {
+			Response response = this->request(addressRequest);
+			if (response.result == RequestResult::Answered) {
+				address = response.answer;
 				break;
 			}
 
 			// only log this once. The profiler always looks for a commander, so for processes that are
 			// profiled without one, this would otherwise fill up the trace file.
-			if (!connectionErrorLogged) {
-				if (commanderWasReachable) {
-					// somebody is there but the handshake didn't work, which is a real problem
+			if (!connectionHintLogged) {
+				if (response.result == RequestResult::NotAnswered) {
 					logError("Registration at the commander failed, trying again.");
 				}
 				else {
-					// there simply is no commander, which is the normal case when profiling without one
-					infoCallback("No commander is listening at " + this->config->getTiaRequestSocket()
+					this->callbacks.info("No commander is listening at " + this->requestSocketAddress
 						+ ". Looking for one in the background.");
 				}
-				connectionErrorLogged = true;
+				connectionHintLogged = true;
 			}
-			waitForRetry(nextRetryInterval());
+			waitBeforeRetry(REGISTRATION_RETRY_INTERVAL);
 		}
-		if (!address.empty() && connectionErrorLogged) {
+		if (!address.empty()) {
 			// we reported that we couldn't reach the commander, so report that we eventually did
-			infoCallback("Connected to the commander at " + this->config->getTiaRequestSocket());
+			this->callbacks.info("Connected to the commander at " + this->requestSocketAddress);
 		}
 		return address;
 	}
@@ -103,7 +94,9 @@ namespace Profiler {
 			return;
 		}
 		this->isRegistered = true;
-		handleMessage(getCurrentTestName());
+		if (this->callbacks.testStart) {
+			handleMessage(getCurrentTestName());
+		}
 
 		this->zmqReplySocket = zmq_socket(this->zmqContext, ZMQ_REP);
 		zmq_setsockopt(this->zmqReplySocket, ZMQ_RCVTIMEO, &IPC_TIMEOUT_MS, sizeof(IPC_TIMEOUT_MS));
@@ -130,48 +123,45 @@ namespace Profiler {
 	}
 
 	void Ipc::handleMessage(const std::string& message) {
-		if (message.find(TEST_START) == 0) {
-			this->testStartCallback(message.substr(TEST_START.length()));
+		if (message == ALIVE_CHECK) {
+			return;
 		}
-		else if (message.find(TEST_END) == 0) {
+		// messages whose callback is not set belong to a feature that is inactive for this process
+		if (this->callbacks.testStart && message.find(TEST_START) == 0) {
+			this->callbacks.testStart(message.substr(TEST_START.length()));
+		}
+		else if (this->callbacks.testEnd && message.find(TEST_END) == 0) {
 			// 21 = maximum length of long + 1
 			size_t last = message.find_last_of(':', 21);
 			std::string testIdentifier = message.substr(0, last);
 			std::string duration = message.substr(last + 1);
-			this->testEndCallback(testIdentifier.substr(TEST_END.length()), duration);
+			this->callbacks.testEnd(testIdentifier.substr(TEST_END.length()), duration);
 		}
-		else if (message == DUMP) {
-			this->dumpCallback();
+		else if (this->callbacks.dump && message == DUMP) {
+			this->callbacks.dump();
 		}
 	}
 
 	std::string Ipc::getCurrentTestName()
 	{
 		std::string testnameRequest = "testname";
-		return this->request(testnameRequest);
+		return this->request(testnameRequest).answer;
 	}
 
-	std::string Ipc::request(const std::string& message, bool* commanderWasReachable)
+	Ipc::Response Ipc::request(const std::string& message)
 	{
-		if (commanderWasReachable != nullptr) {
-			*commanderWasReachable = false;
-		}
 		if (!initRequestSocket()) {
-			return "";
+			return { RequestResult::Unreachable };
 		}
 
-		// Because of ZMQ_IMMEDIATE the socket only becomes writable once the connection to the commander
-		// has actually been established, so this tells us whether there is a commander at all. Without
-		// it we would send into the void and only notice when the receive below times out. We have to
-		// wait a moment because ZeroMQ establishes the connection asynchronously.
+		// Wait for the socket to become writable. Thanks to ZMQ_IMMEDIATE that only happens once the
+		// connection to the commander is established, so this is our check for whether a commander
+		// exists. Without it, we would send into the void and only notice once the receive below times
+		// out. 
 		zmq_pollitem_t pollItem{ this->zmqRequestSocket, 0, ZMQ_POLLOUT, 0 };
 		if (zmq_poll(&pollItem, 1, CONNECT_TIMEOUT_MS) <= 0) {
 			// keep the socket, ZeroMQ keeps trying to establish the connection in the background.
-			// A message we never sent also leaves the REQ socket ready to send again.
-			return "";
-		}
-		if (commanderWasReachable != nullptr) {
-			*commanderWasReachable = true;
+			return { RequestResult::Unreachable };
 		}
 
 		zmq_send(this->zmqRequestSocket, message.data(), message.size(), 0);
@@ -180,10 +170,10 @@ namespace Profiler {
 		if (len < 0) {
 			zmq_close(this->zmqRequestSocket);
 			this->zmqRequestSocket = nullptr;
-			return "";
+			return { RequestResult::NotAnswered };
 		}
 
-		return std::string(buffer.data(), len);
+		return { RequestResult::Answered, std::string(buffer.data(), len) };
 	}
 
 	bool Ipc::initRequestSocket() {
@@ -200,12 +190,10 @@ namespace Profiler {
 			// appear. Must be set before connecting.
 			constexpr int immediate = 1;
 			zmq_setsockopt(this->zmqRequestSocket, ZMQ_IMMEDIATE, &immediate, sizeof(immediate));
-			// Let ZeroMQ retry the connection at the same jittered rate at which we look for the
-			// commander. The default of 100ms would have its I/O thread reconnecting far more often
-			// than we ask, which is wasted work for the many processes profiled without a commander.
-			const int reconnectInterval = static_cast<int>(nextRetryInterval().count());
+
+			constexpr int reconnectInterval = static_cast<int>(REGISTRATION_RETRY_INTERVAL.count());
 			zmq_setsockopt(this->zmqRequestSocket, ZMQ_RECONNECT_IVL, &reconnectInterval, sizeof(reconnectInterval));
-			if (zmq_connect(this->zmqRequestSocket, this->config->getTiaRequestSocket().c_str()) == -1) {
+			if (zmq_connect(this->zmqRequestSocket, this->requestSocketAddress.c_str()) == -1) {
 				zmq_close(this->zmqRequestSocket);
 				this->zmqRequestSocket = nullptr;
 				logError("Failed connecting to request socket");
@@ -215,19 +203,14 @@ namespace Profiler {
 		return true;
 	}
 
-	void Ipc::waitForRetry(std::chrono::milliseconds duration) {
+	void Ipc::waitBeforeRetry(std::chrono::milliseconds duration) {
 		std::unique_lock<std::mutex> lock(this->shutdownMutex);
 		this->shutdownCondition.wait_for(lock, duration, [this] { return this->shutdown.load(); });
 	}
 
-	std::chrono::milliseconds Ipc::nextRetryInterval() {
-		std::uniform_int_distribution<int> jitter(0, REGISTRATION_RETRY_JITTER_MS);
-		return REGISTRATION_RETRY_INTERVAL + std::chrono::milliseconds(jitter(this->randomEngine));
-	}
-
 	void Ipc::logError(const std::string& message) {
 		std::string error = message + " (ZMQ Status: " + zmq_strerror(zmq_errno()) + ")";
-		errorCallback(error);
+		this->callbacks.error(error);
 	}
 
 }

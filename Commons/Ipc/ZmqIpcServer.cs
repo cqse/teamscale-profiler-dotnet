@@ -17,9 +17,23 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         private const string REGISTER_CLIENT = "register";
 
         /// <summary>
-        /// How long to wait for a profiler to acknowledge a broadcast message.
+        /// Message a profiler is asked to answer before it is sent an actual request
         /// </summary>
-        public static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromSeconds(3.0);
+        private const string ALIVE_CHECK = "alive";
+
+        /// <summary>
+        /// How long to wait for a profiler to answer the alive check. Answering it requires no work
+        /// from the profiler, so this stays short no matter how expensive the request that follows is.
+        /// </summary>
+        public static readonly TimeSpan AliveCheckTimeout = TimeSpan.FromSeconds(3.0);
+
+        /// <summary>
+        /// How long to wait for a profiler to acknowledge a broadcast message. This is only ever waited
+        /// for by a profiler that just answered the alive check, i.e. one that we know is there and
+        /// responsive, so it can be generous enough for the most expensive request we send. A profiler
+        /// that is gone is already sorted out by the alive check.
+        /// </summary>
+        public static readonly TimeSpan ResponseTimeout = TimeSpan.FromMinutes(1.0);
 
         private NetMQPoller? poller;
         private ResponseSocket? responseSocket;
@@ -99,17 +113,16 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         /// </summary>
         public void SendTestEvent(string testEvent)
         {
-            Broadcast(testEvent, DefaultResponseTimeout);
+            Broadcast(testEvent);
         }
 
         /// <summary>
         /// Sends the given message to all connected profiler instances and waits for their acknowledgement.
-        /// Profilers that don't answer within the given timeout are considered gone and are removed.
+        /// Profilers that don't answer are considered gone and are removed.
+        /// Each profiler is first asked to answer an alive check.
         /// </summary>
-        public void Broadcast(string message, TimeSpan responseTimeout)
+        public void Broadcast(string message)
         {
-            RemoveClientsOfDeadProcesses();
-
             KeyValuePair<int, ProfilerClient>[] clients;
             lock (pidToClient)
             {
@@ -125,19 +138,29 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             {
                 System.Threading.Tasks.Parallel.ForEach(clients, entry =>
                 {
-                    entry.Value.Socket.SendFrame(Encoding.UTF8.GetBytes(message));
-                    if (entry.Value.Socket.TryReceiveFrameString(responseTimeout, out string? response))
-                    {
-                        logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
-                    }
-                    else
+                    void Remove()
                     {
                         lock (clientsToRemove)
                         {
                             clientsToRemove.Add(entry.Key);
                         }
-                        logger.Error($"Got no response from Profiler with PID {entry.Key} with address {entry.Value.ClientAddress}, removing from clients");
                     }
+
+                    if (Request(entry.Value, ALIVE_CHECK, AliveCheckTimeout) == null)
+                    {
+                        Remove();
+                        logger.Error($"Profiler with PID {entry.Key} with address {entry.Value.ClientAddress} did not answer the alive check within {AliveCheckTimeout}, removing from clients without sending '{message}'");
+                        return;
+                    }
+
+                    string? response = Request(entry.Value, message, ResponseTimeout);
+                    if (response == null)
+                    {
+                        Remove();
+                        logger.Error($"Profiler with PID {entry.Key} with address {entry.Value.ClientAddress} answered the alive check but did not acknowledge '{message}' within {ResponseTimeout}, removing from clients");
+                        return;
+                    }
+                    logger.Info($"Got Response from {entry.Value.ClientAddress}: {response}");
                 });
             }
 
@@ -155,24 +178,18 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         }
 
         /// <summary>
-        /// Drops all clients whose profiled process has ended. Profiled applications are often killed
-        /// instead of being shut down gracefully, in which case they never tell us that they are gone.
+        /// Sends the given message to the given profiler and returns its answer, or null if it did not
+        /// answer within the given timeout. In the latter case the socket must not be used again: a
+        /// request socket that is still waiting for an answer cannot send the next message.
         /// </summary>
-        private void RemoveClientsOfDeadProcesses()
+        private static string? Request(ProfilerClient client, string message, TimeSpan timeout)
         {
-            lock (pidToClient)
+            client.Socket.SendFrame(Encoding.UTF8.GetBytes(message));
+            if (client.Socket.TryReceiveFrameString(timeout, out string? response))
             {
-                foreach (int pid in pidToClient.Keys.ToList())
-                {
-                    if (IsProcessRunning(pid))
-                    {
-                        continue;
-                    }
-                    logger.Info($"Profiled process with PID {pid} has ended, removing from clients");
-                    pidToClient[pid].Socket.Close();
-                    pidToClient.Remove(pid);
-                }
+                return response;
             }
+            return null;
         }
 
         private static bool IsProcessRunning(int pid)

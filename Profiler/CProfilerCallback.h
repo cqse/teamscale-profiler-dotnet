@@ -5,6 +5,7 @@
 #include "log/AttachLog.h"
 #include "config/Config.h"
 #include "utils/WindowsUtils.h"
+#include "utils/CriticalSectionGuard.h"
 #include <atlbase.h>
 #include <string>
 #include <vector>
@@ -54,10 +55,35 @@ namespace Profiler {
 		void CProfilerCallback::ShutdownOnce(bool clrIsAvailable);
 
 	private:
-		/** Synchronizes profiling callbacks. */
+		/** Synchronizes profiling callbacks and writing to the log file. */
 		CRITICAL_SECTION callbackSynchronization;
 
+		/** Guards the calledMethodIds set which can be filled from arbitrary threads.*/
 		CRITICAL_SECTION methodSetSynchronization;
+
+		/**
+		 * Enters both critical sections that the recorded method infos are guarded by and leaves them
+		 * again at the end of the scope. Anything that records methods or writes them to the trace
+		 * needs both: the method infos themselves are guarded by methodSetSynchronization, while
+		 * determining the assembly a method belongs to reads assemblyMap, which is guarded by
+		 * callbackSynchronization.
+		 *
+		 * Always acquiring them through this guard keeps the order in which they are entered the same
+		 * everywhere, which is what makes them deadlock-free.
+		 */
+		class RecordedMethodsGuard {
+		public:
+			explicit RecordedMethodsGuard(CProfilerCallback& callback) :
+				callbackGuard(callback.callbackSynchronization),
+				methodSetGuard(callback.methodSetSynchronization) {
+			}
+
+		private:
+			// members are entered in declaration order and left in reverse, so this order is the
+			// single definition of the lock order
+			CriticalSectionGuard callbackGuard;
+			CriticalSectionGuard methodSetGuard;
+		};
 
 		/** Default size for arrays. */
 		static const int BUFFER_SIZE = 2048;

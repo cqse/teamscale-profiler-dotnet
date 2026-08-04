@@ -8,12 +8,6 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        /// <summary>
-        /// The profiler only acknowledges a dump once the coverage has been handed over to the operating
-        /// system, so we allow more time for it than for a test event.
-        /// </summary>
-        private static readonly TimeSpan DumpTimeout = TimeSpan.FromSeconds(30);
-
         private readonly ZmqIpcServer ipcServer;
 
         /// <summary>
@@ -89,7 +83,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
         public void DumpCoverage()
         {
             logger.Info("Requesting a coverage dump from all connected profilers");
-            ipcServer.Broadcast("dump", DumpTimeout);
+            ipcServer.Broadcast("dump");
         }
 
         public void Dispose()

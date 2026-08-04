@@ -320,6 +320,7 @@
     <ClInclude Include="version.h" />
     <ClInclude Include="utils\WindowsUtils.h" />
     <ClInclude Include="utils\Ipc.h" />
+    <ClInclude Include="utils\CriticalSectionGuard.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
