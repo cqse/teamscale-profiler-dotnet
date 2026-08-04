@@ -75,6 +75,17 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
             ipcServer.SendTestEvent($"end:{Enum.GetName(typeof(TestExecutionResult), result).ToUpper()}:{durationMs}");
         }
 
+        /// <summary>
+        /// Asks all connected profilers to write the coverage they collected so far to disk.
+        /// Returns once the profilers have done so, which makes it safe to kill the profiled
+        /// applications afterwards without losing their coverage.
+        /// </summary>
+        public void DumpCoverage()
+        {
+            logger.Info("Requesting a coverage dump from all connected profilers");
+            ipcServer.Broadcast("dump");
+        }
+
         public void Dispose()
         {
             logger.Info("Shutting down IPC server");

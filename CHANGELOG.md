@@ -6,6 +6,7 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+- [feature] The coverage collected so far can be written to disk on request via the new `profiler/dump` endpoint of the commander server, e.g. for applications that are hard-killed
 - [breaking change] Removed feature to upload raw .NET trace files
 - [feature] Support for recording and uploading Testwise Coverage
 - [fix] .NET Framework subprocesses were not traced when UploadDaemon was active

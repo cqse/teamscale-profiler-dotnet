@@ -143,21 +143,34 @@ namespace Profiler {
 		}
 
 		if (config.isTiaEnabled()) {
+			// This exact wording is used by the upload daemon to detect testwise traces. Do not change it.
 			traceLog.info("TIA enabled. REQ Socket: " + config.getTiaRequestSocket());
-			std::function<void(std::string)> testStartCallback = [this](std::string testName) {
-				this->onTestStart(testName);
-				};
-			std::function<void(std::string, std::string)> testEndCallback = [this](std::string result, std::string duration) {
-				this->onTestEnd(result, duration);
-				};
-			std::function<void(std::string)> errorCallback = [this](std::string message) {
-				this->traceLog.error(message);
-				};
-			this->ipc = std::make_unique<Ipc>(&this->config, testStartCallback, testEndCallback, errorCallback);
-
 			setCriticalSection(&methodSetSynchronization);
 			setCalledMethodsSet(&calledMethodIds);
 		}
+		else {
+			traceLog.info("IPC REQ Socket: " + config.getTiaRequestSocket());
+		}
+
+		Ipc::Callbacks ipcCallbacks;
+		ipcCallbacks.dump = [this]() {
+			this->onDumpRequest();
+			};
+		ipcCallbacks.info = [this](std::string message) {
+			this->traceLog.info(message);
+			};
+		ipcCallbacks.error = [this](std::string message) {
+			this->traceLog.error(message);
+			};
+		if (config.isTiaEnabled()) {
+			ipcCallbacks.testStart = [this](std::string testName) {
+				this->onTestStart(testName);
+				};
+			ipcCallbacks.testEnd = [this](std::string result, std::string duration) {
+				this->onTestEnd(result, duration);
+				};
+		}
+		this->ipc = std::make_unique<Ipc>(config.getTiaRequestSocket(), std::move(ipcCallbacks));
 
 		std::array<char, BUFFER_SIZE> appPool;
 		if (GetEnvironmentVariable("APP_POOL_ID", appPool.data(), static_cast<DWORD>(appPool.size()))) {
@@ -219,11 +232,10 @@ namespace Profiler {
 		if (!config.isProfilingEnabled()) {
 			return;
 		}
-		EnterCriticalSection(&callbackSynchronization);
-		EnterCriticalSection(&methodSetSynchronization);
-		writeFunctionInfosToLog();
-		LeaveCriticalSection(&methodSetSynchronization);
-		LeaveCriticalSection(&callbackSynchronization);
+		{
+			RecordedMethodsGuard guard(*this);
+			writeFunctionInfosToLog();
+		}
 		attachLog.logDetach();
 
 		traceLog.shutdown();
@@ -286,16 +298,15 @@ namespace Profiler {
 		if (!config.isProfilingEnabled()) {
 			return S_OK;
 		}
-		EnterCriticalSection(&callbackSynchronization);
-
-		int assemblyNumber = registerAssembly(assemblyId);
-
 		std::array<WCHAR, BUFFER_SIZE> assemblyName;
 		std::array<WCHAR, BUFFER_SIZE> assemblyPath;
 		ASSEMBLYMETADATA metadata;
-		getAssemblyInfo(assemblyId, assemblyName.data(), assemblyPath.data(), &metadata);
-
-		LeaveCriticalSection(&callbackSynchronization);
+		int assemblyNumber;
+		{
+			CriticalSectionGuard guard(callbackSynchronization);
+			assemblyNumber = registerAssembly(assemblyId);
+			getAssemblyInfo(assemblyId, assemblyName.data(), assemblyPath.data(), &metadata);
+		}
 
 		std::wostringstream out;
 
@@ -387,14 +398,11 @@ namespace Profiler {
 
 	HRESULT CProfilerCallback::JITCompilationFinishedImplementation(FunctionID functionId) {
 		if (config.isProfilingEnabled() && config.isTgaEnabled()) {
-			EnterCriticalSection(&callbackSynchronization);
-			EnterCriticalSection(&methodSetSynchronization);
+			RecordedMethodsGuard guard(*this);
 			recordFunctionInfo(jittedMethods, functionId);
 			if (shouldWriteEagerly()) {
 				writeFunctionInfosToLog();
 			}
-			LeaveCriticalSection(&methodSetSynchronization);
-			LeaveCriticalSection(&callbackSynchronization);
 		}
 		return S_OK;
 	}
@@ -414,15 +422,12 @@ namespace Profiler {
 			// Save information about inlined method (if not already seen)
 
 			if (!inlinedMethodIds.contains(calleeId)) {
-				EnterCriticalSection(&callbackSynchronization);
-				EnterCriticalSection(&methodSetSynchronization);
+				RecordedMethodsGuard guard(*this);
 				inlinedMethodIds.insert(calleeId);
 				recordFunctionInfo(inlinedMethods, calleeId);
 				if (shouldWriteEagerly()) {
 					writeFunctionInfosToLog();
 				}
-				LeaveCriticalSection(&methodSetSynchronization);
-				LeaveCriticalSection(&callbackSynchronization);
 			}
 		}
 
@@ -537,29 +542,39 @@ namespace Profiler {
 			<< version[3];
 	}
 
+	void CProfilerCallback::onDumpRequest()
+	{
+		if (!config.isProfilingEnabled()) {
+			return;
+		}
+		RecordedMethodsGuard guard(*this);
+		writeFunctionInfosToLog();
+		traceLog.info("Dumped coverage on request");
+		// the trace file stays open, so we must force the buffered writes out to make the
+		// coverage survive a hard kill of the profiled process
+		traceLog.flush();
+	}
+
 	void CProfilerCallback::onTestStart(const std::string& testName)
 	{
-		if (config.isProfilingEnabled() && config.isTiaEnabled()) {
-			EnterCriticalSection(&methodSetSynchronization);
+		if (config.isProfilingEnabled()) {
+			RecordedMethodsGuard guard(*this);
 			writeFunctionInfosToLog();
 
 			traceLog.startTestCase(testName);
 			if (!testName.empty()) {
 				setTestCaseRecording(true);
 			}
-			LeaveCriticalSection(&methodSetSynchronization);
 		}
 	}
 
 	void CProfilerCallback::onTestEnd(const std::string& result, const std::string& duration)
 	{
-		if (config.isProfilingEnabled() && config.isTiaEnabled()) {
-			EnterCriticalSection(&methodSetSynchronization);
+		if (config.isProfilingEnabled()) {
+			RecordedMethodsGuard guard(*this);
 			setTestCaseRecording(false);
 			writeFunctionInfosToLog();
 			traceLog.endTestCase(result, duration);
-
-			LeaveCriticalSection(&methodSetSynchronization);
 		}
 	}
 

@@ -9,6 +9,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>$(OutDir)Profiler.dll</LocalDebuggerCommandArguments>
     <LocalDebuggerAttach>true</LocalDebuggerAttach>
+    <LocalDebuggerCommandArgumentsHistory>bin\Debug\Profiler.dll|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
