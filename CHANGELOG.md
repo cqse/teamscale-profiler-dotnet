@@ -9,6 +9,7 @@ Please prefix each entry with one of:
 - [breaking change] Removed feature to upload raw .NET trace files
 - [feature] Support for recording and uploading Testwise Coverage
 - [fix] .NET Framework subprocesses were not traced when UploadDaemon was active
+- [fix] Misspelled profiler option names in the config file were silently ignored, they are now reported as a warning in the trace file
 
 # v25.12.0
 - [fix] Removed feature to upload coverage to multiple Teamscale projects via embedded resources, as it unexpectedly locked DLL files

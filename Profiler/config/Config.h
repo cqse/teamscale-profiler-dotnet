@@ -27,9 +27,14 @@ namespace Profiler {
 		/** Loads the config from the given YAML stream and applies all sections that apply to the given profiled process path. */
 		void EXPOSE_TO_CPP_TESTS load(std::istream& configFileContents, std::string processPath);
 
-		/** Returns any problems encountered while loading the config, e.g. to log them. */
+		/** Returns any problems encountered while loading the config, e.g. to log them. These are fatal and abort the profiled process. */
 		std::vector<std::string> getProblems() {
 			return problems;
+		}
+
+		/** Returns any non-fatal warnings encountered while loading the config, e.g. to log them. */
+		std::vector<std::string> getWarnings() {
+			return warnings;
 		}
 
 		/** The path to the config file. */
@@ -103,6 +108,10 @@ namespace Profiler {
 		std::vector<ProcessSection> relevantConfigFileSections;
 		EnvironmentVariableReader* environmentVariableReader;
 		std::vector<std::string> problems;
+		std::vector<std::string> warnings;
+
+		/** The names of all options the profiler asked for, i.e. all options it supports. Filled by getOption. */
+		CaseInsensitiveStringSet queriedOptionNames;
 
 		bool enabled;
 		std::string targetDir;
@@ -121,6 +130,12 @@ namespace Profiler {
 		std::string getOption(std::string key);
 		bool getBooleanOption(std::string key, bool defaultValue);
 		void setOptions();
+
+		/**
+		 * Logs a warning for every option in the config file that the profiler doesn't support, e.g. because its name is misspelled.
+		 * Must be called after all supported options have been queried via getOption.
+		 */
+		void warnAboutUnknownOptions();
 		void loadYamlConfig(std::istream& configFileContents);
 		bool sectionMatches(ProcessSection& section);
 

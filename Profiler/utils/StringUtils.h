@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <set>
 #include "Testing.h"
 
 namespace Profiler {
@@ -39,5 +40,8 @@ namespace Profiler {
 
 	/** A map string -> string that ignores the casing of its keys. */
 	typedef std::map<std::string, std::string, StringUtils::CaseInsensitiveComparator> CaseInsensitiveStringMap;
+
+	/** A set of strings that ignores the casing of its entries. */
+	typedef std::set<std::string, StringUtils::CaseInsensitiveComparator> CaseInsensitiveStringSet;
 }
 

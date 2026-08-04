@@ -125,6 +125,65 @@ match:       [{{profiler: {{enabled         : false}}}}, {{executablePathRegex: 
         }
 
         /// <summary>
+        /// Makes sure that an option whose name the profiler doesn't know is reported as a warning in the trace file.
+        /// The testee must still run to completion, which is asserted implicitly by Testee.Run.
+        /// </summary>
+        [Test]
+        public void TestWarnsAboutUnknownConfigOption()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, @"
+match:
+  - profiler:
+      enabled: true
+      light_mdoe: false
+");
+            profiler.ConfigFilePath = configFile;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(profiler, arguments: "none");
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.Some.StartsWith("Warn=Unknown profiler option 'light_mdoe'"));
+        }
+
+        /// <summary>
+        /// Makes sure that a valid config file causes no warnings at all. This includes the options of the
+        /// uploader, which are consumed by the UploadDaemon and not by the profiler.
+        /// </summary>
+        [Test]
+        public void TestDoesNotWarnAboutValidConfig()
+        {
+            var configFile = Path.Combine(TestTempDirectory, "profilerconfig.yml");
+            File.WriteAllText(configFile, @"
+disableSslValidation: true
+uploadIntervalInMinutes: 5
+archivePurgingThresholdsInDays:
+  uploadedTraces: 7
+  emptyTraces: 3
+  incompleteTraces: 3
+match:
+  - profiler:
+      enabled: true
+      light_mode: true
+      assembly_paths: true
+      ignore_exceptions: false
+      tga: true
+      eagerness: 0
+    uploader:
+      pdbDirectory: '@AssemblyDir'
+      assemblyPatterns:
+        include:
+          - ProfilerTestee*
+");
+            profiler.ConfigFilePath = configFile;
+
+            new Testee(GetTestProgram("ProfilerTestee.exe")).Run(profiler, arguments: "none");
+
+            string[] lines = profiler.GetSingleTrace();
+            Assert.That(lines, Has.None.StartsWith("Warn="));
+        }
+
+        /// <summary>
         /// Makes sure that when tga mode is active, we only get regular coverage.
         /// </summary>
         [Test]
