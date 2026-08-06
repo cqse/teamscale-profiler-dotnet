@@ -357,7 +357,8 @@ uploader. Patterns are glob patterns: `*` matches any number of characters,
 ## Providing the Teamscale credentials via environment variables
 
 Instead of writing the Teamscale credentials into the configuration file, you can supply them via environment variables.
-This is useful if you do not want to store the access key on disk, e.g. when the configuration file is checked into a repository or when the credentials are injected by a CI system or a secret store.
+This is useful if you do not want to store the access key on disk.
+For example, when the configuration file is checked into a repository, or when the credentials are injected by a CI system or a secret store.
 
 | Environment variable  | Description                              |
 | :-------------------- | :--------------------------------------- |
