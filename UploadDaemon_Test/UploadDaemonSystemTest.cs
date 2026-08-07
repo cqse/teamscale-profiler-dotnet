@@ -46,6 +46,10 @@ namespace UploadDaemon
                       directory: {UploadDir}
                       teamscale:
                         url: http://localhost:8080/
+                        username: user
+                        accessKey: token
+                        project: project
+                        partition: partition
             ").CreateConfigForProcess("test.exe");
 
             Assert.That(configWithTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));
@@ -60,6 +64,10 @@ namespace UploadDaemon
                       directory: {UploadDir}
                       teamscale:
                         url: http://localhost:8080
+                        username: user
+                        accessKey: token
+                        project: project
+                        partition: partition
             ").CreateConfigForProcess("test.exe");
 
             Assert.That(configWithoutTrailingSlash.Teamscale.Url, Is.EqualTo("http://localhost:8080"));

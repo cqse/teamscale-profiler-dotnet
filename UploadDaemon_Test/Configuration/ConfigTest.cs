@@ -27,6 +27,10 @@ namespace UploadDaemon.Configuration
                       uploader:
                         teamscale:
                           url: ts
+                          username: user
+                          accessKey: token
+                          project: project
+                          partition: partition
             ");
 
             Config.ConfigForProcess fooConfig = config.CreateConfigForProcess("C:\\test\\foo.exe");

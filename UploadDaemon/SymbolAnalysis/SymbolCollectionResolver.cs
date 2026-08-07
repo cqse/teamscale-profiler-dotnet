@@ -86,11 +86,11 @@ namespace UploadDaemon.SymbolAnalysis
                 }
 
                 (string, GlobPatternList) cacheKey = GetCacheKey(pdbPath, null); // assembly patterns are irrelevant for single assemblies
-                SymbolFileInfo[] symbolFile = new[] { new SymbolFileInfo { Path = pdbPath, LastWriteTime = File.GetLastWriteTimeUtc(pdbPath) } };
-                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(collection, symbolDirectory, assemblyPatterns))
+                SymbolFileInfo symbolFile = new SymbolFileInfo { Path = pdbPath, LastWriteTime = File.GetLastWriteTimeUtc(pdbPath) };
+                if (!symbolCollectionsCache.TryGetValue(cacheKey, out SymbolCollection collection) || !IsValid(symbolFile))
                 {
                     symbolCollectionsCache[cacheKey] = collection = SymbolCollection.CreateFromFiles(new[] { pdbPath });
-                    UpdateValidationInfo(symbolFile);
+                    UpdateValidationInfo(new[] { symbolFile });
                 }
                 collectionOfAllAssemblies.Add(collection);
             }
@@ -102,6 +102,15 @@ namespace UploadDaemon.SymbolAnalysis
         private static (string, GlobPatternList) GetCacheKey(string symbolDirectory, GlobPatternList assemblyPatterns)
         {
             return (symbolDirectory, assemblyPatterns);
+        }
+
+        /// <summary>
+        /// Returns whether the cached collection for a single symbol file is still up to date.
+        /// </summary>
+        private bool IsValid(SymbolFileInfo symbolFile)
+        {
+            return symbolFileLastWriteDates.TryGetValue(symbolFile.Path, out DateTime lastWriteTime)
+                && symbolFile.LastWriteTime.Equals(lastWriteTime);
         }
 
         private bool IsValid(SymbolCollection collection, string symbolDirectory, GlobPatternList assemblyPatterns)

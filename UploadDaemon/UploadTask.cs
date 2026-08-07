@@ -26,6 +26,12 @@ namespace UploadDaemon
         private readonly IUploadFactory uploadFactory;
         private readonly ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory;
 
+        /// <summary>
+        /// Configuration problems already reported during this run, to avoid logging the same
+        /// problem once per affected trace file.
+        /// </summary>
+        private readonly ISet<string> reportedConfigErrors = new HashSet<string>();
+
         public UploadTask(IFileSystem fileSystem, IUploadFactory uploadFactory, ILineCoverageSynthesizerFactory lineCoverageSynthesizerFactory)
         {
             this.fileSystem = fileSystem;
@@ -52,13 +58,29 @@ namespace UploadDaemon
             Archive archive = new Archive(traceDirectory, fileSystem, new DefaultDateTimeProvider());
             LineCoverageMerger coverageMerger = new LineCoverageMerger();
 
-            IEnumerable<TraceFile> traces = scanner.ListTraceFilesReadyForUpload();
+            ProcessTraceFiles(scanner.ListTraceFilesReadyForUpload(), archive, config, coverageMerger);
+
+            UploadMergedCoverage(archive, coverageMerger, config);
+
+            logger.Debug("Finished scan");
+        }
+
+        /// <summary>
+        /// Processes all given trace files and logs those that could not be processed, so they are retried later.
+        /// </summary>
+        private void ProcessTraceFiles(IEnumerable<TraceFile> traces, Archive archive, Config config, LineCoverageMerger coverageMerger)
+        {
             List<string> errorTraceFilePaths = new List<string>();
             foreach (TraceFile traceFile in traces)
             {
                 try
                 {
                     ProcessTraceFile(traceFile, archive, config, coverageMerger);
+                }
+                catch (Config.InvalidConfigException e)
+                {
+                    ReportConfigError(e);
+                    errorTraceFilePaths.Add(traceFile.FilePath);
                 }
                 catch (Exception e)
                 {
@@ -70,10 +92,19 @@ namespace UploadDaemon
             {
                 logger.Error("Failed to process trace files {traces}. Will retry later", String.Join(", ", errorTraceFilePaths));
             }
+        }
 
-            UploadMergedCoverage(archive, coverageMerger, config);
-
-            logger.Debug("Finished scan");
+        /// <summary>
+        /// Logs the given configuration problem unless it was already reported during this run. The same invalid
+        /// configuration applies to every trace file of that process, hence we report each distinct problem only
+        /// once instead of once per affected trace file.
+        /// </summary>
+        private void ReportConfigError(Config.InvalidConfigException exception)
+        {
+            if (reportedConfigErrors.Add(exception.Message))
+            {
+                logger.Error(exception, "Invalid configuration. No coverage will be uploaded until this is fixed");
+            }
         }
 
         private static void UploadMergedCoverage(Archive archive, LineCoverageMerger coverageMerger, Config config)
