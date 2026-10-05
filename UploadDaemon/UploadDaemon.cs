@@ -29,6 +29,8 @@ namespace UploadDaemon
 
         private const string DaemonControlCommandRunNow = "run";
 
+        private static readonly PipeSecurity DaemonControlPipeSecurity = CreateControlPipeSecurity();
+
         /// <summary>
         /// Lock used to ensure that no two uploads happen in parallel.
         /// </summary>
@@ -59,10 +61,8 @@ namespace UploadDaemon
                 }
                 catch (Exception e) when (e is UnauthorizedAccessException || e is IOException)
                 {
-                    // Happens e.g. if the running instance is elevated or runs as a different user (service)
-                    // and was started by a version that did not grant other users access to the control pipe.
-                    logger.Error(e, "Could not notify the running UploadDaemon (it probably runs elevated or as a different user). " +
-                        "The upload will happen at its next scheduled interval.");
+                    // E.g. if this process runs with a network logon, which is denied access to the control pipe
+                    logger.Error(e, "Could not notify the running UploadDaemon. The upload will happen at its next scheduled interval.");
                 }
                 return;
             }
@@ -168,32 +168,34 @@ namespace UploadDaemon
         {
             while (true) // wait for indefinitely many commands
             {
-                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, CreateControlPipeSecurity()))
+                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, DaemonControlPipeSecurity))
                 {
                     pipeServerStream.WaitForConnection();
-                    using (var pipeStream = new StreamReader(pipeServerStream))
-                    {
-                        // There is currently only one command (DaemonControlCommandUpload), hence,
-                        // we immediately trigger an upload without checking what we received.
-                        pipeStream.ReadLine();
-                        RunOnce();
-                    }
+                    // There is currently only one command (DaemonControlCommandRunNow), hence, we trigger an upload without
+                    // checking what we received. The read is bounded on purpose: any local user can write to this pipe, so an
+                    // unbounded read like StreamReader.ReadLine() would let a client make the daemon run out of memory.
+                    pipeServerStream.Read(new byte[DaemonControlCommandRunNow.Length], 0, DaemonControlCommandRunNow.Length);
+                    RunOnce();
                 }
             }
         }
 
         /// <summary>
-        /// Creates the access rules for the control pipe. By default, Windows grants only read access to users other than
-        /// the creator, which prevents non-elevated instances from notifying an elevated daemon or one that runs as a service.
-        /// Hence, we explicitly allow all authenticated users to write to the pipe. Read access is required as well, since
-        /// opening the pipe for writing also requests READ_CONTROL. Clients cannot read data, as the pipe is inbound only.
+        /// Creates the access rules for the control pipe. Local users may write to it, so that the daemon can be notified
+        /// even if it runs elevated or as a different user (e.g. as a service). Network logons are denied, since
+        /// .NET Framework does not support PIPE_REJECT_REMOTE_CLIENTS.
         /// </summary>
         private static PipeSecurity CreateControlPipeSecurity()
         {
             var pipeSecurity = new PipeSecurity();
-            pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().User, PipeAccessRights.FullControl, AccessControlType.Allow));
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.NetworkSid, null), PipeAccessRights.FullControl, AccessControlType.Deny));
+            using (WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent())
+            {
+                pipeSecurity.AddAccessRule(new PipeAccessRule(currentIdentity.User, PipeAccessRights.FullControl, AccessControlType.Allow));
+            }
             pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
-            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+            // Must match the access requested in NotifyRunningDaemon. CreateFile always adds ReadAttributes.
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null), PipeAccessRights.WriteData | PipeAccessRights.ReadAttributes, AccessControlType.Allow));
             return pipeSecurity;
         }
 
@@ -202,7 +204,8 @@ namespace UploadDaemon
         /// </summary>
         private static void NotifyRunningDaemon()
         {
-            using (var pipeClientStream = new NamedPipeClientStream(".", DaemonControlPipeName, PipeDirection.Out, PipeOptions.Asynchronous))
+            using (var pipeClientStream = new NamedPipeClientStream(".", DaemonControlPipeName, PipeAccessRights.WriteData, PipeOptions.Asynchronous,
+                TokenImpersonationLevel.None, HandleInheritability.None))
             {
                 pipeClientStream.Connect(1000);
 
