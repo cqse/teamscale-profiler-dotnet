@@ -6,6 +6,8 @@ using System.IO.Abstractions;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Timers;
 using UploadDaemon.Archiving;
 using UploadDaemon.Upload;
@@ -54,6 +56,13 @@ namespace UploadDaemon
                 catch (TimeoutException e)
                 {
                     logger.Error(e, "Could not send notification trigger");
+                }
+                catch (Exception e) when (e is UnauthorizedAccessException || e is IOException)
+                {
+                    // Happens e.g. if the running instance is elevated or runs as a different user (service)
+                    // and was started by a version that did not grant other users access to the control pipe.
+                    logger.Error(e, "Could not notify the running UploadDaemon (it probably runs elevated or as a different user). " +
+                        "The upload will happen at its next scheduled interval.");
                 }
                 return;
             }
@@ -159,7 +168,7 @@ namespace UploadDaemon
         {
             while (true) // wait for indefinitely many commands
             {
-                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, CreateControlPipeSecurity()))
                 {
                     pipeServerStream.WaitForConnection();
                     using (var pipeStream = new StreamReader(pipeServerStream))
@@ -171,6 +180,21 @@ namespace UploadDaemon
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates the access rules for the control pipe. By default, Windows grants only read access to users other than
+        /// the creator, which prevents non-elevated instances from notifying an elevated daemon or one that runs as a service.
+        /// Hence, we explicitly allow all authenticated users to write to the pipe. Read access is required as well, since
+        /// opening the pipe for writing also requests READ_CONTROL. Clients cannot read data, as the pipe is inbound only.
+        /// </summary>
+        private static PipeSecurity CreateControlPipeSecurity()
+        {
+            var pipeSecurity = new PipeSecurity();
+            pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().User, PipeAccessRights.FullControl, AccessControlType.Allow));
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+            return pipeSecurity;
         }
 
         /// <summary>

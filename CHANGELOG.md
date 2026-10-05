@@ -6,6 +6,7 @@ Please prefix each entry with one of:
 - [documentation]
 
 # Next Release
+- [fix] UploadDaemon crashed with an `UnauthorizedAccessException` when another instance was running elevated or as a different user (e.g. as a service). The running daemon must be restarted for the fix to take full effect
 
 # v26.8.0
 - [breaking change] Removed feature to upload raw .NET trace files
