@@ -29,6 +29,11 @@ namespace UploadDaemon
 
         private const string DaemonControlCommandRunNow = "run";
 
+        /// <summary>
+        /// Length of the line sent by <see cref="NotifyRunningDaemon"/>, including the newline.
+        /// </summary>
+        private static readonly int DaemonControlCommandLength = DaemonControlCommandRunNow.Length + Environment.NewLine.Length;
+
         private static readonly PipeSecurity DaemonControlPipeSecurity = CreateControlPipeSecurity();
 
         /// <summary>
@@ -174,7 +179,7 @@ namespace UploadDaemon
                     // There is currently only one command (DaemonControlCommandRunNow), hence, we trigger an upload without
                     // checking what we received. The read is bounded on purpose: any local user can write to this pipe, so an
                     // unbounded read like StreamReader.ReadLine() would let a client make the daemon run out of memory.
-                    pipeServerStream.Read(new byte[DaemonControlCommandRunNow.Length], 0, DaemonControlCommandRunNow.Length);
+                    pipeServerStream.Read(new byte[DaemonControlCommandLength], 0, DaemonControlCommandLength);
                     RunOnce();
                 }
             }
