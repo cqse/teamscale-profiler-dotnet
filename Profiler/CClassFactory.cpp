@@ -139,7 +139,7 @@ namespace Profiler {
 		size_t nOutCLSIDLen) {
 		char szID[64];     // The class ID to register.
 
-		CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
+		CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID, ARRAY_LENGTH(szID));
 
 		BOOL success = TRUE;
 
@@ -170,7 +170,7 @@ namespace Profiler {
 	HRESULT UnregisterClassBase(REFCLSID rclsid, const char* szProgID,
 		const char* szIndepProgID, char* szOutCLSID, size_t nOutCLSIDLen) {
 		char szID[64];     // The class ID to register.
-		CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID);
+		CreateIDs(rclsid, szOutCLSID, nOutCLSIDLen, szID, ARRAY_LENGTH(szID));
 
 		BOOL success = TRUE;
 
@@ -197,11 +197,12 @@ namespace Profiler {
 		}
 	}
 
-	void CreateIDs(REFCLSID rclsid, char* szOutCLSID, size_t nOutCLSIDLen, char* szID) {
+	void CreateIDs(REFCLSID rclsid, char* szOutCLSID, size_t nOutCLSIDLen, char* szID,
+		size_t nIDLen) {
 		OLECHAR szWID[64]; // Helper for the class ID to register.
 
 		StringFromGUID2(rclsid, szWID, ARRAY_LENGTH(szWID));
-		WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, sizeof(szID), nullptr, nullptr);
+		WideCharToMultiByte(CP_ACP, 0, szWID, -1, szID, (int)nIDLen, nullptr, nullptr);
 
 		strcpy_s(szOutCLSID, nOutCLSIDLen, "CLSID\\");
 		strcat_s(szOutCLSID, nOutCLSIDLen, szID);

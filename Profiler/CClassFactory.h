@@ -14,9 +14,12 @@ namespace Profiler {
 	HRESULT UnregisterClassBase(REFCLSID rclsid, const char* szProgID,
 		const char* szIndepProgID, char* szOutCLSID, size_t nOutCLSIDLen);
 
-	/** Helper function to create the class IDs needed for registration.*/
+	/**
+	 * Helper function to create the class IDs needed for registration.
+	 * The caller passes the length of szID because sizeof on a pointer parameter yields the pointer size.
+	 */
 	void CreateIDs(REFCLSID rclsid, char* szOutCLSID, size_t nOutCLSIDLen,
-		char* szID);
+		char* szID, size_t nIDLen);
 
 	/** Deletes the key from the registry. */
 	BOOL DeleteKey(const char* szKey, const char* szSubkey);

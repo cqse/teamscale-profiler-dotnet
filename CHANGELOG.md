@@ -8,6 +8,7 @@ Please prefix each entry with one of:
 # Next Release
 - [breaking change] UploadDaemon instances started from a network logon (e.g. PowerShell remoting, WinRM or SSH sessions) can no longer trigger an immediate upload in an already running UploadDaemon. The upload happens at its next scheduled interval instead
 - [fix] UploadDaemon crashed with an `UnauthorizedAccessException` when another instance was running elevated or as a different user (e.g. as a service). The running daemon must be restarted for the fix to take full effect
+- [fix] Registering the profiler with `regsvr32` wrote its registry entries under a garbled class ID instead of `{DD0A1BB6-11CE-11DD-8EE8-3F9E55D89593}`
 
 # v26.8.0
 - [breaking change] Removed feature to upload raw .NET trace files
