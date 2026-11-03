@@ -25,9 +25,11 @@ namespace UploadDaemon
         /// </summary>
         private static string ConfigFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\Profiler.yml");
 
-        private const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
+        internal const string DaemonControlPipeName = "UploadDaemon/ControlPipe";
 
         private const string DaemonControlCommandRunNow = "run";
+
+        private const string UploadDocumentationUrl = "https://github.com/cqse/teamscale-profiler-dotnet/blob/master/documentation/userguide.md#automatic-trace-upload";
 
         /// <summary>
         /// Length of the line sent by <see cref="NotifyRunningDaemon"/>, including the newline.
@@ -168,12 +170,28 @@ namespace UploadDaemon
 
         /// <summary>
         /// Waits for notifications from subsequent executions of the Daemon.
+        /// Returns only if the control pipe cannot be created.
         /// </summary>
-        private void WaitForNotifications()
+        internal void WaitForNotifications()
         {
             while (true) // wait for indefinitely many commands
             {
-                using (var pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, DaemonControlPipeSecurity))
+                NamedPipeServerStream pipeServerStream;
+                try
+                {
+                    pipeServerStream = new NamedPipeServerStream(DaemonControlPipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, DaemonControlPipeSecurity);
+                }
+                catch (Exception e) when (e is UnauthorizedAccessException || e is IOException)
+                {
+                    // E.g. if a policy restricts named pipes or another process holds the pipe name.
+                    // Later UploadDaemon instances cannot notify this one, so each of them uploads once and exits as well.
+                    logger.Error(e, "Could not create the control pipe {pipeName}. The UploadDaemon stops now. " +
+                        "Install the UploadDaemon as a Windows service or run it once manually after all tests are done. See {documentationUrl}",
+                        DaemonControlPipeName, UploadDocumentationUrl);
+                    return;
+                }
+
+                using (pipeServerStream)
                 {
                     pipeServerStream.WaitForConnection();
                     // There is currently only one command (DaemonControlCommandRunNow), hence, we trigger an upload without
