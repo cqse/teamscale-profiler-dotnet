@@ -54,10 +54,13 @@ namespace Profiler {
 		shExecInfo.nShow = SW_NORMAL;
 		shExecInfo.hInstApp = nullptr;
 
-		return ShellExecuteEx(&shExecInfo);
+		bool started = ShellExecuteEx(&shExecInfo);
 
-		// We reset the environment of this process. This does not affect the launched child process
+		// We reset the environment of this process. This does not affect the launched child process.
+		// Keep this before the return, otherwise subprocesses of the profiled process are not profiled (TS-48498).
 		SetEnvironmentVariable("COR_ENABLE_PROFILING", "1");
+
+		return started;
 	}
 }
 
