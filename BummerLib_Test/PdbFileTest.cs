@@ -31,7 +31,7 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		/// <summary>
 		/// The directory of the source files of the test PDBs.
 		/// </summary>
-		private const string SandboxDirectory = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\";
+		private const string SANDBOX_DIRECTORY = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\";
 
 		/// <summary>
 		/// Most basic smoke test.
@@ -55,8 +55,8 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		{
 			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("Sandbox.pdb");
 			Assert.AreEqual(2, mappings.Count);
-			AssertMapping(mappings, 100663297, SandboxDirectory + "Sandbox\\Program.cs", (12, 15));
-			AssertMapping(mappings, 100663298, SandboxDirectory + "Sandbox\\Program.cs", (19, 26));
+			AssertMapping(mappings, 100663297, SANDBOX_DIRECTORY + "Sandbox\\Program.cs", (12, 15));
+			AssertMapping(mappings, 100663298, SANDBOX_DIRECTORY + "Sandbox\\Program.cs", (19, 26));
 		}
 
 		/// <summary>
@@ -68,10 +68,10 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		{
 			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("LibraryARenamedInVersion8.pdb");
 			Assert.AreEqual(4, mappings.Count);
-			AssertMapping(mappings, 100663297, SandboxDirectory + "LibraryA\\ClassARenamedInVersion7.cs", (11, 17));
-			AssertMapping(mappings, 100663298, SandboxDirectory + "LibraryA\\ClassARenamedInVersion7.cs", (21, 23));
-			AssertMapping(mappings, 100663300, SandboxDirectory + "LibraryA\\ClassB.cs", (13, 17));
-			AssertMapping(mappings, 100663301, SandboxDirectory + "LibraryA\\ClassB.cs", (20, 23));
+			AssertMapping(mappings, 100663297, SANDBOX_DIRECTORY + "LibraryA\\ClassARenamedInVersion7.cs", (11, 17));
+			AssertMapping(mappings, 100663298, SANDBOX_DIRECTORY + "LibraryA\\ClassARenamedInVersion7.cs", (21, 23));
+			AssertMapping(mappings, 100663300, SANDBOX_DIRECTORY + "LibraryA\\ClassB.cs", (13, 17));
+			AssertMapping(mappings, 100663301, SANDBOX_DIRECTORY + "LibraryA\\ClassB.cs", (20, 23));
 		}
 
 		/// <summary>
@@ -83,9 +83,9 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		{
 			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("UnusedLibraryRenamedInVersion8.pdb");
 			Assert.AreEqual(3, mappings.Count);
-			AssertMapping(mappings, 100663297, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (20, 27));
-			AssertMapping(mappings, 100663298, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (30, 38));
-			AssertMapping(mappings, 100663300, SandboxDirectory + "UnusedLibrary\\UnusedClass.cs", (13, 18));
+			AssertMapping(mappings, 100663297, SANDBOX_DIRECTORY + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (20, 27));
+			AssertMapping(mappings, 100663298, SANDBOX_DIRECTORY + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (30, 38));
+			AssertMapping(mappings, 100663300, SANDBOX_DIRECTORY + "UnusedLibrary\\UnusedClass.cs", (13, 18));
 		}
 
 		/// <summary>
