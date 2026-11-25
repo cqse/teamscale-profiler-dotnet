@@ -15,9 +15,32 @@ namespace UploadDaemon.SymbolAnalysis
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         /// <summary>
-        /// The source file mappings of each method, by assembly name and method token. Use <see cref="GetKey"/> to create keys.
+        /// The lines of a method in a source file. A compact copy of a <see cref="SourceFileMapping"/>, since symbol
+        /// collections are cached for a long time and may contain many methods.
         /// </summary>
-        private readonly Dictionary<(string assemblyName, uint methodToken), List<SourceFileMapping>> mappings = new Dictionary<(string, uint), List<SourceFileMapping>>();
+        public class SourceLocation
+        {
+            /// <summary>
+            /// The source file path. May be null when the PDB contains no source file path.
+            /// </summary>
+            public string SourceFile { get; }
+
+            /// <summary>
+            /// The sorted, non-overlapping ranges of inclusive start and end lines.
+            /// </summary>
+            public IReadOnlyList<(uint StartLine, uint EndLine)> LineRanges { get; }
+
+            public SourceLocation(string sourceFile, IReadOnlyList<(uint StartLine, uint EndLine)> lineRanges)
+            {
+                SourceFile = sourceFile;
+                LineRanges = lineRanges;
+            }
+        }
+
+        /// <summary>
+        /// The source locations of each method, by assembly name and method token. The assembly names are normalized with <see cref="NormalizeAssemblyName"/>.
+        /// </summary>
+        private readonly Dictionary<(string assemblyName, uint methodToken), SourceLocation[]> mappings = new Dictionary<(string, uint), SourceLocation[]>();
 
         /// <summary>
         /// The paths of the PDB symbol files considered in this collection.
@@ -32,18 +55,24 @@ namespace UploadDaemon.SymbolAnalysis
 
             foreach (AssemblyMethodMappings mapping in mappings)
             {
+                // normalized once, so that all keys of the assembly share the same string
+                string assemblyName = NormalizeAssemblyName(mapping.AssemblyName);
+
                 // in case of duplicate mappings, the mappings of the same method overwrite each other
                 foreach (MethodMapping methodMapping in mapping.MethodMappings)
                 {
-                    this.mappings[GetKey(mapping.AssemblyName, methodMapping.MethodToken)] = methodMapping.SourceFileMappings;
+                    this.mappings[(assemblyName, methodMapping.MethodToken)] = methodMapping.SourceFileMappings
+                        .Select(sourceFileMapping => new SourceLocation(sourceFileMapping.SourceFile,
+                            sourceFileMapping.LineRanges.Select(range => (range.StartLine, range.EndLine)).ToArray()))
+                        .ToArray();
                 }
             }
         }
 
         /// <summary>
-        /// Returns the key for the given method in the given assembly. Assembly names are case-insensitive.
+        /// Returns the given assembly name as it is used in the keys. Assembly names are case-insensitive.
         /// </summary>
-        private static (string, uint) GetKey(string assemblyName, uint methodToken) => (assemblyName.ToUpperInvariant(), methodToken);
+        private static string NormalizeAssemblyName(string assemblyName) => assemblyName.ToUpperInvariant();
 
         /// <summary>
         /// Returns true if no mappings are contained in this collection.
@@ -62,13 +91,13 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         /// <summary>
-        /// Returns the source file mappings for the given method in the given assembly, or null if the method cannot be
-        /// resolved.
+        /// Returns the source locations for the given method in the given assembly, one per source file, or null if the
+        /// method cannot be resolved.
         /// </summary>
-        public List<SourceFileMapping> Resolve(string assemblyName, uint methodToken)
+        public IReadOnlyList<SourceLocation> Resolve(string assemblyName, uint methodToken)
         {
-            mappings.TryGetValue(GetKey(assemblyName, methodToken), out List<SourceFileMapping> sourceFileMappings);
-            return sourceFileMappings;
+            mappings.TryGetValue((NormalizeAssemblyName(assemblyName), methodToken), out SourceLocation[] locations);
+            return locations;
         }
 
         /// <summary>
@@ -110,7 +139,7 @@ namespace UploadDaemon.SymbolAnalysis
                 }
 
                 // in case of duplicate mappings, the mappings of the same method overwrite each other
-                foreach (KeyValuePair<(string, uint), List<SourceFileMapping>> entry in collection.mappings)
+                foreach (KeyValuePair<(string, uint), SourceLocation[]> entry in collection.mappings)
                 {
                     mergedCollection.mappings[entry.Key] = entry.Value;
                 }

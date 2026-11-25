@@ -1,5 +1,4 @@
-﻿using Cqse.ConQAT.Dotnet.Bummer;
-using NLog;
+﻿using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,14 +77,14 @@ namespace UploadDaemon.SymbolAnalysis
                 }
                 includedAssemblies.Add(assemblyName);
 
-                List<SourceFileMapping> sourceFileMappings = symbolCollection.Resolve(assemblyName, methodId);
+                IReadOnlyList<SymbolCollection.SourceLocation> resolvedLocations = symbolCollection.Resolve(assemblyName, methodId);
                 if (!resolutionCounts.TryGetValue(assemblyName, out AssemblyResolutionCount count))
                 {
                     count = new AssemblyResolutionCount();
                     resolutionCounts[assemblyName] = count;
                 }
 
-                if (sourceFileMappings == null)
+                if (resolvedLocations == null)
                 {
                     count.unresolvedMethods += 1;
                     logger.Debug("Could not resolve method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
@@ -94,8 +93,8 @@ namespace UploadDaemon.SymbolAnalysis
                     continue;
                 }
 
-                sourceFileMappings = sourceFileMappings.Where(sourceFileMapping => !string.IsNullOrEmpty(sourceFileMapping.SourceFile)).ToList();
-                if (sourceFileMappings.Count == 0)
+                List<SymbolCollection.SourceLocation> sourceLocations = resolvedLocations.Where(location => !string.IsNullOrEmpty(location.SourceFile)).ToList();
+                if (sourceLocations.Count == 0)
                 {
                     count.methodsWithoutSourceFile += 1;
                     logger.Debug("Could not resolve source file of method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
@@ -105,23 +104,23 @@ namespace UploadDaemon.SymbolAnalysis
                 }
 
                 // The method mappers provide no line ranges for a source file if all lines of the method in it are compiler hidden
-                List<SourceFileMapping> mappingsWithLines = sourceFileMappings.Where(sourceFileMapping => sourceFileMapping.LineRanges.Count > 0).ToList();
-                if (mappingsWithLines.Count < sourceFileMappings.Count)
+                List<SymbolCollection.SourceLocation> locationsWithLines = sourceLocations.Where(location => location.LineRanges.Count > 0).ToList();
+                if (locationsWithLines.Count < sourceLocations.Count)
                 {
                     count.methodsWithCompilerHiddenLines += 1;
                     logger.Debug("Resolved lines of method ID {methodId} from assembly {assemblyName} are all compiler hidden in at least one source file in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
                         trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                 }
-                if (mappingsWithLines.Count == 0)
+                if (locationsWithLines.Count == 0)
                 {
                     continue;
                 }
 
                 count.resolvedMethods += 1;
-                foreach (SourceFileMapping sourceFileMapping in mappingsWithLines)
+                foreach (SymbolCollection.SourceLocation location in locationsWithLines)
                 {
-                    AddToLineCoverage(lineCoverageByFile, sourceFileMapping);
+                    AddToLineCoverage(lineCoverageByFile, location);
                 }
             }
 
@@ -173,15 +172,15 @@ namespace UploadDaemon.SymbolAnalysis
             }
         }
 
-        private static void AddToLineCoverage(Dictionary<string, FileCoverage> lineCoverage, SourceFileMapping sourceFileMapping)
+        private static void AddToLineCoverage(Dictionary<string, FileCoverage> lineCoverage, SymbolCollection.SourceLocation location)
         {
-            if (!lineCoverage.TryGetValue(sourceFileMapping.SourceFile, out FileCoverage fileCoverage))
+            if (!lineCoverage.TryGetValue(location.SourceFile, out FileCoverage fileCoverage))
             {
                 fileCoverage = new FileCoverage();
-                lineCoverage[sourceFileMapping.SourceFile] = fileCoverage;
+                lineCoverage[location.SourceFile] = fileCoverage;
             }
 
-            fileCoverage.CoveredLineRanges.UnionWith(sourceFileMapping.LineRanges.Select(range => (range.StartLine, range.EndLine)));
+            fileCoverage.CoveredLineRanges.UnionWith(location.LineRanges);
         }
 
         public class LineCoverageConversionFailedException : Exception

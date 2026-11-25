@@ -1,5 +1,4 @@
-﻿using Cqse.ConQAT.Dotnet.Bummer;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,17 +19,18 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
 
-            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            IReadOnlyList<SymbolCollection.SourceLocation> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.Multiple(() =>
             {
                 Assert.That(existingMethod, Is.Not.Null);
+                Assert.That(collection.Resolve("profilergui", ExistingMethodToken), Is.SameAs(existingMethod));
                 Assert.That(collection.Resolve("does-not-exist", 123), Is.Null);
             });
 
             Assert.Multiple(() =>
             {
                 Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
+                Assert.That(existingMethod.Single().LineRanges, Is.EqualTo(new[] { (37u, 39u) }));
             });
         }
 
@@ -40,9 +40,9 @@ namespace UploadDaemon.SymbolAnalysis
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
 
             // 100663307 corresponds to the constructor of Config in ProfilerGUI.pdb, which contains an auto-property initializer in line 161
-            List<SourceFileMapping> constructor = collection.Resolve("ProfilerGUI", 100663307);
+            IReadOnlyList<SymbolCollection.SourceLocation> constructor = collection.Resolve("ProfilerGUI", 100663307);
             Assert.That(constructor, Is.Not.Null);
-            Assert.That(constructor.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (161u, 161u), (171u, 175u) }));
+            Assert.That(constructor.Single().LineRanges, Is.EqualTo(new[] { (161u, 161u), (171u, 175u) }));
         }
 
         [Test]
@@ -50,12 +50,12 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { $"{TestUtils.TestDataDirectory}\\Invalid.pdb", TestPdbPath });
 
-            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            IReadOnlyList<SymbolCollection.SourceLocation> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
             Assert.Multiple(() =>
             {
                 Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
+                Assert.That(existingMethod.Single().LineRanges, Is.EqualTo(new[] { (37u, 39u) }));
             });
         }
 
@@ -64,12 +64,12 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath, TestPDBCopyPath });
 
-            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            IReadOnlyList<SymbolCollection.SourceLocation> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
             Assert.Multiple(() =>
             {
                 Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
+                Assert.That(existingMethod.Single().LineRanges, Is.EqualTo(new[] { (37u, 39u) }));
             });
         }
 
