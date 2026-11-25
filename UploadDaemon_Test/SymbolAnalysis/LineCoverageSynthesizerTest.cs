@@ -135,24 +135,24 @@ namespace UploadDaemon.SymbolAnalysis
         }
 
         [Test]
-        public void CompilerHiddenLinesShouldBeIgnored()
+        public void MethodsWithoutSourceFileOrLinesShouldBeIgnored()
         {
-            Trace trace = new Trace() { CoveredMethods = new[] { ("Test", (uint) 1234) }.ToList() };
+            Trace trace = new Trace() { CoveredMethods = new[] { ("Test", (uint) 1234), ("Test", (uint) 5678) }.ToList() };
 
             AssemblyMethodMappings mappings = new AssemblyMethodMappings
             {
                 AssemblyName = "Test",
                 SymbolFileName = "Test.pdb",
             };
+            // the method mappers provide no source file if the symbol file contains no lines for a method
+            mappings.MethodMappings.Add(new MethodMapping
+            {
+                MethodToken = 1234,
+            });
             // the method mappers provide no line ranges if all lines of a method are compiler hidden
             mappings.MethodMappings.Add(new MethodMapping
             {
-                MethodToken = 1234,
-                SourceFileMappings = { new SourceFileMapping { SourceFile = "" } },
-            });
-            mappings.MethodMappings.Add(new MethodMapping
-            {
-                MethodToken = 1234,
+                MethodToken = 5678,
                 SourceFileMappings = { new SourceFileMapping { SourceFile = @"c:\some\file.cs" } },
             });
 
