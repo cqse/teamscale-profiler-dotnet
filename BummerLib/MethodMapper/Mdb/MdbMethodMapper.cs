@@ -66,11 +66,23 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 
                 if (lines != null && lines.Length > 0)
                 {
-                    uint startLine = (uint)lines[0].Row;
-                    uint endLine = (uint)lines[lines.Length - 1].Row;
-                    if (startLine != PdbFile.CompilerHiddenLine && endLine != PdbFile.CompilerHiddenLine)
+                    uint firstLine = (uint)lines[0].Row;
+                    uint lastLine = (uint)lines[lines.Length - 1].Row;
+                    if (firstLine != PdbFile.CompilerHiddenLine && lastLine != PdbFile.CompilerHiddenLine)
                     {
-                        sourceFileMapping.LineRanges.Add(new LineRange { StartLine = startLine, EndLine = endLine });
+                        if (firstLine <= lastLine)
+                        {
+                            sourceFileMapping.LineRanges.Add(new LineRange { StartLine = firstLine, EndLine = lastLine });
+                        }
+                        else
+                        {
+                            // E.g. a constructor whose initializer is located after its body, since the initializers come first
+                            // in the IL. This only avoids invalid ranges until MDB support is removed. Unlike for PDB files, the
+                            // line ranges are not determined with the LineRangeMerger, so the range above may still span other
+                            // methods, e.g. if a constructor's initializer is located before its body.
+                            sourceFileMapping.LineRanges.Add(new LineRange { StartLine = lastLine, EndLine = lastLine });
+                            sourceFileMapping.LineRanges.Add(new LineRange { StartLine = firstLine, EndLine = firstLine });
+                        }
                     }
                 }
             }

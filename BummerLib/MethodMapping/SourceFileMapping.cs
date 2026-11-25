@@ -36,8 +36,9 @@ namespace Cqse.ConQAT.Dotnet.Bummer
         /// Gets the sorted, non-overlapping line ranges of the method within the source file.
         /// </summary>
         /// <value>The line ranges of the method within the source file. Empty if the method has no lines
-        /// in the source file that are not compiler hidden. For MDB files, this contains at most a single
-        /// range from the first to the last line of the method.</value>
+        /// in the source file that are not compiler hidden. For MDB files, this contains a single range from
+        /// the first to the last line of the method, or the first and the last line as separate ranges in some
+        /// cases.</value>
         public List<LineRange> LineRanges { get; internal set; } = new List<LineRange>();
     }
 }
