@@ -20,7 +20,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Cqse.ConQAT.Dotnet.Bummer
 {
@@ -87,17 +86,6 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 			AssertMapping(mappings, 100663297, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (20, 27));
 			AssertMapping(mappings, 100663298, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (30, 38));
 			AssertMapping(mappings, 100663300, SandboxDirectory + "UnusedLibrary\\UnusedClass.cs", (13, 18));
-		}
-
-		/// <summary>
-		/// Asserts that the method with the given token is mapped to exactly the given line ranges in the given source file.
-		/// </summary>
-		private static void AssertMapping(List<MethodMapping> mappings, uint methodToken, string sourceFile, params (uint, uint)[] lineRanges)
-		{
-			MethodMapping mapping = mappings.Single(m => m.MethodToken == methodToken);
-			Assert.That(mapping.SourceFileMappings, Has.Count.EqualTo(1));
-			Assert.That(mapping.SourceFileMappings[0].SourceFile, Is.EqualTo(sourceFile));
-			Assert.That(mapping.SourceFileMappings[0].LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(lineRanges));
 		}
 
 		/// <summary>

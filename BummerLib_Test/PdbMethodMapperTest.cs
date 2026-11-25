@@ -20,9 +20,7 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Cqse.ConQAT.Dotnet.Bummer
 {
@@ -70,17 +68,8 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		{
 			using (Stream pdb = File.OpenRead(this.GetGlobalTestFile("Newtonsoft.Json.pdb").FullName))
 			{
-				var mapper = new PdbMethodMapper();
 				// Corresponds to constructor: https://github.com/JamesNK/Newtonsoft.Json/blob/12.0.1/Src/Newtonsoft.Json/JsonException.cs#L55
-				List<MethodMapping> mappings = mapper.ReadPortablePdbMappings(pdb).Where(m => m.SourceFileMappings.Any(sourceFileMapping =>
-					sourceFileMapping.SourceFile.Contains("JsonException.cs") && sourceFileMapping.LineRanges.First().StartLine == 56)).ToList();
-				Assert.That(mappings, Has.Count.EqualTo(1));
-
-				MethodMapping mapping = mappings.First();
-				Assert.That(mapping.MethodToken, Is.EqualTo(100663435));
-				Assert.That(mapping.SourceFileMappings, Has.Count.EqualTo(1));
-				Assert.That(mapping.SourceFileMappings[0].SourceFile, Is.EqualTo("/_/Src/Newtonsoft.Json/JsonException.cs"));
-				Assert.That(mapping.SourceFileMappings[0].LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (56u, 58u) }));
+				AssertMapping(new PdbMethodMapper().ReadPortablePdbMappings(pdb), 100663435, "/_/Src/Newtonsoft.Json/JsonException.cs", (56, 58));
 			}
 		}
 
@@ -94,11 +83,7 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 			using (Stream pdb = File.OpenRead(this.GetGlobalTestFile("Newtonsoft.Json.pdb").FullName))
 			{
 				// Corresponds to the constructor (line 60) and the initializer of the field _values (line 43): https://github.com/JamesNK/Newtonsoft.Json/blob/12.0.1/Src/Newtonsoft.Json/Linq/JArray.cs#L43
-				MethodMapping mapping = new PdbMethodMapper().ReadPortablePdbMappings(pdb).Single(m => m.MethodToken == 100665706);
-
-				Assert.That(mapping.SourceFileMappings, Has.Count.EqualTo(1));
-				Assert.That(mapping.SourceFileMappings[0].SourceFile, Is.EqualTo("/_/Src/Newtonsoft.Json/Linq/JArray.cs"));
-				Assert.That(mapping.SourceFileMappings[0].LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (43u, 43u), (60u, 62u) }));
+				AssertMapping(new PdbMethodMapper().ReadPortablePdbMappings(pdb), 100665706, "/_/Src/Newtonsoft.Json/Linq/JArray.cs", (43, 43), (60, 62));
 			}
 		}
 	}
