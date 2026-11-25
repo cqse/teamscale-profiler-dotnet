@@ -28,9 +28,8 @@ namespace Cqse.ConQAT.Dotnet.Bummer
     /// <summary>
     /// <para>
     /// Adapter for access to Microsoft.Cci.Pdb.PdbFiles.
-    /// Uses reflection to read Pdb files and load the enclosed functions.
-    /// Wraps these functions in a corresponding local wrapper class
-    /// <see cref="PdbFunction"/>.
+    /// Uses reflection to read Pdb files and load the enclosed functions
+    /// as <see cref="MethodMapping"/>s.
     /// </para>
     /// <para>
     /// Wrapping access to the MS class is necessary, because the methods
@@ -160,11 +159,11 @@ namespace Cqse.ConQAT.Dotnet.Bummer
             BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Loads the Pdb functions contained in the specified stream to a Pdb file.
+        /// Loads the method mappings of the Pdb functions contained in the specified stream to a Pdb file.
         /// </summary>
-        /// <returns>The Pdb functions contained in the specified stream.</returns>
+        /// <returns>The method mappings of the Pdb functions contained in the specified stream.</returns>
         /// <param name="pdbStream">Stream pointing to a Pdb file.</param>
-        public static IEnumerable<PdbFunction> LoadPdbFunctions(Stream pdbStream)
+        public static List<MethodMapping> LoadMethodMappings(Stream pdbStream)
         {
             Dictionary<uint, object> tokenToSourceMapping = null;
             string sourceServerData = null;
@@ -174,71 +173,65 @@ namespace Cqse.ConQAT.Dotnet.Bummer
             object loadedPdbFunctions = PdbFileLoadFunctionsMethodInfo
                 .Invoke(null, new object[] { pdbStream, tokenToSourceMapping, sourceServerData, age, guid });
 
+            List<MethodMapping> mappings = new List<MethodMapping>();
+            List<(SourceFileMapping sourceFileMapping, List<(uint startLine, uint endLine)> lines)> sourceFileMappings = new List<(SourceFileMapping, List<(uint, uint)>)>();
             foreach (object pdbFunction in loadedPdbFunctions as Array)
             {
-                yield return WrapPdbFunction(pdbFunction);
+                MethodMapping mapping = new MethodMapping
+                {
+                    MethodToken = (uint)GetField(pdbFunction, PdbFunctionType, PdbFunctionTokenFieldName)
+                };
+                mappings.Add(mapping);
+
+                foreach ((string sourceFile, List<(uint startLine, uint endLine)> lines) in GetLinesBySourceFile(pdbFunction))
+                {
+                    SourceFileMapping sourceFileMapping = new SourceFileMapping { SourceFile = sourceFile };
+                    mapping.SourceFileMappings.Add(sourceFileMapping);
+                    sourceFileMappings.Add((sourceFileMapping, lines));
+                }
             }
+
+            LineRangeMerger.SetLineRanges(sourceFileMappings);
+            return mappings;
         }
 
         /// <summary>
-        /// Wraps the specified MS PdbFunction object into an object of type
-        /// <see cref="PdbFunction"/>.
+        /// Returns the lines of the specified MS PdbFunction object that are not compiler hidden, grouped by source file.
         /// </summary>
-        private static PdbFunction WrapPdbFunction(object pdbFunction)
+        /// <param name="pdbFunction">The MS PdbFunction object.</param>
+        private static List<(string sourceFile, List<(uint startLine, uint endLine)> lines)> GetLinesBySourceFile(object pdbFunction)
         {
-            var wrappedPdbFunction = new PdbFunction();
-            wrappedPdbFunction.Token =
-                (uint)GetField(pdbFunction, PdbFunctionType, PdbFunctionTokenFieldName);
-
-            var pdbFunctionLines =
-                GetField(pdbFunction, PdbFunctionType, PdbFunctionLinesFieldName);
-            if (pdbFunctionLines != null)
+            var linesBySourceFile = new List<(string sourceFile, List<(uint startLine, uint endLine)> lines)>();
+            if (!(GetField(pdbFunction, PdbFunctionType, PdbFunctionLinesFieldName) is Array pdbFunctionLines))
             {
-                AddPdbFunctionLines(wrappedPdbFunction, pdbFunctionLines);
+                return linesBySourceFile;
             }
 
-            return wrappedPdbFunction;
-        }
-
-        /// <summary>
-        /// Adds the specified PdbFunction lines to the provided function wrapper.
-        /// </summary>
-        /// <param name="wrappedPdbFunction">The wrapped PdbFunction, the lines
-        /// should be added to.</param>
-        /// <param name="pdbFunctionLines">A PdbLines object containing the
-        /// source lines of a PdbFunction.</param>
-        private static void AddPdbFunctionLines(PdbFunction wrappedPdbFunction, object pdbFunctionLines)
-        {
-            if (pdbFunctionLines == null || (pdbFunctionLines as Array).Length == 0)
+            // Each PdbLines object contains the lines of the function in one source file
+            foreach (object pdbLines in pdbFunctionLines)
             {
-                return;
-            }
+                var pdbLinesFile =
+                    GetField(pdbLines, PdbLinesType, PdbLinesFileFieldName);
+                var pdbLinesFileName =
+                    GetField(pdbLinesFile, PdbSourceType, PdbSourceNameFieldName) as string;
 
-            object lines = (pdbFunctionLines as Array).GetValue(0);
-
-            var pdbFunctionLinesFile =
-                GetField(lines, PdbLinesType, PdbLinesFileFieldName);
-            var pdbFunctionLinesFileName =
-                GetField(pdbFunctionLinesFile, PdbSourceType, PdbSourceNameFieldName) as string;
-            wrappedPdbFunction.SourceFilename = pdbFunctionLinesFileName;
-
-            var pdbFunctionLinesLineArray =
-                GetField(lines, PdbLinesType, PdbLinesLinesFieldName) as Array;
-            if (pdbFunctionLinesLineArray?.Length > 0)
-            {
-                var lineNumbers = FilterAndSortLines(pdbFunctionLinesLineArray);
-
-                if (lineNumbers.Count == 0)
+                // Join PdbLines objects of the same source file, in case there are several
+                List<(uint startLine, uint endLine)> lines = linesBySourceFile
+                    .Where(entry => entry.sourceFile == pdbLinesFileName)
+                    .Select(entry => entry.lines)
+                    .FirstOrDefault();
+                if (lines == null)
                 {
-                    wrappedPdbFunction.StartLine = CompilerHiddenLine;
-                    wrappedPdbFunction.EndLine = CompilerHiddenLine;
+                    lines = new List<(uint startLine, uint endLine)>();
+                    linesBySourceFile.Add((pdbLinesFileName, lines));
                 }
-                else
+
+                if (GetField(pdbLines, PdbLinesType, PdbLinesLinesFieldName) is Array pdbLinesLineArray)
                 {
-                    wrappedPdbFunction.StartLine = lineNumbers.First();
-                    wrappedPdbFunction.EndLine = lineNumbers.Last();
+                    lines.AddRange(FilterLines(pdbLinesLineArray));
                 }
             }
+            return linesBySourceFile;
         }
 
         /// <summary>
@@ -252,21 +245,23 @@ namespace Cqse.ConQAT.Dotnet.Bummer
         }
 
         /// <summary>
-        /// Returns the line numbers in the given line array sorted and with compiler hidden lines removed.
+        /// Returns the begin and end lines in the given line array with compiler hidden lines removed.
         /// There are cases where only the first or last few lines of a method are compiler-hidden.
         /// </summary>
         /// <param name="pdbFunctionLinesLineArray">The array of PdbLine objects</param>
-        private static List<uint> FilterAndSortLines(Array pdbFunctionLinesLineArray)
+        private static List<(uint startLine, uint endLine)> FilterLines(Array pdbFunctionLinesLineArray)
         {
-            List<uint> lineNumbers = new List<uint>();
+            List<(uint startLine, uint endLine)> lines = new List<(uint startLine, uint endLine)>();
             foreach (object line in pdbFunctionLinesLineArray)
             {
-                lineNumbers.Add((uint)GetField(line, PdbLineType, PdbLineLineBeginFieldName));
-                lineNumbers.Add((uint)GetField(line, PdbLineType, PdbLineLineEndFieldName));
+                uint lineBegin = (uint)GetField(line, PdbLineType, PdbLineLineBeginFieldName);
+                uint lineEnd = (uint)GetField(line, PdbLineType, PdbLineLineEndFieldName);
+                if (lineBegin != CompilerHiddenLine && lineEnd != CompilerHiddenLine)
+                {
+                    lines.Add((lineBegin, Math.Max(lineBegin, lineEnd)));
+                }
             }
-            lineNumbers = lineNumbers.FindAll(line => line != CompilerHiddenLine);
-            lineNumbers.Sort();
-            return lineNumbers;
+            return lines;
         }
     }
 }

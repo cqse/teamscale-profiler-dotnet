@@ -52,10 +52,11 @@ namespace Cqse.ConQAT.Dotnet.Bummer
         /// <param name="mdbMethod">The MDB MethodEntry to get the mapping for.</param>
         private MethodMapping GetMapping(MethodEntry mdbMethod)
         {
+            var sourceFileMapping = new SourceFileMapping { SourceFile = mdbMethod.CompileUnit.SourceFile.FileName };
             var methodMapping = new MethodMapping()
-            { 
-                MethodToken = (uint)mdbMethod.Token, 
-                SourceFile = mdbMethod.CompileUnit.SourceFile.FileName 
+            {
+                MethodToken = (uint)mdbMethod.Token,
+                SourceFileMappings = { sourceFileMapping }
             };
 
             LineNumberTable lineNumberTable = mdbMethod.GetLineNumberTable();
@@ -65,8 +66,12 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 
                 if (lines != null && lines.Length > 0)
                 {
-                    methodMapping.StartLine = (uint)lines[0].Row;
-                    methodMapping.EndLine = (uint)lines[lines.Length - 1].Row;
+                    uint startLine = (uint)lines[0].Row;
+                    uint endLine = (uint)lines[lines.Length - 1].Row;
+                    if (startLine != PdbFile.CompilerHiddenLine && endLine != PdbFile.CompilerHiddenLine)
+                    {
+                        sourceFileMapping.LineRanges.Add(new LineRange { StartLine = startLine, EndLine = endLine });
+                    }
                 }
             }
 

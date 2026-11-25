@@ -76,14 +76,16 @@
   <ItemGroup>
     <Compile Include="Bummer.cs" />
     <Compile Include="MethodMapper\IMethodMapper.cs" />
+    <Compile Include="MethodMapper\LineRangeMerger.cs" />
     <Compile Include="MethodMapper\Mdb\MdbMethodMapper.cs" />
     <Compile Include="MethodMapper\MethodMapper.cs" />
     <Compile Include="MethodMapper\MethodMapperBase.cs" />
     <Compile Include="MethodMapper\Pdb\PdbFile.cs" />
-    <Compile Include="MethodMapper\Pdb\PdbFunction.cs" />
     <Compile Include="MethodMapper\Pdb\PdbMethodMapper.cs" />
     <Compile Include="MethodMapping\AssemblyMethodMappings.cs" />
+    <Compile Include="MethodMapping\LineRange.cs" />
     <Compile Include="MethodMapping\MethodMapping.cs" />
+    <Compile Include="MethodMapping\SourceFileMapping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

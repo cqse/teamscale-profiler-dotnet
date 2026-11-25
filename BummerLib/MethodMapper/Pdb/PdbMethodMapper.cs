@@ -79,6 +79,8 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		internal IEnumerable<MethodMapping> ReadPortablePdbMappings(Stream fileStream)
 		{
 			MetadataReader metadataReader = MetadataReaderProvider.FromPortablePdbStream(fileStream, MetadataStreamOptions.PrefetchMetadata).GetMetadataReader(MetadataReaderOptions.ApplyWindowsRuntimeProjections);
+			var mappings = new List<MethodMapping>();
+			var sourceFileMappings = new List<(SourceFileMapping sourceFileMapping, List<(uint startLine, uint endLine)> lines)>();
             foreach (MethodDebugInformationHandle methodHandle in metadataReader.MethodDebugInformation)
 			{
 				MethodDebugInformation debugInfo = metadataReader.GetMethodDebugInformation(methodHandle);
@@ -89,22 +91,27 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 					continue;
 				}
 
-				DocumentHandle docHandle = sequencePoints.First().Document;
-				if (docHandle.IsNil)
-				{
-					docHandle = debugInfo.Document;
-				}
-
-				Document doc = metadataReader.GetDocument(docHandle);
-
-				yield return new MethodMapping
+				MethodMapping mapping = new MethodMapping
 				{
 					MethodToken = (uint) MetadataTokens.GetToken(methodHandle.ToDefinitionHandle()),
-					SourceFile = metadataReader.GetString(doc.Name),
-					StartLine = (uint)sequencePoints.First().StartLine,
-					EndLine = (uint)sequencePoints.Last().EndLine,
 				};
+				mappings.Add(mapping);
+
+				// The sequence points of a method may be located in several documents
+				foreach (IGrouping<DocumentHandle, SequencePoint> documentSequencePoints in sequencePoints
+					.GroupBy(point => point.Document.IsNil ? debugInfo.Document : point.Document))
+				{
+					Document document = metadataReader.GetDocument(documentSequencePoints.Key);
+					SourceFileMapping sourceFileMapping = new SourceFileMapping { SourceFile = metadataReader.GetString(document.Name) };
+					mapping.SourceFileMappings.Add(sourceFileMapping);
+					sourceFileMappings.Add((sourceFileMapping, documentSequencePoints
+						.Select(point => ((uint)point.StartLine, (uint)point.EndLine))
+						.ToList()));
+				}
 			}
+
+			LineRangeMerger.SetLineRanges(sourceFileMappings);
+			return mappings;
 		}
 
 		/// <summary>
@@ -112,17 +119,7 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		/// </summary>
 		internal IEnumerable<MethodMapping> ReadNativePdbMethodMappings(Stream fileStream)
 		{
-			IEnumerable<PdbFunction> pdbFunctions = PdbFile.LoadPdbFunctions(fileStream);
-			foreach (PdbFunction pdbFunction in pdbFunctions)
-			{
-				yield return new MethodMapping
-				{
-					MethodToken = pdbFunction.Token,
-					SourceFile = pdbFunction.SourceFilename,
-					StartLine = pdbFunction.StartLine,
-					EndLine = pdbFunction.EndLine
-				};
-			}
+			return PdbFile.LoadMethodMappings(fileStream);
 		}
 
 		/// <summary>

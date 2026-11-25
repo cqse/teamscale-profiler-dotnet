@@ -25,19 +25,21 @@ namespace DumpPdb
             MethodMapper mapper = new MethodMapper();
             AssemblyMethodMappings assemblyMappings = mapper.GetMethodMappings(pdbFile, assemblyName);
             // sorts the elements by source file and then line number since OrderBy guarantees a stable sort
-            IEnumerable<MethodMapping> sortedMappings = assemblyMappings.MethodMappings.OrderBy(mapping => mapping.StartLine)
-                .OrderBy(mapping => mapping.SourceFile);
+            // a method with lines in several source files gets one row per source file
+            IEnumerable<(uint methodToken, SourceFileMapping sourceFileMapping)> sortedRows = assemblyMappings.MethodMappings
+                .SelectMany(mapping => mapping.SourceFileMappings.Select(sourceFileMapping => (methodToken: mapping.MethodToken, sourceFileMapping: sourceFileMapping)))
+                .OrderBy(row => row.sourceFileMapping.LineRanges.FirstOrDefault()?.StartLine ?? 0)
+                .OrderBy(row => row.sourceFileMapping.SourceFile);
 
-            Console.WriteLine("MethodToken, StartLine, EndLine, SourceFile");
-            foreach (MethodMapping mapping in assemblyMappings.MethodMappings)
+            Console.WriteLine("MethodToken, LineRanges, SourceFile");
+            foreach ((uint methodToken, SourceFileMapping sourceFileMapping) in sortedRows)
             {
                 // we pad all fields to the length of the corresponding header plus the comma to align
                 // the fields nicely on the console for easy readability
                 // the source file is the last field because we cannot pad it to a fixed length
-                string tokenField = $"{mapping.MethodToken},".PadRight(12);
-                string startLineField = $"{mapping.StartLine},".PadRight(10);
-                string endLineField = $"{mapping.EndLine},".PadRight(8);
-                Console.WriteLine($"{tokenField} {startLineField} {endLineField} {mapping.SourceFile}");
+                string tokenField = $"{methodToken},".PadRight(12);
+                string lineRangesField = $"{string.Join(" ", sourceFileMapping.LineRanges.Select(range => $"{range.StartLine}-{range.EndLine}"))},".PadRight(11);
+                Console.WriteLine($"{tokenField} {lineRangesField} {sourceFileMapping.SourceFile}");
             }
         }
     }

@@ -32,9 +32,11 @@ namespace UploadDaemon.SymbolAnalysis
             mappings.MethodMappings.Add(new MethodMapping
             {
                 MethodToken = ExistingMethodToken,
-                SourceFile = sourceFilePath,
-                StartLine = 37,
-                EndLine = 39,
+                SourceFileMappings = { new SourceFileMapping
+                {
+                    SourceFile = sourceFilePath,
+                    LineRanges = { new LineRange { StartLine = 37, EndLine = 39 } },
+                } },
             });
 
             SimpleCoverageReport report = Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings> { mappings }), TestUtils.TestDataDirectory,
@@ -42,6 +44,48 @@ namespace UploadDaemon.SymbolAnalysis
 
             Assert.That(report.FileNames, Is.EquivalentTo(new[] { sourceFilePath }));
             Assert.That(report[sourceFilePath], Is.EqualTo(new FileCoverage((37, 39))));
+        }
+
+        [Test]
+        public void MethodsWithMultipleLineRangesInMultipleSourceFilesShouldCoverEachRange()
+        {
+            Trace trace = new Trace() { CoveredMethods = new[] { ("Test", (uint) 1234) }.ToList() };
+
+            AssemblyMethodMappings mappings = new AssemblyMethodMappings
+            {
+                AssemblyName = "Test",
+                SymbolFileName = "Test.pdb",
+            };
+            // e.g. a constructor (lines 17-18) with an auto-property initializer (lines 37-38) in the same file and a field
+            // initializer (line 10) in another file of a partial class
+            mappings.MethodMappings.Add(new MethodMapping
+            {
+                MethodToken = 1234,
+                SourceFileMappings =
+                {
+                    new SourceFileMapping
+                    {
+                        SourceFile = "File.Fields.cs",
+                        LineRanges = { new LineRange { StartLine = 10, EndLine = 10 } },
+                    },
+                    new SourceFileMapping
+                    {
+                        SourceFile = "File.cs",
+                        LineRanges =
+                        {
+                            new LineRange { StartLine = 17, EndLine = 18 },
+                            new LineRange { StartLine = 37, EndLine = 38 },
+                        },
+                    },
+                },
+            });
+
+            SimpleCoverageReport report = Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings> { mappings }), TestUtils.TestDataDirectory,
+                new GlobPatternList(new List<string> { "*" }, new List<string> { }));
+
+            Assert.That(report.FileNames, Is.EquivalentTo(new[] { "File.Fields.cs", "File.cs" }));
+            Assert.That(report["File.Fields.cs"], Is.EqualTo(new FileCoverage((10, 10))));
+            Assert.That(report["File.cs"], Is.EqualTo(new FileCoverage((17, 18), (37, 38))));
         }
 
         [Test]
@@ -58,9 +102,11 @@ namespace UploadDaemon.SymbolAnalysis
             mappings.MethodMappings.Add(new MethodMapping
             {
                 MethodToken = ExistingMethodToken,
-                SourceFile = "File.cs",
-                StartLine = 37,
-                EndLine = 39,
+                SourceFileMappings = { new SourceFileMapping
+                {
+                    SourceFile = "File.cs",
+                    LineRanges = { new LineRange { StartLine = 37, EndLine = 39 } },
+                } },
             });
 
             SimpleCoverageReport report = Convert(trace, new SymbolCollection(new List<AssemblyMethodMappings> { mappings }), TestUtils.TestDataDirectory,
@@ -98,19 +144,16 @@ namespace UploadDaemon.SymbolAnalysis
                 AssemblyName = "Test",
                 SymbolFileName = "Test.pdb",
             };
+            // the method mappers provide no line ranges if all lines of a method are compiler hidden
             mappings.MethodMappings.Add(new MethodMapping
             {
                 MethodToken = 1234,
-                SourceFile = "",
-                StartLine = 16707566,
-                EndLine = 16707566,
+                SourceFileMappings = { new SourceFileMapping { SourceFile = "" } },
             });
             mappings.MethodMappings.Add(new MethodMapping
             {
                 MethodToken = 1234,
-                SourceFile = @"c:\some\file.cs",
-                StartLine = 16707566,
-                EndLine = 16707566,
+                SourceFileMappings = { new SourceFileMapping { SourceFile = @"c:\some\file.cs" } },
             });
 
             SymbolCollection symbolCollection = new SymbolCollection(new List<AssemblyMethodMappings>() { mappings });

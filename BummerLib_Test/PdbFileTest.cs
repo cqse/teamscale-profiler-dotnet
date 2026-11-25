@@ -30,6 +30,11 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 	public class PdbFileTest : TestBase
 	{
 		/// <summary>
+		/// The directory of the source files of the test PDBs.
+		/// </summary>
+		private const string SandboxDirectory = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\";
+
+		/// <summary>
 		/// Most basic smoke test.
 		/// Makes sure that reading the pdb and loading the enclosed functions
 		/// does not throw an exception.
@@ -39,116 +44,71 @@ namespace Cqse.ConQAT.Dotnet.Bummer
 		[Test]
 		public void SmokeTestReflection()
 		{
-			this.LoadPdbFunctionsFromTestFile("Sandbox.pdb");
+			this.LoadMethodMappingsFromTestFile("Sandbox.pdb");
 		}
 
 		/// <summary>
-		/// Makes sure that loading PdbFunctions from the Sandbox Pdb works
+		/// Makes sure that loading the method mappings from the Sandbox Pdb works
 		/// and provides the correct results.
 		/// </summary>
 		[Test]
 		public void TestSandbox()
 		{
-			List<PdbFunction> functions = this.LoadPdbFunctionsFromTestFile("Sandbox.pdb");
-			Assert.AreEqual(2, functions.Count);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 12,
-				EndLine = 15,
-				Token = 100663297,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\Sandbox\\Program.cs"
-			}, functions);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 19,
-				EndLine = 26,
-				Token = 100663298,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\Sandbox\\Program.cs"
-			}, functions);
+			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("Sandbox.pdb");
+			Assert.AreEqual(2, mappings.Count);
+			AssertMapping(mappings, 100663297, SandboxDirectory + "Sandbox\\Program.cs", (12, 15));
+			AssertMapping(mappings, 100663298, SandboxDirectory + "Sandbox\\Program.cs", (19, 26));
 		}
 
 		/// <summary>
-		/// Makes sure that loading PdbFunctions from the Library A Pdb works
+		/// Makes sure that loading the method mappings from the Library A Pdb works
 		/// and provides the correct results.
 		/// </summary>
 		[Test]
 		public void TestLibraryA()
 		{
-			List<PdbFunction> functions = this.LoadPdbFunctionsFromTestFile("LibraryARenamedInVersion8.pdb");
-			Assert.AreEqual(4, functions.Count);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 11,
-				EndLine = 17,
-				Token = 100663297,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\LibraryA\\ClassARenamedInVersion7.cs"
-			}, functions);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 21,
-				EndLine = 23,
-				Token = 100663298,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\LibraryA\\ClassARenamedInVersion7.cs"
-			}, functions);
-
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 13,
-				EndLine = 17,
-				Token = 100663300,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\LibraryA\\ClassB.cs"
-			}, functions);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 20,
-				EndLine = 23,
-				Token = 100663301,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\LibraryA\\ClassB.cs"
-			}, functions);
+			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("LibraryARenamedInVersion8.pdb");
+			Assert.AreEqual(4, mappings.Count);
+			AssertMapping(mappings, 100663297, SandboxDirectory + "LibraryA\\ClassARenamedInVersion7.cs", (11, 17));
+			AssertMapping(mappings, 100663298, SandboxDirectory + "LibraryA\\ClassARenamedInVersion7.cs", (21, 23));
+			AssertMapping(mappings, 100663300, SandboxDirectory + "LibraryA\\ClassB.cs", (13, 17));
+			AssertMapping(mappings, 100663301, SandboxDirectory + "LibraryA\\ClassB.cs", (20, 23));
 		}
 
 		/// <summary>
-		/// Makes sure that loading PdbFunctions from the 'UnusedLibrary' Pdb 
+		/// Makes sure that loading the method mappings from the 'UnusedLibrary' Pdb
 		/// works and provides the correct results.
 		/// </summary>
 		[Test]
 		public void TestUnusedLibrary()
 		{
-			List<PdbFunction> functions = this.LoadPdbFunctionsFromTestFile("UnusedLibraryRenamedInVersion8.pdb");
-			Assert.AreEqual(3, functions.Count);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 20,
-				EndLine = 27,
-				Token = 100663297,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs"
-			}, functions);
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 30,
-				EndLine = 38,
-				Token = 100663298,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs"
-			}, functions);
-
-			Assert.Contains(new PdbFunction()
-			{
-				StartLine = 13,
-				EndLine = 18,
-				Token = 100663300,
-				SourceFilename = "c:\\cqse\\src\\conqat-engine\\testgap\\eu.cqse.conqat.engine.testgap\\test-data\\sandbox\\08\\Sandbox\\UnusedLibrary\\UnusedClass.cs"
-			}, functions);
+			List<MethodMapping> mappings = this.LoadMethodMappingsFromTestFile("UnusedLibraryRenamedInVersion8.pdb");
+			Assert.AreEqual(3, mappings.Count);
+			AssertMapping(mappings, 100663297, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (20, 27));
+			AssertMapping(mappings, 100663298, SandboxDirectory + "UnusedLibrary\\SecondUnusedclassRenamedInVersion7.cs", (30, 38));
+			AssertMapping(mappings, 100663300, SandboxDirectory + "UnusedLibrary\\UnusedClass.cs", (13, 18));
 		}
 
 		/// <summary>
-		/// Loads the Pdb functions from the specified test file.
+		/// Asserts that the method with the given token is mapped to exactly the given line ranges in the given source file.
 		/// </summary>
-		private List<PdbFunction> LoadPdbFunctionsFromTestFile(string testFileName)
+		private static void AssertMapping(List<MethodMapping> mappings, uint methodToken, string sourceFile, params (uint, uint)[] lineRanges)
+		{
+			MethodMapping mapping = mappings.Single(m => m.MethodToken == methodToken);
+			Assert.That(mapping.SourceFileMappings, Has.Count.EqualTo(1));
+			Assert.That(mapping.SourceFileMappings[0].SourceFile, Is.EqualTo(sourceFile));
+			Assert.That(mapping.SourceFileMappings[0].LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(lineRanges));
+		}
+
+		/// <summary>
+		/// Loads the method mappings from the specified test file.
+		/// </summary>
+		private List<MethodMapping> LoadMethodMappingsFromTestFile(string testFileName)
 		{
 			FileInfo sandboxPdb = this.GetGlobalTestFile(testFileName);
 			using (FileStream pdbStream = sandboxPdb.OpenRead())
 			{
-				return PdbFile.LoadPdbFunctions(pdbStream).ToList();
+				return PdbFile.LoadMethodMappings(pdbStream);
 			}
 		}
 	}

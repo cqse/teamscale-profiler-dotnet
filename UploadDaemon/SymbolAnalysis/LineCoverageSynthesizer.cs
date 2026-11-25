@@ -2,6 +2,7 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UploadDaemon.Configuration;
 using UploadDaemon.Report.Simple;
 using UploadDaemon.Scanning;
@@ -77,14 +78,14 @@ namespace UploadDaemon.SymbolAnalysis
                 }
                 includedAssemblies.Add(assemblyName);
 
-                SymbolCollection.SourceLocation sourceLocation = symbolCollection.Resolve(assemblyName, methodId);
+                List<SourceFileMapping> sourceFileMappings = symbolCollection.Resolve(assemblyName, methodId);
                 if (!resolutionCounts.TryGetValue(assemblyName, out AssemblyResolutionCount count))
                 {
                     count = new AssemblyResolutionCount();
                     resolutionCounts[assemblyName] = count;
                 }
 
-                if (sourceLocation == null)
+                if (sourceFileMappings == null)
                 {
                     count.unresolvedMethods += 1;
                     logger.Debug("Could not resolve method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
@@ -92,7 +93,9 @@ namespace UploadDaemon.SymbolAnalysis
                         trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
-                else if (string.IsNullOrEmpty(sourceLocation.SourceFile))
+
+                sourceFileMappings = sourceFileMappings.Where(sourceFileMapping => !string.IsNullOrEmpty(sourceFileMapping.SourceFile)).ToList();
+                if (sourceFileMappings.Count == 0)
                 {
                     count.methodsWithoutSourceFile += 1;
                     logger.Debug("Could not resolve source file of method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
@@ -100,29 +103,26 @@ namespace UploadDaemon.SymbolAnalysis
                         trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
                     continue;
                 }
-                else if (sourceLocation.StartLine == PdbFile.CompilerHiddenLine || sourceLocation.EndLine == PdbFile.CompilerHiddenLine)
+
+                // The method mappers provide no line ranges for a source file if all lines of the method in it are compiler hidden
+                List<SourceFileMapping> mappingsWithLines = sourceFileMappings.Where(sourceFileMapping => sourceFileMapping.LineRanges.Count > 0).ToList();
+                if (mappingsWithLines.Count < sourceFileMappings.Count)
                 {
                     count.methodsWithCompilerHiddenLines += 1;
-                    logger.Debug("Resolved lines of method ID {methodId} from assembly {assemblyName} contain compiler hidden lines in trace file {traceFile}" +
+                    logger.Debug("Resolved lines of method ID {methodId} from assembly {assemblyName} are all compiler hidden in at least one source file in trace file {traceFile}" +
                         " with symbols from {symbolDirectory} with {assemblyPatterns}", methodId, assemblyName,
                         trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
-                    continue;
                 }
-
-                // TODO This only skips invalid source locations as a workaround. The root cause (start line greater than
-                // end line for methods whose PDB sequence points are non-contiguous) should be fixed with TS-46522.
-                else if (sourceLocation.StartLine > sourceLocation.EndLine)
+                if (mappingsWithLines.Count == 0)
                 {
-                    logger.Error("Resolved an invalid source location for method ID {methodId} from assembly {assemblyName} in trace file {traceFile}" +
-                        " with symbols from {symbolDirectory} with {assemblyPatterns}: the start line {startLine} is greater than the end line {endLine} in source file {sourceFile}." +
-                        " This indicates broken or inconsistent PDB symbol information. Skipping this method; it will not be included in the coverage report.",
-                        methodId, assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe(),
-                        sourceLocation.StartLine, sourceLocation.EndLine, sourceLocation.SourceFile);
                     continue;
                 }
 
                 count.resolvedMethods += 1;
-                AddToLineCoverage(lineCoverageByFile, sourceLocation);
+                foreach (SourceFileMapping sourceFileMapping in mappingsWithLines)
+                {
+                    AddToLineCoverage(lineCoverageByFile, sourceFileMapping);
+                }
             }
 
             LogResolutionFailures(trace, symbolDirectory, assemblyPatterns, resolutionCounts);
@@ -161,7 +161,7 @@ namespace UploadDaemon.SymbolAnalysis
                     count.methodsWithoutSourceFile, count.TotalMethods, count.WithoutSourceFilePercentage,
                     assemblyName, trace.OriginTraceFilePath, symbolDirectory, assemblyPatterns.Describe());
             }
-            if (count.methodsWithoutSourceFile > 0)
+            if (count.methodsWithCompilerHiddenLines > 0)
             {
                 logger.Debug("{count} of {total} ({percentage}) method IDs from assembly {assemblyName} contain compiler hidden lines in the corresponding PDB file." +
                     " Read from trace file {traceFile} with symbols from" +
@@ -173,15 +173,15 @@ namespace UploadDaemon.SymbolAnalysis
             }
         }
 
-        private static void AddToLineCoverage(Dictionary<string, FileCoverage> lineCoverage, SymbolCollection.SourceLocation sourceLocation)
+        private static void AddToLineCoverage(Dictionary<string, FileCoverage> lineCoverage, SourceFileMapping sourceFileMapping)
         {
-            if (!lineCoverage.TryGetValue(sourceLocation.SourceFile, out FileCoverage fileCoverage))
+            if (!lineCoverage.TryGetValue(sourceFileMapping.SourceFile, out FileCoverage fileCoverage))
             {
                 fileCoverage = new FileCoverage();
-                lineCoverage[sourceLocation.SourceFile] = fileCoverage;
+                lineCoverage[sourceFileMapping.SourceFile] = fileCoverage;
             }
 
-            fileCoverage.CoveredLineRanges.Add((sourceLocation.StartLine, sourceLocation.EndLine));
+            fileCoverage.CoveredLineRanges.UnionWith(sourceFileMapping.LineRanges.Select(range => (range.StartLine, range.EndLine)));
         }
 
         public class LineCoverageConversionFailedException : Exception

@@ -1,4 +1,7 @@
-﻿using NUnit.Framework;
+﻿using Cqse.ConQAT.Dotnet.Bummer;
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UploadDaemon.SymbolAnalysis
 {
@@ -17,7 +20,7 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
 
-            SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.Multiple(() =>
             {
                 Assert.That(existingMethod, Is.Not.Null);
@@ -26,10 +29,20 @@ namespace UploadDaemon.SymbolAnalysis
 
             Assert.Multiple(() =>
             {
-                Assert.That(existingMethod.SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.StartLine, Is.EqualTo(37));
-                Assert.That(existingMethod.EndLine, Is.EqualTo(39));
+                Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
+                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
             });
+        }
+
+        [Test]
+        public void ConstructorWithInitializerShouldBeMappedToMultipleLineRanges()
+        {
+            SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath });
+
+            // 100663307 corresponds to the constructor of Config in ProfilerGUI.pdb, which contains an auto-property initializer in line 161
+            List<SourceFileMapping> constructor = collection.Resolve("ProfilerGUI", 100663307);
+            Assert.That(constructor, Is.Not.Null);
+            Assert.That(constructor.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (161u, 161u), (171u, 175u) }));
         }
 
         [Test]
@@ -37,13 +50,12 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { $"{TestUtils.TestDataDirectory}\\Invalid.pdb", TestPdbPath });
 
-            SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
             Assert.Multiple(() =>
             {
-                Assert.That(existingMethod.SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.StartLine, Is.EqualTo(37));
-                Assert.That(existingMethod.EndLine, Is.EqualTo(39));
+                Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
+                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
             });
         }
 
@@ -52,13 +64,12 @@ namespace UploadDaemon.SymbolAnalysis
         {
             SymbolCollection collection = SymbolCollection.CreateFromFiles(new[] { TestPdbPath, TestPDBCopyPath });
 
-            SymbolCollection.SourceLocation existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
+            List<SourceFileMapping> existingMethod = collection.Resolve("ProfilerGUI", ExistingMethodToken);
             Assert.That(existingMethod, Is.Not.Null);
             Assert.Multiple(() =>
             {
-                Assert.That(existingMethod.SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
-                Assert.That(existingMethod.StartLine, Is.EqualTo(37));
-                Assert.That(existingMethod.EndLine, Is.EqualTo(39));
+                Assert.That(existingMethod.Single().SourceFile, Contains.Substring("Configurator\\MainViewModel.cs"));
+                Assert.That(existingMethod.Single().LineRanges.Select(range => (range.StartLine, range.EndLine)), Is.EqualTo(new[] { (37u, 39u) }));
             });
         }
 

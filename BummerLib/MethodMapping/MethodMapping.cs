@@ -17,6 +17,8 @@
 // </license>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace Cqse.ConQAT.Dotnet.Bummer
 {
     /// <summary>
@@ -34,24 +36,11 @@ namespace Cqse.ConQAT.Dotnet.Bummer
         public uint MethodToken { get; set; }
 
         /// <summary>
-        /// Gets or sets the source file where the method is included.
+        /// Gets the source files that contain the code of the method, together with the lines of the method in each.
         /// </summary>
-        /// <value>The source file where the method is included. May be null if the method is compiler-generated.
-        /// In that case, the start and end line are not valid.</value>
-        public string SourceFile { get; set; }
-
-        /// <summary>
-        /// Gets or sets the start line of the method in the source code.
-        /// </summary>
-        /// <value>The 1-based, inclusive start line of the source code that corresponds 
-        /// to the method.</value>
-        public uint StartLine { get; set; }
-
-        /// <summary>
-        /// Gets or sets the end line of the method in the source code.
-        /// </summary>
-        /// <value>The 1-based, inclusive end line of the source code that corresponds 
-        /// to the method.</value>
-        public uint EndLine { get; set; }
+        /// <value>The source files of the method. Usually a single one, but e.g. a constructor also contains the code
+        /// of field and auto-property initializers, which may be located in other files of a partial class.
+        /// Empty if the symbol file contains no source file for the method, e.g. if it is compiler-generated.</value>
+        public List<SourceFileMapping> SourceFileMappings { get; } = new List<SourceFileMapping>();
     }
 }

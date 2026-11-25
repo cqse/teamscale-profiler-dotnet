@@ -8,6 +8,7 @@ Please prefix each entry with one of:
 # Next Release
 - [breaking change] UploadDaemon instances started from a network logon (e.g. PowerShell remoting, WinRM or SSH sessions) can no longer trigger an immediate upload in an already running UploadDaemon. The upload happens at its next scheduled interval instead
 - [fix] UploadDaemon crashed with an `UnauthorizedAccessException` when another instance was running elevated or as a different user (e.g. as a service). The running daemon must be restarted for the fix to take full effect
+- [fix] Constructors with field or auto-property initializers were mapped to a single line range spanning all code in between, so that other methods in that range were reported as covered, or to an invalid line range, causing the constructor to be skipped. Initializers located in another file of a partial class were not reported as covered in that file
 
 # v26.8.0
 - [breaking change] Removed feature to upload raw .NET trace files

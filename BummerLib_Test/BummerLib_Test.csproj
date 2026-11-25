@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LineRangeMergerTest.cs" />
     <Compile Include="PdbFileTest.cs" />
     <Compile Include="PdbMethodMapperTest.cs" />
     <Compile Include="TestBase.cs" />
